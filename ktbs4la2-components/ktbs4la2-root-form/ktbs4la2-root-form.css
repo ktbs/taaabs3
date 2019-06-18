@@ -1,0 +1,38 @@
+h1 {
+	margin-top: 0;
+}
+
+label {
+	display: inline-block;
+	width: 80px;
+	text-align: right;
+}
+
+input {
+	margin-left: 5px;
+	min-width: 350px;
+}
+
+#buttons {
+	text-align: center;
+}
+
+#buttons button {
+	background-color: var(--color-main, cornflowerblue);
+	width: 90px;
+	height: 35px;
+	cursor: pointer;
+	margin-left: 10px;
+	margin-right: 10px;
+	color: white;
+	border: none;
+}
+
+#buttons button:hover {
+	background-color: var(--color-highlight, royalblue);
+}
+
+#ok:disabled, #ok:disabled:hover {
+	cursor: default;
+	background-color: #CCC;
+}

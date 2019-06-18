@@ -1,0 +1,58 @@
+<div id="window">
+	<nav id="left-panel" class="unfolded">
+		<div id="nav-content">
+			<div id="fold-button" title="{translate: 'Hide navigation panel'}"></div>
+
+			<header>
+				<h1>
+					<a id="home-link" title="{translate: 'Home'}">KTBS4LA2</a>
+				</h1>
+
+				<div id="lang-selector">
+					<img title="Switch to english" class="selected lang-button" lang="en" src="{my-component-folder}/lang-flags/en.svg" />
+					<img title="Passer en français" class="lang-button" lang="fr" src="{my-component-folder}/lang-flags/fr.svg" />
+				</div>
+			</header>
+
+			<section id="lists">
+				<section>
+					<h2 id="my-ktbs-roots-subtitle">{translate: 'My kTBS roots'}</h2>
+
+					<ul class="nav-list">
+						<slot name="nav-ktbs-roots"></slot>
+
+						<li>
+							<a class="nav-list-add-item-button" id="add-root-button" title="{translate: 'Add new kTBS root'}">+</a>
+						</li>
+					</ul>					
+				</section>
+
+				<section>
+					<h2 id="my-dashboards-subtitle">{translate: 'My dashboards'}</h2>
+
+					<ul class="nav-list">
+						<slot name="nav-dashboards"></slot>
+
+						<li>
+							<a class="nav-list-add-item-button" id="add-dashboard-button" title="{translate: 'Add new dashboard'}">+</a>
+						</li>
+					</ul>
+				</section>
+			</section>
+		</div>
+	</nav>
+
+	<div id="separator" title="{translate: 'Resize navigation panel'}"></div>
+
+	<main id="main-panel">
+		<div id="main-scrollable">
+			<div id="main-content">
+				<slot name="main"></slot>
+			</div>
+		</div>
+	</main>
+</div>
+
+<div id="overlay">
+	<slot name="overlay"></slot>
+</div>

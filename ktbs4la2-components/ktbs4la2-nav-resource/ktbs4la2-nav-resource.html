@@ -1,0 +1,13 @@
+<div id="container" class="folded">
+	<div id="header">
+		<a title="{translate: 'Unfold child list'}" id="unfold-button">&nbsp;</a><a id="title"></a>
+	</div>
+
+	<ul id="child-list">
+		<slot></slot>
+
+		<li>
+			<a id="add-item-button" title="{translate: 'Add new child resource'}">+</a>
+		</li>
+	</ul>
+</div>

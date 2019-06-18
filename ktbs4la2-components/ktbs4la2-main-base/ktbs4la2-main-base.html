@@ -1,0 +1,39 @@
+<article id="container">
+	<header>
+		<div id="resource-type-description">
+			<img src="{my-component-folder}/database.svg" id="resource-type-icon" />
+			<div id="resource-type-label">{translate: 'Base'}</div>
+		</div>
+
+		<div id="resource-description">
+			<h1 id="title"></h1>
+			<a id="resource-link" target="_blank" title="{translate: 'See the resource on the REST console (opens in a new tab)'}"></a>
+			<div id="resource-status">
+				<div id="resource-status-label">{translate: 'Pending...'}</div>
+				<div id="error-message"></div>
+			</div>
+		</div>
+	</header>
+
+	<section id="resource-contents">
+		<ktbs4la2-main-subsection id="child-bases" title="{translate: 'Bases'} :" column-width="250px" separator="false" foldable="true" expanded="true">
+			<slot name="bases"></slot>
+		</ktbs4la2-main-subsection>
+
+		<ktbs4la2-main-subsection id="child-models" title="{translate: 'Models'} :" column-width="250px" foldable="true" expanded="true">
+			<slot name="models"></slot>
+		</ktbs4la2-main-subsection>
+
+		<ktbs4la2-main-subsection id="child-stored-traces" title="{translate: 'Stored traces'} :" column-width="250px" foldable="true" expanded="true">
+			<slot name="stored-traces"></slot>
+		</ktbs4la2-main-subsection>
+
+		<ktbs4la2-main-subsection id="child-methods" title="{translate: 'Methods'} :" column-width="250px" foldable="true" expanded="true">
+			<slot name="methods"></slot>
+		</ktbs4la2-main-subsection>
+
+		<ktbs4la2-main-subsection id="child-computed-traces" title="{translate: 'Computed traces'} :" column-width="250px" foldable="true" expanded="true">
+			<slot name="computed-traces"></slot>
+		</ktbs4la2-main-subsection>
+	</section>
+</article>

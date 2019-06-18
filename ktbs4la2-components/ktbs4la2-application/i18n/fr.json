@@ -1,0 +1,13 @@
+{
+	"Home": "Accueil",
+	"Show navigation panel": "Montrer le volet de navigation",
+	"Hide navigation panel": "Cacher le volet de navigation",
+	"My kTBS roots": "Mes racines kTBS",
+	"Add new kTBS root": "Ajouter une nouvelle racine kTBS",
+	"My dashboards": "Mes tableaux de bord",
+	"Add new dashboard": "Ajouter un nouveau tableau de bord",
+	"Resize navigation panel": "Redimensionner le volet de navigation",
+	"You are about to remove ": "Vous êtes sur le point de retirer ",
+	"(uri : ": "(uri : ",
+	") from \"My kTBS roots\".\nPlease note this will only make KTBS4LA2 \"forget\" about this kTBS root, but will not affect the kTBS root itself or the data hosted on it.\nAre you sure ?": ") de \"Mes racines kTBS\".\nVeuillez noter que cela fera seulement \"oublier\" cette racine à KTBS4LA2, mais n'affectera pas la racine elle-même ni les données qu'elle héberge.\nÊtes-vous sûr(e) ?"
+}

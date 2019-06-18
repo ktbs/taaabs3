@@ -1,0 +1,106 @@
+- factoriser le code des composants main
+
+- ajouter des tokens aux templates :
+	- une pour chemin vers "common"
+
+- dédoublonner les icones équivalentes de différentes couleurs et les styler depuis le css
+
+- factoriser les icones pour limiter le nb de requetes HTTP
+
+- factoriser les fichiers de traduction (?)
+
+- factoriser au maximum le CSS pour rendre l'appli themable
+
+- mémoriser l'état de l'UI dans le sessionStorage :
+	- largeur du nav
+	- éléments de nav dépliés
+	- état de la zone de notification d'erreurs
+	- élément de nav sélectionné + objet en cours dans le main
+
+- finir d'implémenter les composants main pour chaque type de ressource :
+	- Method
+	- Model
+	- Stored trace
+	- Computed trace
+
+- v. si poss d'utiliser fetch à la place de HTTPRequest pour les req vers kTBS
+
+- gestion du cache :
+	essayer de respecter autant que possible les entêtes de cache de la reponse HTTP
+
+- gérer l'authentification, au moins sur les Root (necessite CORS)
+	=> options dans les objets HTTPRequest/fetch
+		=> cf. doc JS "credentials"
+
+- erreurs serveur
+	=> récup/afficher également le contenu du payload
+
+- voir si le composant pie-chart peut détecter les clics/sélections de parts pour émettre des events
+
+- afficher "chemin de fer" (cliquable) en haut du main de chaque ress (sauf kTBS root)
+
+- affichage des obsels
+
+- revoir nomenclature des noms de methodes et d'attributs
+
+- réflechir à une API uniformisée/cohérente pour les events et attributs propres à kTBS
+
+- !!! Echapper les strings pour éviter l'injection de code & les XSS !!!
+	=> encodeURI / decodeURI pour les attributs
+	=> .innerText au lieu de .innerHTML pour le contenu des nodes
+
+- pour tous les composants, vérifier la validité de chaque attribut :
+	=> présence des attributs requis
+	=> + valeur valide
+		=> en cas de pb, emettre un ErrorEvent
+
+- fichier de conf par défaut
+	=> à la racine de l'appli
+	=> options chargées si pas redéfinies dans le localStorage
+
+- boutons "+" :
+	- dans le nav => utiliser le composant "add-resource-button" (?)
+	- dans le composant "add-resource-button" => émettre un CustomEvent lors du clic 
+	- écouter l'event dans le composant application
+	- implémenter les form de création
+
+- bouton edition pour chaque composant main
+
+- formulaires d'édition pour chaque type de ressource :
+	- Base
+	- Method
+	- Model
+	- Stored trace
+	- Computed trace
+
+- bouton suppression pour chaque composant main
+
+- notif en cas de modif/suppression d'une ress.
+	=> design pattern observer sur l'objet resource (?)
+		=> ou gestion par events JS au niveau des composants (???)
+	=> répercuter sur l'UI
+
+- implémenter les dashboards
+
+- COMMENTER / DOCUMENTER
+
+- rédiger Doc
+
+- rédiger et intégrer aides en ligne :
+	- tuto "getting started"
+	- F.A.Q.
+
+- implémenter HTTP2
+
+--------------------------------------------------------------------
+
+A suivre : 
+
+- demander à PAC d'envoyer les entêtes CORS dans TOUS les cas, même en cas de code d'erreur (404, 500 ...)
+
+- demander à PAC de répondre sur les URIs des builtin methods
+
+- demander à PAC de corriger le pb de "inRoot: ../" pour les bases dans les bases
+	=> inBase: ../
+	=> inRoot: ../../ (?)
+

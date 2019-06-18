@@ -1,0 +1,60 @@
+#container {
+	margin-bottom: 20px;
+}
+
+#separator {
+	display: block; 
+	height: 1px;
+    border: 0; 
+	border-top: 1px solid #aaa;
+    margin: 5px 0; 
+	padding: 0;
+}
+
+:host([separator = "false"]) #separator {
+	visibility: hidden;
+}
+
+#text {
+	padding-left: 30px;
+	padding-right: 30px;
+}
+
+#chevron {
+	display: none;
+	width: 32px;
+	height: 32px;
+	background: url('{my-component-folder}/chevron-down.svg') no-repeat;
+	cursor: pointer;
+	opacity: 0.3;
+	float: right;
+	margin-top: -5px;
+	margin-right: 10px;
+}
+
+#chevron:hover {
+	opacity: 1;
+}
+
+#title {
+	margin-top: 0;
+	margin-bottom: 0;
+	font-size: 18pt;
+	font-style: italic;
+}
+
+:host([!title]) #title, :host([title = ""]) #title {
+	display: none;
+}
+
+:host([foldable = "true"]) #chevron {
+	display: block;
+}
+
+:host([expanded = "true"]) #chevron {
+	background: url('{my-component-folder}/chevron-up.svg') no-repeat;
+}
+
+:host([expanded = "false"]) #content {
+	display: none;
+}

@@ -1,0 +1,19 @@
+<h1 id="title">{translate: 'Add new kTBS Root'}</h1>
+
+<form id="root">
+	<p>
+		<label for="uri">{translate: 'URI'}<span class="required-field">*</span> : </label>
+		<input id="uri" type="url" placeHolder="http://example.com/ktbs/" required/>
+		<input type="hidden" name="old_uri" id="old_uri" />
+	</p>
+
+	<p>
+		<label for="label">{translate: 'Label'} : </label>
+		<input id="label" type="text" placeHolder="{translate: 'Label'}" />
+	</p>
+
+	<p id="buttons">
+		<button type="submit" id="ok">{translate: 'Add'} !</button>
+		<button type="reset" id="cancel">{translate: 'Cancel'}</button>
+	</p>
+</form>

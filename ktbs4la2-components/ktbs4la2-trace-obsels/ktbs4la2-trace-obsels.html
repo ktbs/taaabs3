@@ -1,0 +1,79 @@
+<div id="filters-container">
+	<ktbs4la2-main-subsection id="filters-subsection" title="{translate: 'Filters'}" foldable="true" expanded="false">
+		<form id="filters">
+			<ul id="fields">
+				<li class="field">
+					<label for="begin-lower"><strong id="begins-label">{translate: 'Begins'}</strong> <span id="begins-between-label">{translate: 'between'}</span> </label>
+					<input type="date" id="begin-lower" placeholder="-- {translate: 'Any'} --"/>
+					<label id="begin-higher-label" for="begin-higher">{translate: 'and'}</label>
+					<input type="date" id="begin-higher" placeholder="-- {translate: 'Any'} --"/>
+				</li>
+
+				<li class="field">
+					<label for="end-lower"><strong id="ends-label">{translate: 'Ends'}</strong> <span id="ends-between-label">{translate: 'between'}</span> </label>
+					<input type="date" id="end-lower" placeholder="-- {translate: 'Any'} --"/>
+					<label id="end-higher-label" for="end-higher"> {translate: 'and'} </label>
+					<input type="date" id="end-higher" placeholder="-- {translate: 'Any'} --"/>
+				</li>
+
+				<li class="field">
+					<label for="obsel-lower"><span id="obsel-between-label">{translate: 'Between'}</span> <strong id="obsel-obsels-label">{translate: 'obsels'}</strong> </label>
+					<input type="text" id="obsel-lower" placeholder="-- {translate: 'Any'} --"/>
+					<label id="obsel-higher-label" for="obsel-higher"> {translate: 'and'} </label>
+					<input type="text" id="obsel-higher" placeholder="-- {translate: 'Any'} --"/>
+				</li>
+			</ul>
+
+			<div id="buttons">
+				<button type="reset" id="clear">{translate: 'Clear'}</button>
+				<button type="submit" id="apply">{translate: 'Apply'}</button>			
+			</div>
+		</form>
+	</ktbs4la2-main-subsection>
+</div>
+
+<div id="table-container" class="pending">
+	<table id="obsels-table">
+		<thead>
+			<tr>
+				<th id="table-header-id">
+					<div id="toggle-reverse-button" title="{translate: 'Reverse obsel ordering'}"></div>
+					<span id="table-header-id-label">{translate: '@id'}</span>
+				</th>
+
+				<th id="table-header-type">{translate: 'Type'}</th>
+				<th id="table-header-begin">{translate: 'Begin'}</th>
+				<th id="table-header-end">{translate: 'End'}</th>
+				<th id="table-header-attributes">{translate: 'Attributes'}</th>
+			</tr>
+		</thead>
+
+		<tbody id="obsels-table-body">
+
+		</tbody>
+	</table>
+
+	<form id="obselsperpage">
+		<p>
+			<label id="obselsperpage-select-label" for="obselsperpage-select">{translate: 'Obsels / page'} :</label>
+
+			<select id="obselsperpage-select">
+				<option value="5" selected>5</option>
+				<option value="10">10</option>
+				<option value="25">25</option>
+				<option value="50">50</option>
+				<option value="100">100</option>
+				<option value="500">500</option>
+				<option id="obselsperpage-select-all" value="all">-- {translate: 'All'} --</option>
+			</select>
+		</p>
+	</form>
+
+	<div id="error-message"></div>
+
+	<div id="wait-message-container">
+		<div id="wait-message-overlay"></div>
+		
+		<div id="wait-message-content">{translate: 'Querying server, please wait...'}</div>
+	</div>
+</div>

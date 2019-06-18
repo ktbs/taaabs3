@@ -1,0 +1,28 @@
+#container {
+	display: block;
+}
+
+#link {
+	display: inline-block;
+	text-decoration-line: none;
+	padding-left: 16px;
+	padding-right: 16px;
+	width: 100%;
+	max-width: 90%;
+	padding-top: 8px;
+	padding-bottom: 8px;
+	color: grey;
+	font-size: 16pt;
+	margin-left: 10px;
+	margin-right: 10px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	border-radius: 10px;
+	cursor: pointer;
+	text-align: center;
+}
+
+#link:hover {
+	background-color: #E8E8E8;
+	color: black;
+}

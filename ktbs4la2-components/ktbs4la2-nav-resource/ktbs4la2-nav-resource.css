@@ -1,0 +1,148 @@
+#container {
+	border-bottom: 1px solid black;
+	padding-top: 3px;
+	padding-bottom: 2px;
+}
+
+#header {
+	display: flex;
+	align-items: baseline;
+	width: 100%;
+}
+
+#unfold-button {
+	display: none;
+}
+
+:host([resource-type = "Ktbs"]) #unfold-button, :host([resource-type = "Base"]) #unfold-button {
+	display: inline-block;
+	cursor: pointer;
+	padding-left: 15px;
+	background-repeat: no-repeat;
+}
+
+#container.error #unfold-button {
+	visibility: hidden;
+}
+
+#container.folded #unfold-button {
+	background-image: url('{my-component-folder}/chevron-right.svg');
+}
+
+#container.unfolded #unfold-button {
+	background-image: url('{my-component-folder}/chevron-down.svg');
+}
+
+#title {
+	display: inline-block;
+	text-decoration-line: none;
+	color: white;
+	padding-left: 25px;
+	padding-right: 3px;
+	background-repeat: no-repeat;
+	background-position: 5px 5px;
+	border-radius: 5px;
+	outline: none;
+	height: 23px;
+	padding-top: 5px;
+	flex: 100%;
+}
+
+:host([resource-type = "Ktbs"]) #title, :host([resource-type = "Base"]) #title {
+	margin-left: -3px;
+}
+
+:host([resource-type = "Ktbs"]) #title {
+	background-image: url('{my-component-folder}/Ktbs.svg');
+}
+
+:host([resource-type = "Base"]) #title {
+	background-image: url('{my-component-folder}/Base.svg');
+}
+
+:host([resource-type = "Method"]) #title {
+	background-image: url('{my-component-folder}/Method.svg');
+}
+
+:host([resource-type = "Model"]) #title {
+	background-image: url('{my-component-folder}/Model.svg');
+}
+
+:host([resource-type = "StoredTrace"]) #title {
+	background-image: url('{my-component-folder}/StoredTrace.svg');
+}
+
+:host([resource-type = "ComputedTrace"]) #title {
+	background-image: url('{my-component-folder}/ComputedTrace.svg');
+}
+
+#container.error #title {
+	color: black;
+	font-style: italic;
+	opacity: .5;
+	background-position: 10px 10px, 5px 5px;
+}
+
+:host([resource-type = "Ktbs"]) #container.error #title {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Ktbs.svg');
+}
+
+:host([resource-type = "Base"]) #container.error #title {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Base.svg');
+}
+
+:host([resource-type = "Method"]) #container.error #title {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Method.svg');
+}
+
+:host([resource-type = "Model"]) #container.error #title {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Model.svg');
+}
+
+:host([resource-type = "StoredTrace"]) #container.error #title {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/StoredTrace.svg');
+}
+
+:host([resource-type = "ComputedTrace"]) #container.error #title {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/ComputedTrace.svg');
+}
+
+#title:hover, :host(.selected) #title {
+	background-color: var(--color-highlight, royalblue);
+}
+
+:host(.selected) #title:hover {
+	cursor: default;
+}
+
+#child-list {
+	list-style-type: none;
+	padding-left: 10px;
+	margin-top: 0;
+	margin-bottom: 0;
+	display: none;
+	border-left: 1px dotted #000;
+	margin-left: 7px;
+}
+
+:host([resource-type = "Ktbs"]) #container.unfolded #child-list, :host([resource-type = "Base"]) #container.unfolded #child-list {
+	display: block;
+}
+
+#container.error #child-list {
+	display: none !important;
+}
+
+#add-item-button {
+	cursor: pointer;
+	display: inline-block;
+	width: 100%;
+	padding-left: 5px;
+	font-size: 18pt;
+	border-radius: 5px;
+	margin-top: 2px;
+}
+
+#add-item-button:hover {
+	background-color: royalblue;
+}

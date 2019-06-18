@@ -1,0 +1,92 @@
+#container > header {
+	padding-left: 30px;
+	padding-right: 30px;
+	padding-bottom: 30px;
+	/*display: table;
+	table-layout: fixed;*/
+	
+	position: sticky;
+	top: 0px;
+	background-color: white;
+	padding-top: var(--main-padding, 20px);
+	padding-bottom: var(--main-padding, 20px);
+	border-bottom: 1px solid #aaa;
+	display: block;
+	z-index: 2;
+	box-shadow: 0 10px 8px -8px gray;
+	margin-bottom: 10px;
+}
+
+#resource-type-description {
+	display: table-cell;
+	text-align: center;
+	width: 60px;
+	vertical-align: top;
+}
+
+#resource-type-icon {
+	width: 60px;
+	height: 60px;
+}
+
+#resource-type-label {
+	font-size: 8pt;
+	font-weight: bold;
+}
+
+#resource-description {
+	display: table-cell;
+	padding-left: 10px;
+	vertical-align: top;
+}
+
+#title {
+	margin-top: 0;
+	margin-bottom: 3px;
+	font-size: 22pt;
+}
+
+#resource-link {
+	display: block;
+	font-size: 10pt;
+	margin-bottom: 7px;
+	outline: none;
+}
+
+#resource-link:after {
+	content: " [↗]";
+}
+
+#resource-status-label {
+	padding-left: 18px;
+	font-size: 11pt;
+	display: inline;
+}
+
+#container.online #resource-status {
+	background: url('{my-component-folder}/online.svg') no-repeat;
+}
+
+#container.online #resource-status-label {
+	color: #060;
+}
+
+#container.error #resource-status {
+	background: url('{my-component-folder}/error.svg') no-repeat;
+}
+
+#container.error #resource-status-label, #container.error #error-message {
+	color: red;
+}
+
+#error-message {
+	display: none;
+}
+
+#container.error #error-message {
+	display: inline;
+}
+
+#container.error #resource-about {
+	display: none;
+}

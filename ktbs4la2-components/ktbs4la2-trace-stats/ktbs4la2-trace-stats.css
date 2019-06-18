@@ -1,0 +1,30 @@
+#numbers, #obsels-types-pie-chart {
+	display: inline-block;
+	vertical-align: top;
+}
+
+#numbers {
+	padding-top: 15px;
+	font-size: 11pt;
+}
+
+#obsels-types-pie-chart {
+	margin-top: -15px;
+}
+
+#error {
+	color: red;
+	display: none;
+}
+
+#error-name {
+	font-weight: bold;
+}
+
+:host([status = "error"]) #numbers, :host([status = "error"]) #obsels-types-pie-chart {
+	display: none;
+}
+
+:host([status = "error"]) #error {
+	display: block;
+}

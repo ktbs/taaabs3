@@ -1,0 +1,21 @@
+<article id="container">
+	<header>
+		<div id="resource-type-description">
+			<img src="{my-component-folder}/Model.svg" id="resource-type-icon" />
+			<div id="resource-type-label">{translate: 'Model'}</div>
+		</div>
+
+		<div id="resource-description">
+			<h1 id="title"></h1>
+			<a id="resource-link" target="_blank" title="{translate: 'See the resource on the REST console (opens in a new tab)'}"></a>
+			<div id="resource-status">
+				<div id="resource-status-label">{translate: 'Pending...'}</div>
+				<div id="error-message"></div>
+			</div>
+		</div>
+	</header>
+
+	<section id="resource-contents">
+		<slot name="diagram"></slot>
+	</section>
+</article>

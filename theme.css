@@ -1,0 +1,22 @@
+body {
+	margin: 0;
+	font-family: "Arial";
+}
+
+* {
+	--color-main: cornflowerblue;
+	--color-highlight: royalblue;
+
+	--nav-padding: 10px;
+	--nav-background-color: cornflowerblue;
+
+	--home-link-color: white;
+	--home-link-decoration-color: white;
+	--home-link-decoration-line: underline overline;
+	--home-link-font-size: 24pt;
+
+	--nav-h2-font-size: 14pt;
+	--nav-h2-font-style: italic;
+
+	--main-padding: 20px;
+}

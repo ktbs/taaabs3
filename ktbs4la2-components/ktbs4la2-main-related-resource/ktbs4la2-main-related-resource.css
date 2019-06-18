@@ -1,0 +1,83 @@
+#container {
+	display: block;
+}
+
+#link {
+	display: inline-block;
+	width: 100%;
+	text-decoration-line: none;
+	padding-left: 32px;
+	padding-right: 8px;
+	padding-top: 8px;
+	padding-bottom: 8px;
+	background-repeat: no-repeat;
+	background-position: 5px 8px;
+	color: black;
+	font-size: 16pt;
+	margin-left: 10px;
+	margin-right: 10px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	border-radius: 10px;
+	max-width: 90%;
+	overflow-wrap: break-word;
+}
+
+#link:hover {
+	background-color: #E8E8E8;
+}
+
+:host([resource-type = "Ktbs"]) #link {
+	background-image: url('{my-component-folder}/Ktbs.svg');
+}
+
+:host([resource-type = "Base"]) #link {
+	background-image: url('{my-component-folder}/Base.svg');
+}
+
+:host([resource-type = "Method"]) #link {
+	background-image: url('{my-component-folder}/Method.svg');
+}
+
+:host([resource-type = "Model"]) #link {
+	background-image: url('{my-component-folder}/Model.svg');
+}
+
+:host([resource-type = "StoredTrace"]) #link {
+	background-image: url('{my-component-folder}/StoredTrace.svg');
+}
+
+:host([resource-type = "ComputedTrace"]) #link {
+	background-image: url('{my-component-folder}/ComputedTrace.svg');
+}
+
+#link.error {
+	color: black;
+	font-style: italic;
+	opacity: .5;
+	background-position: 12px 15px, 5px 8px;
+}
+
+:host([resource-type = "Ktbs"]) #link.error {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Ktbs.svg');
+}
+
+:host([resource-type = "Base"]) #link.error {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Base.svg');
+}
+
+:host([resource-type = "Method"]) #link.error {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Method.svg');
+}
+
+:host([resource-type = "Model"]) #link.error {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Model.svg');
+}
+
+:host([resource-type = "StoredTrace"]) #link.error {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/StoredTrace.svg');
+}
+
+:host([resource-type = "ComputedTrace"]) #link.error {
+	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/ComputedTrace.svg');
+}

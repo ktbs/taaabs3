@@ -1,0 +1,23 @@
+#container {
+	overflow-x: scroll;
+}
+
+#time {
+	height: 200px;
+}
+
+#container, #time, .time-division { 
+    position: relative; 
+    float: left;
+}
+
+.time-division {
+	border-left: 1px solid #000;
+	/*height: 100%;*/
+	width: 20px;
+}
+
+/*
+.time-division > label {
+	position: absolute;
+}*/

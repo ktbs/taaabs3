@@ -1,0 +1,33 @@
+<div id="container">
+	<div id="numbers">
+		<div class="stat" id="begin-container">
+			<strong id="begin-label">{translate: 'Begin'} :</strong>
+			<span id="begin"></span>
+		</div>
+
+		<div class="stat" id="end-container">
+			<strong id="end-label">{translate: 'End'} :</strong>
+			<span id="end"></span>
+		</div>
+
+		<div class="stat" id="duration-container">
+			<strong id="duration-label">{translate: 'Duration'} :</strong>
+			<span id="duration"></span>
+		</div>
+
+		<div class="stat" id="count-container">
+			<strong id="count-label">{translate: 'Obsels count'} :</strong>
+			<span id="count"></span>
+		</div>
+	</div>
+
+	<ktbs4la2-pie-chart 
+		id="obsels-types-pie-chart" 
+		title="{translate: 'Obsels count per obsel types'}">
+	</ktbs4la2-pie-chart>
+
+	<div id="error">
+		<div id="error-name"></div>
+		<div id="error-message"></div>
+	</div>
+</div>
