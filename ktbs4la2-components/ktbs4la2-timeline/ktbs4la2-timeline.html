@@ -1,4 +1,37 @@
-<div id="container">
-	<div id="time">
+<style id="div-width-rules"></style>
+
+<div id="widget-container">
+	<div id="legend">
+		<div id="datetime-legend">
+			<div class="legend-group" id="date-legend">
+				<div id="date-components-labels">
+					<div class="legend-label" id="year-label">{translate: 'Year'}</div>
+					<div class="legend-label" id="month-label">{translate: 'Month'}</div>
+					<div class="legend-label" id="day-label">{translate: 'Day'}</div>
+				</div>
+			</div>
+
+			<div class="legend-group" id="time-legend">
+				<div id="time-components-labels">
+					<div class="legend-label" id="hour-label">{translate: 'Hour'}</div>
+					<div class="legend-label" id="minute-label">{translate: 'Minute'}</div>
+					<div class="legend-label" id="second-label">{translate: 'Second'}</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="obsels-legend">
+			<!-- @TODO add obsels type icons and names ...-->
+		</div>
+	</div>
+
+	<div id="display-window">
+		<div id="timeline-container">
+			<div id="time"></div>
+
+			<div id="events">
+				<slot name="visible"></slot>
+			</div>
+		</div>
 	</div>
 </div>

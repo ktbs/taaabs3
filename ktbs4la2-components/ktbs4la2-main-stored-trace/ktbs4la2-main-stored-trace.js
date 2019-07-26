@@ -3,7 +3,9 @@ import {StoredTrace} from "../../ktbs-api/StoredTrace.js";
 
 import "../ktbs4la2-main-related-resource/ktbs4la2-main-related-resource.js";
 import "../ktbs4la2-trace-stats/ktbs4la2-trace-stats.js";
+import "../ktbs4la2-icon-tabs/ktbs4la2-icon-tabs.js";
 import "../ktbs4la2-trace-obsels/ktbs4la2-trace-obsels.js";
+import "../ktbs4la2-trace-timeline/ktbs4la2-trace-timeline.js";
 
 /**
  * 
@@ -80,10 +82,15 @@ class KTBS4LA2MainStoredTrace extends KtbsResourceElement {
 			statsElement.setAttribute("slot", "stats");
 			this.appendChild(statsElement);
 
-			let obselsElement = document.createElement("ktbs4la2-trace-obsels");
-			obselsElement.setAttribute("uri", this.getAttribute("uri") + "@obsels");
-			obselsElement.setAttribute("slot", "obsels");
-			this.appendChild(obselsElement);
+			let obselsTimelineElement = document.createElement("ktbs4la2-trace-timeline");
+			obselsTimelineElement.setAttribute("uri", this.getAttribute("uri"));
+			obselsTimelineElement.setAttribute("slot", "obsels-timeline");
+			this.appendChild(obselsTimelineElement);
+
+			let obselsTableElement = document.createElement("ktbs4la2-trace-obsels");
+			obselsTableElement.setAttribute("uri", this.getAttribute("uri") + "@obsels");
+			obselsTableElement.setAttribute("slot", "obsels-table");
+			this.appendChild(obselsTableElement);
 		});
 	}
 

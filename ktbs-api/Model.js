@@ -36,6 +36,31 @@ export class Model extends Resource {
 	}
 
 	/**
+	 * 
+	 */
+	get_stylesheets() {
+		let styleSheets = new Array();
+		let graphs = this._parsedJson["@graph"];
+
+		if(graphs instanceof Array) {
+			for(let i = 0; (i < graphs.length); i++) {
+				let graph = graphs[i];
+
+				if((graph["@type"]) && (graph["@type"] == "TraceModel") && (graph["http://www.example.com/TODO#ModelStylesheets"])) {
+					let styleSheetsData = graph["http://www.example.com/TODO#ModelStylesheets"];
+
+					for(let j = 0; j < styleSheetsData.length; j++) {
+						let aStyleSheetData = styleSheetsData[j];
+						let parsedStyleSheet = JSON.parse(aStyleSheetData);
+						styleSheets.push(parsedStyleSheet);
+					}
+				}
+			}
+		}
+		return styleSheets;
+	}
+
+	/**
 	 * @return Base
 	 */
 	/*get_base() {
@@ -95,9 +120,21 @@ export class Model extends Resource {
 	 * @param bool include_inherited – defaults to true and means that obsel types from inherited models should be included
 	 * @return [ObselType]
 	 */
-	/*list_obsel_types(include_inherited = true) {
+	list_obsel_types(include_inherited = true) {
+		let obsel_types = new Array();
+		let graphs = this._parsedJson["@graph"];
 
-	}*/
+		if(graphs instanceof Array) {
+			for(let i = 0; i < graphs.length; i++) {
+				let aGraph = graphs[i];
+
+				if(aGraph["@type"] == "ObselType")
+					obsel_types.push(aGraph);
+			}
+		}
+
+		return obsel_types;
+	}
 
 	/**
 	 * @param Model m

@@ -1,0 +1,187 @@
+#container {
+	position: absolute;
+	transition-duration: .3s;
+	transition-timing-function: ease-in;
+}
+
+:host([row = "0"]) #container {
+	bottom: 0px;
+}
+
+:host([row = "1"]) #container {
+	bottom: 15px;
+}
+
+:host([row = "2"]) #container {
+	bottom: 30px;
+}
+
+:host([row = "3"]) #container {
+	bottom: 45px;
+}
+
+:host([row = "4"]) #container {
+	bottom: 60px;
+}
+
+:host([row = "5"]) #container {
+	bottom: 75px;
+}
+
+:host([row = "6"]) #container {
+	bottom: 90px;
+}
+
+:host([row = "7"]) #container {
+	bottom: 105px;
+}
+
+:host([row = "8"]) #container {
+	bottom: 120px;
+}
+
+:host([row = "9"]) #container {
+	bottom: 135px;
+}
+
+:host([row = "10"]) #container {
+	bottom: 150px;
+}
+
+:host([row = "11"]) #container {
+	bottom: 165px;
+}
+
+:host([row = "12"]) #container {
+	bottom: 180px;
+}
+
+:host([row = "13"]) #container {
+	bottom: 195px;
+}
+
+:host([row = "14"]) #container {
+	bottom: 210px;
+}
+
+:host([row = "15"]) #container {
+	bottom: 225px;
+}
+
+:host([row = "16"]) #container {
+	bottom: 240px;
+}
+
+:host([row = "17"]) #container {
+	bottom: 255px;
+}
+
+:host([row = "18"]) #container {
+	bottom: 270px;
+}
+
+:host(:not([row])) #container {
+	bottom: 350px;
+}
+
+#marker {
+	display: inline-block;
+	position: relative;
+	left: 0;
+	top: 0;
+	cursor: pointer;
+	height: 12px;
+	background-color: #888;
+}
+
+:host([shape]:not([shape = "duration-bar"])) #marker {
+	width: 12px;
+	mask-repeat: no-repeat;
+	-webkit-mask-repeat: no-repeat;
+}
+
+:host([shape = "duration-bar"]) #marker, :host(:not([shape])) #marker {
+	width: 100%;
+	min-width: 12px;
+	border-radius: 2px;
+}
+
+:host([shape = "circle"]) #marker {
+	mask-image: url('{my-component-folder}/circle.svg');
+	-webkit-mask-image: url('{my-component-folder}/circle.svg');
+}
+
+:host([shape = "diamond"]) #marker {
+	mask-image: url('{my-component-folder}/diamond.svg');
+	-webkit-mask-image: url('{my-component-folder}/diamond.svg');
+}
+
+:host([shape = "square"]) #marker {
+	mask-image: url('{my-component-folder}/square.svg');
+	-webkit-mask-image: url('{my-component-folder}/square.svg');
+}
+
+:host([shape = "star"]) #marker {
+	mask-image: url('{my-component-folder}/star.svg');
+	-webkit-mask-image: url('{my-component-folder}/star.svg');
+}
+
+:host([visible = "false"]) #marker, :host([visible = "0"])  #marker {
+	display: none;
+}
+
+ #marker:hover, :host(.selected) #marker {
+	z-index: 4;
+	height: 16px;
+	top: 2px;
+}
+
+:host(:not([shape = "duration-bar"])) #marker:hover, :host(.selected:not([shape = "duration-bar"])) #marker {
+	width: 16px;
+	left: -2px;
+}
+
+#popup {
+	display: none;
+	position: absolute;
+	z-index: 4;
+	left: 15px;
+	bottom: 5px;
+	background-color: white;
+	border: 1px solid #AAA;
+	border-radius: 10px;
+	padding: 0 15px 0 5px;
+	text-align: right;
+}
+
+:host(.selected) #popup {
+	display: block;
+}
+
+#close-button {
+	cursor: pointer;
+	opacity: 0.3;
+	position: relative;
+	top: 2px;
+	right: -13px;
+	display: inline-block;
+}
+
+#close-button:hover {
+	opacity: 1;
+}
+
+#close-icon {
+	width: 16px;
+	height: 16px;
+}
+
+#popup-content {
+	max-height: 250px;
+	overflow-y: auto;
+	text-align: left;
+}
+
+#popup-content * {
+	font-size: 8pt;
+}

@@ -8,6 +8,7 @@
 		<div id="resource-description">
 			<h1 id="title"></h1>
 			<a id="resource-link" target="_blank" title="{translate: 'See the resource on the REST console (opens in a new tab)'}"></a>
+
 			<div id="resource-status">
 				<div id="resource-status-label">{translate: 'Pending...'}</div>
 				<div id="error-message"></div>
@@ -25,7 +26,15 @@
 		</ktbs4la2-main-subsection>
 
 		<ktbs4la2-main-subsection id="obsels" title="{translate: 'Obsels'} :" foldable="true" expanded="true">
-			<slot name="obsels"></slot>
+			<ktbs4la2-icon-tabs-group>
+				<ktbs4la2-icon-tab title="{translate: 'Timeline view'}" icon="{my-component-folder}/timeline.svg">
+					<slot name="obsels-timeline"></slot>
+				</ktbs4la2-icon-tab>
+
+				<ktbs4la2-icon-tab title="{translate: 'Table view'}" icon="{my-component-folder}/table.svg">
+					<slot name="obsels-table"></slot>
+				</ktbs4la2-icon-tab>
+			</ktbs4la2-icon-tabs-group>
 		</ktbs4la2-main-subsection>
 	</section>
 </article>

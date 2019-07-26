@@ -214,7 +214,7 @@ class KTBS4LA2TraceObsels extends KtbsResourceElement {
 		let customAttributes = new Array();
 		let sysAttributes = ["@id", "@type", "begin", "beginDT", "end", "hasSourceObsel"];
 
-		for(var property in obsel) {
+		for(let property in obsel) {
 			if(!sysAttributes.includes(property))
 				customAttributes[property] = obsel[property];
 		}

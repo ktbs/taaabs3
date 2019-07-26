@@ -1,0 +1,33 @@
+#icons {
+    list-style-type: none;
+    display: block;
+    text-align: right;
+    border-bottom: 1px solid #DDD;
+}
+
+#icons li {
+    display: inline-block;
+    margin-left: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+#icons li[selected] {
+    cursor: default;
+}
+
+#icons li:hover, #icons li[selected] {
+    margin-top: -4px;
+    margin-left: 3px;
+    margin-right: 3px;
+}
+
+#icons li:not([selected]) img {
+    width: 24px;
+    opacity: 0.3;
+}
+
+#icons li:hover img, #icons li[selected] img {
+    opacity: 1;
+    width: 28px;
+}

@@ -12,7 +12,7 @@ class KTBS4LA2TraceStats extends KtbsResourceElement {
 	 * 
 	 */
 	constructor() {
-		super(import.meta.url, true);
+		super(import.meta.url);
 		this._resolveTypeSet();
 	}
 

@@ -1,23 +1,202 @@
-#container {
+#widget-container {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+}
+
+#legend {
+	display: flex;
+	flex-direction: column;
+	margin-top: 5px;
+	margin-right: 2px;
+	height: 320px;
+	position: relative;
+	text-align: right;
+}
+
+.legend-group {
+	display: flex;
+	flex-direction: row-reverse;
+	height: 60px;
+}
+
+.legend-label {
+	padding-right: 5px;
+	height: 20px;
+	line-height: 15px;
+	font-size: 8pt;
+	width: 50px;
+	color: white;
+	font-weight: bold;
+}
+
+#year-label {
+	background-color: cornflowerblue;
+}
+
+#month-label {
+	background-color: lightskyblue;
+}
+
+#day-label {
+	background-color: powderblue;
+}
+
+#hour-label {
+	background-color: violet;
+}
+
+#minute-label {
+	background-color: plum;
+}
+
+#second-label {
+	background-color: thistle;
+}
+
+
+/* ---------------------------------------------------------- */
+
+#display-window {
 	overflow-x: scroll;
+	width: 100%; /* !!! */
+}
+
+#timeline-container {
+	position: relative;
+	display: inline-flex;
+	flex-direction: column;
+}
+
+#timeline-container * {
+	align-self: flex-end;
 }
 
 #time {
-	height: 200px;
+	display: flex;
+	flex-direction: row;
 }
 
-#container, #time, .time-division { 
-    position: relative; 
-    float: left;
+#events {
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	width: 100%;
+}
+
+#display-window.scrollable #events {
+	cursor: grab;
+}
+
+#display-window.scrolled #events {
+	cursor: grabbing;
 }
 
 .time-division {
-	border-left: 1px solid #000;
-	/*height: 100%;*/
-	width: 20px;
+	display: flex;
+	flex-direction: row;
 }
 
-/*
-.time-division > label {
-	position: absolute;
-}*/
+.time-division > .label {
+	align-self: flex-start !important;
+	display: block;
+	position: sticky;
+	left: 0;
+	font-size: 8pt;
+	width: 0;
+}
+
+.time-division:nth-child(odd) { 
+	color: white;
+}
+
+.time-division:nth-child(even) {
+	background-color: white;
+}
+
+.time-division-year {
+	height: 320px;
+}
+
+.time-division-year:nth-child(odd) { 
+	background-color: cornflowerblue;
+}
+
+.time-division-year:nth-child(even) {
+	color: cornflowerblue;
+}
+
+.time-division-month {
+	height: 300px;
+}
+
+.time-division-month:nth-child(odd) { 
+	background-color: lightskyblue;
+}
+
+.time-division-month:nth-child(even) {
+	color: lightskyblue;
+}
+
+.time-division-day {
+	height: 280px;
+}
+
+.time-division-day:nth-child(odd) { 
+	background-color: powderblue;
+}
+
+.time-division-day:nth-child(even) {
+	color: powderblue;
+}
+
+.time-division-hour {
+	height: 260px;
+}
+
+.time-division-hour:nth-child(odd) { 
+	background-color: violet;
+}
+
+.time-division-hour:nth-child(even) {
+	color: violet;
+}
+
+.time-division-minute {
+	height: 240px;
+}
+
+.time-division-minute:nth-child(odd) { 
+	background-color: plum;
+}
+
+.time-division-minute:nth-child(even) {
+	color: plum;
+}
+
+.time-division-second {
+	height: 220px;
+}
+
+.time-division-second:nth-child(odd) { 
+	background-color: thistle;
+}
+
+.time-division-second:nth-child(even) {
+	color: thistle;
+}
+
+#widget-container.year .time-division-month, #widget-container.year .time-division-day, #widget-container.year .time-division-hour, #widget-container.year .time-division-minute, #widget-container.year .time-division-second,
+#widget-container.month .time-division-day, #widget-container.month .time-division-hour, #widget-container.month .time-division-minute, #widget-container.month .time-division-second,
+#widget-container.day .time-division-hour, #widget-container.day .time-division-minute, #widget-container.day .time-division-second,
+#widget-container.hour .time-division-minute, #widget-container.hour .time-division-second,
+#widget-container.minute .time-division-second,
+#widget-container.year #month-label, #widget-container.year #day-label, #widget-container.year #hour-label, #widget-container.year #minute-label, #widget-container.year #second-label,
+#widget-container.month #day-label, #widget-container.month #hour-label, #widget-container.month #minute-label, #widget-container.month #second-label,
+#widget-container.day #hour-label, #widget-container.day #minute-label, #widget-container.day #second-label,
+#widget-container.hour #minute-label, #widget-container.hour #second-label,
+#widget-container.minute #second-label
+{
+	display: none;
+}

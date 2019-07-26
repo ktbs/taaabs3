@@ -658,7 +658,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		newRootElement.setAttribute("label", newRootLabel);
 		newRootElement.setAttribute("resource-type", "Ktbs");
 		newRootElement.setAttribute("slot", "nav-ktbs-roots");
-		newRootElement.setAttribute("preload-children", "true");
+		//newRootElement.setAttribute("preload-children", "true");
 		this.appendChild(newRootElement);
 	}
 
