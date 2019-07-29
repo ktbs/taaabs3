@@ -109,6 +109,8 @@
 
 .time-division:nth-child(odd) { 
 	color: white;
+	background-image: linear-gradient(transparent, #FFF8 4em,  #FFFC);
+	background-size: cover;
 }
 
 .time-division:nth-child(even) {
