@@ -136,7 +136,7 @@
 	top: 2px;
 }
 
-:host(:not([shape = "duration-bar"])) #marker:hover, :host(.selected:not([shape = "duration-bar"])) #marker {
+:host([shape]:not([shape = "duration-bar"])) #marker:hover, :host(.selected:[shape]:not([shape = "duration-bar"])) #marker {
 	width: 16px;
 	left: -2px;
 }

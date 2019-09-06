@@ -57,6 +57,14 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._updateVisibleDivisionsDelay = 100;
 		this._requestUpdateStylesID = null;
 		this._updateStylesDelay = 100;
+
+		this._resolveTimeDivisionsInitialized;
+		this._rejectTimeDivisionsInitialized;
+
+		this._timeDivisionsInitialized = new Promise(function(resolve, reject) {
+			this._resolveTimeDivisionsInitialized = resolve;
+			this._rejectTimeDivisionsInitialized = reject;
+		}.bind(this));
 	}
 
 	/**
@@ -102,7 +110,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let currentEvent = allEvents[i];
 			let currentEventTime = parseInt(currentEvent.getAttribute("begin"));
 
-			if(currentEventTime > startTime) {
+			if(currentEventTime >= startTime) {
 				firstEvent = currentEvent;
 				break;
 			}
@@ -296,7 +304,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let timeLineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
 			let availableWidth = this._timeDiv.clientWidth;
 			let timeOverWidthRatio = timeLineDuration / availableWidth;
-		
+			
 			if(!isNaN(timeOverWidthRatio)) {
 				let pixelsBeginThreshold = 15;
 				let timeBeginThreshold = timeOverWidthRatio * pixelsBeginThreshold;
@@ -432,7 +440,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					dateString = node.getAttribute("id") + "-12-31T23:59:59.999";
 					break;
 				case "month":
-					dateString = node.getAttribute("id") + "-31T23:59:59.999";
+					let year = node.getAttribute("id").substring(0, 4);
+					let month = node.getAttribute("id").substring(5, 7);
+					dateString = year + "-" + month + "-" + this._getNumberOfDaysInMonth(parseInt(month), parseInt(year)) + "T23:59:59.999";
 					break;
 				case "day":
 					dateString = node.getAttribute("id") + "T23:59:59.999";
@@ -448,7 +458,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					break;
 			}
 		}
-
+		
 		let dateObject = new Date(dateString);
 		return(dateObject.getTime());
 	}
@@ -1210,6 +1220,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let availableWidth = this._displayWindow.clientWidth - 15;
 		this._initialDivWidth = Math.floor(availableWidth / timeDivs.length);
 		this._setWidthRules(this._initialLevel, this._initialDivWidth);
+		this._resolveTimeDivisionsInitialized();
 		this._requestUpdateEventsView();
 	}
 

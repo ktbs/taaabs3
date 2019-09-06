@@ -67,6 +67,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		}.bind(this));
 
 		this._context = null;
+		this._styleSheets = new Array();
+		this._styleSheets[0] = null;
 		this._currentStylesheet = null;
 	}
 
@@ -225,17 +227,23 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onObselLoadEnded() {
 		// @TODO stop/hide spinner here, when it is implemented
+		let defaultStyleSheet = this._generateDefaultStylesheetFromObsels();
+		this._styleSheets[0] = defaultStyleSheet;
+		let styleSheetSelectorEntry = document.createElement("option");
+		styleSheetSelectorEntry.setAttribute("value", 0);
+		styleSheetSelectorEntry.setAttribute("selected", true);
+		styleSheetSelectorEntry.innerText = defaultStyleSheet.name;
+		styleSheetSelectorEntry.setAttribute("title", defaultStyleSheet.description);
 
-		if(!this._currentStylesheet) {
-			let defaultStyleSheet = this._generateDefaultStylesheetFromObsels();
-			let styleSheetSelectorEntry = document.createElement("option");
-			styleSheetSelectorEntry.setAttribute("value", 0);
-			styleSheetSelectorEntry.setAttribute("selected", true);
-			styleSheetSelectorEntry.innerText = defaultStyleSheet.name;
-			styleSheetSelectorEntry.setAttribute("title", defaultStyleSheet.description);
-			this._styleSheetSelector.appendChild(styleSheetSelectorEntry);
+		this._componentReady.then(() => {
+			if(this._styleSheetSelector.hasChildNodes)
+				this._styleSheetSelector.insertBefore(styleSheetSelectorEntry, this._styleSheetSelector.firstChild);
+			else
+				this._styleSheetSelector.appendChild(styleSheetSelectorEntry);
+		});
+
+		//if(!this._currentStylesheet)
 			this._applyStyleSheet(defaultStyleSheet);
-		}
 	}
 
 	/**
@@ -354,7 +362,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			rgbColor = this._hsvToRgb(hueCoef * colorRank, 80 , 80);
 		}
 		else
-		rgbColor = this._hsvToRgb(0, 80 , 80);
+			rgbColor = this._hsvToRgb(0, 80 , 80);
 
 		let colorCode = this._rgb2hex(rgbColor[0], rgbColor[1], rgbColor[2]);
 		return colorCode;
@@ -363,7 +371,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_generateDefaultStylesheetFromModel() {
+	/*_generateDefaultStylesheetFromModel() {
 		let defaultStyleSheet = null;
 		let obselTypes = this._model.list_obsel_types();
 
@@ -399,35 +407,37 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		}
 		
 		return defaultStyleSheet;
-	}
+	}*/
 
 	/**
 	 * 
 	 */
 	_onModelLoaded() {
-		this._styleSheets = this._model.get_stylesheets();
+		//this._styleSheets = this._model.get_stylesheets();
+		let modelStyleSheets = this._model.get_stylesheets();
 
-		let defaultStylesheetGeneratedFromModel = this._generateDefaultStylesheetFromModel();
+		/*let defaultStylesheetGeneratedFromModel = this._generateDefaultStylesheetFromModel();
 
 		if(defaultStylesheetGeneratedFromModel != null)
-			this._styleSheets.push(defaultStylesheetGeneratedFromModel);
+			this._styleSheets.push(defaultStylesheetGeneratedFromModel);*/
 
 		this._componentReady.then(() => {
-			for(let i = 0; i < this._styleSheets.length; i++) {
-				let aStyleSheet = this._styleSheets[i];
+			for(let i = 0; i < modelStyleSheets.length; i++) {
+				let aStyleSheet = modelStyleSheets[i];
+				this._styleSheets[i+1] = aStyleSheet;
 				let styleSheetSelectorEntry = document.createElement("option");
-				styleSheetSelectorEntry.setAttribute("value", i);
+				styleSheetSelectorEntry.setAttribute("value", i+1);
 
-				if(i == 0)
-					styleSheetSelectorEntry.setAttribute("selected", true);
+				/*if(i == 0)
+					styleSheetSelectorEntry.setAttribute("selected", true);*/
 
 				styleSheetSelectorEntry.innerText = aStyleSheet.name;
 				styleSheetSelectorEntry.setAttribute("title", aStyleSheet.description);
 				this._styleSheetSelector.appendChild(styleSheetSelectorEntry);
 			}
 
-			if(this._styleSheets.length > 0)
-				this._applyStyleSheet(this._styleSheets[0]);
+			/*if(this._styleSheets.length > 0)
+				this._applyStyleSheet(this._styleSheets[0]);*/
 		});
 	}
 
@@ -499,37 +509,63 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 	/**
 	 * 
+	 * @param obsel 
+	 * @param attributeConstraint 
+	 * @returns bool
 	 */
-	_styleSheetRuleConditionMatchesObsel(styleSheetRuleCondition, obsel) {
+	_obselMatchesSubruleAttributeContraint(obsel, attributeConstraint) {
+		let matches = false;
+		let uri = attributeConstraint.uri;
+		let value = attributeConstraint.value;
+		let operator = attributeConstraint.operator;
+
+		for(let obselAttribute in obsel) {
+			if((obselAttribute == uri) || (this._substituteContextString(obselAttribute) == uri)) {
+				let obselValue = obsel[obselAttribute];
+				let testString = '"' + encodeURIComponent(obselValue) + '"' + operator + '"' + encodeURIComponent(value) + '"';
+				matches = eval(testString);
+
+				if(matches)
+					break;
+			}
+		}
+
+		return matches;
+	}
+
+	/**
+	 * 
+	 * @param subrule 
+	 * @param obsel 
+	 * @returns bool
+	 */
+	_obselMatchesSubruleType(subrule, obsel) {
+		let rawObselType = obsel["@type"];
+
+		return(
+				(rawObselType == subrule.type) 
+			|| 	(this._substituteContextString(rawObselType) == subrule.type)
+			|| 	(this._getAbsoluteModelLink(rawObselType) == subrule.type)
+		);
+	}
+
+	/**
+	 * 
+	 */
+	_obselMatchesSubrule(subrule, obsel) {
 		let matches = new Array();
 		
-		if((styleSheetRuleCondition.type) && (styleSheetRuleCondition.type != "")) {
-			let rawObselType = obsel["@type"];
-			matches.push((rawObselType == styleSheetRuleCondition.type) || (this._substituteContextString(rawObselType) == styleSheetRuleCondition.type) || (this._getAbsoluteModelLink(rawObselType) == styleSheetRuleCondition.type));
-		}
+		if((subrule.type) && (subrule.type != ""))
+			matches.push(this._obselMatchesSubruleType(subrule, obsel));
 	
-		if((styleSheetRuleCondition.attributes) && (styleSheetRuleCondition.attributes instanceof Array)) {
-			let attributesConditions = styleSheetRuleCondition.attributes;
-			
-			for(let i = 0; (!matches.includes(false)) && (i < attributesConditions.length); i++) {
-				let attributeConditionMatched = false;
-				let aCondition = attributesConditions[i];
-				let uri = aCondition.uri;
-				let value = aCondition.value;
-				let operator = aCondition.operator;
-
-				for(let obselAttribute in obsel) {
-					if((obselAttribute == uri) || (this._substituteContextString(obselAttribute) == uri)) {
-						let obselValue = obsel[obselAttribute];
-						let testString = '"' + encodeURIComponent(obselValue) + '"' + operator + '"' + encodeURIComponent(value) + '"';
-						attributeConditionMatched = eval(testString);
-
-						if(attributeConditionMatched)
-							break;
-					}
+		if(!matches.includes(false)) {
+			if((subrule.attributes) && (subrule.attributes instanceof Array)) {
+				let attributesConstraints = subrule.attributes;
+				
+				for(let i = 0; (!matches.includes(false)) && (i < attributesConstraints.length); i++) {
+					let attributeConstraint = attributesConstraints[i];
+					matches.push(this._obselMatchesSubruleAttributeContraint(obsel, attributeConstraint));
 				}
-
-				matches.push(attributeConditionMatched);
 			}
 		}
 
@@ -539,12 +575,12 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_styleSheetRuleMatchesObsel(styleSheetRule, obsel) {
+	_obselMatchesRule(rule, obsel) {
 		let matches = false;
 
-		for(let i = 0; (!matches) && (i < styleSheetRule.rules.length); i++) {
-			let styleSheetRuleCondition = styleSheetRule.rules[i];
-			matches = this._styleSheetRuleConditionMatchesObsel(styleSheetRuleCondition, obsel);
+		for(let i = 0; (!matches) && (i < rule.rules.length); i++) {
+			let subrule = rule.rules[i];
+			matches = this._obselMatchesSubrule(subrule, obsel);
 		}
 
 		return matches;
@@ -553,40 +589,43 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_getStylesheetRuleMatchingObsel(obsel) {
-		let matchingRule = null;
+	_getFirstRuleMatchedByObsel(obsel) {
+		let firstMatchedRule = null;
 
-		if(this._currentStylesheet != null)
-			for(let i = 0; (!matchingRule) && (i < this._currentStylesheet.rules.length); i++)
-				if(this._styleSheetRuleMatchesObsel(this._currentStylesheet.rules[i], obsel))
-					matchingRule = this._currentStylesheet.rules[i];
+		if(this._currentStylesheet && this._currentStylesheet.rules && (this._currentStylesheet.rules instanceof Array))
+			for(let i = 0; (firstMatchedRule == null) && (i < this._currentStylesheet.rules.length); i++) {
+				let testedRule = this._currentStylesheet.rules[i];
 
-		return matchingRule;
+				if(this._obselMatchesRule(testedRule, obsel))
+					firstMatchedRule = testedRule;
+			}
+
+		return firstMatchedRule;
 	}
+
 
 	/**
 	 * 
 	 */
 	_applyStyleSheet(stylesheet) {
 		this._currentStylesheet = stylesheet;
-		let styleSheetRules = stylesheet.rules;
 
 		for(let i = 0; i < this._obsels.length; i++) {
 			let anObsel = this._obsels[i];
 			let obselEventNode = this.shadowRoot.getElementById(anObsel["@id"]);
 
 			if(obselEventNode) {
-				let matchingRule = this._getStylesheetRuleMatchingObsel(anObsel);
+				let matchedRule = this._getFirstRuleMatchedByObsel(anObsel);
 				
-				if(matchingRule) {
-					obselEventNode.setAttribute("shape", matchingRule["symbol"].shape);
-					obselEventNode.setAttribute("color", matchingRule["symbol"].color);
-					obselEventNode.setAttribute("visible", matchingRule["visible"]);
+				if(matchedRule) {
+					obselEventNode.setAttribute("shape", matchedRule["symbol"].shape);
+					obselEventNode.setAttribute("color", matchedRule["symbol"].color);
+					obselEventNode.setAttribute("visible", matchedRule["visible"]);
 				}
 				else {
 					obselEventNode.removeAttribute("shape");
 					obselEventNode.removeAttribute("color");
-					obselEventNode.setAttribute("visible", false);
+					obselEventNode.removeAttribute("visible");
 				}
 			}
 			else
@@ -658,93 +697,89 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_addObsels(obsels) {
-		this._obsels.push(...obsels);
-
 		let sysAttributes = ["@id", "@type", "begin", "beginDT", "end", "hasSourceObsel"];
-			let eventsFragments = document.createDocumentFragment();
+		let eventsFragment = document.createDocumentFragment();
+		
+		for(let i = 0; i < obsels.length; i++) {
+			let obsel = obsels[i];
+			let eventElement = document.createElement("ktbs4la2-timeline-event");
+			eventElement.setAttribute("begin", obsel.begin);
+			eventElement.setAttribute("end", obsel.end);
+			eventElement.setAttribute("id", obsel["@id"]);
+			eventElement.setAttribute("title", this._getObselTitleHint(obsel));
+			eventElement.setAttribute("href", this.getAttribute("uri") + obsel["@id"]);
 
-			for(let i = 0; i < obsels.length; i++) {
-				let obsel = obsels[i];
-				let event = document.createElement("ktbs4la2-timeline-event");
-				event.setAttribute("begin", obsel.begin);
-				event.setAttribute("end", obsel.end);
-				event.setAttribute("id", obsel["@id"]);
-				event.setAttribute("title", this._getObselTitleHint(obsel));
-				event.setAttribute("href", this.getAttribute("uri") + obsel["@id"]);
+			/*if(this._currentStylesheet) {
+				let matchedRule = this._getFirstRuleMatchedByObsel(obsel);
 
-				if(this._currentStylesheet) {
-					let matchingRule = this._getStylesheetRuleMatchingObsel(obsel);
-
-					if(matchingRule) {
-						event.setAttribute("shape", matchingRule["symbol"].shape);
-						event.setAttribute("color", matchingRule["symbol"].color);
-						event.setAttribute("visible", matchingRule["visible"]);
-					}
-					else
-						event.setAttribute("visible", false);
+				if(matchedRule) {
+					eventElement.setAttribute("shape", matchedRule["symbol"].shape);
+					eventElement.setAttribute("color", matchedRule["symbol"].color);
+					eventElement.setAttribute("visible", matchedRule["visible"]);
 				}
+			}*/
 
-				let eventContent = document.createDocumentFragment();
+			let eventContent = document.createDocumentFragment();
 
-				let idTitle = document.createElement("h3");
-					let eventLink = document.createElement("a");
-					eventLink.setAttribute("href", this.getAttribute("uri") + obsel["@id"]);
-					eventLink.setAttribute("target", "_blank");
-					eventLink.innerText = obsel["@id"];
-					idTitle.appendChild(eventLink);
-				eventContent.appendChild(idTitle);
+			let idTitle = document.createElement("h3");
+			let eventLink = document.createElement("a");
+			eventLink.setAttribute("href", this.getAttribute("uri") + obsel["@id"]);
+			eventLink.setAttribute("target", "_blank");
+			eventLink.innerText = obsel["@id"];
+			idTitle.appendChild(eventLink);
+			eventContent.appendChild(idTitle);
 
-				let typeLine = document.createElement("p");
-					let typeLabel = document.createElement("strong");
-						typeLabel.innerText = this._translateString("Type") + " : ";
-					typeLine.appendChild(typeLabel);
+			let typeLine = document.createElement("p");
+			let typeLabel = document.createElement("strong");
+			typeLabel.innerText = this._translateString("Type") + " : ";
+			typeLine.appendChild(typeLabel);
 
-					let typeValue = document.createElement("span");
-						typeValue.innerText = obsel["@type"];
-					typeLine.appendChild(typeValue);
-				eventContent.appendChild(typeLine);
+			let typeValue = document.createElement("span");
+			typeValue.innerText = obsel["@type"];
+			typeLine.appendChild(typeValue);
+			eventContent.appendChild(typeLine);
 
-				let beginLine = document.createElement("p");
-					let beginLabel = document.createElement("strong");
-						beginLabel.innerText = this._translateString("Begin") + " : ";
-					beginLine.appendChild(beginLabel);
+			let beginLine = document.createElement("p");
+			let beginLabel = document.createElement("strong");
+			beginLabel.innerText = this._translateString("Begin") + " : ";
+			beginLine.appendChild(beginLabel);
 
-					let beginValue = document.createElement("span");
-						beginValue.innerText = this._getFormattedDate(parseInt(obsel.begin));
-					beginLine.appendChild(beginValue);
-				eventContent.appendChild(beginLine);
+			let beginValue = document.createElement("span");
+			beginValue.innerText = this._getFormattedDate(parseInt(obsel.begin));
+			beginLine.appendChild(beginValue);
+			eventContent.appendChild(beginLine);
 
-				let endLine = document.createElement("p");
-					let endLabel = document.createElement("strong");
-						endLabel.innerText = this._translateString("End") + " : ";
-					endLine.appendChild(endLabel);
+			let endLine = document.createElement("p");
+			let endLabel = document.createElement("strong");
+			endLabel.innerText = this._translateString("End") + " : ";
+			endLine.appendChild(endLabel);
 
-					let endValue = document.createElement("span");
-						endValue.innerText = this._getFormattedDate(parseInt(obsel.end));
-					endLine.appendChild(endValue);
-				eventContent.appendChild(endLine);
+			let endValue = document.createElement("span");
+			endValue.innerText = this._getFormattedDate(parseInt(obsel.end));
+			endLine.appendChild(endValue);
+			eventContent.appendChild(endLine);
 
-				// display other attributes (custom attributes)
-				let otherAttributesList = document.createElement("ul");
+			// display other attributes (custom attributes)
+			let otherAttributesList = document.createElement("ul");
 
-					for(let property_key in obsel) {
-						if(!sysAttributes.includes(property_key)) {
-							let attribute_value = obsel[property_key];
-							let listItem = document.createElement("li");
-							listItem.innerText = property_key + " : " + attribute_value;
-							otherAttributesList.appendChild(listItem);
-						}
-					}
-
-				eventContent.appendChild(otherAttributesList);
-				// ---
-
-				event.appendChild(eventContent);
-
-				eventsFragments.append(event);
+			for(let property_key in obsel) {
+				if(!sysAttributes.includes(property_key)) {
+					let attribute_value = obsel[property_key];
+					let listItem = document.createElement("li");
+					listItem.innerText = property_key + " : " + attribute_value;
+					otherAttributesList.appendChild(listItem);
+				}
 			}
 
-			this._timeline.appendChild(eventsFragments);
+			eventContent.appendChild(otherAttributesList);
+			// ---
+
+			eventElement.appendChild(eventContent);
+			eventsFragment.appendChild(eventElement);
+		}
+
+		this._obsels.push(...obsels);
+		this._timeline.appendChild(eventsFragment);
 	}
 
 	/**
