@@ -91,12 +91,15 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 * 
 	 */
 	_adjustWidth() {
-		//console.log("_adjustWidth()");
-		if(this.getAttribute("begin") && this.getAttribute("end") && (this._parentTimeline)) {
-			let eventDuration = parseInt(this.getAttribute("end")) - parseInt(this.getAttribute("begin"));
-			let timelineDuration = this._parentTimeline._lastRepresentedTime - this._parentTimeline._firstRepresentedTime;
-			let eventPercentageWidth = (eventDuration / timelineDuration) * 100;
-			this._container.style.width = eventPercentageWidth + "%";
+		if(this.getAttribute("begin") && this.getAttribute("end")) {
+			this._parentTimelineKnown.then(() => {
+				this._parentTimeline._timeDivisionsInitialized.then(() => {
+					let eventDuration = parseInt(this.getAttribute("end")) - parseInt(this.getAttribute("begin"));
+					let timelineDuration = this._parentTimeline._lastRepresentedTime - this._parentTimeline._firstRepresentedTime;
+					let eventPercentageWidth = (eventDuration / timelineDuration) * 100;
+					this._container.style.width = eventPercentageWidth + "%";
+				});
+			});
 		}
 	}
 

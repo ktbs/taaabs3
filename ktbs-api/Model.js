@@ -42,21 +42,22 @@ export class Model extends Resource {
 		let styleSheets = new Array();
 		let graphs = this._parsedJson["@graph"];
 
-		if(graphs instanceof Array) {
+		if(graphs instanceof Object) {
 			for(let i = 0; (i < graphs.length); i++) {
 				let graph = graphs[i];
 
 				if((graph["@type"]) && (graph["@type"] == "TraceModel") && (graph["http://www.example.com/TODO#ModelStylesheets"])) {
 					let styleSheetsData = graph["http://www.example.com/TODO#ModelStylesheets"];
-
-					for(let j = 0; j < styleSheetsData.length; j++) {
-						let aStyleSheetData = styleSheetsData[j];
-						let parsedStyleSheet = JSON.parse(aStyleSheetData);
-						styleSheets.push(parsedStyleSheet);
-					}
+					let parsedSyleSheetsData = JSON.parse(styleSheetsData);
+					
+					if(parsedSyleSheetsData instanceof Array)
+						styleSheets.push(...parsedSyleSheetsData);
+					else if(parsedSyleSheetsData instanceof Object)
+						styleSheets.push(parsedSyleSheetsData);
 				}
 			}
 		}
+
 		return styleSheets;
 	}
 

@@ -237,18 +237,34 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_sortEventNodes() {
-		let eventNodes = this._getAllEventNodes();
 		let inversionProcessed;
 		
 		do {
 			inversionProcessed = false;
-			
+			let eventNodes = this._getAllEventNodes();
+
 			for(let i = 0; i < (eventNodes.length - 1); i++)
 				if(parseInt(eventNodes[i].getAttribute("begin")) > parseInt(eventNodes[i+1].getAttribute("begin"))) {
 					eventNodes[i].before(eventNodes[i+1]);
 					inversionProcessed = true;
 				}
 		} while(inversionProcessed);
+	}
+
+	/**
+	 * 
+	 */
+	_updateIsEmpty() {
+		let eventCount = this._getAllEventNodes().length;
+
+		if(eventCount > 0) {
+			if(this._displayWindow.classList.contains("empty"))
+				this._displayWindow.classList.remove("empty");
+		}
+		else {
+			if(!this._displayWindow.classList.contains("empty"))
+				this._displayWindow.classList.add("empty");
+		}
 	}
 
 	/**
@@ -286,6 +302,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 						changedEventVisibility = true;
 				
 		}
+
+		if(addedOrRemovedEvent)
+			this._updateIsEmpty();
 
 		if(addedOrRemovedEvent || changedEventVisibility)
 			this._componentReady.then(() => {
@@ -511,6 +530,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._displayWindow.addEventListener("wheel", this._onMouseWheel.bind(this));
 		this._displayWindow.addEventListener("mousedown", this._onMouseDown.bind(this));
 		this._displayWindow.addEventListener("scroll", this._onScroll.bind(this));
+
+		this._updateIsEmpty();
 	}
 
 	/**
@@ -1018,7 +1039,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let beginTime = parseInt(this.getAttribute("begin"));
 			let endTime = parseInt(this.getAttribute("end"));
 
-			if((beginTime != NaN) && (endTime != NaN) && (beginTime < endTime)) {
+			if((beginTime != NaN) && (endTime != NaN) && (beginTime <= endTime)) {
 				let lowestFullyInstanciatedLevel = "year";
 				let beginDate = new Date(beginTime);
 				let endDate = new Date(endTime);

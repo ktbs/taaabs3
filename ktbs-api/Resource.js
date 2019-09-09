@@ -56,36 +56,48 @@ export class Resource {
 		if(this._uri) {
 			if(this._data_read == null) {
 				this._data_read = new Promise((resolve, reject) => {
-					let httpRequest = new XMLHttpRequest();
-					httpRequest.open('GET', this._data_read_uri, true);
+					this._syncStatus = "pending";
 
-					httpRequest.onreadystatechange = function(event) {
-						if (this.readyState == XMLHttpRequest.DONE) {
-							if (this.status == 200) {
-								this.resource._etag = this.getResponseHeader("etag");
-
-								try {
-									this.resource._parsedJson = JSON.parse(this.responseText);
-									this.resource._syncStatus = "in_sync";
-									resolve();
-								}
-								catch(error) {
-									this.resource._syncStatus = "error";
-									reject(error);
-								}
-							}
-							else {
-								this.resource._syncStatus = "error";
-								reject(new Error("Failed to perform GET request to URL \"" + this.resource._data_read_uri + "\". HTTP request status : " + this.status + ", " + this.statusText));
-							}
-						}
+					let fetchParameters = { 
+						method: "GET",
+						headers: new Headers({
+							"Accept": "application/json"
+						}),
+						mode: "cors",
+						credentials: "same-origin",
+						//credentials: "include",
+						cache: "default" 
 					};
 
-					//httpRequest.timeout = 5000;
-					httpRequest.resource = this;
-					httpRequest.setRequestHeader("Accept", "application/json");
-					this._syncStatus = "pending";
-					httpRequest.send(null);
+					fetch(this._data_read_uri, fetchParameters)
+						.then(function(response) {
+							// if the HTTP request responded successfully
+							if(response.ok) {
+								if(response.headers.has("etag"))
+									this._etag = response.headers.get("etag");
+
+								// when the response content from the HTTP request has been successfully read
+								response.json()
+									.then(function(parsedJson) {
+										this._parsedJson = parsedJson;
+										this._syncStatus = "in_sync";
+										resolve();
+									}.bind(this))
+									.catch(error => {
+										this._syncStatus = "error";
+										reject(error);
+									});
+							}
+							/*else if(response.status == 401) {
+								reject();
+							}*/
+							else
+								reject("Fetch request to uri \"" + this._data_read_uri + "\"has failed");
+						}.bind(this))
+						.catch(error => {
+							this._syncStatus = "error";
+							reject(error);
+						});
 				});
 			}
 

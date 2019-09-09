@@ -163,13 +163,14 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	_generateDefaultStylesheetFromObsels() {
 		let defaultStyleSheet = new Object();
 		defaultStyleSheet.name = this._translateString("Default");
-		defaultStyleSheet.description = this._translateString("Automatically generated stylesheet (one symbol and color for each obsel type)");
+		defaultStyleSheet.description = this._translateString("Automatically generated stylesheet (duration bar symbol, with one different color for each obsel type)");
 		defaultStyleSheet.rules = new Array();
 		let knownObselTypes = new Array();
-		
+	
+		// build list of all distinct obsel types in the obsel list
 		for(let i = 0; i < this._obsels.length; i++) {
 			let anObsel = this._obsels[i];
-			let rawObselType = anObsel["@type"];
+			/*let rawObselType = anObsel["@type"];
 			let cleanObselType;
 			let colonPosition = rawObselType.indexOf(':');
 
@@ -179,17 +180,22 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				cleanObselType = rawObselType;
 
 			if(!knownObselTypes.includes(cleanObselType))
-				knownObselTypes.push(cleanObselType);
+				knownObselTypes.push(cleanObselType);*/
+
+			let obselType = anObsel["@type"];
+
+			if(!knownObselTypes.includes(obselType))
+				knownObselTypes.push(obselType);
 		}
 
 		// --- @TODO utiliser plutôt "context"
-		let rawModelUri, cleanModelUri;
+	/*	let rawModelUri, cleanModelUri;
 
 		if((this._context instanceof Array) && (this._context.length > 1)) {
-			let contectModelUriElement = this._context[1];
+			let contextModelUriElement = this._context[1];
 
-			for(let key in contectModelUriElement) {
-				rawModelUri = contectModelUriElement[key];
+			for(let key in contextModelUriElement) {
+				rawModelUri = contextModelUriElement[key];
 				break;
 			}
 		}
@@ -203,7 +209,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		else
 			cleanModelUri = rawModelUri;
 		// ---
-
+*/
 		for(let i = 0; i < knownObselTypes.length; i++) {
 			let obselTypeID = knownObselTypes[i];
 			let aRule = new Object();
@@ -213,7 +219,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			aRule.symbol.shape = "duration-bar";
 			aRule.rules = new Array();
 			let aRuleRule = new Object();
-			aRuleRule.type = cleanModelUri + '#' + obselTypeID;
+			aRuleRule.type = /*cleanModelUri + '#' +*/ obselTypeID;
 			aRuleRule.attributes = new Array();
 			aRule.rules.push(aRuleRule);
 			defaultStyleSheet.rules.push(aRule);

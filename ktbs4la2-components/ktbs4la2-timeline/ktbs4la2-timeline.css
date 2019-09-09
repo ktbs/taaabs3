@@ -62,10 +62,30 @@
 	width: 100%; /* !!! */
 }
 
+#empty-message {
+	text-align: center;
+	height: 100%;
+	display: none;
+	flex-direction: column;
+	justify-content: center;
+	font-size: 16pt;
+	font-style: italic;
+	font-weight: bold;
+	color: #AAA;
+}
+
 #timeline-container {
 	position: relative;
 	display: inline-flex;
 	flex-direction: column;
+}
+
+#display-window.empty #empty-message {
+	display: flex;
+}
+
+#display-window.empty #timeline-container {
+	display: none;
 }
 
 #timeline-container * {
