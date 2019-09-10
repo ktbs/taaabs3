@@ -48,12 +48,16 @@ export class Model extends Resource {
 
 				if((graph["@type"]) && (graph["@type"] == "TraceModel") && (graph["http://www.example.com/TODO#ModelStylesheets"])) {
 					let styleSheetsData = graph["http://www.example.com/TODO#ModelStylesheets"];
-					let parsedSyleSheetsData = JSON.parse(styleSheetsData);
 					
-					if(parsedSyleSheetsData instanceof Array)
-						styleSheets.push(...parsedSyleSheetsData);
-					else if(parsedSyleSheetsData instanceof Object)
-						styleSheets.push(parsedSyleSheetsData);
+					if(styleSheetsData instanceof Array) {
+						for(let i = 0; i < styleSheetsData.length; i++) {
+							let aStyleSheetData = styleSheetsData[i];
+							styleSheets.push(JSON.parse(aStyleSheetData));
+						}
+					}
+					else {
+						styleSheets.push(JSON.parse(styleSheetsData));
+					}	
 				}
 			}
 		}

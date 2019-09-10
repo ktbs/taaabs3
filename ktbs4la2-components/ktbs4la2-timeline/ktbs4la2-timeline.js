@@ -1249,17 +1249,19 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onMouseWheel(event) {
-		let verticalMovement = event.deltaY;
-		
-		if(verticalMovement && (verticalMovement != 0)) {
-			event.preventDefault();
-			let movementUnit = event.deltaMode;
+		if (event.ctrlKey) {
+			let verticalMovement = event.deltaY;
+			
+			if(verticalMovement && (verticalMovement != 0)) {
+				event.preventDefault();
+				let movementUnit = event.deltaMode;
 
-			if(movementUnit == 0)
-				verticalMovement = verticalMovement / 28;
+				if(movementUnit == 0)
+					verticalMovement = verticalMovement / 28;
 
-			let posX = event.offsetX;
-			this._requestZoomIncrement(verticalMovement, posX);
+				let posX = event.offsetX;
+				this._requestZoomIncrement(verticalMovement, posX);
+			}
 		}
 	}
 

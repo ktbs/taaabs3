@@ -152,7 +152,53 @@ export class ObselList extends Resource {
 	 */
 	_read_obsel_page(pageURI) {
 		let page_read = new Promise((resolve, reject) => {
-			let httpRequest = new XMLHttpRequest();
+				let fetchParameters = { 
+					method: "GET",
+					headers: new Headers({
+						"Accept": "application/json"
+					}),
+					mode: "cors",
+					credentials: "same-origin",
+					//credentials: "include",
+					cache: "default" 
+				};
+
+				fetch(pageURI, fetchParameters)
+					.then(function(response) {
+						// if the HTTP request responded successfully
+						if(response.ok) {
+							let nextPageURI = null;
+							
+							if(response.headers.has("link")) {
+								let linkResponseHeader = response.headers.get("link");
+								let links = linkResponseHeader.split(', ');
+
+								for(let i = 0; (nextPageURI == null) && (i < links.length); i++) {
+									let aLinkData = links[i];
+									let aLinkParts = aLinkData.split(';');
+
+									if((aLinkParts.length == 2) && (aLinkParts[1] == "rel=\"next\""))
+										nextPageURI = aLinkParts[0].substring(1, aLinkParts[0].length - 1);
+								}
+							}
+
+							// when the response content from the HTTP request has been successfully read
+							response.json()
+								.then(function(parsedJson) {
+									resolve({context: parsedJson["@context"], obsels: parsedJson.obsels, nextPageURI: nextPageURI});
+								}.bind(this))
+								.catch(error => {
+									reject(error);
+								});
+						}
+						else
+							reject("Fetch request to uri \"" + pageURI + "\"has failed");
+					}.bind(this))
+					.catch(error => {
+						reject(error);
+					});
+
+			/*let httpRequest = new XMLHttpRequest();
 			httpRequest.open('GET', pageURI, true);
 
 			httpRequest.onreadystatechange = function(event) {
@@ -188,7 +234,7 @@ export class ObselList extends Resource {
 			};
 
 			httpRequest.setRequestHeader("Accept", "application/json");
-			httpRequest.send(null);
+			httpRequest.send(null);*/
 		});
 
 		return page_read;

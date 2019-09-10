@@ -13,6 +13,53 @@ export class Method extends Resource {
 		if(this._uri) {
 			if(this._data_read == null) {
 				this._data_read = new Promise((resolve, reject) => {
+					this._syncStatus = "pending";
+
+					let fetchParameters = { 
+						method: "GET",
+						headers: new Headers({
+							"Accept": "application/json"
+						}),
+						mode: "cors",
+						credentials: "same-origin",
+						//credentials: "include",
+						cache: "default" 
+					};
+
+					fetch(this._data_read_uri, fetchParameters)
+						.then(function(response) {
+							// if the HTTP request responded successfully
+							if(response.ok) {
+								if(response.headers.has("etag"))
+									this._etag = response.headers.get("etag");
+
+								// when the response content from the HTTP request has been successfully read
+								response.json()
+									.then(function(parsedJson) {
+										this._parsedJson = parsedJson;
+										this._syncStatus = "in_sync";
+										resolve();
+									}.bind(this))
+									.catch(error => {
+										this._syncStatus = "error";
+										reject(error);
+									});
+							}
+							else
+								resolve();
+							/*else if(response.status == 401) {
+								reject();
+							}
+							else
+								reject("Fetch request to uri \"" + this._data_read_uri + "\"has failed");
+							*/
+						}.bind(this))
+						.catch(error => {
+							this._syncStatus = "error";
+							reject(error);
+						});
+
+					/*
 					let httpRequest = new XMLHttpRequest();
 					httpRequest.open('GET', this._uri, true);
 
@@ -44,7 +91,7 @@ export class Method extends Resource {
 					//httpRequest.timeout = 3000;
 					httpRequest.resource = this;
 					httpRequest.setRequestHeader("Accept", "application/json");
-					httpRequest.send(null);
+					httpRequest.send(null);*/
 				});
 			}
 

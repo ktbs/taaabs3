@@ -34,11 +34,6 @@ export class Resource {
 			this._CRUDState = "read";
 		else
 			this._CRUDState = "create";
-
-		/**
-		 * 
-		 */
-		//this.eventListeners = new Array(); // "update, delete, children"
 	}
 
 	/**
