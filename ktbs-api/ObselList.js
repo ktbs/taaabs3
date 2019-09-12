@@ -157,9 +157,7 @@ export class ObselList extends Resource {
 					headers: new Headers({
 						"Accept": "application/json"
 					}),
-					/*mode: "cors",
-					credentials: "include",*/
-					cache: "force-cache" 
+					credentials: "include"
 				};
 
 				fetch(pageURI, fetchParameters)
