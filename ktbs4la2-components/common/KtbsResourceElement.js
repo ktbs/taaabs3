@@ -87,10 +87,11 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 		let uri = this.getAttribute("uri");
 		
 		try {
-			if(!KtbsResourceElement.resourceInstances[uri])
+			/*if(!KtbsResourceElement.resourceInstances[uri])
 				KtbsResourceElement.resourceInstances[uri] = new (this._getKtbsResourceClass())(uri);
 
-			this._ktbsResource = KtbsResourceElement.resourceInstances[uri];
+			this._ktbsResource = KtbsResourceElement.resourceInstances[uri];*/
+			this._ktbsResource = new (this._getKtbsResourceClass())(uri);
 		
 			this._ktbsResource._read_data()
 				.then(function() {

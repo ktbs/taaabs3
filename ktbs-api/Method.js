@@ -21,8 +21,7 @@ export class Method extends Resource {
 							"Accept": "application/json"
 						}),
 						mode: "cors",
-						credentials: "same-origin",
-						//credentials: "include",
+						credentials: "include",
 						cache: "default" 
 					};
 

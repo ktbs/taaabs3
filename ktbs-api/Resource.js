@@ -53,19 +53,23 @@ export class Resource {
 				this._data_read = new Promise((resolve, reject) => {
 					this._syncStatus = "pending";
 
-					let fetchParameters = { 
+
+					let fetchParameters = {
 						method: "GET",
 						headers: new Headers({
-							"Accept": "application/json"
+							//"Accept": "application/json",
+							//"Authorization": "Basic " + btoa("test:test")
 						}),
-						mode: "cors",
-						credentials: "same-origin",
-						//credentials: "include",
-						cache: "default" 
+						credentials: "include"
 					};
 
+
+
+					
 					fetch(this._data_read_uri, fetchParameters)
 						.then(function(response) {
+							//console.log("then");
+							//console.log(response);
 							// if the HTTP request responded successfully
 							if(response.ok) {
 								if(response.headers.has("etag"))
@@ -83,13 +87,15 @@ export class Resource {
 										reject(error);
 									});
 							}
-							/*else if(response.status == 401) {
-								reject();
-							}*/
+							else if(response.status == 401) {
+								//console.log("Authentication required");
+								reject("Authentication required");
+							}
 							else
 								reject("Fetch request to uri \"" + this._data_read_uri + "\"has failed");
 						}.bind(this))
 						.catch(error => {
+							//console.log("catch");
 							this._syncStatus = "error";
 							reject(error);
 						});
