@@ -65,6 +65,19 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			this._resolveTimeDivisionsInitialized = resolve;
 			this._rejectTimeDivisionsInitialized = reject;
 		}.bind(this));
+
+		this.addEventListener("select-timeline-event", this._onSelectTimelineEvent.bind(this));
+	}
+
+	/**
+	 * 
+	 */
+	_onSelectTimelineEvent(event) {
+		let timelineEventID = event.target.getAttribute("id");
+		let previouslySelectedEvents = this.querySelectorAll("ktbs4la2-timeline-event.selected:not([id = \"" + timelineEventID + "\"])");
+
+		for(let i = 0; i < previouslySelectedEvents.length; i++)
+			previouslySelectedEvents[i].classList.remove("selected");
 	}
 
 	/**

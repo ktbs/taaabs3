@@ -133,8 +133,11 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	_onClickMarker(event) {
 		event.preventDefault();
 
-		if(!this.classList.contains("selected"))
+		if(!this.classList.contains("selected")) {
 			this.classList.add("selected");
+			let select_event = new CustomEvent("select-timeline-event", {bubbles: true});
+			this.dispatchEvent(select_event);
+		}
 		else
 			this.classList.remove("selected");
 	}
