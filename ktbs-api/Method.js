@@ -20,9 +20,7 @@ export class Method extends Resource {
 						headers: new Headers({
 							"Accept": "application/json"
 						}),
-						mode: "cors",
-						credentials: "include",
-						cache: "default" 
+						credentials: "include"
 					};
 
 					fetch(this._data_read_uri, fetchParameters)
