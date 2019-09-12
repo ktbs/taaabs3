@@ -631,7 +631,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				else {
 					obselEventNode.removeAttribute("shape");
 					obselEventNode.removeAttribute("color");
-					obselEventNode.removeAttribute("visible");
+					obselEventNode.setAttribute("visible", "false");
 				}
 			}
 			else
