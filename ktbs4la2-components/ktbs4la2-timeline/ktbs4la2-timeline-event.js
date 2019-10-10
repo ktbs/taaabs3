@@ -8,6 +8,9 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url);
 
+		this._rowIsOverflow = false;
+		this._posXIsOverflow = false;
+
 		this._resolveParentTimelineKnown;
 		this._rejectParentTimelineKnown;
 
@@ -27,6 +30,7 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		observedAttributes.push("href");
 		observedAttributes.push("color");
 		observedAttributes.push("title");
+		observedAttributes.push("row");
 		return observedAttributes;
 	}
 
@@ -57,6 +61,8 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 			this._componentReady.then(() => {
 				this._marker.setAttribute("title", newValue);
 			});
+		else if(attributeName == "row")
+			this._onUpdateRow(newValue);
 	}
 
 	/**
@@ -69,6 +75,11 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		this._popupDiv = this.shadowRoot.querySelector("#popup");
 		this._closeButton = this.shadowRoot.querySelector("#close-button");
 		this._closeButton.addEventListener("click", this._onClickCloseButton.bind(this));
+		this.addEventListener("mousedown", this._onMouseDown.bind(this));
+	}
+
+	_onMouseDown(event) {
+		event.stopPropagation();
 	}
 
 	/**
@@ -80,10 +91,55 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		
 		if(this._parentTimeline) {
 			this._resolveParentTimelineKnown();
+			this._parentTimeline.addEventListener("update-represented-time", this._onParentTimelineUpdateRepresentedTime.bind(this));
 		}
 		else {
 			this._rejectParentTimelineKnown();
 			this.emitErrorEvent(new Error("Element of type ktbs4la2-timeline-event must be nested in a parent element of type ktbs4la2-timeline"));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onParentTimelineUpdateRepresentedTime(event) {
+		this._adjustWidth();
+		this._adjustPosX();
+	}
+
+	/**
+	 * 
+	 */
+	_onUpdateRow(newRowString) {
+		let newRowInt = parseInt(newRowString);
+
+		if(isNaN(newRowInt)) {
+			this._rowIsOverflow = true;
+			this._updateSlot();
+		}
+		else {
+			this._componentReady.then(() => {
+				this._container.style.bottom = (newRowInt * 15) + "px";
+
+				this._parentTimelineKnown.then(() => {
+					this._rowIsOverflow = newRowInt > this._parentTimeline._maxDisplayableRows;
+					this._updateSlot();
+				});
+			});
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_updateSlot() {
+		if(this.getAttribute("row") && !this._rowIsOverflow && !this._posXIsOverflow) {
+			if(this.getAttribute("slot") != "visible")
+				this.setAttribute("slot", "visible");
+		}
+		else {
+			if(this.getAttribute("slot"))
+				this.removeAttribute("slot");
 		}
 	}
 
@@ -97,7 +153,10 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 					let eventDuration = parseInt(this.getAttribute("end")) - parseInt(this.getAttribute("begin"));
 					let timelineDuration = this._parentTimeline._lastRepresentedTime - this._parentTimeline._firstRepresentedTime;
 					let eventPercentageWidth = (eventDuration / timelineDuration) * 100;
-					this._container.style.width = eventPercentageWidth + "%";
+
+					this._componentReady.then(() => {
+						this._container.style.width = eventPercentageWidth + "%";
+					});
 				});
 			});
 		}
@@ -109,10 +168,31 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	_adjustPosX() {
 		this._parentTimelineKnown.then(() => {
 			this._parentTimeline._timeDivisionsInitialized.then(() => {
-				let timeOffset = this.getAttribute("begin") - this._parentTimeline._firstRepresentedTime;
-				let timelineDuration = this._parentTimeline._lastRepresentedTime - this._parentTimeline._firstRepresentedTime;
-				let posX = (timeOffset / timelineDuration) * 100;
-				this._container.style.left = posX + "%";
+				let timelineBegin = this._parentTimeline._firstRepresentedTime;
+				let timeOffset = this.getAttribute("begin") - timelineBegin;
+
+				if(timeOffset >= 0) {
+					let timelineEnd = this._parentTimeline._lastRepresentedTime;
+					let timelineDuration = timelineEnd - timelineBegin;
+					let posX = (timeOffset / timelineDuration) * 100;
+
+					if(posX <= 100) {
+						this._posXIsOverflow = false;
+						this._updateSlot();
+
+						this._componentReady.then(() => {
+							this._container.style.left = posX + "%";
+						});
+					}
+					else {
+						this._posXIsOverflow = true;
+						this._updateSlot();
+					}
+				}
+				else {
+					this._posXIsOverflow = true;
+					this._updateSlot();
+				}
 			});
 		});
 	}

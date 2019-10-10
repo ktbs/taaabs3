@@ -157,7 +157,9 @@ export class ObselList extends Resource {
 					headers: new Headers({
 						"Accept": "application/json"
 					}),
-					credentials: "include"
+					mode: "cors",
+					credentials: "include",
+					cache: "default"
 				};
 
 				fetch(pageURI, fetchParameters)
@@ -194,44 +196,6 @@ export class ObselList extends Resource {
 					.catch(error => {
 						reject(error);
 					});
-
-			/*let httpRequest = new XMLHttpRequest();
-			httpRequest.open('GET', pageURI, true);
-
-			httpRequest.onreadystatechange = function(event) {
-				if (this.readyState == XMLHttpRequest.DONE) {
-					if (this.status == 200) {
-						try {
-							let parsedJson = JSON.parse(this.responseText);
-							let nextPageURI = null;
-							let linkResponseHeader = this.getResponseHeader("link");
-
-							if(linkResponseHeader) {
-								let links = linkResponseHeader.split(', ');
-
-								for(let i = 0; (nextPageURI == null) && (i < links.length); i++) {
-									let aLinkData = links[i];
-									let aLinkParts = aLinkData.split(';');
-
-									if((aLinkParts.length == 2) && (aLinkParts[1] == "rel=\"next\""))
-										nextPageURI = aLinkParts[0].substring(1, aLinkParts[0].length - 1);
-								}
-							}
-
-							resolve({context: parsedJson["@context"], obsels: parsedJson.obsels, nextPageURI: nextPageURI});
-						}
-						catch(error) {
-							reject(error);
-						}
-					}
-					else {
-						reject(new Error("Failed to perform GET request to URL \"" + this.pageURI + "\". HTTP request status : " + this.status + ", " + this.statusText));
-					}
-				}
-			};
-
-			httpRequest.setRequestHeader("Accept", "application/json");
-			httpRequest.send(null);*/
 		});
 
 		return page_read;

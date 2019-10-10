@@ -1,87 +1,8 @@
 #container {
 	position: absolute;
+	transition-property: bottom;
 	transition-duration: .3s;
 	transition-timing-function: ease-in;
-}
-
-:host([row = "0"]) #container {
-	bottom: 0px;
-}
-
-:host([row = "1"]) #container {
-	bottom: 15px;
-}
-
-:host([row = "2"]) #container {
-	bottom: 30px;
-}
-
-:host([row = "3"]) #container {
-	bottom: 45px;
-}
-
-:host([row = "4"]) #container {
-	bottom: 60px;
-}
-
-:host([row = "5"]) #container {
-	bottom: 75px;
-}
-
-:host([row = "6"]) #container {
-	bottom: 90px;
-}
-
-:host([row = "7"]) #container {
-	bottom: 105px;
-}
-
-:host([row = "8"]) #container {
-	bottom: 120px;
-}
-
-:host([row = "9"]) #container {
-	bottom: 135px;
-}
-
-:host([row = "10"]) #container {
-	bottom: 150px;
-}
-
-:host([row = "11"]) #container {
-	bottom: 165px;
-}
-
-:host([row = "12"]) #container {
-	bottom: 180px;
-}
-
-:host([row = "13"]) #container {
-	bottom: 195px;
-}
-
-:host([row = "14"]) #container {
-	bottom: 210px;
-}
-
-:host([row = "15"]) #container {
-	bottom: 225px;
-}
-
-:host([row = "16"]) #container {
-	bottom: 240px;
-}
-
-:host([row = "17"]) #container {
-	bottom: 255px;
-}
-
-:host([row = "18"]) #container {
-	bottom: 270px;
-}
-
-:host(:not([row])) #container {
-	bottom: 350px;
 }
 
 #marker {
@@ -132,13 +53,13 @@
 
  #marker:hover, :host(.selected) #marker {
 	z-index: 4;
-	height: 16px;
-	top: 2px;
+	height: 14px;
+	top: 1px;
 }
 
-:host([shape]:not([shape = "duration-bar"])) #marker:hover, :host(.selected:[shape]:not([shape = "duration-bar"])) #marker {
-	width: 16px;
-	left: -2px;
+:host([shape]:not([shape = "duration-bar"])) #marker:hover, :host(.selected[shape]:not([shape = "duration-bar"])) #marker {
+	width: 14px;
+	left: -1px;
 }
 
 #popup {

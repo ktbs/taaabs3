@@ -807,14 +807,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			this._resolveAllObselsLoaded();
 		}
 		else {
-			this._obselList._read_obsel_page(nextPageURI)
-				.then((response) => {
-					this._onObselListPageRead(response.obsels, response.nextPageURI);
-				})
-				.catch((error) => {
-					this._onObselListPageReadFailed(error);
-				});
-			}
+			setTimeout(() => {
+				this._obselList._read_obsel_page(nextPageURI)
+					.then((response) => {
+						this._onObselListPageRead(response.obsels, response.nextPageURI);
+					})
+					.catch((error) => {
+						this._onObselListPageReadFailed(error);
+					});
+			});
+		}
 	}
 }
 

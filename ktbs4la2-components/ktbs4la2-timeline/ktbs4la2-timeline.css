@@ -1,3 +1,13 @@
+@keyframes fadein {
+	from {
+		opacity: 0;
+	}
+  
+	to {
+		opacity: 1;
+	}
+}
+
 #widget-container {
 	display: flex;
 	flex-direction: row;
@@ -25,9 +35,11 @@
 	height: 20px;
 	line-height: 15px;
 	font-size: 8pt;
-	width: 50px;
+	width: 70px;
 	color: white;
 	font-weight: bold;
+	opacity: 0;
+	transition: opacity 0.5s;
 }
 
 #year-label {
@@ -54,12 +66,15 @@
 	background-color: thistle;
 }
 
+#millisecond-label {
+	background-color: pink;
+}
 
 /* ---------------------------------------------------------- */
 
 #display-window {
-	overflow-x: scroll;
-	width: 100%; /* !!! */
+	overflow-x: hidden;
+	width: 100%;
 }
 
 #empty-message {
@@ -113,9 +128,26 @@
 	cursor: grabbing;
 }
 
+#display-window.zooming-in #events {
+	cursor: zoom-in;
+}
+
+#display-window.zooming-out #events {
+	cursor: zoom-out;
+}
+
+#display-window.zoom-denied #events {
+	cursor: not-allowed;
+}
+
 .time-division {
 	display: flex;
 	flex-direction: row;
+	animation: fadein 0.5s;
+}
+
+.time-division.overflow, .time-division.overflow * {
+	display: none;
 }
 
 .time-division > .label {
@@ -127,25 +159,26 @@
 	width: 0;
 }
 
-.time-division:nth-child(odd) { 
+.time-division.odd {	
 	color: white;
 	background-image: linear-gradient(transparent, #FFF8 4em,  #FFFC);
 	background-size: cover;
 }
 
-.time-division:nth-child(even) {
+.time-division.even {
 	background-color: white;
+	background-size: cover;
 }
 
 .time-division-year {
 	height: 320px;
 }
 
-.time-division-year:nth-child(odd) { 
+.time-division-year.odd { 
 	background-color: cornflowerblue;
 }
 
-.time-division-year:nth-child(even) {
+.time-division-year.even {
 	color: cornflowerblue;
 }
 
@@ -153,11 +186,11 @@
 	height: 300px;
 }
 
-.time-division-month:nth-child(odd) { 
+.time-division-month.odd {	
 	background-color: lightskyblue;
 }
 
-.time-division-month:nth-child(even) {
+.time-division-month.even {
 	color: lightskyblue;
 }
 
@@ -165,11 +198,11 @@
 	height: 280px;
 }
 
-.time-division-day:nth-child(odd) { 
+.time-division-day.odd { 
 	background-color: powderblue;
 }
 
-.time-division-day:nth-child(even) {
+.time-division-day.even {
 	color: powderblue;
 }
 
@@ -177,48 +210,80 @@
 	height: 260px;
 }
 
-.time-division-hour:nth-child(odd) { 
+.time-division-hour.odd { 
 	background-color: violet;
 }
 
-.time-division-hour:nth-child(even) {
+.time-division-hour.even {
 	color: violet;
 }
 
-.time-division-minute {
+.time-division-minute, .time-division-tenminutes {
 	height: 240px;
 }
 
-.time-division-minute:nth-child(odd) { 
+.time-division-minute.odd, .time-division-tenminutes.odd { 
 	background-color: plum;
 }
 
-.time-division-minute:nth-child(even) {
+.time-division-minute.even, .time-division-tenminutes.even {
 	color: plum;
 }
 
-.time-division-second {
+.time-division-second, .time-division-tenseconds {
 	height: 220px;
 }
 
-.time-division-second:nth-child(odd) { 
+.time-division-second.odd, .time-division-tenseconds.odd { 
 	background-color: thistle;
 }
 
-.time-division-second:nth-child(even) {
+.time-division-second.even, .time-division-tenseconds.even {
 	color: thistle;
 }
 
-#widget-container.year .time-division-month, #widget-container.year .time-division-day, #widget-container.year .time-division-hour, #widget-container.year .time-division-minute, #widget-container.year .time-division-second,
-#widget-container.month .time-division-day, #widget-container.month .time-division-hour, #widget-container.month .time-division-minute, #widget-container.month .time-division-second,
-#widget-container.day .time-division-hour, #widget-container.day .time-division-minute, #widget-container.day .time-division-second,
-#widget-container.hour .time-division-minute, #widget-container.hour .time-division-second,
-#widget-container.minute .time-division-second,
-#widget-container.year #month-label, #widget-container.year #day-label, #widget-container.year #hour-label, #widget-container.year #minute-label, #widget-container.year #second-label,
-#widget-container.month #day-label, #widget-container.month #hour-label, #widget-container.month #minute-label, #widget-container.month #second-label,
-#widget-container.day #hour-label, #widget-container.day #minute-label, #widget-container.day #second-label,
-#widget-container.hour #minute-label, #widget-container.hour #second-label,
-#widget-container.minute #second-label
+.time-division-ahundredmilliseconds, .time-division-tenmilliseconds, .time-division-millisecond {
+	height: 200px;
+}
+
+.time-division-ahundredmilliseconds.odd, .time-division-tenmilliseconds.odd, .time-division-millisecond.odd { 
+	background-color: pink;
+}
+
+.time-division-ahundredmilliseconds.even, .time-division-tenmilliseconds.even, .time-division-millisecond.even {
+	color: pink;
+}
+
+#widget-container.year #year-label,
+#widget-container.month #month-label, #widget-container.month #year-label,
+#widget-container.day #day-label, #widget-container.day #month-label, #widget-container.day #year-label,
+#widget-container.hour #hour-label, #widget-container.hour #day-label, #widget-container.hour #month-label, #widget-container.hour #year-label,
+#widget-container.tenminutes #minute-label, #widget-container.tenminutes #hour-label, #widget-container.tenminutes #day-label, #widget-container.tenminutes #month-label, #widget-container.tenminutes #year-label,
+#widget-container.minute #minute-label, #widget-container.minute #hour-label, #widget-container.minute #day-label, #widget-container.minute #month-label, #widget-container.minute #year-label,
+#widget-container.tenseconds #second-label, #widget-container.tenseconds #minute-label, #widget-container.tenseconds #hour-label, #widget-container.tenseconds #day-label, #widget-container.tenseconds #month-label, #widget-container.tenseconds #year-label,
+#widget-container.second #second-label, #widget-container.second #minute-label, #widget-container.second #hour-label, #widget-container.second #day-label, #widget-container.second #month-label, #widget-container.second #year-label,
+#widget-container.ahundredmilliseconds #millisecond-label, #widget-container.ahundredmilliseconds #second-label, #widget-container.ahundredmilliseconds #minute-label, #widget-container.ahundredmilliseconds #hour-label, #widget-container.ahundredmilliseconds #day-label, #widget-container.ahundredmilliseconds #month-label, #widget-container.ahundredmilliseconds #year-label,
+#widget-container.tenmilliseconds #millisecond-label, #widget-container.tenmilliseconds #second-label, #widget-container.tenmilliseconds #minute-label, #widget-container.tenmilliseconds #hour-label, #widget-container.tenmilliseconds #day-label, #widget-container.tenmilliseconds #month-label, #widget-container.tenmilliseconds #year-label,
+#widget-container.millisecond #millisecond-label, #widget-container.millisecond #second-label, #widget-container.millisecond #minute-label, #widget-container.millisecond #hour-label, #widget-container.millisecond #day-label, #widget-container.millisecond #month-label, #widget-container.millisecond #year-label
+{
+	opacity: 1;
+}
+
+#widget-container.year .time-division-month,
+#widget-container.month .time-division-day,
+#widget-container.day .time-division-hour,
+#widget-container.hour .time-division-tenminutes,
+#widget-container.tenminutes .time-division-minute,
+#widget-container.minute .time-division-tenseconds,
+#widget-container.minute .time-division-tenminutes > .label,
+#widget-container.tenseconds .time-division-second,
+#widget-container.second .time-division-ahundredmilliseconds,
+#widget-container.second .time-division-tenseconds > .label,
+#widget-container.ahundredmilliseconds .time-division-tenmilliseconds,
+#widget-container.tenmilliseconds .time-division-millisecond,
+#widget-container.tenmilliseconds .time-division-ahundredmilliseconds > .label,
+#widget-container.millisecond .time-division-ahundredmilliseconds > .label,
+#widget-container.millisecond .time-division-tenmilliseconds > .label
 {
 	display: none;
 }

@@ -59,7 +59,9 @@ export class Resource {
 							"Accept": "application/json",
 							//"Authorization": "Basic " + btoa("test:test")
 						}),
-						credentials: "include"
+						mode: "cors",
+						credentials: "include",
+						cache: "no-cache"
 					};
 					
 					fetch(this._data_read_uri, fetchParameters)
