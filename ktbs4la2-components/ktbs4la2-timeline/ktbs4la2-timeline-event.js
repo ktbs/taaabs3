@@ -8,8 +8,13 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url);
 
-		this._rowIsOverflow = false;
-		this._posXIsOverflow = false;
+		this._rowIsOverflow = true;
+		this._posXIsOverflow = true;
+		this._beginTime = null;
+		this._endTime = null;
+		this._isVisible = null;
+
+		this._bindedUpdatePosX = this._updatePosX.bind(this);
 
 		this._resolveParentTimelineKnown;
 		this._rejectParentTimelineKnown;
@@ -27,10 +32,11 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		let observedAttributes = super.observedAttributes;
 		observedAttributes.push("begin");
 		observedAttributes.push("end")
+		observedAttributes.push("row");
+		observedAttributes.push("visible");
 		observedAttributes.push("href");
 		observedAttributes.push("color");
 		observedAttributes.push("title");
-		observedAttributes.push("row");
 		return observedAttributes;
 	}
 
@@ -39,16 +45,24 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 */
 	attributeChangedCallback(attributeName, oldValue, newValue) {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
-		
-		if(attributeName == "begin")
-			this._componentReady.then(() => {
-				this._adjustPosX();
-				this._adjustWidth();
-			});
-		else if(attributeName == "end")
-			this._componentReady.then(() => {
-				this._adjustWidth();
-			});
+
+		if(attributeName == "begin") {
+			this._beginTime = null;
+			this._updatePosX();
+		}
+		else if(attributeName == "end") {
+			this._endTime = null;
+
+			if(this.hasAttribute("begin")) {
+				this._updatePosX();
+			}
+		}
+		else if(attributeName == "row") {
+			this._updateRow();
+		}
+		else if(attributeName == "visible") {
+			this._isVisible = null;
+		}
 		else if(attributeName == "href")
 			this._componentReady.then(() => {
 				this._marker.setAttribute("href", newValue);
@@ -61,8 +75,23 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 			this._componentReady.then(() => {
 				this._marker.setAttribute("title", newValue);
 			});
-		else if(attributeName == "row")
-			this._onUpdateRow(newValue);
+	}
+
+	/**
+	 * 
+	 */
+	connectedCallback() {
+		super.connectedCallback();
+		this._parentTimeline = this.closest("ktbs4la2-timeline");
+		
+		if(this._parentTimeline) {
+			this._resolveParentTimelineKnown();
+			this._parentTimeline.addEventListener("update-represented-time", this._bindedUpdatePosX, false);
+		}
+		else {
+			this._rejectParentTimelineKnown();
+			this.emitErrorEvent(new Error("Element of type ktbs4la2-timeline-event must be nested in a parent element of type ktbs4la2-timeline"));
+		}
 	}
 
 	/**
@@ -78,123 +107,200 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		this.addEventListener("mousedown", this._onMouseDown.bind(this));
 	}
 
-	_onMouseDown(event) {
-		event.stopPropagation();
-	}
-
 	/**
 	 * 
 	 */
-	connectedCallback() {
-		super.connectedCallback();
-		this._parentTimeline = this.closest("ktbs4la2-timeline");
-		
-		if(this._parentTimeline) {
-			this._resolveParentTimelineKnown();
-			this._parentTimeline.addEventListener("update-represented-time", this._onParentTimelineUpdateRepresentedTime.bind(this));
+	get beginTime() {
+		if(this._beginTime == null) {
+			if(this.hasAttribute("begin")) {
+				let beginTimeInt = parseInt(this.getAttribute("begin"));
+
+				if(!isNaN(beginTimeInt))
+					this._beginTime = beginTimeInt;
+				else
+					throw new Error("Cannot parse integer from string : " + this.getAttribute("begin"));
+			}
+			else
+				this._beginTime = undefined;
 		}
-		else {
-			this._rejectParentTimelineKnown();
-			this.emitErrorEvent(new Error("Element of type ktbs4la2-timeline-event must be nested in a parent element of type ktbs4la2-timeline"));
+
+		return this._beginTime;
+	}
+	
+
+	/**
+	 * 
+	 */
+	get endTime() {
+		if(this._endTime == null) {
+			if(this.hasAttribute("end")) {
+				let endTimeInt = parseInt(this.getAttribute("end"));
+
+				if(!isNaN(endTimeInt))
+					this._endTime = endTimeInt;
+				else
+					throw new Error("Cannot parse integer from string : " + this.getAttribute("end"));
+			}
+			else
+				this._endTime = this.beginTime;
 		}
+
+		return this._endTime;
 	}
 
 	/**
 	 * 
 	 */
-	_onParentTimelineUpdateRepresentedTime(event) {
-		this._adjustWidth();
-		this._adjustPosX();
+	get isVisible() {
+		if(this._isVisible == null) {
+			this._isVisible = (
+					!this.hasAttribute("visible")
+				|| 	(
+						(this.getAttribute("visible") != "0")
+					&&	(this.getAttribute("visible") != "false")
+				)
+			);
+		}
+
+		return this._isVisible;
 	}
 
 	/**
 	 * 
 	 */
-	_onUpdateRow(newRowString) {
-		let newRowInt = parseInt(newRowString);
+	get posXIsOverflow() {
+		return this._posXIsOverflow;
+	}
 
-		if(isNaN(newRowInt)) {
-			this._rowIsOverflow = true;
+	/**
+	 * 
+	 */
+	set posXIsOverflow(newValue) {
+		if(this._posXIsOverflow != newValue) {
+			this._posXIsOverflow = newValue;
+
+			if(newValue == true) {
+				this._componentReady.then(() => {
+					if(!this._container.classList.contains("posx-is-overflow"))
+						this._container.classList.add("posx-is-overflow");
+				});
+			}
+			else {
+				this._componentReady.then(() => {
+					if(this._container.classList.contains("posx-is-overflow"))
+						this._container.classList.remove("posx-is-overflow");
+				});
+			}
+
 			this._updateSlot();
 		}
-		else {
-			this._componentReady.then(() => {
-				this._container.style.bottom = (newRowInt * 15) + "px";
+	}
 
-				this._parentTimelineKnown.then(() => {
-					this._rowIsOverflow = newRowInt > this._parentTimeline._maxDisplayableRows;
+	/**
+	 * 
+	 */
+	get rowIsOverflow() {
+		return this._rowIsOverflow;
+	}
+
+	/**
+	 * 
+	 */
+	set rowIsOverflow(newValue) {
+		if(this._rowIsOverflow != newValue) {
+			this._rowIsOverflow = newValue;
+
+			if(newValue == true) {
+				this._componentReady.then(() => {
+					if(!this._container.classList.contains("row-is-overflow"))
+						this._container.classList.add("row-is-overflow");
+				});
+			}
+			else {
+				this._componentReady.then(() => {
+					if(this._container.classList.contains("row-is-overflow"))
+						this._container.classList.remove("row-is-overflow");
+				});
+
+				this._updatePosX();
+			}
+
+			this._updateSlot();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_updatePosX() {
+		if(!this.rowIsOverflow && this.isVisible) {
+			this._parentTimelineKnown.then(() => {
+				this._parentTimeline._timeDivisionsInitialized.then(() => {
+					this.posXIsOverflow = (this.beginTime < this._parentTimeline._firstRepresentedTime) || (this.endTime > this._parentTimeline._lastRepresentedTime);
+
+					if(!this.posXIsOverflow) {
+						let timelineBegin = this._parentTimeline._firstRepresentedTime;
+						let timeOffset = this.beginTime - timelineBegin;
+						let timelineEnd = this._parentTimeline._lastRepresentedTime;
+						let timelineDuration = timelineEnd - timelineBegin;
+						let posX = (timeOffset / timelineDuration) * 100;
+
+						this._componentReady.then(() => {
+							this._container.style.left = posX + "%";
+						});
+
+						if(this.hasAttribute("end") && (!this.hasAttribute("shape") || (this.getAttribute("shape") == "duration-bar"))) {
+							let eventDuration = this.endTime - this.beginTime;
+							let timelineDuration = this._parentTimeline._lastRepresentedTime - this._parentTimeline._firstRepresentedTime;
+							let eventPercentageWidth = (eventDuration / timelineDuration) * 100;
+
+							this._componentReady.then(() => {
+								this._container.style.width = eventPercentageWidth + "%";
+							});
+						}
+					}
+
 					this._updateSlot();
 				});
 			});
 		}
+	}
+
+	/**
+	 * 
+	 */
+	_updateRow() {
+		if(this.hasAttribute("row")) {
+			let newRowInt = parseInt(this.getAttribute("row"));
+
+			if(!isNaN(newRowInt)) {
+				this._parentTimelineKnown.then(() => {
+					this.rowIsOverflow = (newRowInt > this._parentTimeline._maxDisplayableRows);
+					
+					this._componentReady.then(() => {
+						this._container.style.bottom = (newRowInt * 15) + "px";
+					});
+				});
+			}
+			else
+				throw new Error("Invalid value for row attribute : must be an integer");
+		}
+		else
+			this.rowIsOverflow = true;
 	}
 
 	/**
 	 * 
 	 */
 	_updateSlot() {
-		if(this.getAttribute("row") && !this._rowIsOverflow && !this._posXIsOverflow) {
+		if(!this.rowIsOverflow && !this._posXIsOverflow && this.isVisible) {
 			if(this.getAttribute("slot") != "visible")
 				this.setAttribute("slot", "visible");
 		}
 		else {
-			if(this.getAttribute("slot"))
+			if(this.hasAttribute("slot"))
 				this.removeAttribute("slot");
 		}
-	}
-
-	/**
-	 * 
-	 */
-	_adjustWidth() {
-		if(this.getAttribute("begin") && this.getAttribute("end")) {
-			this._parentTimelineKnown.then(() => {
-				this._parentTimeline._timeDivisionsInitialized.then(() => {
-					let eventDuration = parseInt(this.getAttribute("end")) - parseInt(this.getAttribute("begin"));
-					let timelineDuration = this._parentTimeline._lastRepresentedTime - this._parentTimeline._firstRepresentedTime;
-					let eventPercentageWidth = (eventDuration / timelineDuration) * 100;
-
-					this._componentReady.then(() => {
-						this._container.style.width = eventPercentageWidth + "%";
-					});
-				});
-			});
-		}
-	}
-
-	/**
-	 * 
-	 */
-	_adjustPosX() {
-		this._parentTimelineKnown.then(() => {
-			this._parentTimeline._timeDivisionsInitialized.then(() => {
-				let timelineBegin = this._parentTimeline._firstRepresentedTime;
-				let timeOffset = this.getAttribute("begin") - timelineBegin;
-
-				if(timeOffset >= 0) {
-					let timelineEnd = this._parentTimeline._lastRepresentedTime;
-					let timelineDuration = timelineEnd - timelineBegin;
-					let posX = (timeOffset / timelineDuration) * 100;
-
-					if(posX <= 100) {
-						this._posXIsOverflow = false;
-						this._updateSlot();
-
-						this._componentReady.then(() => {
-							this._container.style.left = posX + "%";
-						});
-					}
-					else {
-						this._posXIsOverflow = true;
-						this._updateSlot();
-					}
-				}
-				else {
-					this._posXIsOverflow = true;
-					this._updateSlot();
-				}
-			});
-		});
 	}
 	
 	/**
@@ -220,6 +326,13 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		}
 		else
 			this.classList.remove("selected");
+	}
+
+	/**
+	 * 
+	 */
+	_onMouseDown(event) {
+		event.stopPropagation();
 	}
 }
 

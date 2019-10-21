@@ -43,10 +43,14 @@ function isEvenStartingYear(year) {
  * 
  */
 function getDayRankInYear(year, month, day) {
-	let dayDate = new Date(year, (month - 1), day);
-    let firstJanDate = new Date(year, 0, 1);
-    let msDelta = dayDate - firstJanDate;
-    return (Math.floor(msDelta / (1000 * 60 * 60 * 24)) + 1);
+	let rank = 0;
+
+	for(let i = 1; i < month; i++)
+		rank += getNumberOfDaysInMonth(i, year);
+
+	rank += day;
+
+	return rank;
 }
 
 /**
@@ -244,10 +248,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._updateEventsRowsDelay = 250;
 		this._requestUpdateEventsRowsID = null;
 		this._requestZoomIncrementID = null;
+		this._requestZoomIncrementID2 = null;
 		this._requestedZoomIncrementAmount = 0;
 		this._requestedZoomMouseRelativeX = null;
 		this._requestedZoomMouseTime = null;
-		this._updateZoomDelay = 10;
 		this._requestUpdateTimeDivisionsID = null;
 		this._updateTimeDivisionsDelay = 250;
 		this._maxDisplayableRows = 18;
@@ -291,8 +295,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			}.bind(this));
 
 		this._eventsNodesObserver = new MutationObserver(this._onEventsNodesMutation.bind(this));
-		this._eventsNodesObserver.observe(this, { childList: true, subtree: true, attributes: true});
-
+		this._eventsNodesObserver.observe(this, { childList: true, subtree: true, attributes: true, attributeFilter: ["visible"]});
+		
 		this.addEventListener("select-timeline-event", this._onSelectTimelineEvent.bind(this));
 	}
 
@@ -355,23 +359,27 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 *
 	 */
 	_getViewBeginTime() {
-		let totalTime = this._lastRepresentedTime - this._firstRepresentedTime;
-		let ratio = totalTime / this._timeDiv.clientWidth;
-		let leftBorderTimeOffset = this._displayWindow.scrollLeft * ratio;
-		return (this._firstRepresentedTime + leftBorderTimeOffset);
+		let lastTime = this._getActualLastRepresentedTime();
+		let firstTime = this._getActualFirstRepresentedTime();
+		let totalTime = lastTime - firstTime;
+		let timeOverWidthRatio = totalTime / this._timeDiv.clientWidth;
+		let leftBorderTimeOffsetTime = this._displayWindow.scrollLeft * timeOverWidthRatio;
+		return (firstTime + leftBorderTimeOffsetTime);
 	}
 
 	/**
 	 * 
 	 */
 	_getViewEndTime() {
-		let totalTime = this._lastRepresentedTime - this._firstRepresentedTime;
-		let ratio = totalTime / this._timeDiv.clientWidth;
-		let rightBorderTimeOffset = (this._displayWindow.scrollLeft + this._displayWindow.clientWidth) * ratio;
-		let lastVisibleTime = this._firstRepresentedTime + rightBorderTimeOffset;
+		let lastTime = this._getActualLastRepresentedTime();
+		let firstTime = this._getActualFirstRepresentedTime();
+		let totalTime = lastTime - firstTime;
+		let timeOverWidthRatio = totalTime / this._timeDiv.clientWidth;
+		let rightBorderTimeOffset = (this._displayWindow.scrollLeft + this._displayWindow.clientWidth) * timeOverWidthRatio;
+		let lastVisibleTime = firstTime + rightBorderTimeOffset;
 
-		if(lastVisibleTime > this._lastRepresentedTime)
-			lastVisibleTime = this._lastRepresentedTime;
+		if(lastVisibleTime > lastTime)
+			lastVisibleTime = lastTime;
 
 		return (lastVisibleTime);
 	}
@@ -470,7 +478,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_updateEventsRows() {
-		this._componentReady.then(function() {
+		this._timeDivisionsInitialized.then(() => {
 			let timeLineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
 			let availableWidth = this._timeDiv.clientWidth;
 			let timeOverWidthRatio = timeLineDuration / availableWidth;
@@ -483,58 +491,57 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				let previousEventsPerRow = new Array();
 				let previousEventsTimePerRow = new Array();
 				let minDisplayableTime = this._firstRepresentedTime;
-				let events = this._getAllEventNodes();
+				let events = this.querySelectorAll("ktbs4la2-timeline-event:not([visible = \"false\"]):not([visible = \"0\"])");
 
+				// we browse all visible events
 				for(let i = 0; i < events.length; i++) {
 					let currentEvent = events[i];
-					let currentEventVisibleAttrValue = currentEvent.getAttribute("visible");
-					let currentEventIsHidden = ((currentEventVisibleAttrValue == "false") || (currentEventVisibleAttrValue == "0"));
+					let currentEventTime = currentEvent.beginTime;
+					let availableRow = null;
 
-					if(!currentEventIsHidden) {
-						let currentEventTime = parseInt(currentEvent.getAttribute("begin"));
-						let availableRow = null;
+					if(currentEventTime >= minDisplayableTime) {
+						// we browse the "previousEventsPerRow" Array
+						for(let j = 0; (availableRow == null) && (j <= (this._maxDisplayableRows)) && (j < previousEventsPerRow.length); j++) {
+							let previousEvent = previousEventsPerRow[j];
 
-						if(currentEventTime >= minDisplayableTime) {
-							for(let j = 0; (availableRow == null) && (j <= (this._maxDisplayableRows)) && (j < previousEventsPerRow.length); j++) {
-								let previousEvent = previousEventsPerRow[j];
+							if(previousEvent.hasAttribute("shape") && (previousEvent.getAttribute("shape") != "duration-bar")) {
+								let previousEventTime = previousEvent.beginTime;
+								let timeDelta = currentEventTime - previousEventTime;
 
-								if(previousEvent.getAttribute("shape") && (previousEvent.getAttribute("shape") != "duration-bar")) {
-									let previousEventTime = parseInt(previousEvent.getAttribute("begin"));
-									let timeDelta = currentEventTime - previousEventTime;
+								if(timeDelta >= timeBeginThreshold)
+									availableRow = j;
+							}
+							else {
+								let previousEventBeginTime = previousEvent.beginTime;
+								let previousEventEndTime = previousEvent.endTime;
 
-									if(timeDelta >= timeBeginThreshold)
-										availableRow = j;
-								}
-								else {
-									let previousEventBeginTime = parseInt(previousEvent.getAttribute("begin"));
-									let previousEventEndTime = parseInt(previousEvent.getAttribute("end"));
+								let timeBeginDelta = currentEventTime - previousEventBeginTime;
+								let timeEndDelta = currentEventTime - previousEventEndTime;
 
-									let timeBeginDelta = currentEventTime - previousEventBeginTime;
-									let timeEndDelta = currentEventTime - previousEventEndTime;
-
-									if((timeBeginDelta >= timeBeginThreshold) && (timeEndDelta > timeEndThreshold))
-										availableRow = j;
-								}
+								if((timeBeginDelta >= timeBeginThreshold) && (timeEndDelta > timeEndThreshold))
+									availableRow = j;
 							}
 						}
+					}
 
-						if(availableRow == null)
-							availableRow = previousEventsPerRow.length;
+					if(availableRow == null)
+						availableRow = previousEventsPerRow.length;
 
-						if(currentEvent.getAttribute("row") != availableRow)
-							currentEvent.setAttribute("row", availableRow);
+					if(!currentEvent.hasAttribute("row") || (parseInt(currentEvent.getAttribute("row")) != availableRow))
+						currentEvent.setAttribute("row", availableRow);
 
-						if(availableRow <= this._maxDisplayableRows) {
-							previousEventsPerRow[availableRow] = currentEvent;
-							previousEventsTimePerRow[availableRow] = currentEventTime;
+					if(availableRow <= this._maxDisplayableRows) {
+						previousEventsPerRow[availableRow] = currentEvent;
+						previousEventsTimePerRow[availableRow] = currentEventTime;
 
-							if(previousEventsPerRow.length >= this._maxDisplayableRows)
-								minDisplayableTime = Math.min(...previousEventsTimePerRow) + timeBeginThreshold;
-						}
+						if(previousEventsPerRow.length >= this._maxDisplayableRows)
+							minDisplayableTime = Math.min(...previousEventsTimePerRow) + timeBeginThreshold;
 					}
 				}
 			}
-		}.bind(this));
+			else
+				throw new Error("Could not determine time/width ratio");
+		});
 	}
 
 	/**
@@ -557,8 +564,11 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._displayWindow.scrollLeft = newValue;
 	}
 
-	_updateTimeDivisions() {
-		this._updateHiddenTimeDivs();
+	/**
+	 * 
+	 */
+	_updateTimeDivisions(viewBeginTime, viewEndTime) {
+		this._updateHiddenTimeDivs(viewBeginTime, viewEndTime);
 		this._updateViewSubdivisions();
 		this._updateRepresentedTime();
 	}
@@ -570,10 +580,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		if(this._requestUpdateTimeDivisionsID != null)
 			clearTimeout(this._requestUpdateTimeDivisionsID);
 
-		this._requestUpdateTimeDivisionsID = setTimeout(function() {
-			this._updateTimeDivisions();
+		this._requestUpdateTimeDivisionsID = setTimeout(() => {
+			let viewBeginTime = this._getViewBeginTime();
+			let viewEndTime = this._getViewEndTime();
+			this._updateTimeDivisions(viewBeginTime, viewEndTime);
+			let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
+			let newTimeOffset = viewBeginTime - this._firstRepresentedTime;
+			let newScrollLeft = newTimeOffset * widthOverTimeRatio;
+			this._setSilentScroll(newScrollLeft);
 			this._requestUpdateTimeDivisionsID = null;
-		}.bind(this), this._updateTimeDivisionsDelay);
+		}, this._updateTimeDivisionsDelay);
 	}
 
 	/**
@@ -1532,36 +1548,61 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_requestZoomIncrement(incrementAmount, mouseRelativeX) {
-		this._requestedZoomIncrementAmount += incrementAmount;
-		this._requestedZoomMouseRelativeX = mouseRelativeX;
-		this._requestedZoomMouseTime = this._getMouseTime(mouseRelativeX);
 		let zoomDenied = false;
 
-		if(this._requestedZoomIncrementAmount > 0)
+		if(incrementAmount > 0)
 			zoomDenied = ((this._initialLevel == this._widgetContainer.className) && (this._currentLevelDivWidth <= this._initialDivWidth));
-		else if(this._requestedZoomIncrementAmount < 0)
+		else if(incrementAmount < 0)
 			zoomDenied = (this._widgetContainer.className == "millisecond");
 
 		if(zoomDenied) {
 			this._requestedZoomIncrementAmount = 0;
 			this._setZoomCursor("zoom-denied");
 		}
-		else if(this._requestedZoomIncrementAmount != 0) {
-			if(this._requestedZoomIncrementAmount > 0)
-				this._setZoomCursor("zooming-out");
-			else if(this._requestedZoomIncrementAmount < 0)
-				this._setZoomCursor("zooming-in");
+		else {
+			this._requestedZoomIncrementAmount += incrementAmount;
+			this._requestedZoomMouseRelativeX = mouseRelativeX;
+			this._requestedZoomMouseTime = this._getMouseTime(mouseRelativeX);
 
-			if(this._requestZoomIncrementID == null) {
-				this._requestZoomIncrementID = setTimeout(function() {
-					this._incrementZoom(this._requestedZoomIncrementAmount);
-					this._resetScrollForLastMousePositionAndTime();
-					this._updateTimeDivisions();
-					this._resetScrollForLastMousePositionAndTime();
-					this._requestZoomIncrementID = null;
-					this._requestedZoomIncrementAmount = 0;
-					this._requestUpdateEventsRows();
-				}.bind(this), this._updateZoomDelay);
+			if(this._requestedZoomIncrementAmount != 0) {
+				if(this._requestedZoomIncrementAmount > 0)
+					this._setZoomCursor("zooming-out");
+				else if(this._requestedZoomIncrementAmount < 0)
+					this._setZoomCursor("zooming-in");
+
+				if(this._requestZoomIncrementID == null) {
+					this._requestZoomIncrementID = setTimeout(() => {
+						this._incrementZoom(this._requestedZoomIncrementAmount);
+
+						let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
+						let newViewBeginTime = this._requestedZoomMouseTime - (mouseRelativeX * timeOverWidthRatio);
+						let newViewEndTime = this._requestedZoomMouseTime + ((this._displayWindow.clientWidth - mouseRelativeX) * timeOverWidthRatio);
+
+						this._updateTimeDivisions(newViewBeginTime, newViewEndTime);
+						this._resetScrollForLastMousePositionAndTime();
+						this._requestZoomIncrementID = null;
+						this._requestedZoomIncrementAmount = 0;
+						this._requestUpdateEventsRows();
+					}, 100);
+				}
+				else {
+					if(this._requestZoomIncrementID2 != null)
+						clearTimeout(this._requestZoomIncrementID2);
+
+					this._requestZoomIncrementID2 = setTimeout(() => {
+						this._incrementZoom(this._requestedZoomIncrementAmount);
+
+						let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
+						let newViewBeginTime = this._requestedZoomMouseTime - (mouseRelativeX * timeOverWidthRatio);
+						let newViewEndTime = this._requestedZoomMouseTime + ((this._displayWindow.clientWidth - mouseRelativeX) * timeOverWidthRatio);
+
+						this._updateTimeDivisions(newViewBeginTime, newViewEndTime);
+						this._resetScrollForLastMousePositionAndTime();
+						this._requestZoomIncrementID2 = null;
+						this._requestedZoomIncrementAmount = 0;
+						this._requestUpdateEventsRows();
+					});
+				}
 			}
 		}
 	}
@@ -1569,44 +1610,87 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_getExtremityVisibleSubdivision(fromBegin = true) {
-		let units = Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit);
-		let selector = "";
+	_getFirstVisibleSubdivision(parent = null) {
+		let callFromTop = (parent == null);
+		let lowestVisibleLevelReached;
 
-		for(let i = 0; i <= units.indexOf(this._widgetContainer.className); i++) {
-			let unit = units[i];
-			selector += ".time-division-" + unit + ":not(.overflow)";
-
-			if(i < units.indexOf(this._widgetContainer.className))
-				selector += " > ";
-		}
-		
-		let lowestLevelDivs = this._timeDiv.querySelectorAll(selector);
-
-		if(lowestLevelDivs.length > 0) {
-			if(fromBegin)
-				return lowestLevelDivs[0];
-			else
-				return lowestLevelDivs[lowestLevelDivs.length - 1];
+		if(callFromTop) {
+			parent = this._timeDiv;
+			lowestVisibleLevelReached = false;
 		}
 		else
-			return null;
+			lowestVisibleLevelReached = (parent._getUnit() == this._widgetContainer.className);
+
+		if(lowestVisibleLevelReached)
+			return parent;
+		else {
+			let firstVisibleChild = parent.querySelector(":scope > .time-division:not(.overflow)");
+
+			if(firstVisibleChild)
+				return this._getFirstVisibleSubdivision(firstVisibleChild);
+			else {
+				if(callFromTop)
+					return null;
+				else
+					return parent;
+			}
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_getLastVisibleSubdivision(parent = null) {
+		let callFromTop = (parent == null);
+		let lowestVisibleLevelReached;
+		
+		if(callFromTop) {
+			parent = this._timeDiv;
+			lowestVisibleLevelReached = false;
+		}
+		else
+			lowestVisibleLevelReached = (parent._getUnit() == this._widgetContainer.className);
+
+		if(lowestVisibleLevelReached)
+			return parent;
+		else {
+			let visibleChilds = parent.querySelectorAll(":scope > .time-division:not(.overflow)");
+			
+			if(visibleChilds.length > 0) {
+				let lastVisibleChild = visibleChilds[visibleChilds.length - 1];
+				return this._getLastVisibleSubdivision(lastVisibleChild);
+			}
+			else {
+				if(callFromTop)
+					return null;
+				else
+					return parent;
+			}
+		}
 	}
 
 	/**
 	 * 
 	 */
 	_getActualFirstRepresentedTime() {
-		let firstVisibleSubdiv = this._getExtremityVisibleSubdivision();
-		return firstVisibleSubdiv._getBeginTime();
+		let firstVisibleSubdiv = this._getFirstVisibleSubdivision();
+
+		if(firstVisibleSubdiv)
+			return firstVisibleSubdiv._getBeginTime();
+		else
+			throw new Error("Could not find any visible time division");
 	}
 
 	/**
 	 * 
 	 */
 	_getActualLastRepresentedTime() {
-		let lastVisibleSubdiv = this._getExtremityVisibleSubdivision(false);
-		return lastVisibleSubdiv._getEndTime();
+		let lastVisibleSubdiv = this._getLastVisibleSubdivision();
+
+		if(lastVisibleSubdiv)
+			return lastVisibleSubdiv._getEndTime();
+		else
+			throw new Error("Could not find any visible time division");
 	}
 
 	/**
@@ -1624,45 +1708,14 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 	/**
 	 * 
-	 * @param {*} limitTime 
-	 * @param {*} directionIsFromBegining 
-	 * @param {*} maxWidth 
-	 * @return HTMLElement
 	 */
-	/*_getTimeDivToHide(direction, maxWidth, parent = null) {
-		let candidate = null;
-
-		if(parent == null)
-			parent = this._timeDiv;
-
-		let children = Array.from(parent.querySelectorAll(":scope > .time-division:not(.overflow)"));
-
-		if(!direction)
-			children = children.reverse();
-
-		if(children.length > 0) {
-			let firstCandidate = children[0];
-
-			if((firstCandidate.clientWidth <= maxWidth) && !this._timeDivIsInView(firstCandidate))
-				candidate = firstCandidate;
-			else {
-				candidate = this._getTimeDivToHide(direction, maxWidth, firstCandidate);
-				
-				if((candidate == null) && !this._timeDivIsInView(firstCandidate))
-					candidate = firstCandidate;
-			}
-		}
-
-		return candidate;
-	}*/
-
-	_getTimeDivToHide(directionIsFromBegining, maxWidth, parent = null) {
+	_hideOverflowTimeDivs(directionIsFromBegining, timeLimit) {
 		let units = Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit);
-		let divToHide = null;
-		
-		for(let i = 0; (divToHide == null) && (i <= units.indexOf(this._widgetContainer.className)); i++) {
-			let selector = "";
+		let currentUnitRank = units.indexOf(this._widgetContainer.className);
 
+		for(let i = 0; i <= currentUnitRank; i++) {
+			let selector = "";
+			
 			for(let j = 0; j <= i; j++) {
 				let unit = units[j];
 				selector += ".time-division-" + unit + ":not(.overflow)";
@@ -1671,289 +1724,216 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					selector += " > ";
 			}
 
-			let candidates = this._timeDiv.querySelectorAll(selector);
+			let hideableTimeDivs = this._timeDiv.querySelectorAll(selector);
+			let timeLimitHit = false;
 
-			if(candidates.length > 0) {
+			for(let j = 0; !timeLimitHit && (j < hideableTimeDivs.length); j++) {
 				let candidate;
-	
-				if(directionIsFromBegining)
-					candidate = candidates[0];
-				else
-					candidate = candidates[candidates.length - 1];
-	
-				if((candidate.clientWidth <= maxWidth) && !this._timeDivIsInView(candidate))
-					divToHide = candidate;
+
+				if(directionIsFromBegining) {
+					candidate = hideableTimeDivs[j];
+					timeLimitHit = (candidate._getEndTime() > timeLimit);
+				}
+				else {
+					candidate = hideableTimeDivs[hideableTimeDivs.length - (j + 1)];
+					timeLimitHit = (candidate._getBeginTime() < timeLimit);
+				}
+
+				if(!timeLimitHit)
+					candidate.classList.add("overflow");
 			}
 		}
-
-		return divToHide;
 	}
-	
+
 	/**
 	 * 
-	 * @param {*} direction 
-	 * @param {*} widthToHide 
 	 */
-	_hideOverflowTimeDivs(direction, widthToHide) {
-		let hiddenWidth = 0;
-		
-		while(hiddenWidth < widthToHide) {
-			let widthToHideRest = widthToHide - hiddenWidth;
-			let hideCandidate = this._getTimeDivToHide(direction, widthToHideRest);
+	_unHideOverflowTimeDivs(fromTime, toTime) {
+		let units = Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit);
+		let currentUnitRank = units.indexOf(this._widgetContainer.className);
 
-			if(hideCandidate != null) {
-				let widthBefore = this._timeDiv.clientWidth;
-				hideCandidate.classList.add("overflow");
-				let widthAfter = this._timeDiv.clientWidth;
-				hiddenWidth += (widthBefore - widthAfter);
-				//console.log("hid " + hideCandidate.id + ", gained " + (widthBefore - widthAfter) + "px");
+		for(let i = currentUnitRank; i >= 0; i--) {
+			let unit = units[i];
+			let selector = "";
+			selector += ".time-division-" + unit + ".overflow";
+			let hidenTimeDivs = this._timeDiv.querySelectorAll(selector);
+
+			for(let j = 0; j < hidenTimeDivs.length; j++) {
+				let candidate = hidenTimeDivs[j];
+
+				if((candidate._getEndTime() >= fromTime) && (candidate._getBeginTime() <= toTime))
+					candidate.classList.remove("overflow");
 			}
-			else
-				break;
 		}
+	}
+
+	/**
+	 * 
+	 */
+	_updateHiddenTimeDivs(viewBeginTime, viewEndTime) {
+		let representedDuration = (this._lastRepresentedTime - this._firstRepresentedTime);
+		let timeOverWidthRatio = representedDuration / this._timeDiv.clientWidth;
+		let minLeftTime = viewBeginTime - (2 * this._displayWindow.clientWidth * timeOverWidthRatio);
+		let maxLeftTime = viewBeginTime - (1.5 * this._displayWindow.clientWidth * timeOverWidthRatio);
+		let minRightTime = viewEndTime + (1.5 * this._displayWindow.clientWidth * timeOverWidthRatio);
+		let maxRightTime = viewEndTime + (2 * this._displayWindow.clientWidth * timeOverWidthRatio);
+
+		if(this._firstRepresentedTime < minLeftTime)
+			this._hideOverflowTimeDivs(true, minLeftTime);
+		else if(this._firstRepresentedTime > maxLeftTime)
+			this._unHideOverflowTimeDivs(maxLeftTime, viewEndTime);
 		
-		return hiddenWidth;
-	}
-
-	/**
-	 * 
-	 * @param {*} directionTowardsBegining 
-	 * @return HTMLElement
-	 */
-	_getTimeDivToUnhide(directionTowardsBegining) {
-		let candidate = null;
-		let allHiddenDivs = Array.from(this._timeDiv.querySelectorAll(".time-division.overflow"));
-
-		if(directionTowardsBegining) {
-			let i;
-			let screenLeftTime = this._getViewBeginTime();
-
-			for(i = 0; i < allHiddenDivs.length; i++)
-				if(allHiddenDivs[i]._getEndTime() > screenLeftTime)
-					break;
-
-			if(allHiddenDivs[i - 1])
-				candidate = allHiddenDivs[i - 1];
-		}
-		else {
-			let i;
-			let screenRightTime = this._getViewEndTime();
-
-			for(i = (allHiddenDivs.length - 1); i >= 0; i--)
-				if(allHiddenDivs[i]._getBeginTime() < screenRightTime)
-					break;
-
-			if(allHiddenDivs[i + 1])
-				candidate = allHiddenDivs[i + 1];
-		}
-
-		return candidate;
-	}
-
-	/**
-	 * 
-	 * @param {*} directionTowardsBegining 
-	 * @param {*} widthToUnhide 
-	 * @return unhidden width
-	 */
-	_unHideOverflowTimeDivs(directionTowardsBegining, widthToUnhide) {
-		let unhiddenWidth = 0;
-
-		while(unhiddenWidth < widthToUnhide) {
-			let unhideCandidate = this._getTimeDivToUnhide(directionTowardsBegining);
-
-			if(unhideCandidate != null) {
-				let widthBefore = this._timeDiv.clientWidth;
-				unhideCandidate.classList.remove("overflow");
-				let widthAfter = this._timeDiv.clientWidth;
-				unhiddenWidth += (widthAfter - widthBefore);
-			}
-			else
-				break;
-		}
-
-		return unhiddenWidth;
-	}
-
-	/**
-	 * 
-	 */
-	_updateHiddenTimeDivs() {
-		let changesMade = false;
-		let leftMargin = this._displayWindow.scrollLeft;
-			
-		if(leftMargin < (1.5 * this._displayWindow.clientWidth)) {
-			let widthToUnhide = (2 * this._displayWindow.clientWidth) - leftMargin;
-			let scrollBefore = this._displayWindow.scrollLeft;
-			let unhiddenWidth = this._unHideOverflowTimeDivs(true, widthToUnhide);
-			this._setSilentScroll(scrollBefore + unhiddenWidth);
-			changesMade = (unhiddenWidth > 0);
-		}
-		else if(leftMargin > (2.5 * this._displayWindow.clientWidth)) {
-			let widthToHide = leftMargin - (2 * this._displayWindow.clientWidth);
-			let scrollBefore = this._displayWindow.scrollLeft;
-			let hiddenWidth = this._hideOverflowTimeDivs(true, widthToHide);
-			this._setSilentScroll(scrollBefore - hiddenWidth);
-			changesMade = (hiddenWidth > 0);
-		}
-
-		let rightMargin = this._timeDiv.clientWidth - (this._displayWindow.scrollLeft + this._displayWindow.clientWidth);
-		
-		if(rightMargin < (1.5 * this._displayWindow.clientWidth)) {
-			let widthToUnhide = (2 * this._displayWindow.clientWidth) - rightMargin;
-			let unhiddenWidth = this._unHideOverflowTimeDivs(false, widthToUnhide);
-			changesMade = (changesMade || (unhiddenWidth > 0));
-		}
-		else if(rightMargin > (2.5 * this._displayWindow.clientWidth)) {
-			let widthToHide = rightMargin - (2 * this._displayWindow.clientWidth);
-			let hiddenWidth = this._hideOverflowTimeDivs(false, widthToHide);
-			changesMade = (changesMade || (hiddenWidth > 0));
-		}
+		if(this._lastRepresentedTime < minRightTime)
+			this._unHideOverflowTimeDivs(viewBeginTime, minRightTime);
+		else if(this._lastRepresentedTime > maxRightTime)
+			this._hideOverflowTimeDivs(false, maxRightTime);
 	}
 
 	/**
 	 * 
 	 */
 	_incrementZoom(increment) {
-		let newLevel = this._widgetContainer.className;
+		if(increment != 0) {
+			let newLevel = this._widgetContainer.className;
 
-		// limit zoom out to a 1/4 ratio, in order to prevent non-overflow timedivs from shrinking narrower than the displayable content
-		if((increment > 0) && (increment < (-Math.log(1/4)/10)))
-			increment = -Math.log(1/4)/10;
+			// limit zoom out to a 1/4 ratio, in order to prevent non-overflow timedivs from shrinking narrower than the displayable content
+			if((increment > 0) && (increment < (-Math.log(1/4)/10)))
+				increment = -Math.log(1/4)/10;
 
-		let newWidth = this._currentLevelDivWidth * Math.exp(-increment / 10);
+			let newWidth = this._currentLevelDivWidth * Math.exp(-increment / 10);
 
-		// user zoomed out
-		if(increment > 0) {
-			while(newWidth < KTBS4LA2Timeline.minDivisionWidthPerUnit[newLevel]) {
-				switch(newLevel) {
-					case "millisecond":
-						newLevel = "tenmilliseconds";
-						newWidth = newWidth * 10;
-						break;
-					case "tenmilliseconds":
-						newLevel = "ahundredmilliseconds";
-						newWidth = newWidth * 10;
-						break;
-					case "ahundredmilliseconds":
-						newLevel = "second";
-						newWidth = newWidth * 10;
-						break;
-					case "second":
-						newLevel = "tenseconds";
-						newWidth = newWidth * 10;
-						break;
-					case "tenseconds":
-						newLevel = "minute";
-						newWidth = newWidth * 6;
-						break;
-					case "minute":
-						newLevel = "tenminutes";
-						newWidth = newWidth * 10;
-						break;
-					case "tenminutes":
-						newLevel = "hour";
-						newWidth = newWidth * 6;
-						break;
-					case "hour":
-						newLevel = "day";
-						newWidth = newWidth * 24;
-						break;
-					case "day":
-						newLevel = "month";
-						newWidth = newWidth * 31;
-						break;
-					case "month":
-						newLevel = "year";
-						newWidth = newWidth * 12;
-						break;
+			// user zoomed out
+			if(increment > 0) {
+				while(newWidth < KTBS4LA2Timeline.minDivisionWidthPerUnit[newLevel]) {
+					switch(newLevel) {
+						case "millisecond":
+							newLevel = "tenmilliseconds";
+							newWidth = newWidth * 10;
+							break;
+						case "tenmilliseconds":
+							newLevel = "ahundredmilliseconds";
+							newWidth = newWidth * 10;
+							break;
+						case "ahundredmilliseconds":
+							newLevel = "second";
+							newWidth = newWidth * 10;
+							break;
+						case "second":
+							newLevel = "tenseconds";
+							newWidth = newWidth * 10;
+							break;
+						case "tenseconds":
+							newLevel = "minute";
+							newWidth = newWidth * 6;
+							break;
+						case "minute":
+							newLevel = "tenminutes";
+							newWidth = newWidth * 10;
+							break;
+						case "tenminutes":
+							newLevel = "hour";
+							newWidth = newWidth * 6;
+							break;
+						case "hour":
+							newLevel = "day";
+							newWidth = newWidth * 24;
+							break;
+						case "day":
+							newLevel = "month";
+							newWidth = newWidth * 31;
+							break;
+						case "month":
+							newLevel = "year";
+							newWidth = newWidth * 12;
+							break;
+					}
+				}
+
+				let newLevelHasExceededTop = (
+						((this._initialLevel == "month") && (newLevel == "year"))
+					||	((this._initialLevel == "day") && ((newLevel == "year") || (newLevel == "month")))
+					||	((this._initialLevel == "hour") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day")))
+					||	((this._initialLevel == "tenminutes") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour")))
+					||	((this._initialLevel == "minute") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour") || (newLevel == "tenminutes")))
+					||	((this._initialLevel == "tenseconds") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour") || (newLevel == "tenminutes") || (newLevel == "minute")))
+					||	((this._initialLevel == "second") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour") || (newLevel == "tenminutes") || (newLevel == "minute") || (newLevel == "tenseconds")))
+					||	((this._initialLevel == "ahundredmilliseconds") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour") || (newLevel == "tenminutes") || (newLevel == "minute") || (newLevel == "tenseconds") || (newLevel == "second")))
+					||	((this._initialLevel == "tenmilliseconds") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour") || (newLevel == "tenminutes") || (newLevel == "minute") || (newLevel == "tenseconds") || (newLevel == "second") || (newLevel == "ahundredmilliseconds")))
+					||	((this._initialLevel == "millisecond"))
+				);
+
+				// prevent user from zooming out more than the initial zoom settings
+				if(newLevelHasExceededTop || ((newLevel == this._initialLevel) && (newWidth <= this._initialDivWidth))) {
+					newLevel = this._initialLevel;
+					newWidth = this._initialDivWidth;
+
+					if(this._displayWindow.classList.contains("scrollable"))
+						this._displayWindow.classList.remove("scrollable");
 				}
 			}
+			// user zoomed in
+			else {
+				if((newLevel == "year") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["month"] * 12))) {
+					newLevel = "month";
+					newWidth = newWidth / 12;
+				}
 
-			let newLevelHasExceededTop = (
-					((this._initialLevel == "month") && (newLevel == "year"))
-				||	((this._initialLevel == "day") && ((newLevel == "year") || (newLevel == "month")))
-				||	((this._initialLevel == "hour") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day")))
-				||	((this._initialLevel == "tenminutes") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour")))
-				||	((this._initialLevel == "minute") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour") || (newLevel == "tenminutes")))
-				||	((this._initialLevel == "tenseconds") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour") || (newLevel == "tenminutes") || (newLevel == "minute")))
-				||	((this._initialLevel == "second") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour") || (newLevel == "tenminutes") || (newLevel == "minute") || (newLevel == "tenseconds")))
-				||	((this._initialLevel == "ahundredmilliseconds") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour") || (newLevel == "tenminutes") || (newLevel == "minute") || (newLevel == "tenseconds") || (newLevel == "second")))
-				||	((this._initialLevel == "tenmilliseconds") && ((newLevel == "year") || (newLevel == "month") || (newLevel == "day") || (newLevel == "hour") || (newLevel == "tenminutes") || (newLevel == "minute") || (newLevel == "tenseconds") || (newLevel == "second") || (newLevel == "ahundredmilliseconds")))
-				||	((this._initialLevel == "millisecond"))
-			);
+				if((newLevel == "month") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["day"] * 31))) {
+					newLevel = "day";
+					newWidth = newWidth / 31;
+				}
 
-			// prevent user from zooming out more than the initial zoom settings
-			if(newLevelHasExceededTop || ((newLevel == this._initialLevel) && (newWidth <= this._initialDivWidth))) {
-				newLevel = this._initialLevel;
-				newWidth = this._initialDivWidth;
+				if((newLevel == "day") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["hour"] * 24))) {
+					newLevel = "hour";
+					newWidth = newWidth / 24;
+				}
 
-				if(this._displayWindow.classList.contains("scrollable"))
-					this._displayWindow.classList.remove("scrollable");
+				if((newLevel == "hour") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["tenminutes"] * 6))) {
+					newLevel = "tenminutes";
+					newWidth = newWidth / 6;
+				}
+
+				if((newLevel == "tenminutes") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["minute"] * 10))) {
+					newLevel = "minute";
+					newWidth = newWidth / 10;
+				}
+
+				if((newLevel == "minute") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["tenseconds"] * 6))) {
+					newLevel = "tenseconds";
+					newWidth = newWidth / 6;
+				}
+
+				if((newLevel == "tenseconds") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["second"] * 10))) {
+					newLevel = "second";
+					newWidth = newWidth / 10;
+				}
+
+				if((newLevel == "second") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["ahundredmilliseconds"] * 10))) {
+					newLevel = "ahundredmilliseconds";
+					newWidth = newWidth / 10;
+				}
+
+				if((newLevel == "ahundredmilliseconds") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["tenmilliseconds"] * 10))) {
+					newLevel = "tenmilliseconds";
+					newWidth = newWidth / 10;
+				}
+
+				if((newLevel == "tenmilliseconds") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["millisecond"] * 10))) {
+					newLevel = "millisecond";
+					newWidth = newWidth / 10;
+				}
+
+				// prevent user from zooming in once we've reached the "millisecond" level
+				if((newLevel == "millisecond") && (newWidth > KTBS4LA2Timeline.minDivisionWidthPerUnit["millisecond"]))
+					newWidth = KTBS4LA2Timeline.minDivisionWidthPerUnit["millisecond"];
+
+				if(!this._displayWindow.classList.contains("scrollable"))
+					this._displayWindow.classList.add("scrollable");
 			}
+
+			if((newLevel != this._widgetContainer.className) || (newWidth != this._currentLevelDivWidth))
+				this._setWidthRules(newLevel, newWidth);
 		}
-		// user zoomed in
-		else {
-			if((newLevel == "year") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["month"] * 12))) {
-				newLevel = "month";
-				newWidth = newWidth / 12;
-			}
-
-			if((newLevel == "month") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["day"] * 31))) {
-				newLevel = "day";
-				newWidth = newWidth / 31;
-			}
-
-			if((newLevel == "day") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["hour"] * 24))) {
-				newLevel = "hour";
-				newWidth = newWidth / 24;
-			}
-
-			if((newLevel == "hour") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["tenminutes"] * 6))) {
-				newLevel = "tenminutes";
-				newWidth = newWidth / 6;
-			}
-
-			if((newLevel == "tenminutes") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["minute"] * 10))) {
-				newLevel = "minute";
-				newWidth = newWidth / 10;
-			}
-
-			if((newLevel == "minute") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["tenseconds"] * 6))) {
-				newLevel = "tenseconds";
-				newWidth = newWidth / 6;
-			}
-
-			if((newLevel == "tenseconds") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["second"] * 10))) {
-				newLevel = "second";
-				newWidth = newWidth / 10;
-			}
-
-			if((newLevel == "second") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["ahundredmilliseconds"] * 10))) {
-				newLevel = "ahundredmilliseconds";
-				newWidth = newWidth / 10;
-			}
-
-			if((newLevel == "ahundredmilliseconds") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["tenmilliseconds"] * 10))) {
-				newLevel = "tenmilliseconds";
-				newWidth = newWidth / 10;
-			}
-
-			if((newLevel == "tenmilliseconds") && (newWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["millisecond"] * 10))) {
-				newLevel = "millisecond";
-				newWidth = newWidth / 10;
-			}
-
-			// prevent user from zooming in once we've reached the "millisecond" level
-			if((newLevel == "millisecond") && (newWidth > KTBS4LA2Timeline.minDivisionWidthPerUnit["millisecond"]))
-				newWidth = KTBS4LA2Timeline.minDivisionWidthPerUnit["millisecond"];
-
-			if(!this._displayWindow.classList.contains("scrollable"))
-				this._displayWindow.classList.add("scrollable");
-		}
-
-		if((newLevel != this._widgetContainer.className) || (newWidth != this._currentLevelDivWidth))
-			this._setWidthRules(newLevel, newWidth);
 	}
 
 	/**

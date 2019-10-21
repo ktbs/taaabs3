@@ -800,7 +800,9 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onObselListPageRead(obsels, nextPageURI) {
 		this._componentReady.then(() => {
-			this._addObsels(obsels);
+			setTimeout(() => {
+				this._addObsels(obsels);
+			});
 		});
 		
 		if(nextPageURI == null) {
