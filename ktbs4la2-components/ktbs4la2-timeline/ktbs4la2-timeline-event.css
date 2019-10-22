@@ -12,6 +12,31 @@
 	display: none;
 }
 
+#hidden-siblings-marker {
+	font-size: 6pt;
+	font-style: italic;
+	transform: rotate(-90deg);
+	transform-origin: left;
+	opacity: 0.2;
+	display: block;
+	position: absolute;
+	left: 6px;
+	top: -5px;
+	padding: 0px 4px 0px 2px;
+	cursor: default;
+}
+
+#hidden-siblings-marker:hover {
+	opacity: 1;
+	background-color: white;
+	border-radius: 3px;
+	font-weight: bold;
+}
+
+:host(:not([hidden-siblinbgs-count])) #hidden-siblings-marker {
+	display: none;
+}
+
 #marker {
 	display: inline-block;
 	position: relative;

@@ -11,23 +11,13 @@
 #widget-container {
 	display: flex;
 	flex-direction: row;
-	width: 100%;
+	height: 100%;
 }
 
 #legend {
-	display: flex;
-	flex-direction: column;
-	margin-top: 5px;
 	margin-right: 2px;
-	height: 320px;
-	position: relative;
 	text-align: right;
-}
-
-.legend-group {
-	display: flex;
-	flex-direction: row-reverse;
-	height: 60px;
+	width: 70px;
 }
 
 .legend-label {
@@ -35,7 +25,6 @@
 	height: 20px;
 	line-height: 15px;
 	font-size: 8pt;
-	width: 70px;
 	color: white;
 	font-weight: bold;
 	opacity: 0;
@@ -73,7 +62,7 @@
 /* ---------------------------------------------------------- */
 
 #display-window {
-	overflow-x: hidden;
+	overflow: hidden;
 	width: 100%;
 }
 
@@ -89,12 +78,6 @@
 	color: #AAA;
 }
 
-#timeline-container {
-	position: relative;
-	display: inline-flex;
-	flex-direction: column;
-}
-
 #display-window.empty #empty-message {
 	display: flex;
 }
@@ -103,11 +86,17 @@
 	display: none;
 }
 
-#timeline-container * {
-	align-self: flex-end;
+#timeline-container {
+	height: 100%; 
+	position: relative;
+	display: inline-flex;
+	flex-direction: column;
+	top: -5px;
 }
 
 #time {
+	height: 100%;
+	min-height: 150px;
 	display: flex;
 	flex-direction: row;
 }
@@ -119,6 +108,8 @@
 	height: 100%;
 	width: 100%;
 }
+
+/* ------------------------------------------------- */
 
 #display-window.scrollable #events {
 	cursor: grab;
@@ -140,10 +131,30 @@
 	cursor: not-allowed;
 }
 
+/* ------------------------------------------------------- */
+
 .time-division {
 	display: flex;
 	flex-direction: row;
 	animation: fadein 0.5s;
+	padding-top: 20px;
+}
+
+#widget-container.minute .time-division-tenminutes,
+#widget-container.tenseconds .time-division-tenminutes,
+#widget-container.second .time-division-tenminutes,
+#widget-container.ahundredmilliseconds .time-division-tenminutes,
+#widget-container.tenmilliseconds .time-division-tenminutes,
+#widget-container.millisecond .time-division-tenminutes,
+#widget-container.second .time-division-tenseconds,
+#widget-container.ahundredmilliseconds .time-division-tenseconds,
+#widget-container.tenmilliseconds .time-division-tenseconds,
+#widget-container.millisecond .time-division-tenseconds,
+#widget-container.tenmilliseconds .time-division-ahundredmilliseconds,
+#widget-container.millisecond .time-division-ahundredmilliseconds,
+#widget-container.millisecond .time-division-tenmilliseconds
+{
+	padding-top: 0;
 }
 
 .time-division.overflow, .time-division.overflow * {
@@ -157,6 +168,7 @@
 	left: 0;
 	font-size: 8pt;
 	width: 0;
+	margin-top: -20px;
 }
 
 .time-division.odd {	
@@ -170,20 +182,12 @@
 	background-size: cover;
 }
 
-.time-division-year {
-	height: 320px;
-}
-
 .time-division-year.odd { 
 	background-color: cornflowerblue;
 }
 
 .time-division-year.even {
 	color: cornflowerblue;
-}
-
-.time-division-month {
-	height: 300px;
 }
 
 .time-division-month.odd {	
@@ -194,20 +198,12 @@
 	color: lightskyblue;
 }
 
-.time-division-day {
-	height: 280px;
-}
-
 .time-division-day.odd { 
 	background-color: powderblue;
 }
 
 .time-division-day.even {
 	color: powderblue;
-}
-
-.time-division-hour {
-	height: 260px;
 }
 
 .time-division-hour.odd { 
@@ -218,10 +214,6 @@
 	color: violet;
 }
 
-.time-division-minute, .time-division-tenminutes {
-	height: 240px;
-}
-
 .time-division-minute.odd, .time-division-tenminutes.odd { 
 	background-color: plum;
 }
@@ -230,20 +222,12 @@
 	color: plum;
 }
 
-.time-division-second, .time-division-tenseconds {
-	height: 220px;
-}
-
 .time-division-second.odd, .time-division-tenseconds.odd { 
 	background-color: thistle;
 }
 
 .time-division-second.even, .time-division-tenseconds.even {
 	color: thistle;
-}
-
-.time-division-ahundredmilliseconds, .time-division-tenmilliseconds, .time-division-millisecond {
-	height: 200px;
 }
 
 .time-division-ahundredmilliseconds.odd, .time-division-tenmilliseconds.odd, .time-division-millisecond.odd { 
@@ -277,11 +261,19 @@
 #widget-container.minute .time-division-tenseconds,
 #widget-container.minute .time-division-tenminutes > .label,
 #widget-container.tenseconds .time-division-second,
+#widget-container.tenseconds .time-division-tenminutes > .label,
 #widget-container.second .time-division-ahundredmilliseconds,
+#widget-container.second .time-division-tenminutes > .label,
 #widget-container.second .time-division-tenseconds > .label,
 #widget-container.ahundredmilliseconds .time-division-tenmilliseconds,
+#widget-container.ahundredmilliseconds .time-division-tenminutes > .label,
+#widget-container.ahundredmilliseconds .time-division-tenseconds > .label,
 #widget-container.tenmilliseconds .time-division-millisecond,
+#widget-container.tenmilliseconds .time-division-tenminutes > .label,
+#widget-container.tenmilliseconds .time-division-tenseconds > .label,
 #widget-container.tenmilliseconds .time-division-ahundredmilliseconds > .label,
+#widget-container.millisecond .time-division-tenminutes > .label,
+#widget-container.millisecond .time-division-tenseconds > .label,
 #widget-container.millisecond .time-division-ahundredmilliseconds > .label,
 #widget-container.millisecond .time-division-tenmilliseconds > .label
 {

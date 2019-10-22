@@ -14,8 +14,6 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		this._endTime = null;
 		this._isVisible = null;
 
-		this._bindedUpdatePosX = this._updatePosX.bind(this);
-
 		this._resolveParentTimelineKnown;
 		this._rejectParentTimelineKnown;
 
@@ -37,6 +35,7 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		observedAttributes.push("href");
 		observedAttributes.push("color");
 		observedAttributes.push("title");
+		observedAttributes.push("hidden-siblinbgs-count");
 		return observedAttributes;
 	}
 
@@ -75,6 +74,10 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 			this._componentReady.then(() => {
 				this._marker.setAttribute("title", newValue);
 			});
+		else if(attributeName == "hidden-siblinbgs-count")
+			this._componentReady.then(() => {
+				this._hiddenSiblingsMarker.innerText = "+" + newValue;
+			});
 	}
 
 	/**
@@ -86,7 +89,8 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		
 		if(this._parentTimeline) {
 			this._resolveParentTimelineKnown();
-			this._parentTimeline.addEventListener("update-represented-time", this._bindedUpdatePosX, false);
+			this._parentTimeline.addEventListener("update-represented-time", this._updatePosX.bind(this), false);
+			this._parentTimeline.addEventListener("update-max-displayable-rows", this._updateRow.bind(this), false);
 		}
 		else {
 			this._rejectParentTimelineKnown();
@@ -99,6 +103,7 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 */
 	onComponentReady() {
 		this._container = this.shadowRoot.querySelector("#container");
+		this._hiddenSiblingsMarker = this.shadowRoot.querySelector("#hidden-siblings-marker");
 		this._marker = this.shadowRoot.querySelector("#marker");
 		this._marker.addEventListener("click", this._onClickMarker.bind(this));
 		this._popupDiv = this.shadowRoot.querySelector("#popup");
@@ -275,7 +280,7 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 
 			if(!isNaN(newRowInt)) {
 				this._parentTimelineKnown.then(() => {
-					this.rowIsOverflow = (newRowInt > this._parentTimeline._maxDisplayableRows);
+					this.rowIsOverflow = (newRowInt > (this._parentTimeline._maxDisplayableRows - 1));
 					
 					this._componentReady.then(() => {
 						this._container.style.bottom = (newRowInt * 15) + "px";

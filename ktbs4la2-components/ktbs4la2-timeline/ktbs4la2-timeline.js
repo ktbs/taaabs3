@@ -254,7 +254,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._requestedZoomMouseTime = null;
 		this._requestUpdateTimeDivisionsID = null;
 		this._updateTimeDivisionsDelay = 250;
-		this._maxDisplayableRows = 18;
+		this._maxDisplayableRows = null;
 		this._watchScroll = true;
 		this._requestUnsetZoomCursorID = null;
 		this._requestUnsetZoomCursorDelay = 300;
@@ -328,13 +328,84 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	onComponentReady() {
 		this._widgetContainer = this.shadowRoot.querySelector("#widget-container");
-		this._displayWindow = this.shadowRoot.querySelector("#display-window");
+
+		let displayWindowResizeObserver = new ResizeObserver(this._onWidgetContainerResize.bind(this));
+		displayWindowResizeObserver.observe(this._widgetContainer, { box : 'border-box' });
+
 		this._timeDiv = this.shadowRoot.querySelector("#time");
 		this._eventsDiv = this.shadowRoot.querySelector("#events");
+		this._displayWindow = this.shadowRoot.querySelector("#display-window");
 		this._displayWindow.addEventListener("wheel", this._onMouseWheel.bind(this), { passive: false });
 		this._displayWindow.addEventListener("mousedown", this._onMouseDown.bind(this));
 		this._displayWindow.addEventListener("scroll", this._onScroll.bind(this));
 		this._updateIsEmpty();
+	}
+
+	/**
+	 * 
+	 */
+	_onWidgetContainerResize(event) {
+		this._componentReady.then(() => {
+			this._updateMaxDisplayableRows();
+		});
+	}
+
+	/**
+	 * 
+	 */
+	_updateMaxDisplayableRows() {
+		this._componentReady.then(() => {
+			let widgetHeight = this._widgetContainer.getBoundingClientRect().height;
+
+			this._timeDivisionsInitialized.then(() => {
+				let currentLevel = this._widgetContainer.className;
+				let availableHeightForEvents;
+				
+				switch(currentLevel) {
+					case "year" :
+						availableHeightForEvents = widgetHeight - 30;
+						break;
+					case "month" :
+						availableHeightForEvents = widgetHeight - 50;
+						break;
+					case "day" :
+						availableHeightForEvents = widgetHeight - 70;
+						break;
+					case "hour" :
+						availableHeightForEvents = widgetHeight - 90;
+						break;
+					case "tenminutes" :
+						availableHeightForEvents = widgetHeight - 110;
+						break;
+					case "minute" :
+						availableHeightForEvents = widgetHeight - 110;
+						break;
+					case "tenseconds" :
+						availableHeightForEvents = widgetHeight - 130;
+						break;
+					case "second" :
+						availableHeightForEvents = widgetHeight - 130;
+						break;
+					case "ahundredmilliseconds" :
+						availableHeightForEvents = widgetHeight - 150;
+						break;
+					case "tenmilliseconds" :
+						availableHeightForEvents = widgetHeight - 150;
+						break;
+					case "millisecond" :
+						availableHeightForEvents = widgetHeight - 150;
+						break;
+				}
+				
+				let newMaxDisplayableRows = Math.floor(availableHeightForEvents / 15);
+				
+				if(newMaxDisplayableRows != this._maxDisplayableRows) {
+					this._maxDisplayableRows = newMaxDisplayableRows;
+					this.dispatchEvent(new CustomEvent("update-max-displayable-rows"));
+					this._requestUpdateEventsRows();
+				}
+			});
+		});
 	}
 
 	/**
@@ -501,7 +572,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 					if(currentEventTime >= minDisplayableTime) {
 						// we browse the "previousEventsPerRow" Array
-						for(let j = 0; (availableRow == null) && (j <= (this._maxDisplayableRows)) && (j < previousEventsPerRow.length); j++) {
+						for(let j = 0; (availableRow == null) && (j <= (this._maxDisplayableRows - 1)) && (j < previousEventsPerRow.length); j++) {
 							let previousEvent = previousEventsPerRow[j];
 
 							if(previousEvent.hasAttribute("shape") && (previousEvent.getAttribute("shape") != "duration-bar")) {
@@ -530,12 +601,26 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					if(!currentEvent.hasAttribute("row") || (parseInt(currentEvent.getAttribute("row")) != availableRow))
 						currentEvent.setAttribute("row", availableRow);
 
-					if(availableRow <= this._maxDisplayableRows) {
+					if(availableRow <= (this._maxDisplayableRows - 1)) {
+						if(currentEvent.hasAttribute("hidden-siblinbgs-count"))
+							currentEvent.removeAttribute("hidden-siblinbgs-count");
+
 						previousEventsPerRow[availableRow] = currentEvent;
 						previousEventsTimePerRow[availableRow] = currentEventTime;
 
 						if(previousEventsPerRow.length >= this._maxDisplayableRows)
 							minDisplayableTime = Math.min(...previousEventsTimePerRow) + timeBeginThreshold;
+					}
+					else if(previousEventsPerRow.length > 0) {
+						let lastVisibleEvent = previousEventsPerRow[previousEventsPerRow.length - 1];
+
+						if(lastVisibleEvent.hasAttribute("hidden-siblinbgs-count")) {
+							let hiddenSiblingsCount = parseInt(lastVisibleEvent.getAttribute("hidden-siblinbgs-count"));
+							hiddenSiblingsCount++;
+							lastVisibleEvent.setAttribute("hidden-siblinbgs-count", hiddenSiblingsCount);
+						}
+						else
+							lastVisibleEvent.setAttribute("hidden-siblinbgs-count", "1");
 					}
 				}
 			}
@@ -881,6 +966,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this.shadowRoot.getElementById("div-width-rules").innerText = css;
 		this._widgetContainer.className = newLevel;
 		this._currentLevelDivWidth = newDivWidth;
+		this._updateMaxDisplayableRows();
 	}
 
 	/**
