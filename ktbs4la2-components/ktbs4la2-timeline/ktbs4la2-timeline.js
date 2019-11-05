@@ -236,28 +236,41 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url);
 
+		this._beginTime = null;
+		this._endTime = null;
+		this._eventCountsPerTime = new Array();
+
 		this._firstRepresentedTime;
 		this._lastRepresentedTime;
 		this._currentLevelDivWidth;
 
-		this._bindedDragFunction = this._onDrag.bind(this);
-		this._bindedStopDraggingFunction = this._onStopDragging.bind(this);
-		this._is_dragging = false;
-		this._drag_origin_x;
-		this._initial_scroll;
+		this._bindedDragDisplayWindowFunction = this._onDragDisplayWindow.bind(this);
+		this._bindedStopDraggingDisplayWindowFunction = this._onStopDraggingDisplayWindow.bind(this);
+		this._displayWindowIsBeingDragged = false;
+		this._displayWindowDragMouseTime;
+
+		this._watchScroll = true;
+		this._requestedScrollAmount = 0;
+		this._scrollRequestID = null;
+		this._bindedDragScrollBarCursorFunction = this._onDragScrollBarCursor.bind(this);
+		this._bindedStopDraggingScrollBarCursorFunction = this._onStopDraggingScrollBarCursor.bind(this);
+		this._scrollBarDragOrigin;
+		this._dragScrollBarCursorUpdateViewID = null;
+		this._scrollLeftButtonPressedIntervalID = null;
+		this._scrollRightButtonPressedIntervalID = null;
+
 		this._updateEventsRowsDelay = 250;
 		this._requestUpdateEventsRowsID = null;
 		this._requestZoomIncrementID = null;
-		this._requestZoomIncrementID2 = null;
 		this._requestedZoomIncrementAmount = 0;
 		this._requestedZoomMouseRelativeX = null;
 		this._requestedZoomMouseTime = null;
 		this._requestUpdateTimeDivisionsID = null;
 		this._updateTimeDivisionsDelay = 250;
 		this._maxDisplayableRows = null;
-		this._watchScroll = true;
 		this._requestUnsetZoomCursorID = null;
 		this._requestUnsetZoomCursorDelay = 300;
+		this._onWidgetContainerResizeID = null;
 
 		this._resolveBeginSet;
 		this._rejectBeginSet;
@@ -294,6 +307,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this.emitErrorEvent(new Error("Missing required attribute \"begin\" and/or \"end\""));
 			}.bind(this));
 
+		this._eventsSortedUntilRank = 0;
 		this._eventsNodesObserver = new MutationObserver(this._onEventsNodesMutation.bind(this));
 		this._eventsNodesObserver.observe(this, { childList: true, subtree: true, attributes: true, attributeFilter: ["visible"]});
 		
@@ -329,24 +343,58 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	onComponentReady() {
 		this._widgetContainer = this.shadowRoot.querySelector("#widget-container");
 
-		let displayWindowResizeObserver = new ResizeObserver(this._onWidgetContainerResize.bind(this));
-		displayWindowResizeObserver.observe(this._widgetContainer, { box : 'border-box' });
-
 		this._timeDiv = this.shadowRoot.querySelector("#time");
 		this._eventsDiv = this.shadowRoot.querySelector("#events");
 		this._displayWindow = this.shadowRoot.querySelector("#display-window");
 		this._displayWindow.addEventListener("wheel", this._onMouseWheel.bind(this), { passive: false });
-		this._displayWindow.addEventListener("mousedown", this._onMouseDown.bind(this));
+		this._displayWindow.addEventListener("mousedown", this._onDisplayWindowMouseDown.bind(this));
 		this._displayWindow.addEventListener("scroll", this._onScroll.bind(this));
+		this._scrollBar = this.shadowRoot.querySelector("#scrollbar");
+		this._scrollBarBackground = this.shadowRoot.querySelector("#scrollbar-background");
+		this._scrollBarBackground.addEventListener("click", this._onClickScrollBarBackGround.bind(this));
+		this._scrollBarCursor = this.shadowRoot.querySelector("#scrollbar-cursor");
+		this._scrollBarCursor.addEventListener("mousedown", this._onScrollBarCursorMouseDown.bind(this));
+		
+		this._dezoomButton = this.shadowRoot.querySelector("#dezoom-button");
+		this._dezoomButton.addEventListener("click", this._onClickDezoomButton.bind(this));
+
+		this._scrollLeftButton = this.shadowRoot.querySelector("#scroll-left-button");
+		this._scrollLeftButton.addEventListener("mousedown", this._onScrollLeftButtonMouseDown.bind(this));
+		this._scrollLeftButton.addEventListener("mouseup", this._onScrollLeftButtonMouseUp.bind(this));
+		this._scrollLeftButton.addEventListener("mouseout", this._onScrollLeftButtonMouseUp.bind(this));
+		
+		this._scrollRightButton = this.shadowRoot.querySelector("#scroll-right-button");
+		this._scrollRightButton.addEventListener("mousedown", this._onScrollRightButtonMouseDown.bind(this));
+		this._scrollRightButton.addEventListener("mouseup", this._onScrollRightButtonMouseUp.bind(this));
+		this._scrollRightButton.addEventListener("mouseout", this._onScrollRightButtonMouseUp.bind(this));
+
+		try {
+			let displayWindowResizeObserver = new ResizeObserver(this._onWidgetContainerResize.bind(this));
+			displayWindowResizeObserver.observe(this._widgetContainer, { box : 'border-box' });
+		}
+		catch(error) {
+			this.emitErrorEvent(error);
+		}
+
 		this._updateIsEmpty();
 	}
 
 	/**
 	 * 
 	 */
-	_onWidgetContainerResize(event) {
-		this._componentReady.then(() => {
+	_onWidgetContainerResize(entries, observer) {
+		if(this._onWidgetContainerResizeID != null)
+			clearTimeout(this._onWidgetContainerResizeID);
+
+		this._onWidgetContainerResizeID = setTimeout(() => {
 			this._updateMaxDisplayableRows();
+		
+			this._timeDivisionsInitialized.then(() => {
+				this._updateScrollBarCursor();
+				this._updateScrollBarContent();
+			});
+
+			this._onWidgetContainerResizeID = null;
 		});
 	}
 
@@ -355,7 +403,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_updateMaxDisplayableRows() {
 		this._componentReady.then(() => {
-			let widgetHeight = this._widgetContainer.getBoundingClientRect().height;
+			let widgetHeight = this._displayWindow.getBoundingClientRect().height;
 
 			this._timeDivisionsInitialized.then(() => {
 				let currentLevel = this._widgetContainer.className;
@@ -363,37 +411,37 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				
 				switch(currentLevel) {
 					case "year" :
-						availableHeightForEvents = widgetHeight - 30;
+						availableHeightForEvents = widgetHeight - 25;
 						break;
 					case "month" :
-						availableHeightForEvents = widgetHeight - 50;
+						availableHeightForEvents = widgetHeight - 45;
 						break;
 					case "day" :
-						availableHeightForEvents = widgetHeight - 70;
+						availableHeightForEvents = widgetHeight - 65;
 						break;
 					case "hour" :
-						availableHeightForEvents = widgetHeight - 90;
+						availableHeightForEvents = widgetHeight - 85;
 						break;
 					case "tenminutes" :
-						availableHeightForEvents = widgetHeight - 110;
+						availableHeightForEvents = widgetHeight - 105;
 						break;
 					case "minute" :
-						availableHeightForEvents = widgetHeight - 110;
+						availableHeightForEvents = widgetHeight - 105;
 						break;
 					case "tenseconds" :
-						availableHeightForEvents = widgetHeight - 130;
+						availableHeightForEvents = widgetHeight - 125;
 						break;
 					case "second" :
-						availableHeightForEvents = widgetHeight - 130;
+						availableHeightForEvents = widgetHeight - 125;
 						break;
 					case "ahundredmilliseconds" :
-						availableHeightForEvents = widgetHeight - 150;
+						availableHeightForEvents = widgetHeight - 145;
 						break;
 					case "tenmilliseconds" :
-						availableHeightForEvents = widgetHeight - 150;
+						availableHeightForEvents = widgetHeight - 145;
 						break;
 					case "millisecond" :
-						availableHeightForEvents = widgetHeight - 150;
+						availableHeightForEvents = widgetHeight - 145;
 						break;
 				}
 				
@@ -430,46 +478,68 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 *
 	 */
 	_getViewBeginTime() {
-		let lastTime = this._getActualLastRepresentedTime();
-		let firstTime = this._getActualFirstRepresentedTime();
-		let totalTime = lastTime - firstTime;
+		let totalTime = this._lastRepresentedTime - this._firstRepresentedTime;
 		let timeOverWidthRatio = totalTime / this._timeDiv.clientWidth;
 		let leftBorderTimeOffsetTime = this._displayWindow.scrollLeft * timeOverWidthRatio;
-		return (firstTime + leftBorderTimeOffsetTime);
+		return (this._firstRepresentedTime + leftBorderTimeOffsetTime);
 	}
 
 	/**
 	 * 
 	 */
 	_getViewEndTime() {
-		let lastTime = this._getActualLastRepresentedTime();
-		let firstTime = this._getActualFirstRepresentedTime();
-		let totalTime = lastTime - firstTime;
+		let totalTime = this._lastRepresentedTime - this._firstRepresentedTime;
 		let timeOverWidthRatio = totalTime / this._timeDiv.clientWidth;
-		let rightBorderTimeOffset = (this._displayWindow.scrollLeft + this._displayWindow.clientWidth) * timeOverWidthRatio;
-		let lastVisibleTime = firstTime + rightBorderTimeOffset;
+		let rightBorderTimeOffsetTime = (this._displayWindow.scrollLeft + this._displayWindow.clientWidth) * timeOverWidthRatio;
+		return (this._firstRepresentedTime + rightBorderTimeOffsetTime);
+	}
 
-		if(lastVisibleTime > lastTime)
-			lastVisibleTime = lastTime;
+	/**
+	 * 
+	 */
+	get beginTime() {
+		if(!this._beginTime) {
+			let firstInitialTimeDiv = this._timeDiv.querySelector(".time-division-" + this._initialLevel);
+			this._beginTime = firstInitialTimeDiv._getBeginTime();
+		}
 
-		return (lastVisibleTime);
+		return this._beginTime;
+	}
+
+	/**
+	 * 
+	 */
+	get endTime() {
+		if(!this._endTime) {
+			let allInitialTimeDivs = this._timeDiv.querySelectorAll(".time-division-" + this._initialLevel);
+
+			if(allInitialTimeDivs.length > 0) {
+				let lastInitialTimeDiv = allInitialTimeDivs[allInitialTimeDivs.length - 1];
+				this._endTime = lastInitialTimeDiv._getEndTime();
+			}
+		}
+
+		return this._endTime;
 	}
 
 	/**
 	 * 
 	 */
 	_sortEventNodes() {
+		let eventNodes = this._getAllEventNodes();
+		let sortedUntil = this._eventsSortedUntilRank;
 		let inversionProcessed;
-		let sortedUntil = 0;
-		
+
 		do {
 			inversionProcessed = false;
-			let eventNodes = this._getAllEventNodes();
 			let firstInversion = null;
 
 			for(let i = sortedUntil; i < (eventNodes.length - 2); i++)
 				if(parseInt(eventNodes[i].getAttribute("begin")) > parseInt(eventNodes[i+1].getAttribute("begin"))) {
 					eventNodes[i].before(eventNodes[i+1]);
+					let temp = eventNodes[i];
+					eventNodes[i] = eventNodes[i+1];
+					eventNodes[i+1] = temp;
 					inversionProcessed = true;
 
 					if(firstInversion == null)
@@ -478,6 +548,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 			sortedUntil = firstInversion;
 		} while(inversionProcessed);
+
+		this._eventsSortedUntilRank = eventNodes.length;
 	}
 
 	/**
@@ -534,9 +606,12 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		if(addedOrRemovedEvent) {
 			this._componentReady.then(() => {
-				this._updateIsEmpty();
-				this._sortEventNodes();
-				this._requestUpdateEventsRows();
+				setTimeout(() => {
+					this._updateIsEmpty();
+					this._sortEventNodes();
+					this._updateScrollBarContent();
+					this._requestUpdateEventsRows();
+				});
 			});
 		}
 		else if(changedEventVisibility)
@@ -632,13 +707,88 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_updateScrollBarCursor() {
+		let timeDivOffsetTime = this._firstRepresentedTime - this.beginTime;
+		let timeDivTimeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
+		
+		let viewBeginOffsetTime = timeDivOffsetTime + (this._displayWindow.scrollLeft * timeDivTimeOverWidthRatio);
+		let viewEndOffsetTime = timeDivOffsetTime + ((this._displayWindow.scrollLeft + this._displayWindow.clientWidth) * timeDivTimeOverWidthRatio);
+
+		let totalTimeDuration = this.endTime - this.beginTime;
+		let scrollBarWidth = this._scrollBar.clientWidth;
+		let scrollBarTimeOverWidthRatio = totalTimeDuration / scrollBarWidth;
+		let cursorLeft = viewBeginOffsetTime / scrollBarTimeOverWidthRatio;
+
+		let viewDuration = viewEndOffsetTime - viewBeginOffsetTime;
+		let cursorWidth = viewDuration / scrollBarTimeOverWidthRatio;
+
+		if(cursorWidth > (scrollBarWidth - cursorLeft))
+			cursorWidth = (scrollBarWidth - cursorLeft);
+
+		if(cursorWidth < 1) {
+			cursorWidth = 1;
+
+			if(!this._scrollBarCursor.classList.contains("view-too-small"))
+				this._scrollBarCursor.classList.add("view-too-small");
+		}
+		else {
+			if(this._scrollBarCursor.classList.contains("view-too-small"))
+				this._scrollBarCursor.classList.remove("view-too-small");
+		}
+
+		this._scrollBarCursor.style.width = Math.round(cursorWidth) + "px";
+		this._scrollBarCursor.style.left = (cursorLeft - 2) + "px";
+	}
+
+	/**
+	 * 
+	 */
 	_onScroll(event) {
 		event.preventDefault();
 
-		if(this._watchScroll != false)
+		if(this._watchScroll != false) {
 			this._requestUpdateTimeDivisions();
+			this._updateScrollBarCursor();
+		}
 		else
 			this._watchScroll = true;
+
+		this._updateScrollButtons();
+	}
+
+	/**
+	 * 
+	 */
+	_updateScrollButtons() {
+		if(this._beginIsInView()) {
+			if(!this._scrollLeftButton.hasAttribute("disabled"))
+				this._scrollLeftButton.setAttribute("disabled", "");
+		}
+		else {
+			if(this._scrollLeftButton.hasAttribute("disabled"))
+				this._scrollLeftButton.removeAttribute("disabled");
+		}
+
+		if(this._endIsInView()) {
+			if(!this._scrollRightButton.hasAttribute("disabled"))
+				this._scrollRightButton.setAttribute("disabled", "");
+		}
+		else {
+			if(this._scrollRightButton.hasAttribute("disabled"))
+				this._scrollRightButton.removeAttribute("disabled");
+		}
+
+		if(this._beginIsInView() && this._endIsInView()) {
+			if(!this._dezoomButton.hasAttribute("disabled"))
+				this._dezoomButton.setAttribute("disabled", "");
+
+			if(this._scrollBar.classList.contains("scrollable"))
+				this._scrollBar.classList.remove("scrollable");
+		}
+		else {
+			if(this._dezoomButton.hasAttribute("disabled"))
+				this._dezoomButton.removeAttribute("disabled");
+		}
 	}
 
 	/**
@@ -647,15 +797,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	_setSilentScroll(newValue) {
 		this._watchScroll = false;
 		this._displayWindow.scrollLeft = newValue;
-	}
-
-	/**
-	 * 
-	 */
-	_updateTimeDivisions(viewBeginTime, viewEndTime) {
-		this._updateHiddenTimeDivs(viewBeginTime, viewEndTime);
-		this._updateViewSubdivisions();
-		this._updateRepresentedTime();
 	}
 
 	/**
@@ -677,73 +818,73 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		}, this._updateTimeDivisionsDelay);
 	}
 
-	/**
-	 * 
-	 */
-	_updateViewSubdivisions(parent = null) {
-		if(parent == null)
-			parent = this._timeDiv;
+	_updateViewSubdivisions(fromTime, toTime) {
+		let units = Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit);
+		let currentUnitRank = units.indexOf(this._widgetContainer.className);
 
-		let subDivs = parent.querySelectorAll(":scope > .time-division:not(.overflow)");
+		for(let i = 0; i < currentUnitRank; i++) {
+			let selector = "";
+			
+			for(let j = 0; j <= i; j++) {
+				let unit = units[j];
+				selector += ".time-division-" + unit + ":not(.overflow)";
 
-		for(let i = 0; i < subDivs.length; i++) {
-			let aSubDiv = subDivs[i];
-			let subDivUnit = aSubDiv._getUnit();
-
-			if(subDivUnit != this._widgetContainer.className) {
-				if(!aSubDiv.classList.contains("subdivided")) {
-					let childrenUnit, begin, end;
+				if(j < i)
+					selector += " > ";
+				else
+					selector += ":not(.subdivided)";
+			}
+			
+			let dividableTimeDivs = this._timeDiv.querySelectorAll(selector);
+			
+			for(let j = 0; j < dividableTimeDivs.length; j++) {
+				let aSubDiv = dividableTimeDivs[j];
+				
+				if((aSubDiv._getEndTime() > fromTime) && (aSubDiv._getBeginTime() < toTime)) {
+					let subDivUnit = units[i];
+					let childrenUnit = units[i+1];
+					let begin, end;
 
 					switch(subDivUnit) {
 						case "year":
-							childrenUnit = "month";
 							begin = 1;
 							end = 12;
 							break;
 						case "month":
-							childrenUnit = "day";
 							begin = 1;
 							let month = parseInt(aSubDiv.getAttribute("id").substring(5,7));
 							let year = parseInt(aSubDiv.getAttribute("id").substring(0,4));
 							end = getNumberOfDaysInMonth(month, year);
 							break;
 						case "day":
-							childrenUnit = "hour";
 							begin = 0;
 							end = 23;
 							break;
 						case "hour":
-							childrenUnit = "tenminutes";
 							begin = 0;
 							end = 5;
 							break;
 						case "tenminutes":
-							childrenUnit = "minute";
 							begin = 0;
 							end = 9;
 							break;
 						case "minute":
-							childrenUnit = "tenseconds";
 							begin = 0;
 							end = 5;
 							break;
 						case "tenseconds":
-							childrenUnit = "second";
 							begin = 0;
 							end = 9;
 							break;
 						case "second":
-							childrenUnit = "ahundredmilliseconds";
 							begin = 0;
 							end = 9;
 							break;
 						case "ahundredmilliseconds":
-							childrenUnit = "tenmilliseconds";
 							begin = 0;
 							end = 9;
 							break;
 						case "tenmilliseconds":
-							childrenUnit = "millisecond";
 							begin = 0;
 							end = 9;
 							break;
@@ -751,8 +892,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 					this._instanciateSubdivisions(begin, end, childrenUnit, aSubDiv);
 				}
-
-				this._updateViewSubdivisions(aSubDiv);
 			}
 		}
 	}
@@ -760,45 +899,237 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onMouseDown(event) {
+	_setViewBegin(newViewBegin) {
+		if(newViewBegin < this.beginTime)
+			newViewBegin = this.beginTime;
+
+		let newViewEnd = newViewBegin + (this._displayWindow.clientWidth * ((this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth));
+
+		if(newViewEnd > this.endTime)
+			newViewEnd = this.endTime;
+
+		this._updateTimeDivisions(newViewBegin, newViewEnd);
+		let viewWidthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
+		let timeOffset = newViewBegin - this._firstRepresentedTime;
+		let newTimeDivScroll = timeOffset * viewWidthOverTimeRatio;
+		this._setSilentScroll(newTimeDivScroll);
+		this._updateScrollBarCursor();
+	}
+
+	/**
+	 * 
+	 */
+	_onDisplayWindowMouseDown(event) {
 		event.preventDefault();
 
 		if(this._displayWindow.classList.contains("scrollable")) {
-			this._is_dragging = true;
-			this._drag_origin_x = event.clientX;
-			this._initial_scroll = this._displayWindow.scrollLeft;
-
+			this._displayWindowIsBeingDragged = true;
+			let relativeMousePosX = event.offsetX - this._displayWindow.scrollLeft;
+			this._displayWindowDragMouseTime = this._getMouseTime(relativeMousePosX);
+			
 			if(!this._displayWindow.classList.contains("scrolled"))
 				this._displayWindow.classList.add("scrolled");
 
-			this._displayWindow.addEventListener("mousemove", this._bindedDragFunction, true);
-			window.document.addEventListener("mouseup", this._bindedStopDraggingFunction, true);
+			this._displayWindow.addEventListener("mousemove", this._bindedDragDisplayWindowFunction, true);
+			window.document.addEventListener("mouseup", this._bindedStopDraggingDisplayWindowFunction, true);
 		}
 	}
 
 	/**
 	 * 
 	 */
-	_onDrag(event) {
+	_onDragDisplayWindow(event) {
 		event.preventDefault();
-		let mouseX = event.clientX;
-		let dragDelta = this._drag_origin_x - mouseX;
-		this._displayWindow.scrollLeft = this._initial_scroll + dragDelta;
+		let relativeMousePosX = event.offsetX - this._displayWindow.scrollLeft;
+		let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
+		let mouseTimeOffset = this._displayWindowDragMouseTime - this._firstRepresentedTime;
+		let newMouseAbsoluteX = mouseTimeOffset * widthOverTimeRatio;
+		let newScrollLeft = newMouseAbsoluteX - relativeMousePosX;
+		this._displayWindow.scrollLeft = newScrollLeft;
 	}
 
 	/**
 	 * 
 	 */
-	_onStopDragging(event) {
+	_onStopDraggingDisplayWindow(event) {
 		event.preventDefault();
-		this._displayWindow.removeEventListener("mousemove", this._bindedDragFunction, true);
-		window.document.removeEventListener("mouseup", this._bindedStopDraggingFunction, true);
+		this._displayWindow.removeEventListener("mousemove", this._bindedDragDisplayWindowFunction, true);
+		window.document.removeEventListener("mouseup", this._bindedStopDraggingDisplayWindowFunction, true);
 
 		if(this._displayWindow.classList.contains("scrolled"))
 			this._displayWindow.classList.remove("scrolled");
 
-		this._is_dragging = false;
-		this._drag_origin_x = null;
+		this._displayWindowIsBeingDragged = false;
+		this._displayWindowDragMouseTime = null;
+	}
+
+	/**
+	 * 
+	 */
+	_onScrollBarCursorMouseDown(event) {
+		event.preventDefault();
+
+		if(this._scrollBar.classList.contains("scrollable")) {
+			if(!this._scrollBarCursor.classList.contains("scrolled"))
+				this._scrollBarCursor.classList.add("scrolled");
+
+			this._scrollBarDragOrigin = event.clientX;
+			let scrollBarCursorLeftValue = this._scrollBarCursor.style.left;
+			this._scrollBarCursorOrigin = parseFloat(scrollBarCursorLeftValue.substring(0, scrollBarCursorLeftValue.length - 2));
+			this._scrollBarDragViewBeginOrigin = this._getViewBeginTime();
+			window.document.addEventListener("mousemove", this._bindedDragScrollBarCursorFunction, true);
+			window.document.addEventListener("mouseup", this._bindedStopDraggingScrollBarCursorFunction, true);
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onDragScrollBarCursor(event) {
+		event.preventDefault();
+		let mouseXDelta = event.clientX - this._scrollBarDragOrigin;
+		let totalDuration = this.endTime - this.beginTime;
+		let scrollBarTimeOverWidthRatio = totalDuration / this._scrollBar.clientWidth;
+		let newScrollBarCursorLeft = this._scrollBarCursorOrigin + mouseXDelta;
+
+		if(this._dragScrollBarCursorUpdateViewID != null)
+			clearTimeout(this._dragScrollBarCursorUpdateViewID);
+
+		this._dragScrollBarCursorUpdateViewID = setTimeout(() => {
+			let newViewBegin = this._scrollBarDragViewBeginOrigin + (mouseXDelta * scrollBarTimeOverWidthRatio);
+			this._setViewBegin(newViewBegin);
+			this._dragScrollBarCursorUpdateViewID = null;
+		});
+	}
+
+	/**
+	 * 
+	 */
+	_onStopDraggingScrollBarCursor(event) {
+		event.preventDefault();
+		window.document.removeEventListener("mousemove", this._bindedDragScrollBarCursorFunction, true);
+		window.document.removeEventListener("mouseup", this._bindedStopDraggingScrollBarCursorFunction, true);
+
+		if(this._scrollBarCursor.classList.contains("scrolled"))
+			this._scrollBarCursor.classList.remove("scrolled");
+	}
+
+	/**
+	 * 
+	 */
+	_onClickScrollBarBackGround(event) {
+		event.preventDefault();
+		let mouseX = event.offsetX;
+		let totalDuration = this.endTime - this.beginTime;
+		let scrollBarTimeOverWidthRatio = totalDuration / this._scrollBar.clientWidth;
+		let mouseTime = this.beginTime + (mouseX * scrollBarTimeOverWidthRatio);
+		let viewDuration = this._getViewEndTime() - this._getViewBeginTime();
+		let newViewBeginTime = mouseTime - (viewDuration / 2);
+		this._setViewBegin(newViewBeginTime);
+	}
+
+	/**
+	 * 
+	 */
+	_incrementScroll(scrollIncrement) {
+		let widthIncrementUnit = 40;
+		this._requestedScrollAmount += scrollIncrement;
+		let representedDuration = this._lastRepresentedTime - this._firstRepresentedTime;
+		let timeOverWidthRatio = representedDuration / this._timeDiv.clientWidth;
+		let viewDuration = this._displayWindow.clientWidth * timeOverWidthRatio;
+
+		if(this._scrollRequestID != null)
+			clearTimeout(this._scrollRequestID);
+
+		this._scrollRequestID = setTimeout(() => {
+			let viewWidthIncrement = widthIncrementUnit * this._requestedScrollAmount;
+			let viewTimeIncrement = timeOverWidthRatio * viewWidthIncrement;
+			let newViewBeginTime = this._getViewBeginTime() + viewTimeIncrement;
+			this._setViewBegin(newViewBeginTime);
+			this._scrollRequestID = null;
+			this._requestedScrollAmount = 0;
+		});
+	}
+
+	_beginIsInView() {
+		return ((this._firstRepresentedTime <= this.beginTime) && (this._displayWindow.scrollLeft <= 0));
+	}
+
+	_endIsInView() {
+		return ((this._lastRepresentedTime >= this.endTime) && (Math.ceil(this._displayWindow.scrollLeft) >= Math.floor(this._timeDiv.clientWidth - this._displayWindow.clientWidth)));
+	}
+
+	_onClickDezoomButton() {
+		this._setWidthRules(this._initialLevel, this._initialDivWidth);
+		this._unHideOverflowTimeDivs(this.beginTime, this.endTime);
+		this._setSilentScroll(0);
+		this._updateRepresentedTime();
+		this._updateScrollBarCursor();
+		this._updateScrollButtons();
+	}
+
+	/**
+	 * 
+	 */
+	_onScrollLeftButtonMouseDown(event) {
+		event.preventDefault();
+		this._incrementScroll(-1);
+
+		if(this._scrollLeftButtonPressedIntervalID != null)
+			clearInterval(this._scrollLeftButtonPressedIntervalID);
+		
+		this._scrollLeftButtonPressedIntervalID = setInterval(() => {
+			if(!this._beginIsInView())
+				this._incrementScroll(-1);
+			else {
+				clearInterval(this._scrollLeftButtonPressedIntervalID);
+				this._scrollLeftButtonPressedIntervalID = null;
+			}
+		}, 50);
+	}
+
+	/**
+	 * 
+	 */
+	_onScrollLeftButtonMouseUp(event) {
+		event.preventDefault();
+		
+		if(this._scrollLeftButtonPressedIntervalID != null) {
+			clearInterval(this._scrollLeftButtonPressedIntervalID);
+			this._scrollLeftButtonPressedIntervalID = null;
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onScrollRightButtonMouseDown(event) {
+		event.preventDefault();
+		this._incrementScroll(1);
+
+		if(this._scrollRightButtonPressedIntervalID != null)
+			clearInterval(this._scrollRightButtonPressedIntervalID);
+
+		this._scrollRightButtonPressedIntervalID = setInterval(() => {
+			if(!this._endIsInView())
+				this._incrementScroll(1);
+			else {
+				clearInterval(this._scrollRightButtonPressedIntervalID);
+				this._scrollRightButtonPressedIntervalID = null;
+			}
+		}, 50);
+	}
+
+	/**
+	 * 
+	 */
+	_onScrollRightButtonMouseUp(event) {
+		event.preventDefault();
+		
+		if(this._scrollRightButtonPressedIntervalID != null) {
+			clearInterval(this._scrollRightButtonPressedIntervalID);
+			this._scrollRightButtonPressedIntervalID = null;
+		}
 	}
 
 	/**
@@ -1533,7 +1864,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_initZoom() {
 		let timeDivs = this._timeDiv.querySelectorAll(".time-division-" + this._initialLevel);
-		this._initialDivWidth = Math.floor(this._displayWindow.clientWidth / timeDivs.length);
+		this._initialDivWidth = this._displayWindow.clientWidth / timeDivs.length;
 		this._setWidthRules(this._initialLevel, this._initialDivWidth);
 	}
 
@@ -1656,39 +1987,25 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				else if(this._requestedZoomIncrementAmount < 0)
 					this._setZoomCursor("zooming-in");
 
-				if(this._requestZoomIncrementID == null) {
-					this._requestZoomIncrementID = setTimeout(() => {
-						this._incrementZoom(this._requestedZoomIncrementAmount);
+				if(this._requestZoomIncrementID != null)
+					clearTimeout(this._requestZoomIncrementID);
 
-						let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
-						let newViewBeginTime = this._requestedZoomMouseTime - (mouseRelativeX * timeOverWidthRatio);
-						let newViewEndTime = this._requestedZoomMouseTime + ((this._displayWindow.clientWidth - mouseRelativeX) * timeOverWidthRatio);
+				this._requestZoomIncrementID = setTimeout(() => {
+					let zoomAmount = this._requestedZoomIncrementAmount;
+					this._requestedZoomIncrementAmount = 0;
+					this._incrementZoom(zoomAmount);
 
-						this._updateTimeDivisions(newViewBeginTime, newViewEndTime);
-						this._resetScrollForLastMousePositionAndTime();
-						this._requestZoomIncrementID = null;
-						this._requestedZoomIncrementAmount = 0;
-						this._requestUpdateEventsRows();
-					}, 100);
-				}
-				else {
-					if(this._requestZoomIncrementID2 != null)
-						clearTimeout(this._requestZoomIncrementID2);
+					let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
+					let newViewBeginTime = this._requestedZoomMouseTime - (mouseRelativeX * timeOverWidthRatio);
+					let newViewEndTime = this._requestedZoomMouseTime + ((this._displayWindow.clientWidth - mouseRelativeX) * timeOverWidthRatio);
+					this._updateTimeDivisions(newViewBeginTime, newViewEndTime);
 
-					this._requestZoomIncrementID2 = setTimeout(() => {
-						this._incrementZoom(this._requestedZoomIncrementAmount);
+					this._resetScrollForLastMousePositionAndTime();
+					this._updateScrollBarCursor();
+					this._requestUpdateEventsRows();
 
-						let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
-						let newViewBeginTime = this._requestedZoomMouseTime - (mouseRelativeX * timeOverWidthRatio);
-						let newViewEndTime = this._requestedZoomMouseTime + ((this._displayWindow.clientWidth - mouseRelativeX) * timeOverWidthRatio);
-
-						this._updateTimeDivisions(newViewBeginTime, newViewEndTime);
-						this._resetScrollForLastMousePositionAndTime();
-						this._requestZoomIncrementID2 = null;
-						this._requestedZoomIncrementAmount = 0;
-						this._requestUpdateEventsRows();
-					});
-				}
+					this._requestZoomIncrementID = null;
+				});
 			}
 		}
 	}
@@ -1838,16 +2155,25 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let units = Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit);
 		let currentUnitRank = units.indexOf(this._widgetContainer.className);
 
-		for(let i = currentUnitRank; i >= 0; i--) {
-			let unit = units[i];
+		for(let i = 0; i <= currentUnitRank; i++) {
 			let selector = "";
-			selector += ".time-division-" + unit + ".overflow";
+			
+			for(let j = 0; j <= i; j++) {
+				let unit = units[j];
+				selector += ".time-division-" + unit;
+
+				if(j < i)
+					selector += ":not(.overflow) > ";
+				else
+					selector += ".overflow";
+			}
+			
 			let hidenTimeDivs = this._timeDiv.querySelectorAll(selector);
 
 			for(let j = 0; j < hidenTimeDivs.length; j++) {
 				let candidate = hidenTimeDivs[j];
 
-				if((candidate._getEndTime() >= fromTime) && (candidate._getBeginTime() <= toTime))
+				if((candidate._getEndTime() > fromTime) && (candidate._getBeginTime() < toTime))
 					candidate.classList.remove("overflow");
 			}
 		}
@@ -1856,23 +2182,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_updateHiddenTimeDivs(viewBeginTime, viewEndTime) {
+	_updateTimeDivisions(viewBeginTime, viewEndTime) {
 		let representedDuration = (this._lastRepresentedTime - this._firstRepresentedTime);
 		let timeOverWidthRatio = representedDuration / this._timeDiv.clientWidth;
 		let minLeftTime = viewBeginTime - (2 * this._displayWindow.clientWidth * timeOverWidthRatio);
-		let maxLeftTime = viewBeginTime - (1.5 * this._displayWindow.clientWidth * timeOverWidthRatio);
-		let minRightTime = viewEndTime + (1.5 * this._displayWindow.clientWidth * timeOverWidthRatio);
 		let maxRightTime = viewEndTime + (2 * this._displayWindow.clientWidth * timeOverWidthRatio);
-
-		if(this._firstRepresentedTime < minLeftTime)
-			this._hideOverflowTimeDivs(true, minLeftTime);
-		else if(this._firstRepresentedTime > maxLeftTime)
-			this._unHideOverflowTimeDivs(maxLeftTime, viewEndTime);
-		
-		if(this._lastRepresentedTime < minRightTime)
-			this._unHideOverflowTimeDivs(viewBeginTime, minRightTime);
-		else if(this._lastRepresentedTime > maxRightTime)
-			this._hideOverflowTimeDivs(false, maxRightTime);
+		this._unHideOverflowTimeDivs(minLeftTime, maxRightTime);
+		this._updateViewSubdivisions(minLeftTime, maxRightTime);
+		this._hideOverflowTimeDivs(true, minLeftTime);
+		this._hideOverflowTimeDivs(false, maxRightTime);
+		this._updateRepresentedTime();
 	}
 
 	/**
@@ -1955,6 +2274,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 					if(this._displayWindow.classList.contains("scrollable"))
 						this._displayWindow.classList.remove("scrollable");
+
+					if(this._scrollBar.classList.contains("scrollable"))
+						this._scrollBar.classList.remove("scrollable");
 				}
 			}
 			// user zoomed in
@@ -2015,6 +2337,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 				if(!this._displayWindow.classList.contains("scrollable"))
 					this._displayWindow.classList.add("scrollable");
+
+				if(!this._scrollBar.classList.contains("scrollable"))
+					this._scrollBar.classList.add("scrollable");
 			}
 
 			if((newLevel != this._widgetContainer.className) || (newWidth != this._currentLevelDivWidth))
@@ -2033,6 +2358,54 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let containerLeft = containerClientRect.left;
 		let containerRight = containerClientRect.right;
 		return ((divRight >= containerLeft) && (divLeft <= containerRight)); 
+	}
+
+	/**
+	 * 
+	 */
+	_updateScrollBarContent() {
+		Promise.all([this._componentReady, this._timeDivisionsInitialized]).then(() => {
+			let scrollBarWidth = this._scrollBar.clientWidth;
+			
+			// count how much more event for each pixel of the scrollbar
+			let eventsCountPerPixel = new Array();
+			let timeStep = (this.endTime - this.beginTime) / scrollBarWidth;
+			let eventNodes = this._getAllEventNodes();
+			let eventIndex = 0;
+
+			for(let x = 0; x < scrollBarWidth; x++) {
+				let currentPixelEventCount = 0;
+				let xTime = this.beginTime + ((x + 1) * timeStep);
+				
+				while((eventIndex < eventNodes.length) && (eventNodes[eventIndex].beginTime <= xTime)) {
+					currentPixelEventCount++;
+					eventIndex++;
+				}
+
+				eventsCountPerPixel[x] = currentPixelEventCount;
+			}
+			// ---
+
+			// paint the scrollbar
+			this._scrollBarBackground.setAttribute("width", scrollBarWidth);
+			let scrollBarHeight = this._scrollBar.clientHeight;
+			let maxDelta = Math.max(...eventsCountPerPixel);
+			let canvasContext = this._scrollBarBackground.getContext('2d');
+			canvasContext.clearRect(0, 0, scrollBarWidth, scrollBarHeight);
+			
+			for(let x = 0; x < eventsCountPerPixel.length; x++) {
+				let rawDelta = eventsCountPerPixel[x];
+				
+				if(rawDelta != 0) {
+					let normalizedDelta = (rawDelta / maxDelta);
+					let h = (1.0 - normalizedDelta) * 240;
+					let color = "hsl(" + h + ", 100%, 50%)";
+					canvasContext.strokeStyle = color;
+					canvasContext.strokeRect(x, 0, 1, scrollBarHeight);
+				}
+			}
+			// ---
+		});
 	}
 }
 
