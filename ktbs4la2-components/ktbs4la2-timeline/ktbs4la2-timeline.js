@@ -270,7 +270,13 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._maxDisplayableRows = null;
 		this._requestUnsetZoomCursorID = null;
 		this._requestUnsetZoomCursorDelay = 300;
-		this._onWidgetContainerResizeID = null;
+
+		this._onDisplayWindowChangeHeightID = null;
+		this._onDisplayWindowChangeWidthID = null;
+		this._isZoomedOut = null;
+
+		this._lastKnownDisplayWindowWidth = null;
+		this._lastKnownDisplayWindowHeight = null;
 
 		this._resolveBeginSet;
 		this._rejectBeginSet;
@@ -369,8 +375,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._scrollRightButton.addEventListener("mouseout", this._onScrollRightButtonMouseUp.bind(this));
 
 		try {
-			let displayWindowResizeObserver = new ResizeObserver(this._onWidgetContainerResize.bind(this));
-			displayWindowResizeObserver.observe(this._widgetContainer, { box : 'border-box' });
+			let displayWindowResizeObserver = new ResizeObserver(this._onResizeWidgetContainer.bind(this));
+			displayWindowResizeObserver.observe(this._widgetContainer);
 		}
 		catch(error) {
 			this.emitErrorEvent(error);
@@ -382,20 +388,41 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onWidgetContainerResize(entries, observer) {
-		if(this._onWidgetContainerResizeID != null)
-			clearTimeout(this._onWidgetContainerResizeID);
+	_onResizeWidgetContainer(entries, observer) {
+		if(this._lastKnownDisplayWindowHeight != this._displayWindow.clientHeight) {		
+			this._lastKnownDisplayWindowHeight = this._displayWindow.clientHeight;
 
-		this._onWidgetContainerResizeID = setTimeout(() => {
-			this._updateMaxDisplayableRows();
-		
-			this._timeDivisionsInitialized.then(() => {
-				this._updateScrollBarCursor();
-				this._updateScrollBarContent();
+			if(this._onDisplayWindowChangeHeightID != null)
+				clearTimeout(this._onDisplayWindowChangeHeightID);
+
+			this._onDisplayWindowChangeHeightID = setTimeout(() => {
+				this._updateMaxDisplayableRows();
+				this._onDisplayWindowChangeHeightID = null;
 			});
+		}
 
-			this._onWidgetContainerResizeID = null;
-		});
+		if(this._lastKnownDisplayWindowWidth != this._displayWindow.clientWidth) {
+			this._lastKnownDisplayWindowWidth = this._displayWindow.clientWidth;
+
+			if(this._onDisplayWindowChangeWidthID != null)
+				clearTimeout(this._onDisplayWindowChangeWidthID);
+
+			this._onDisplayWindowChangeWidthID = setTimeout(() => {
+				this._timeDivisionsInitialized.then(() => {
+					this._initZoomParams();
+
+					if(this._isZoomedOut == true) {
+						this._setWidthRules(this._initialLevel, this._initialDivWidth);
+						this._requestUpdateEventsRows();
+					}
+					
+					this._updateScrollBarCursor();
+					this._updateScrollBarContent();
+				});
+
+				this._onDisplayWindowChangeWidthID = null;
+			});
+		}
 	}
 
 	/**
@@ -779,6 +806,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		}
 
 		if(this._beginIsInView() && this._endIsInView()) {
+			this._isZoomedOut = true;
+
 			if(!this._dezoomButton.hasAttribute("disabled"))
 				this._dezoomButton.setAttribute("disabled", "");
 
@@ -1862,10 +1891,118 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_initZoomParams() {
+		let newLevel = this._initialLevel;
+		let timeDivs = this._timeDiv.querySelectorAll(".time-division-" + newLevel);
+		let newDivWidth = this._displayWindow.clientWidth / timeDivs.length;
+
+		while(newDivWidth < KTBS4LA2Timeline.minDivisionWidthPerUnit[newLevel]) {
+			switch(newLevel) {
+				case "millisecond":
+					newLevel = "tenmilliseconds";
+					newDivWidth = newDivWidth * 10;
+					break;
+				case "tenmilliseconds":
+					newLevel = "ahundredmilliseconds";
+					newDivWidth = newDivWidth * 10;
+					break;
+				case "ahundredmilliseconds":
+					newLevel = "second";
+					newDivWidth = newDivWidth * 10;
+					break;
+				case "second":
+					newLevel = "tenseconds";
+					newDivWidth = newDivWidth * 10;
+					break;
+				case "tenseconds":
+					newLevel = "minute";
+					newDivWidth = newDivWidth * 6;
+					break;
+				case "minute":
+					newLevel = "tenminutes";
+					newDivWidth = newDivWidth * 10;
+					break;
+				case "tenminutes":
+					newLevel = "hour";
+					newDivWidth = newDivWidth * 6;
+					break;
+				case "hour":
+					newLevel = "day";
+					newDivWidth = newDivWidth * 24;
+					break;
+				case "day":
+					newLevel = "month";
+					newDivWidth = newDivWidth * 31;
+					break;
+				case "month":
+					newLevel = "year";
+					newDivWidth = newDivWidth * 12;
+					break;
+			}
+		}
+		
+		if((newLevel == "year") && (newDivWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["month"] * 12))) {
+			newLevel = "month";
+			newDivWidth = newDivWidth / 12;
+		}
+
+		if((newLevel == "month") && (newDivWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["day"] * 31))) {
+			newLevel = "day";
+			newDivWidth = newDivWidth / 31;
+		}
+
+		if((newLevel == "day") && (newDivWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["hour"] * 24))) {
+			newLevel = "hour";
+			newDivWidth = newDivWidth / 24;
+		}
+
+		if((newLevel == "hour") && (newDivWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["tenminutes"] * 6))) {
+			newLevel = "tenminutes";
+			newDivWidth = newDivWidth / 6;
+		}
+
+		if((newLevel == "tenminutes") && (newDivWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["minute"] * 10))) {
+			newLevel = "minute";
+			newDivWidth = newDivWidth / 10;
+		}
+
+		if((newLevel == "minute") && (newDivWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["tenseconds"] * 6))) {
+			newLevel = "tenseconds";
+			newDivWidth = newDivWidth / 6;
+		}
+
+		if((newLevel == "tenseconds") && (newDivWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["second"] * 10))) {
+			newLevel = "second";
+			newDivWidth = newDivWidth / 10;
+		}
+
+		if((newLevel == "second") && (newDivWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["ahundredmilliseconds"] * 10))) {
+			newLevel = "ahundredmilliseconds";
+			newDivWidth = newDivWidth / 10;
+		}
+
+		if((newLevel == "ahundredmilliseconds") && (newDivWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["tenmilliseconds"] * 10))) {
+			newLevel = "tenmilliseconds";
+			newDivWidth = newDivWidth / 10;
+		}
+
+		if((newLevel == "tenmilliseconds") && (newDivWidth >= (KTBS4LA2Timeline.minDivisionWidthPerUnit["millisecond"] * 10))) {
+			newLevel = "millisecond";
+			newDivWidth = newDivWidth / 10;
+		}
+
+		this._initialDivWidth = newDivWidth;
+		this._initialLevel= newLevel;
+	}
+
+
+	/**
+	 * 
+	 */
 	_initZoom() {
-		let timeDivs = this._timeDiv.querySelectorAll(".time-division-" + this._initialLevel);
-		this._initialDivWidth = this._displayWindow.clientWidth / timeDivs.length;
+		this._initZoomParams();
 		this._setWidthRules(this._initialLevel, this._initialDivWidth);
+		this._isZoomedOut = true;
 	}
 
 	/**
@@ -2200,11 +2337,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	_incrementZoom(increment) {
 		if(increment != 0) {
 			let newLevel = this._widgetContainer.className;
-
-			// limit zoom out to a 1/4 ratio, in order to prevent non-overflow timedivs from shrinking narrower than the displayable content
-			if((increment > 0) && (increment < (-Math.log(1/4)/10)))
-				increment = -Math.log(1/4)/10;
-
 			let newWidth = this._currentLevelDivWidth * Math.exp(-increment / 10);
 
 			// user zoomed out
@@ -2271,6 +2403,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				if(newLevelHasExceededTop || ((newLevel == this._initialLevel) && (newWidth <= this._initialDivWidth))) {
 					newLevel = this._initialLevel;
 					newWidth = this._initialDivWidth;
+
+					this._isZoomedOut = true;
 
 					if(this._displayWindow.classList.contains("scrollable"))
 						this._displayWindow.classList.remove("scrollable");
@@ -2340,6 +2474,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 				if(!this._scrollBar.classList.contains("scrollable"))
 					this._scrollBar.classList.add("scrollable");
+
+				this._isZoomedOut = false;
 			}
 
 			if((newLevel != this._widgetContainer.className) || (newWidth != this._currentLevelDivWidth))

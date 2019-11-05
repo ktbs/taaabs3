@@ -21,10 +21,6 @@
 			<slot name="model"></slot>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="stats" title="{translate: 'Statistics'} :" foldable="true" expanded="true">
-			<slot name="stats"></slot>
-		</ktbs4la2-main-subsection>
-
 		<ktbs4la2-main-subsection id="obsels" title="{translate: 'Obsels'} :" foldable="true" expanded="true">
 			<ktbs4la2-icon-tabs-group>
 				<ktbs4la2-icon-tab title="{translate: 'Timeline view'}" icon="{my-component-folder}/timeline.svg">
@@ -37,6 +33,10 @@
 					<slot name="obsels-table"></slot>
 				</ktbs4la2-icon-tab>
 			</ktbs4la2-icon-tabs-group>
+		</ktbs4la2-main-subsection>
+
+		<ktbs4la2-main-subsection id="stats" title="{translate: 'Statistics'} :" foldable="true" expanded="true">
+			<slot name="stats"></slot>
 		</ktbs4la2-main-subsection>
 	</section>
 </article>
