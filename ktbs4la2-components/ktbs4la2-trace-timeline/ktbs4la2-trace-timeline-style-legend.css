@@ -1,0 +1,65 @@
+#marker {
+    height: 12px;
+    width: 12px;
+	outline: none;
+	vertical-align: middle;
+}
+
+:host(:not([symbol]):not([color])) #marker {
+	background-color: #888;
+}
+
+:host([symbol]:not([color])) #marker {
+	color: #888;
+}
+
+:host(:not([symbol])) #marker {
+	display: inline-block;
+	margin-top: -2px;
+}
+
+:host([symbol]) #marker {
+	display: inline;
+	font-family: "unifont", "unifont-upper";
+	text-decoration: none;
+	font-size: 11pt;
+}
+
+:host([shape]:not([shape = "duration-bar"])) #marker {
+	mask-repeat: no-repeat;
+	-webkit-mask-repeat: no-repeat;
+}
+
+:host([shape = "duration-bar"]) #marker, :host(:not([shape])) #marker {
+	border-radius: 2px;
+}
+
+:host([shape = "circle"]) #marker {
+	mask-image: url('{my-component-folder}/../ktbs4la2-timeline/circle.svg');
+	-webkit-mask-image: url('{my-component-folder}/../ktbs4la2-timeline/circle.svg');
+}
+
+:host([shape = "diamond"]) #marker {
+	mask-image: url('{my-component-folder}/../ktbs4la2-timeline/diamond.svg');
+	-webkit-mask-image: url('{my-component-folder}/../ktbs4la2-timeline/diamond.svg');
+}
+
+:host([shape = "square"]) #marker {
+	mask-image: url('{my-component-folder}/../ktbs4la2-timeline/square.svg');
+	-webkit-mask-image: url('{my-component-folder}/../ktbs4la2-timeline/square.svg');
+}
+
+:host([shape = "star"]) #marker {
+	mask-image: url('{my-component-folder}/../ktbs4la2-timeline/star.svg');
+	-webkit-mask-image: url('{my-component-folder}/../ktbs4la2-timeline/star.svg');
+}
+
+#label {
+	display: inline;
+	vertical-align: middle;
+}
+
+:host([visible = "false"]) #label , :host([visible = "0"]) #label {
+	font-style: italic;
+	opacity: .4;
+}

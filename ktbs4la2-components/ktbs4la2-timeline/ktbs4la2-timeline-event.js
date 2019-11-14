@@ -1,5 +1,7 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 
+import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
+
 class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 
 	/**
@@ -34,6 +36,7 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		observedAttributes.push("visible");
 		observedAttributes.push("href");
 		observedAttributes.push("color");
+		observedAttributes.push("symbol");
 		observedAttributes.push("title");
 		observedAttributes.push("hidden-siblinbgs-count");
 		return observedAttributes;
@@ -68,7 +71,19 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 			});
 		else if(attributeName == "color")
 			this._componentReady.then(() => {
-				this._marker.style.backgroundColor = newValue;
+				if(this.hasAttribute("symbol")) {
+					this._marker.style.color = newValue;
+					this._marker.style.backgroundColor = "transparent";
+				}
+				else
+					this._marker.style.backgroundColor = newValue;
+			});
+		else if(attributeName == "symbol")
+			this._componentReady.then(() => {
+				this._marker.innerHTML = newValue;
+
+				if(newValue)
+					this._marker.style.backgroundColor = "transparent";
 			});
 		else if(attributeName == "title")
 			this._componentReady.then(() => {
@@ -197,7 +212,7 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 				});
 			}
 
-			this._updateSlot();
+			//this._updateSlot();
 		}
 	}
 
@@ -230,7 +245,7 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 				this._updatePosX();
 			}
 
-			this._updateSlot();
+			//this._updateSlot();
 		}
 	}
 
@@ -265,7 +280,7 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 						}
 					}
 
-					this._updateSlot();
+					//this._updateSlot();
 				});
 			});
 		}
@@ -297,7 +312,7 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_updateSlot() {
+	/*_updateSlot() {
 		if(!this.rowIsOverflow && !this._posXIsOverflow && this.isVisible) {
 			if(this.getAttribute("slot") != "visible")
 				this.setAttribute("slot", "visible");
@@ -306,7 +321,7 @@ class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 			if(this.hasAttribute("slot"))
 				this.removeAttribute("slot");
 		}
-	}
+	}*/
 	
 	/**
 	 * 

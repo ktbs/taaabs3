@@ -6,7 +6,12 @@ import {Model} from "../../ktbs-api/Model.js";
 import {TraceStats} from "../../ktbs-api/TraceStats.js";
 import {ObselList} from "../../ktbs-api/ObselList.js";
 
+import "./ktbs4la2-trace-timeline-style-legend.js";
 import "../ktbs4la2-timeline/ktbs4la2-timeline.js";
+
+function JSSpecialCharToHTMLHex(str) {
+    return "&#x" + str.codePointAt(0).toString(16) + ";";
+}
 
 /**
  * 
@@ -68,7 +73,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 		this._context = null;
 		this._styleSheets = new Array();
-		this._styleSheets[0] = null;
 		this._currentStylesheet = null;
 	}
 
@@ -80,6 +84,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._timeline.setAttribute("lang", this._lang);
 		this._styleSheetSelector = this.shadowRoot.querySelector("#slylesheet-selector");
 		this._styleSheetSelector.addEventListener("change", this._onChangeStyleSheetSelector.bind(this));
+		this._legend = this.shadowRoot.querySelector("#legend");
 	}
 
 	/**
@@ -233,23 +238,15 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onObselLoadEnded() {
 		// @TODO stop/hide spinner here, when it is implemented
-		let defaultStyleSheet = this._generateDefaultStylesheetFromObsels();
-		this._styleSheets[0] = defaultStyleSheet;
-		let styleSheetSelectorEntry = document.createElement("option");
-		styleSheetSelectorEntry.setAttribute("value", 0);
-		styleSheetSelectorEntry.setAttribute("selected", true);
-		styleSheetSelectorEntry.innerText = defaultStyleSheet.name;
-		styleSheetSelectorEntry.setAttribute("title", defaultStyleSheet.description);
 
 		this._componentReady.then(() => {
-			if(this._styleSheetSelector.hasChildNodes)
-				this._styleSheetSelector.insertBefore(styleSheetSelectorEntry, this._styleSheetSelector.firstChild);
-			else
-				this._styleSheetSelector.appendChild(styleSheetSelectorEntry);
-		});
+			if(this._styleSheets.length == 0) {
+				let defaultStyleSheet = this._generateDefaultStylesheetFromObsels();
 
-		//if(!this._currentStylesheet)
-			this._applyStyleSheet(defaultStyleSheet);
+				if(defaultStyleSheet != null)
+					this._applyStyleSheet(defaultStyleSheet);
+			}
+		});
 	}
 
 	/**
@@ -377,7 +374,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	/*_generateDefaultStylesheetFromModel() {
+	_generateDefaultStylesheetFromModel() {
 		let defaultStyleSheet = null;
 		let obselTypes = this._model.list_obsel_types();
 
@@ -401,8 +398,17 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				let aRule = new Object();
 				aRule.id = cleanObselTypeID;
 				aRule.symbol = new Object();
-				aRule.symbol.color = this._getDistinctColor(i, obselTypes.length);
-				aRule.symbol.shape = "duration-bar";
+
+				if(obselTypes[i].suggestedColor)
+					aRule.symbol.color = obselTypes[i].suggestedColor;
+				else
+					aRule.symbol.color = this._getDistinctColor(i, obselTypes.length);
+
+				if(obselTypes[i].suggestedSymbol)
+					aRule.symbol.symbol = obselTypes[i].suggestedSymbol;
+				else
+					aRule.symbol.shape = "duration-bar";
+
 				aRule.rules = new Array();
 				let aRuleRule = new Object();
 				aRuleRule.type = model_uri + '#' + cleanObselTypeID;
@@ -413,37 +419,38 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		}
 		
 		return defaultStyleSheet;
-	}*/
+	}
 
 	/**
 	 * 
 	 */
 	_onModelLoaded() {
-		//this._styleSheets = this._model.get_stylesheets();
-		let modelStyleSheets = this._model.get_stylesheets();
-
-		/*let defaultStylesheetGeneratedFromModel = this._generateDefaultStylesheetFromModel();
-
-		if(defaultStylesheetGeneratedFromModel != null)
-			this._styleSheets.push(defaultStylesheetGeneratedFromModel);*/
-
 		this._componentReady.then(() => {
+			let defaultStylesheetGeneratedFromModel = this._generateDefaultStylesheetFromModel();
+
+			if(defaultStylesheetGeneratedFromModel != null) {
+				this._styleSheets.push(defaultStylesheetGeneratedFromModel);
+
+				setTimeout(() => {
+					this._applyStyleSheet(defaultStylesheetGeneratedFromModel);
+				});
+			}
+
+			let modelStyleSheets = this._model.get_stylesheets();
+
 			for(let i = 0; i < modelStyleSheets.length; i++) {
 				let aStyleSheet = modelStyleSheets[i];
-				this._styleSheets[i+1] = aStyleSheet;
+				this._styleSheets.push(aStyleSheet);
 				let styleSheetSelectorEntry = document.createElement("option");
 				styleSheetSelectorEntry.setAttribute("value", i+1);
-
-				/*if(i == 0)
-					styleSheetSelectorEntry.setAttribute("selected", true);*/
-
 				styleSheetSelectorEntry.innerText = aStyleSheet.name;
 				styleSheetSelectorEntry.setAttribute("title", aStyleSheet.description);
 				this._styleSheetSelector.appendChild(styleSheetSelectorEntry);
 			}
 
-			/*if(this._styleSheets.length > 0)
-				this._applyStyleSheet(this._styleSheets[0]);*/
+			if(modelStyleSheets.length > 0)
+				if(this._styleSheetSelector.hasAttribute("disabled"))
+					this._styleSheetSelector.removeAttribute("disabled");
 		});
 	}
 
@@ -451,9 +458,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onChangeStyleSheetSelector(event) {
-		let styleSheetID = this._styleSheetSelector.value;
-		let newStyleSheet = this._styleSheets[parseInt(styleSheetID)];
-		this._applyStyleSheet(newStyleSheet);
+		setTimeout(() => {
+			let styleSheetID = parseInt(this._styleSheetSelector.value);
+
+			if(!isNaN(styleSheetID)) {
+				let newStyleSheet = this._styleSheets[styleSheetID];
+
+				if(newStyleSheet != this._currentStylesheet)
+					this._applyStyleSheet(newStyleSheet);
+			}
+		});
 	}
 
 	/**
@@ -616,6 +630,30 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	_applyStyleSheet(stylesheet) {
 		this._currentStylesheet = stylesheet;
 
+		// rebuild the legend
+		while(this._legend.firstChild)
+			this._legend.removeChild(this._legend.firstChild);
+
+		for(let i = 0; i < stylesheet.rules.length; i++) {
+			let aRule = stylesheet.rules[i];
+			let styleNode = document.createElement("ktbs4la2-trace-timeline-style-legend");
+			styleNode.setAttribute("rule-id", aRule.id);
+
+			if(aRule.symbol.symbol)
+				styleNode.setAttribute("symbol", JSSpecialCharToHTMLHex(aRule.symbol.symbol));
+			else if(aRule.symbol.shape)
+				styleNode.setAttribute("shape", aRule.symbol.shape);
+
+			if(aRule.symbol.color)
+				styleNode.setAttribute("color", aRule.symbol.color);
+
+			if(aRule.visible != undefined)
+				styleNode.setAttribute("visible", aRule.visible);
+
+			this._legend.appendChild(styleNode);
+		}
+
+		// --- apply rules to obsels ---
 		for(let i = 0; i < this._obsels.length; i++) {
 			let anObsel = this._obsels[i];
 			let obselEventNode = this.shadowRoot.getElementById(anObsel["@id"]);
@@ -624,14 +662,38 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				let matchedRule = this._getFirstRuleMatchedByObsel(anObsel);
 				
 				if(matchedRule) {
-					obselEventNode.setAttribute("shape", matchedRule["symbol"].shape);
-					obselEventNode.setAttribute("color", matchedRule["symbol"].color);
-					obselEventNode.setAttribute("visible", matchedRule["visible"]);
+					if(matchedRule["symbol"].symbol) {
+						obselEventNode.setAttribute("symbol", JSSpecialCharToHTMLHex(matchedRule["symbol"].symbol));
+
+						if(obselEventNode.hasAttribute("shape"))
+							obselEventNode.removeAttribute("shape");
+					}
+					else if(matchedRule["symbol"].shape) {
+						obselEventNode.setAttribute("shape", matchedRule["symbol"].shape);
+
+						if(obselEventNode.hasAttribute("symbol"))
+							obselEventNode.removeAttribute("symbol");
+					}
+
+					if(matchedRule["symbol"].color)
+						obselEventNode.setAttribute("color", matchedRule["symbol"].color);
+					else if(obselEventNode.hasAttribute("color"))
+						obselEventNode.removeAttribute("color");
+
+					if(matchedRule["visible"] != undefined)
+						obselEventNode.setAttribute("visible", matchedRule["visible"]);
+					else if(obselEventNode.hasAttribute("visible"))
+						obselEventNode.removeAttribute("visible");
 				}
 				else {
-					obselEventNode.removeAttribute("shape");
-					obselEventNode.removeAttribute("color");
-					obselEventNode.setAttribute("visible", "false");
+					if(obselEventNode.hasAttribute("shape"))
+						obselEventNode.removeAttribute("shape");
+
+					if(obselEventNode.hasAttribute("color"))
+						obselEventNode.removeAttribute("color");
+
+					if(obselEventNode.hasAttribute("visible"))
+						obselEventNode.removeAttribute("visible");
 				}
 			}
 			else
@@ -715,15 +777,22 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			eventElement.setAttribute("title", this._getObselTitleHint(obsel));
 			eventElement.setAttribute("href", this.getAttribute("uri") + obsel["@id"]);
 
-			/*if(this._currentStylesheet) {
+			if(this._currentStylesheet) {
 				let matchedRule = this._getFirstRuleMatchedByObsel(obsel);
 
 				if(matchedRule) {
-					eventElement.setAttribute("shape", matchedRule["symbol"].shape);
-					eventElement.setAttribute("color", matchedRule["symbol"].color);
-					eventElement.setAttribute("visible", matchedRule["visible"]);
+					if(matchedRule["symbol"].symbol)
+						eventElement.setAttribute("symbol", JSSpecialCharToHTMLHex(matchedRule["symbol"].symbol));
+					else if(matchedRule["symbol"].shape)
+						eventElement.setAttribute("shape", matchedRule["symbol"].shape);
+
+					if(matchedRule["symbol"].color)
+						eventElement.setAttribute("color", matchedRule["symbol"].color);
+
+					if(matchedRule["visible"] != undefined)
+						eventElement.setAttribute("visible", matchedRule["visible"]);
 				}
-			}*/
+			}
 
 			let eventContent = document.createDocumentFragment();
 

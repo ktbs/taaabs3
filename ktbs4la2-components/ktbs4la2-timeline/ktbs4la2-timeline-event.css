@@ -44,7 +44,21 @@
 	top: 0;
 	cursor: pointer;
 	height: 12px;
+	outline: none;
+}
+
+:host(:not([symbol]):not([color])) #marker {
 	background-color: #888;
+}
+
+:host([symbol]:not([color])) #marker {
+	color: #888;
+}
+
+:host([symbol]) #marker {
+	font-family: "unifont", "unifont-upper";
+	text-decoration: none;
+	font-size: 11pt;
 }
 
 :host([shape]:not([shape = "duration-bar"])) #marker {
@@ -79,7 +93,7 @@
 	-webkit-mask-image: url('{my-component-folder}/star.svg');
 }
 
- #marker:hover, :host(.selected) #marker {
+#marker:hover, :host(.selected) #marker {
 	z-index: 4;
 	height: 14px;
 	top: 1px;

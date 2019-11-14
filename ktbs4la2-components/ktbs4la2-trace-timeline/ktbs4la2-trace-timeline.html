@@ -1,10 +1,17 @@
 <div id="container">
-    <ktbs4la2-timeline id="timeline"></ktbs4la2-timeline>
+    <div id="stylesheet-tools">
+        <form id="stylesheet-selection">
+            <label for="slylesheet-selector">
+               <img id="stylesheet-icon" title="{translate: 'Stylesheet'}" alt="{translate: 'Stylesheet'}" src="{my-component-folder}/palette.svg" />
+            </label>
 
-    <p id="stylesheet-tools">
-        <label for="slylesheet-selector">{translate: 'Stylesheet'} :</label>
-        <select id="slylesheet-selector">
-            <!--<option id="default">{translate: 'Default'}</option>-->
-        </select>
-    </p>
+            <select id="slylesheet-selector" disabled>
+                <option id="default" value="0" title="{translate: 'Default stylesheet generated automatically'}">{translate: 'Default'}</option>
+            </select>
+        </form>
+
+        <div id="legend"></div>
+    </div>
+
+    <ktbs4la2-timeline id="timeline"></ktbs4la2-timeline>
 </div>
