@@ -175,46 +175,12 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		// build list of all distinct obsel types in the obsel list
 		for(let i = 0; i < this._obsels.length; i++) {
 			let anObsel = this._obsels[i];
-			/*let rawObselType = anObsel["@type"];
-			let cleanObselType;
-			let colonPosition = rawObselType.indexOf(':');
-
-			if(colonPosition != -1)
-				cleanObselType = rawObselType.substring(colonPosition + 1);
-			else
-				cleanObselType = rawObselType;
-
-			if(!knownObselTypes.includes(cleanObselType))
-				knownObselTypes.push(cleanObselType);*/
-
 			let obselType = anObsel["@type"];
 
 			if(!knownObselTypes.includes(obselType))
 				knownObselTypes.push(obselType);
 		}
 
-		// --- @TODO utiliser plutôt "context"
-	/*	let rawModelUri, cleanModelUri;
-
-		if((this._context instanceof Array) && (this._context.length > 1)) {
-			let contextModelUriElement = this._context[1];
-
-			for(let key in contextModelUriElement) {
-				rawModelUri = contextModelUriElement[key];
-				break;
-			}
-		}
-		else 
-			rawModelUri = this._trace.get_model_uri();
-		
-		let hash_char_position = rawModelUri.indexOf('#');
-
-		if(hash_char_position != -1)
-			cleanModelUri = rawModelUri.substring(0, hash_char_position);
-		else
-			cleanModelUri = rawModelUri;
-		// ---
-*/
 		for(let i = 0; i < knownObselTypes.length; i++) {
 			let obselTypeID = knownObselTypes[i];
 			let aRule = new Object();
@@ -224,7 +190,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			aRule.symbol.shape = "duration-bar";
 			aRule.rules = new Array();
 			let aRuleRule = new Object();
-			aRuleRule.type = /*cleanModelUri + '#' +*/ obselTypeID;
+			aRuleRule.type = obselTypeID;
 			aRuleRule.attributes = new Array();
 			aRule.rules.push(aRuleRule);
 			defaultStyleSheet.rules.push(aRule);
@@ -356,7 +322,11 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		return '#'+rgb[0]+rgb[1]+rgb[2];
 	  }
 
-
+	/**
+	 * 
+	 * @param {*} colorRank 
+	 * @param {*} totalColorCount 
+	 */
 	_getDistinctColor(colorRank, totalColorCount) {
 		let rgbColor;
 
@@ -374,50 +344,64 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_getCatchAllRule() {
+		let catchAllRule = new Object();
+		catchAllRule.id = this._translateString("Unknown obsel type");
+		catchAllRule.rules = new Array();
+		catchAllRule.symbol = new Object();
+		let aRuleRule = new Object();
+		aRuleRule.type = "*";
+		aRuleRule.attributes = new Array();
+		catchAllRule.rules.push(aRuleRule);
+		return catchAllRule;
+	}
+
+	/**
+	 * 
+	 */
 	_generateDefaultStylesheetFromModel() {
-		let defaultStyleSheet = null;
+		let defaultStyleSheet = new Object();
+		defaultStyleSheet.name = this._translateString("Default");
+		defaultStyleSheet.description = this._translateString("Automatically generated stylesheet (one symbol and color for each obsel type)");
+		defaultStyleSheet.rules = new Array();
+		let model_uri = this._model.get_id();
 		let obselTypes = this._model.list_obsel_types();
 
-		if(obselTypes.length > 0) {
-			defaultStyleSheet = new Object();
-			defaultStyleSheet.name = this._translateString("Default");
-			defaultStyleSheet.description = this._translateString("Automatically generated stylesheet (one symbol and color for each obsel type)");
-			defaultStyleSheet.rules = new Array();
-			let model_uri = this._model.get_id();
+		for(let i = 0; i < obselTypes.length; i++) {
+			let rawObselTypeID = obselTypes[i]["@id"];
+			let cleanObselTypeID;
+			let colonPosition = rawObselTypeID.indexOf('#');
 
-			for(let i = 0; i < obselTypes.length; i++) {
-				let rawObselTypeID = obselTypes[i]["@id"];
-				let cleanObselTypeID;
-				let colonPosition = rawObselTypeID.indexOf('#');
+			if(colonPosition != -1)
+				cleanObselTypeID = rawObselTypeID.substring(colonPosition + 1);
+			else
+				cleanObselTypeID = rawObselTypeID;
 
-				if(colonPosition != -1)
-					cleanObselTypeID = rawObselTypeID.substring(colonPosition + 1);
-				else
-					cleanObselTypeID = rawObselTypeID;
+			let aRule = new Object();
+			aRule.id = cleanObselTypeID;
+			aRule.symbol = new Object();
 
-				let aRule = new Object();
-				aRule.id = cleanObselTypeID;
-				aRule.symbol = new Object();
+			if(obselTypes[i].suggestedColor)
+				aRule.symbol.color = obselTypes[i].suggestedColor;
+			else
+				aRule.symbol.color = this._getDistinctColor(i, obselTypes.length);
 
-				if(obselTypes[i].suggestedColor)
-					aRule.symbol.color = obselTypes[i].suggestedColor;
-				else
-					aRule.symbol.color = this._getDistinctColor(i, obselTypes.length);
+			if(obselTypes[i].suggestedSymbol)
+				aRule.symbol.symbol = obselTypes[i].suggestedSymbol;
+			else
+				aRule.symbol.shape = "duration-bar";
 
-				if(obselTypes[i].suggestedSymbol)
-					aRule.symbol.symbol = obselTypes[i].suggestedSymbol;
-				else
-					aRule.symbol.shape = "duration-bar";
-
-				aRule.rules = new Array();
-				let aRuleRule = new Object();
-				aRuleRule.type = model_uri + '#' + cleanObselTypeID;
-				aRuleRule.attributes = new Array();
-				aRule.rules.push(aRuleRule);
-				defaultStyleSheet.rules.push(aRule);
-			}
+			aRule.rules = new Array();
+			let aRuleRule = new Object();
+			aRuleRule.type = model_uri + '#' + cleanObselTypeID;
+			aRuleRule.attributes = new Array();
+			aRule.rules.push(aRuleRule);
+			defaultStyleSheet.rules.push(aRule);
 		}
 		
+		// add a default "catch-all" rule
+		defaultStyleSheet.rules.push(this._getCatchAllRule());
+
 		return defaultStyleSheet;
 	}
 
@@ -563,7 +547,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		let rawObselType = obsel["@type"];
 
 		return(
-				(rawObselType == subrule.type) 
+				(subrule.type == "*")
+			||	(rawObselType == subrule.type) 
 			|| 	(this._substituteContextString(rawObselType) == subrule.type)
 			|| 	(this._getAbsoluteModelLink(rawObselType) == subrule.type)
 		);
@@ -685,16 +670,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					else if(obselEventNode.hasAttribute("visible"))
 						obselEventNode.removeAttribute("visible");
 				}
-				else {
-					if(obselEventNode.hasAttribute("shape"))
-						obselEventNode.removeAttribute("shape");
-
-					if(obselEventNode.hasAttribute("color"))
-						obselEventNode.removeAttribute("color");
-
-					if(obselEventNode.hasAttribute("visible"))
-						obselEventNode.removeAttribute("visible");
-				}
+				else
+					obselEventNode.setAttribute("visible", false);
 			}
 			else
 				console.error("Could not found event node for obsel " + anObsel["@id"]);
@@ -792,6 +769,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					if(matchedRule["visible"] != undefined)
 						eventElement.setAttribute("visible", matchedRule["visible"]);
 				}
+				else
+					eventElement.setAttribute("visible", false);
 			}
 
 			let eventContent = document.createDocumentFragment();
