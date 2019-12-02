@@ -1,5 +1,5 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
-import "./ktbs4la2-timeline-event.js";
+import {KTBS4LA2TimelineEvent} from "./ktbs4la2-timeline-event.js";
 
 /**
  * 
@@ -60,6 +60,101 @@ function getDayRankInYear(year, month, day) {
  */
 function getNumberOfDaysInMonth(month, year) {
 	return new Date(year, month, 0).getDate();
+}
+
+/**
+ * 
+ */
+class KTBS4LA2CallbackQueue {
+
+	/**
+	 * 
+	 */
+	constructor() {
+		this._queuedCallbacks = new Array();
+		this._processIntervalID = null;
+		this._processIntervalDelay = 1;
+	}
+
+	/**
+	 * 
+	 */
+	get processIntervalDelay() {
+		return this._processIntervalDelay;
+	}
+
+	/**
+	 * 
+	 */
+	set processIntervalDelay(newIntervalDelay) {
+		if((newIntervalDelay === parseInt(newIntervalDelay, 10)) && (newIntervalDelay >= 0))
+			this._processIntervalDelay = newIntervalDelay;
+		else
+			throw new Error("new value for processIntervalDelay parameter must be a non-negative Integer");
+	}
+
+	/**
+	 * 
+	 */
+	get isRunning() {
+		return (this._processIntervalID != null);
+	}
+
+	/**
+	 * 
+	 */
+	get hasPendingCallback() {
+		return (this._queuedCallbacks.length > 0);
+	}
+
+	/**
+	 * 
+	 */
+	add(callback) {
+		this._queuedCallbacks.push(callback);
+	}
+
+	/**
+	 * 
+	 */
+	clear() {
+		if(this.isRunning)
+			this.stop();
+		
+		this._queuedCallbacks = new Array();
+	}
+
+	/**
+	 * 
+	 */
+	start() {
+		if(!this.isRunning)
+			this._processIntervalID = setInterval(this._processNextCallback.bind(this), this._processIntervalDelay);
+		else
+			throw new Error("Already running");
+	}
+
+	/**
+	 * 
+	 */
+	stop() {
+		if(this.isRunning) {
+			clearInterval(this._processIntervalID);
+			this._processIntervalID = null;
+		}
+		else
+			throw new Error("Already stopped");
+	}
+
+	/**
+	 * 
+	 */
+	_processNextCallback() {
+		if(this._queuedCallbacks.length > 0)
+			this._queuedCallbacks.shift()();
+		else
+			this.stop();
+	}
 }
 
 /**
@@ -181,8 +276,8 @@ class KTBS4LA2TimelineSubdivision extends HTMLElement {
 						dateString = this.getAttribute("id") + "-12-31T23:59:59.999";
 						break;
 					case "month":
-						let year = parseInt(this.getAttribute("id").substring(0, 4));
-						let month = parseInt(this.getAttribute("id").substring(5, 7));
+						let year = parseInt(this.getAttribute("id").substring(0, 4), 10);
+						let month = parseInt(this.getAttribute("id").substring(5, 7), 10);
 						dateString = this.getAttribute("id") + "-" + getNumberOfDaysInMonth(month, year) + "T23:59:59.999";
 						break;
 					case "day":
@@ -236,23 +331,19 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url);
 
-		/*this._resolveConnected;
-
-		this._connected = new Promise((resolve) => {
-			this._resolveConnected = resolve;
-		});*/
-
 		this._beginTime = null;
 		this._endTime = null;
-		this._eventCountsPerTime = new Array();
-
+		
 		this._firstRepresentedTime;
 		this._lastRepresentedTime;
 		this._currentLevelDivWidth;
 
+		this._allEventNodes = null;
+		this._visibleEventsNodes = null;
+		this._eventsNodesInView = null;
+
 		this._bindedDragDisplayWindowFunction = this._onDragDisplayWindow.bind(this);
 		this._bindedStopDraggingDisplayWindowFunction = this._onStopDraggingDisplayWindow.bind(this);
-		this._displayWindowIsBeingDragged = false;
 		this._displayWindowDragMouseTime;
 
 		this._watchScroll = true;
@@ -265,17 +356,11 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._scrollLeftButtonPressedIntervalID = null;
 		this._scrollRightButtonPressedIntervalID = null;
 
-		this._updateEventsRowsDelay = 250;
-		this._requestUpdateEventsRowsID = null;
 		this._requestZoomIncrementID = null;
 		this._requestedZoomIncrementAmount = 0;
-		this._requestedZoomMouseRelativeX = null;
-		this._requestedZoomMouseTime = null;
 		this._requestUpdateTimeDivisionsID = null;
-		this._updateTimeDivisionsDelay = 250;
 		this._maxDisplayableRows = null;
 		this._requestUnsetZoomCursorID = null;
-		this._requestUnsetZoomCursorDelay = 300;
 
 		this._onDisplayWindowChangeHeightID = null;
 		this._onDisplayWindowChangeWidthID = null;
@@ -283,6 +368,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		this._lastKnownDisplayWindowWidth = null;
 		this._lastKnownDisplayWindowHeight = null;
+
+		this._updateEventsRowQueue = new KTBS4LA2CallbackQueue();
+		this._updateEventsRowQueue.processIntervalDelay = 10;
 
 		this._resolveBeginSet;
 		this._rejectBeginSet;
@@ -313,7 +401,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			this._timeDivisionsAreInitialized = true;
 		});
 
-		this._zoomIsInitialized = false;
 		this._resolveZoomInitialized;
 
 		this._zoomInitialized = new Promise((resolve) => {
@@ -325,16 +412,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._componentReady.then(() => {
 					this._initTimeDivisions();
 					this._initZoom();
+					this._updateMaxDisplayableRows();
 				});
 			}.bind(this))
 			.catch(function() {
 				this.emitErrorEvent(new Error("Missing required attribute \"begin\" and/or \"end\""));
 			}.bind(this));
 
-		this._eventsSortedUntilRank = 0;
 		this._eventsNodesObserver = new MutationObserver(this._onEventsNodesMutation.bind(this));
 		this._eventsNodesObserver.observe(this, { childList: true, subtree: true, attributes: true, attributeFilter: ["visible"]});
-		
+
 		this.addEventListener("select-timeline-event", this._onSelectTimelineEvent.bind(this));
 	}
 
@@ -345,7 +432,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let observedAttributes = super.observedAttributes;
 		observedAttributes.push("begin");
 		observedAttributes.push("end");
-		observedAttributes.push("auto-sort-events");
 		return observedAttributes;
 	}
 
@@ -369,7 +455,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._widgetContainer = this.shadowRoot.querySelector("#widget-container");
 
 		this._timeDiv = this.shadowRoot.querySelector("#time");
-		this._eventsDiv = this.shadowRoot.querySelector("#events");
 		this._displayWindow = this.shadowRoot.querySelector("#display-window");
 		this._displayWindow.addEventListener("wheel", this._onMouseWheel.bind(this), { passive: false });
 		this._displayWindow.addEventListener("mousedown", this._onDisplayWindowMouseDown.bind(this));
@@ -400,61 +485,51 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		catch(error) {
 			this.emitErrorEvent(error);
 		}
-
-		this._updateIsEmpty();
 	}
 
 	/**
 	 * 
 	 */
-	/*connectedCallback() {
-		super.connectedCallback();
-
-		Promise.all([this._componentReady, this._timeDivisionsInitialized, this._zoomInitialized]).then(() => {
-			window.requestAnimationFrame(() => {
-				console.log("connectedCallback() : this._timeDiv.clientWidth=" + this._timeDiv.clientWidth);
-				//this._resolveConnected();
-			});
-		});
-	}*/
-
-	/**
-	 * 
-	 */
 	_onResizeWidgetContainer(entries, observer) {
-		if((this._displayWindow.clientHeight != 0) && (this._lastKnownDisplayWindowHeight != this._displayWindow.clientHeight)) {		
-			this._lastKnownDisplayWindowHeight = this._displayWindow.clientHeight;
+		if(this._timeDivisionsAreInitialized == true) {
+			// widget's height has changed
+			if((this._displayWindow.clientHeight != 0) && (this._lastKnownDisplayWindowHeight != this._displayWindow.clientHeight)) {		
+				this._lastKnownDisplayWindowHeight = this._displayWindow.clientHeight;
 
-			if(this._onDisplayWindowChangeHeightID != null)
-				clearTimeout(this._onDisplayWindowChangeHeightID);
+				if(this._onDisplayWindowChangeHeightID != null)
+					clearTimeout(this._onDisplayWindowChangeHeightID);
 
-			this._onDisplayWindowChangeHeightID = setTimeout(() => {
-				this._updateMaxDisplayableRows();
-				this._onDisplayWindowChangeHeightID = null;
-			});
-		}
+				this._onDisplayWindowChangeHeightID = setTimeout(() => {
+					if(this._updateMaxDisplayableRows())
+						this._requestUpdateEventsRow();
 
-		if((this._displayWindow.clientWidth != 0) && (this._lastKnownDisplayWindowWidth != this._displayWindow.clientWidth)) {
-			this._lastKnownDisplayWindowWidth = this._displayWindow.clientWidth;
-
-			if(this._onDisplayWindowChangeWidthID != null)
-				clearTimeout(this._onDisplayWindowChangeWidthID);
-
-			this._onDisplayWindowChangeWidthID = setTimeout(() => {
-				this._timeDivisionsInitialized.then(() => {
-					this._initZoomParams();
-
-					if(this._isZoomedOut == true) {
-						this._setWidthRules(this._initialLevel, this._initialDivWidth);
-						this._requestUpdateEventsRows();
-					}
-					
-					this._updateScrollBarCursor();
-					this._updateScrollBarContent();
+					this._onDisplayWindowChangeHeightID = null;
 				});
+			}
 
-				this._onDisplayWindowChangeWidthID = null;
-			});
+			// widget's width has changed
+			if((this._displayWindow.clientWidth != 0) && (this._lastKnownDisplayWindowWidth != this._displayWindow.clientWidth)) {
+				this._lastKnownDisplayWindowWidth = this._displayWindow.clientWidth;
+
+				if(this._onDisplayWindowChangeWidthID != null)
+					clearTimeout(this._onDisplayWindowChangeWidthID);
+
+				this._onDisplayWindowChangeWidthID = setTimeout(() => {
+					this._timeDivisionsInitialized.then(() => {
+						this._initZoomParams();
+
+						if(this._isZoomedOut == true) {
+							this._setWidthRules(this._initialLevel, this._initialDivWidth);
+							this._requestUpdateEventsRow();
+						}
+						
+						this._updateScrollBarCursor();
+						this._updateScrollBarContent();
+					});
+
+					this._onDisplayWindowChangeWidthID = null;
+				});
+			}
 		}
 	}
 
@@ -462,58 +537,54 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_updateMaxDisplayableRows() {
-		this._componentReady.then(() => {
-			let widgetHeight = this._displayWindow.getBoundingClientRect().height;
-
-			this._timeDivisionsInitialized.then(() => {
-				let currentLevel = this._widgetContainer.className;
-				let availableHeightForEvents;
-				
-				switch(currentLevel) {
-					case "year" :
-						availableHeightForEvents = widgetHeight - 25;
-						break;
-					case "month" :
-						availableHeightForEvents = widgetHeight - 45;
-						break;
-					case "day" :
-						availableHeightForEvents = widgetHeight - 65;
-						break;
-					case "hour" :
-						availableHeightForEvents = widgetHeight - 85;
-						break;
-					case "tenminutes" :
-						availableHeightForEvents = widgetHeight - 105;
-						break;
-					case "minute" :
-						availableHeightForEvents = widgetHeight - 105;
-						break;
-					case "tenseconds" :
-						availableHeightForEvents = widgetHeight - 125;
-						break;
-					case "second" :
-						availableHeightForEvents = widgetHeight - 125;
-						break;
-					case "ahundredmilliseconds" :
-						availableHeightForEvents = widgetHeight - 145;
-						break;
-					case "tenmilliseconds" :
-						availableHeightForEvents = widgetHeight - 145;
-						break;
-					case "millisecond" :
-						availableHeightForEvents = widgetHeight - 145;
-						break;
-				}
-				
-				let newMaxDisplayableRows = Math.floor(availableHeightForEvents / 15);
-				
-				if(newMaxDisplayableRows != this._maxDisplayableRows) {
-					this._maxDisplayableRows = newMaxDisplayableRows;
-					this.dispatchEvent(new CustomEvent("update-max-displayable-rows"));
-					this._requestUpdateEventsRows();
-				}
-			});
-		});
+		let widgetHeight = this._displayWindow.getBoundingClientRect().height;
+		let currentLevel = this._widgetContainer.className;
+		let availableHeightForEvents;
+		
+		switch(currentLevel) {
+			case "year" :
+				availableHeightForEvents = widgetHeight - 25;
+				break;
+			case "month" :
+				availableHeightForEvents = widgetHeight - 45;
+				break;
+			case "day" :
+				availableHeightForEvents = widgetHeight - 65;
+				break;
+			case "hour" :
+				availableHeightForEvents = widgetHeight - 85;
+				break;
+			case "tenminutes" :
+				availableHeightForEvents = widgetHeight - 105;
+				break;
+			case "minute" :
+				availableHeightForEvents = widgetHeight - 105;
+				break;
+			case "tenseconds" :
+				availableHeightForEvents = widgetHeight - 125;
+				break;
+			case "second" :
+				availableHeightForEvents = widgetHeight - 125;
+				break;
+			case "ahundredmilliseconds" :
+				availableHeightForEvents = widgetHeight - 145;
+				break;
+			case "tenmilliseconds" :
+				availableHeightForEvents = widgetHeight - 145;
+				break;
+			case "millisecond" :
+				availableHeightForEvents = widgetHeight - 145;
+				break;
+		}
+		
+		let newMaxDisplayableRows = Math.floor(availableHeightForEvents / 15);
+		
+		if(newMaxDisplayableRows != this._maxDisplayableRows) {
+			this._maxDisplayableRows = newMaxDisplayableRows;
+			return true;
+		}
+		else
+			return false;
 	}
 
 	/**
@@ -531,8 +602,26 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_getAllEventNodes() {
-		return this.querySelectorAll("ktbs4la2-timeline-event");
+		if(this._allEventNodes == null) {
+			this._allEventNodes = Array.from(this.querySelectorAll("ktbs4la2-timeline-event"));
+			this._allEventNodes.sort(KTBS4LA2TimelineEvent.compareEventsOrder);
+		}
+
+		return this._allEventNodes;
 	}
+
+	/**
+	 * 
+	 */
+	_getVisibleEventNodes() {
+		if(this._visibleEventsNodes == null) {
+			this._visibleEventsNodes = Array.from(this.querySelectorAll("ktbs4la2-timeline-event:not([visible = \"false\"]):not([visible = \"0\"])"));
+			this._visibleEventsNodes.sort(KTBS4LA2TimelineEvent.compareEventsOrder);
+		}
+
+		return this._visibleEventsNodes;
+	}
+
 
 	/**
 	 *
@@ -585,185 +674,275 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_sortEventNodes() {
-		//let eventNodes = this._getAllEventNodes();
-		//let sortedUntil = this._eventsSortedUntilRank;
-		let eventNodes, inversionProcessed;
-
-		do {
-			eventNodes = this._getAllEventNodes(); //+
-			inversionProcessed = false;
-			let firstInversion = null;
-
-			for(let i = 0/*sortedUntil*/; i < (eventNodes.length - 2); i++)
-				if(parseInt(eventNodes[i].getAttribute("begin")) > parseInt(eventNodes[i+1].getAttribute("begin"))) {
-					eventNodes[i].before(eventNodes[i+1]);
-					/*let temp = eventNodes[i];
-					eventNodes[i] = eventNodes[i+1];
-					eventNodes[i+1] = temp;*/
-					inversionProcessed = true;
-
-					if(firstInversion == null)
-						firstInversion = i;
-				}
-
-			//sortedUntil = firstInversion;
-		} while(inversionProcessed);
-
-		this._eventsSortedUntilRank = eventNodes.length;
-	}
-
-	/**
-	 * 
-	 */
-	_updateIsEmpty() {
-		let eventCount = this._getAllEventNodes().length;
-
-		if(eventCount > 0) {
-			if(this._displayWindow.classList.contains("empty"))
-				this._displayWindow.classList.remove("empty");
-		}
-		else {
-			if(!this._displayWindow.classList.contains("empty"))
-				this._displayWindow.classList.add("empty");
-		}
-	}
-
-	/**
-	 * 
-	 */
 	_onEventsNodesMutation(mutationRecords, observer) {
-		let addedOrRemovedEvent = false;
+		let nodeAdded = false;
+		let nodeRemoved = false;
 		let changedEventVisibility = false;
+		let newlyAddedNodes = new Array();
 
-		for(let i = 0; (i < mutationRecords.length) && (!addedOrRemovedEvent || !changedEventVisibility); i++) {
+		for(let i = 0; i < mutationRecords.length; i++) {
 			let currentMutationRecord = mutationRecords[i];
 
 			if(currentMutationRecord.type == "childList") {
-				let addedNodes = currentMutationRecord.addedNodes;
-		
-				for(let i = 0; (i < addedNodes.length) && !(addedOrRemovedEvent); i++) {
-					let addedNode = addedNodes[i];
-
-					if(addedNode.localName == "ktbs4la2-timeline-event")
-						addedOrRemovedEvent = true;
+				if(currentMutationRecord.addedNodes.length > 0) {
+					newlyAddedNodes = newlyAddedNodes.concat(...currentMutationRecord.addedNodes);
+					nodeAdded = true;
 				}
 
-				let removedNodes = currentMutationRecord.removedNodes;
-		
-				for(let i = 0; (i < removedNodes.length) && !(addedOrRemovedEvent); i++) {
-					let removedNode = removedNodes[i];
-
-					if(removedNode.localName == "ktbs4la2-timeline-event")
-						addedOrRemovedEvent = true;
-				}
+				if(currentMutationRecord.removedNodes.length > 0)
+					nodeRemoved = true;
 			}
 			else if(	(currentMutationRecord.type == "attributes")
 					&&	(currentMutationRecord.target.localName == "ktbs4la2-timeline-event")
 					&&	(currentMutationRecord.attributeName == "visible"))
 						changedEventVisibility = true;
-				
 		}
 
-		if(addedOrRemovedEvent) {
-			this._componentReady.then(() => {
-				setTimeout(() => {
-					this._updateIsEmpty();
-					this._sortEventNodes();
+		if(nodeAdded || nodeRemoved) {
+			setTimeout(() => {
+				this._allEventNodes = null;
+				this._visibleEventsNodes = null;
+
+				this._timeDivisionsInitialized.then(() => {
 					this._updateScrollBarContent();
-					this._requestUpdateEventsRows();
+					this._updateEventsPosX(newlyAddedNodes);
+					this._requestUpdateEventsRow();
 				});
 			});
 		}
-		else if(changedEventVisibility)
+		else if(changedEventVisibility) {
+			this._visibleEventsNodes = null;
+			
 			this._componentReady.then(() => {
 				this._updateScrollBarContent();
-				this._requestUpdateEventsRows();
+				this._requestUpdateEventsRow();
 			});
+		}
 	}
 
 	/**
 	 * 
 	 */
-	_updateEventsRows() {
-		this._timeDivisionsInitialized.then(() => {
-			let timeLineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
-			let availableWidth = this._timeDiv.clientWidth;
-			let timeOverWidthRatio = timeLineDuration / availableWidth;
+	_updateEventsPosX(events) {
+		let timelineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
+							
+		// we browse all visible events
+		for(let i = 0; i < events.length; i++) {
+			let currentEvent = events[i];
+			let eventPosXIsOverflow = ((currentEvent.endTime < this._firstRepresentedTime) || (currentEvent.beginTime > this._lastRepresentedTime));
+
+			if(!eventPosXIsOverflow) {
+				let timeOffset = currentEvent.beginTime - this._firstRepresentedTime;
+				let posX = (timeOffset / timelineDuration) * 100;
+				currentEvent.style.left = posX + "%";
+
+				if(currentEvent.hasAttribute("end") && (!(currentEvent.hasAttribute("shape") || currentEvent.hasAttribute("symbol")) || (currentEvent.getAttribute("shape") == "duration-bar"))) {
+					let eventDuration = currentEvent.endTime - currentEvent.beginTime;
+					let eventPercentageWidth = (eventDuration / timelineDuration) * 100;
+					currentEvent.style.width = eventPercentageWidth + "%";
+				}
+
+				if(currentEvent.classList.contains("posx-is-overflow"))
+					currentEvent.classList.remove("posx-is-overflow");
+			}
+			else
+				if(!currentEvent.classList.contains("posx-is-overflow"))
+					currentEvent.classList.add("posx-is-overflow");
+
+			if(!currentEvent.hasAttribute("posx-initialized"))
+				currentEvent.setAttribute("posx-initialized", "");
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_requestUpdateEventsRow() {
+		if(this._updateEventsRowQueue.isRunning) {
+			this._updateEventsRowQueue.stop();
+			this._updateEventsRowQueue.clear();
+		}
+
+		let events = this._getVisibleEventNodes();
+
+		if(events.length > 0) {
+			this._updateEventsRowQueue.add(() => {
+				this._updateEventsRow(0, events.length - 1, 10, true);
+			});
+
+			this._updateEventsRowQueue.start();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_updateEventsRow(fromRank, toRank, maxBatchTime = null, initNewOrdering = true, previousEventsPerRow = null, previousEventsTimePerRow = null, minDisplayableTime = null, eventsNewRows = new Array(), eventsNewHiddenSiblinbgsCounts = new Array(), hiddenEventsCountSinceLastVisible = 0) {
+		let batchBeginTime = performance.now();
+		let timeLineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
+		let timeOverWidthRatio = timeLineDuration / this._timeDiv.clientWidth;
+		
+		if(!isNaN(timeOverWidthRatio)) {
+			let pixelsBeginThreshold = 13;
+			let timeBeginThreshold = timeOverWidthRatio * pixelsBeginThreshold;
+			let pixelsEndThreshold = 1;
+			let timeEndThreshold = timeOverWidthRatio * pixelsEndThreshold;
+			let events = this._getVisibleEventNodes();
 			
-			if(!isNaN(timeOverWidthRatio)) {
-				let pixelsBeginThreshold = 15;
-				let timeBeginThreshold = timeOverWidthRatio * pixelsBeginThreshold;
-				let pixelsEndThreshold = 1;
-				let timeEndThreshold = timeOverWidthRatio * pixelsEndThreshold;
-				let previousEventsPerRow = new Array();
-				let previousEventsTimePerRow = new Array();
-				let minDisplayableTime = this._firstRepresentedTime;
-				let events = this.querySelectorAll("ktbs4la2-timeline-event:not([visible = \"false\"]):not([visible = \"0\"])");
+			// initialize usefull data about already assigned rows if needed
+			if((initNewOrdering == false) && (fromRank > 0)) {
+				if((previousEventsPerRow == null) || (previousEventsTimePerRow == null)) {
+					previousEventsPerRow = new Array();
+					previousEventsTimePerRow = new Array();
 
-				// we browse all visible events
-				for(let i = 0; i < events.length; i++) {
-					let currentEvent = events[i];
-					let currentEventTime = currentEvent.beginTime;
-					let availableRow = null;
-
-					if(currentEventTime >= minDisplayableTime) {
-						// we browse the "previousEventsPerRow" Array
-						for(let j = 0; (availableRow == null) && (j <= (this._maxDisplayableRows - 1)) && (j < previousEventsPerRow.length); j++) {
-							let previousEvent = previousEventsPerRow[j];
-
-							if(previousEvent.hasAttribute("shape") && (previousEvent.getAttribute("shape") != "duration-bar")) {
-								let previousEventTime = previousEvent.beginTime;
-								let timeDelta = currentEventTime - previousEventTime;
-
-								if(timeDelta >= timeBeginThreshold)
-									availableRow = j;
-							}
-							else {
-								let previousEventBeginTime = previousEvent.beginTime;
-								let previousEventEndTime = previousEvent.endTime;
-
-								let timeBeginDelta = currentEventTime - previousEventBeginTime;
-								let timeEndDelta = currentEventTime - previousEventEndTime;
-
-								if((timeBeginDelta >= timeBeginThreshold) && (timeEndDelta > timeEndThreshold))
-									availableRow = j;
-							}
-						}
-					}
-
-					if(availableRow == null)
-						availableRow = previousEventsPerRow.length;
-
-					if(!currentEvent.hasAttribute("row") || (parseInt(currentEvent.getAttribute("row")) != availableRow))
-						currentEvent.setAttribute("row", availableRow);
-
-					if(availableRow <= (this._maxDisplayableRows - 1)) {
-						if(currentEvent.hasAttribute("hidden-siblinbgs-count"))
-							currentEvent.removeAttribute("hidden-siblinbgs-count");
-
-						previousEventsPerRow[availableRow] = currentEvent;
-						previousEventsTimePerRow[availableRow] = currentEventTime;
-
-						if(previousEventsPerRow.length >= this._maxDisplayableRows)
-							minDisplayableTime = Math.min(...previousEventsTimePerRow) + timeBeginThreshold;
-					}
-					else if(previousEventsPerRow.length > 0) {
-						let lastVisibleEvent = previousEventsPerRow[previousEventsPerRow.length - 1];
-
-						if(lastVisibleEvent.hasAttribute("hidden-siblinbgs-count")) {
-							let hiddenSiblingsCount = parseInt(lastVisibleEvent.getAttribute("hidden-siblinbgs-count"));
-							hiddenSiblingsCount++;
-							lastVisibleEvent.setAttribute("hidden-siblinbgs-count", hiddenSiblingsCount);
+					for(let row = 0; row < this._maxDisplayableRows; row++) {
+						let selector = "ktbs4la2-timeline-event[row = \"" + row + "\"]:not(.row-is-overflow):not([visible = \"false\"]):not([visible = \"0\"]):nth-child(-n + " + (fromRank - 1) + ")";
+						let selectedEvents = this.querySelectorAll(selector);
+						
+						if(selectedEvents.length > 0) {
+							let lastEvent = selectedEvents[selectedEvents.length - 1];
+							previousEventsPerRow[row] = lastEvent;
+							previousEventsTimePerRow[row] = lastEvent.beginTime;
 						}
 						else
-							lastVisibleEvent.setAttribute("hidden-siblinbgs-count", "1");
+							break;
+					}
+
+					if(previousEventsTimePerRow.length >= this._maxDisplayableRows)
+						minDisplayableTime = Math.min(...previousEventsTimePerRow) + timeBeginThreshold;
+					else
+						minDisplayableTime = this._firstRepresentedTime;
+				}
+
+				if(minDisplayableTime == null) {
+					if(previousEventsTimePerRow.length >= this._maxDisplayableRows)
+						minDisplayableTime = Math.min(...previousEventsTimePerRow) + timeBeginThreshold;
+					else
+						minDisplayableTime = this._firstRepresentedTime;
+				}
+			}
+			else {
+				previousEventsPerRow = new Array();
+				previousEventsTimePerRow = new Array();
+				minDisplayableTime = this._firstRepresentedTime;
+			}
+			// --- done
+
+			let i, lastVisibleMaxRowEvent;
+
+			// we browse visible events
+			for(i = fromRank; i <= toRank; i++) {
+				let currentEvent = events[i];
+				let availableRow = null;
+
+				if(currentEvent.beginTime >= minDisplayableTime) {
+					// we browse the "previousEventsPerRow" Array
+					for(let j = 0; (availableRow == null) && (j < this._maxDisplayableRows) && (j < previousEventsPerRow.length); j++) {
+						let previousEvent = previousEventsPerRow[j];
+
+						if(previousEvent.hasAttribute("symbol") || (previousEvent.hasAttribute("shape") && (previousEvent.getAttribute("shape") != "duration-bar"))) {
+							let timeDelta = currentEvent.beginTime - previousEvent.beginTime;
+
+							if(timeDelta >= timeBeginThreshold)
+								availableRow = j;
+						}
+						else {
+							let timeBeginDelta = currentEvent.beginTime - previousEvent.beginTime;
+							let timeEndDelta = currentEvent.beginTime - previousEvent.endTime;
+
+							if((timeBeginDelta >= timeBeginThreshold) && (timeEndDelta >= timeEndThreshold))
+								availableRow = j;
+						}
+					}
+				}
+
+				if(availableRow == null)
+					availableRow = previousEventsPerRow.length;
+
+				if(availableRow < this._maxDisplayableRows) {
+					if(availableRow == (this._maxDisplayableRows - 1))
+						lastVisibleMaxRowEvent = currentEvent;
+
+					if(currentEvent.getAttribute("row") != availableRow)
+						eventsNewRows[currentEvent.id] = availableRow;
+					
+					previousEventsPerRow[availableRow] = currentEvent;
+					previousEventsTimePerRow[availableRow] = currentEvent.beginTime;
+
+					if(previousEventsPerRow.length >= this._maxDisplayableRows)
+						minDisplayableTime = Math.min(...previousEventsTimePerRow) + timeBeginThreshold;
+
+					hiddenEventsCountSinceLastVisible = 0;
+
+					if(currentEvent.hasAttribute("hidden-siblinbgs-count"))
+						eventsNewHiddenSiblinbgsCounts[currentEvent.id] = null;
+				}
+				else {
+					if(currentEvent.getAttribute("row") != null)
+						eventsNewRows[currentEvent.id] = null;
+
+					if(!lastVisibleMaxRowEvent && (previousEventsPerRow.length > 0))
+						lastVisibleMaxRowEvent = previousEventsPerRow[this._maxDisplayableRows - 1];
+
+					if(lastVisibleMaxRowEvent) {
+						if(!eventsNewHiddenSiblinbgsCounts[lastVisibleMaxRowEvent.id])
+							eventsNewHiddenSiblinbgsCounts[lastVisibleMaxRowEvent.id] = 1;
+						else
+							eventsNewHiddenSiblinbgsCounts[lastVisibleMaxRowEvent.id]++;
+					}
+				}
+				
+				if((maxBatchTime != null) && (i < toRank)) {
+					let currentTime = performance.now();
+
+					if((currentTime - batchBeginTime) > maxBatchTime) {
+						this._updateEventsRowQueue.add(() => {
+							this._updateEventsRow(i + 1, toRank, maxBatchTime, false, previousEventsPerRow, previousEventsTimePerRow, minDisplayableTime, eventsNewRows, eventsNewHiddenSiblinbgsCounts, hiddenEventsCountSinceLastVisible);
+						});
+
+						break;
 					}
 				}
 			}
-			else
-				throw new Error("Could not determine time/width ratio");
-		});
+
+			// if the batch has been processed to the end
+			if(i >= toRank) {
+				// all events rows have been recalculated, now we apply them in bulk
+				for(let eventId in eventsNewRows) {
+					let eventRow = eventsNewRows[eventId];
+					let event = this.querySelector("#" + eventId);
+
+					if(eventRow != null) {
+						event.setAttribute("row", eventRow);
+
+						if(event.classList.contains("row-is-overflow"))
+							event.classList.remove("row-is-overflow");
+					}
+					else  {
+						event.removeAttribute("row");
+
+						if(!event.classList.contains("row-is-overflow"))
+							event.classList.add("row-is-overflow");
+					}
+
+					if(!event.hasAttribute("row-initialized"))
+						event.setAttribute("row-initialized", "");
+				}
+
+				for(let eventId in eventsNewHiddenSiblinbgsCounts) {
+					let event = this.querySelector("#" + eventId);
+					let hiddenSiblingsCount = eventsNewHiddenSiblinbgsCounts[eventId];
+
+					if(hiddenSiblingsCount != null)
+						event.setAttribute("hidden-siblinbgs-count", hiddenSiblingsCount);
+					else
+						event.removeAttribute("hidden-siblinbgs-count");
+				}
+			}
+			
+		}
+		else
+			throw new Error("Could not determine time/width ratio");
 	}
 
 	/**
@@ -873,97 +1052,158 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._requestUpdateTimeDivisionsID = setTimeout(() => {
 			let viewBeginTime = this._getViewBeginTime();
 			let viewEndTime = this._getViewEndTime();
-			this._updateTimeDivisions(viewBeginTime, viewEndTime);
-			let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
-			let newTimeOffset = viewBeginTime - this._firstRepresentedTime;
-			let newScrollLeft = newTimeOffset * widthOverTimeRatio;
-			this._setSilentScroll(newScrollLeft);
+			let newTimeDivBoundaries = this._getTimeDivBoundariesForView(viewBeginTime, viewEndTime);
+			let timeDivNeedsToChange = ((newTimeDivBoundaries.beginTime != this._firstRepresentedTime) || (newTimeDivBoundaries.endTime != this._lastRepresentedTime));
+
+			if(timeDivNeedsToChange) {
+				let firstBefore = this._firstRepresentedTime;
+				let lastBefore = this._lastRepresentedTime;
+				this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
+				this._updateEventsPosX(this._getVisibleEventNodes());
+				let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
+				let newTimeOffset = viewBeginTime - this._firstRepresentedTime;
+				let newScrollLeft = newTimeOffset * widthOverTimeRatio;
+				this._setSilentScroll(newScrollLeft);
+			}
+
 			this._requestUpdateTimeDivisionsID = null;
-		}, this._updateTimeDivisionsDelay);
+		});
 	}
 
-	_updateViewSubdivisions(fromTime, toTime) {
-		let units = Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit);
-		let currentUnitRank = units.indexOf(this._widgetContainer.className);
+	/**
+	 * 
+	 */
+	_updateTimeDivisions(fromTime, toTime, parent = this._timeDiv) {
+		let subDivs = parent.querySelectorAll(":scope > ktbs4la2-timeline-subdivision");
 
-		for(let i = 0; i < currentUnitRank; i++) {
-			let selector = "";
-			
-			for(let j = 0; j <= i; j++) {
-				let unit = units[j];
-				selector += ".time-division-" + unit + ":not(.overflow)";
+		// browse parent's sub-divs
+		for(let i = 0; i < subDivs.length; i++) {
+			let aSubDiv = subDivs[i];
 
-				if(j < i)
-					selector += " > ";
-				else
-					selector += ":not(.subdivided)";
-			}
-			
-			let dividableTimeDivs = this._timeDiv.querySelectorAll(selector);
-			
-			for(let j = 0; j < dividableTimeDivs.length; j++) {
-				let aSubDiv = dividableTimeDivs[j];
+			// if the child subdivs overlaps the [fromTime - toTime] interval
+			if((aSubDiv._getEndTime() > fromTime) && (aSubDiv._getBeginTime() < toTime)) {
+				if(aSubDiv.classList.contains("overflow"))
+					aSubDiv.classList.remove("overflow");
 				
-				if((aSubDiv._getEndTime() > fromTime) && (aSubDiv._getBeginTime() < toTime)) {
-					let subDivUnit = units[i];
-					let childrenUnit = units[i+1];
-					let begin, end;
+				let subDivUnit = aSubDiv._getUnit();
 
-					switch(subDivUnit) {
-						case "year":
-							begin = 1;
-							end = 12;
-							break;
-						case "month":
-							begin = 1;
-							let month = parseInt(aSubDiv.getAttribute("id").substring(5,7));
-							let year = parseInt(aSubDiv.getAttribute("id").substring(0,4));
-							end = getNumberOfDaysInMonth(month, year);
-							break;
-						case "day":
-							begin = 0;
-							end = 23;
-							break;
-						case "hour":
-							begin = 0;
-							end = 5;
-							break;
-						case "tenminutes":
-							begin = 0;
-							end = 9;
-							break;
-						case "minute":
-							begin = 0;
-							end = 5;
-							break;
-						case "tenseconds":
-							begin = 0;
-							end = 9;
-							break;
-						case "second":
-							begin = 0;
-							end = 9;
-							break;
-						case "ahundredmilliseconds":
-							begin = 0;
-							end = 9;
-							break;
-						case "tenmilliseconds":
-							begin = 0;
-							end = 9;
-							break;
+				// if we haven't reached the maximum useful level of subdivisions
+				if(subDivUnit != this._widgetContainer.className) {
+					// instanciate sub-divs if needed
+					if(!aSubDiv.classList.contains("subdivided")) {
+						let begin, end, childrenUnit;
+
+						switch(subDivUnit) {
+							case "year":
+								begin = 1;
+								end = 12;
+								childrenUnit = "month";
+								break;
+							case "month":
+								begin = 1;
+								let month = parseInt(aSubDiv.getAttribute("id").substring(5,7), 10);
+								let year = parseInt(aSubDiv.getAttribute("id").substring(0,4), 10);
+								end = getNumberOfDaysInMonth(month, year);
+								childrenUnit = "day";
+								break;
+							case "day":
+								begin = 0;
+								end = 23;
+								childrenUnit = "hour";
+								break;
+							case "hour":
+								begin = 0;
+								end = 5;
+								childrenUnit = "tenminutes";
+								break;
+							case "tenminutes":
+								begin = 0;
+								end = 9;
+								childrenUnit = "minute";
+								break;
+							case "minute":
+								begin = 0;
+								end = 5;
+								childrenUnit = "tenseconds";
+								break;
+							case "tenseconds":
+								begin = 0;
+								end = 9;
+								childrenUnit = "second";
+								break;
+							case "second":
+								begin = 0;
+								end = 9;
+								childrenUnit = "ahundredmilliseconds";
+								break;
+							case "ahundredmilliseconds":
+								begin = 0;
+								end = 9;
+								childrenUnit = "tenmilliseconds";
+								break;
+							case "tenmilliseconds":
+								begin = 0;
+								end = 9;
+								childrenUnit = "millisecond";
+								break;
+						}
+
+						this._instanciateSubdivisions(begin, end, childrenUnit, aSubDiv);
 					}
 
-					this._instanciateSubdivisions(begin, end, childrenUnit, aSubDiv);
+					// recursive call
+					this._updateTimeDivisions(fromTime, toTime, aSubDiv);
 				}
 			}
+			else
+				if(!aSubDiv.classList.contains("overflow"))
+					aSubDiv.classList.add("overflow");
 		}
+
+		if(parent == this._timeDiv)
+			this._updateRepresentedTime();
+	}
+
+	/**
+	 * 
+	 */
+	_getTimeDivBoundariesForView(viewBeginTime, viewEndTime) {
+		let representedDuration = (this._lastRepresentedTime - this._firstRepresentedTime);
+		let timeOverWidthRatio = representedDuration / this._timeDiv.clientWidth;
+		let minLeftTime = viewBeginTime - (3 * this._displayWindow.clientWidth * timeOverWidthRatio);
+		let maxLeftTime = viewBeginTime - (1 * this._displayWindow.clientWidth * timeOverWidthRatio);
+		let minRightTime = viewEndTime + (1 * this._displayWindow.clientWidth * timeOverWidthRatio);
+		let maxRightTime = viewEndTime + (3 * this._displayWindow.clientWidth * timeOverWidthRatio);
+		 
+		let newTimeDivBeginTime = this._firstRepresentedTime;
+
+		if(newTimeDivBeginTime < minLeftTime)
+			newTimeDivBeginTime = minLeftTime;
+		else if(newTimeDivBeginTime > maxLeftTime)
+			newTimeDivBeginTime = maxLeftTime;
+
+		if(newTimeDivBeginTime < this.beginTime)
+			newTimeDivBeginTime = this.beginTime;
+		
+		let newTimeDivEndTime = this._lastRepresentedTime;
+
+		if(newTimeDivEndTime < minRightTime)
+			newTimeDivEndTime = minRightTime;
+		else if(newTimeDivEndTime > maxRightTime)
+			newTimeDivEndTime = maxRightTime;
+
+		if(newTimeDivEndTime > this.endTime)
+			newTimeDivEndTime = this.endTime;
+
+		return {beginTime : newTimeDivBeginTime, endTime : newTimeDivEndTime};
 	}
 
 	/**
 	 * 
 	 */
 	_setViewBegin(newViewBegin) {
+		let timeDivHasChanged = false;
+
 		if(newViewBegin < this.beginTime)
 			newViewBegin = this.beginTime;
 
@@ -972,12 +1212,22 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		if(newViewEnd > this.endTime)
 			newViewEnd = this.endTime;
 
-		this._updateTimeDivisions(newViewBegin, newViewEnd);
+		let newTimeDivBoundaries = this._getTimeDivBoundariesForView(newViewBegin, newViewEnd);
+		let timeDivNeedsToChange = ((newTimeDivBoundaries.beginTime != this._firstRepresentedTime) || (newTimeDivBoundaries.endTime != this._lastRepresentedTime));
+
+		if(timeDivNeedsToChange) {
+			let firstRepTimeBefore = this._firstRepresentedTime;
+			let lastRepTimeBefore = this._lastRepresentedTime;
+			this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
+			timeDivHasChanged = ((this._firstRepresentedTime != firstRepTimeBefore) || (this._lastRepresentedTime != lastRepTimeBefore));
+		}
+
 		let viewWidthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
 		let timeOffset = newViewBegin - this._firstRepresentedTime;
 		let newTimeDivScroll = timeOffset * viewWidthOverTimeRatio;
 		this._setSilentScroll(newTimeDivScroll);
 		this._updateScrollBarCursor();
+		return timeDivHasChanged;
 	}
 
 	/**
@@ -987,9 +1237,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		event.preventDefault();
 
 		if(this._displayWindow.classList.contains("scrollable")) {
-			this._displayWindowIsBeingDragged = true;
-			let relativeMousePosX = event.offsetX - this._displayWindow.scrollLeft;
-			this._displayWindowDragMouseTime = this._getMouseTime(relativeMousePosX);
+			let timeDivRelativeMouseX = event.clientX - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
+			this._displayWindowDragMouseTime = this._getMouseTime(timeDivRelativeMouseX);
 			
 			if(!this._displayWindow.classList.contains("scrolled"))
 				this._displayWindow.classList.add("scrolled");
@@ -1004,11 +1253,11 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_onDragDisplayWindow(event) {
 		event.preventDefault();
-		let relativeMousePosX = event.offsetX - this._displayWindow.scrollLeft;
+		let displayWindowRelativeMouseX = event.clientX - this._displayWindow.getBoundingClientRect().left;
 		let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
 		let mouseTimeOffset = this._displayWindowDragMouseTime - this._firstRepresentedTime;
 		let newMouseAbsoluteX = mouseTimeOffset * widthOverTimeRatio;
-		let newScrollLeft = newMouseAbsoluteX - relativeMousePosX;
+		let newScrollLeft = newMouseAbsoluteX - displayWindowRelativeMouseX;
 		this._displayWindow.scrollLeft = newScrollLeft;
 	}
 
@@ -1023,7 +1272,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		if(this._displayWindow.classList.contains("scrolled"))
 			this._displayWindow.classList.remove("scrolled");
 
-		this._displayWindowIsBeingDragged = false;
 		this._displayWindowDragMouseTime = null;
 	}
 
@@ -1061,7 +1309,13 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		this._dragScrollBarCursorUpdateViewID = setTimeout(() => {
 			let newViewBegin = this._scrollBarDragViewBeginOrigin + (mouseXDelta * scrollBarTimeOverWidthRatio);
-			this._setViewBegin(newViewBegin);
+			let firstBefore = this._firstRepresentedTime;
+			let lastBefore = this._lastRepresentedTime;
+			let timeDivChanged = this._setViewBegin(newViewBegin);
+
+			if(timeDivChanged)
+				this._updateEventsPosX(this._getVisibleEventNodes());
+
 			this._dragScrollBarCursorUpdateViewID = null;
 		});
 	}
@@ -1089,7 +1343,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let mouseTime = this.beginTime + (mouseX * scrollBarTimeOverWidthRatio);
 		let viewDuration = this._getViewEndTime() - this._getViewBeginTime();
 		let newViewBeginTime = mouseTime - (viewDuration / 2);
-		this._setViewBegin(newViewBeginTime);
+		let timeDivChanged = this._setViewBegin(newViewBeginTime);
+
+		if(timeDivChanged)
+			this._updateEventsPosX(this._getVisibleEventNodes());
 	}
 
 	/**
@@ -1109,28 +1366,50 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let viewWidthIncrement = widthIncrementUnit * this._requestedScrollAmount;
 			let viewTimeIncrement = timeOverWidthRatio * viewWidthIncrement;
 			let newViewBeginTime = this._getViewBeginTime() + viewTimeIncrement;
-			this._setViewBegin(newViewBeginTime);
+			let firstBefore = this._firstRepresentedTime;
+			let lastBefore = this._lastRepresentedTime;
+			let timeDivChanged = this._setViewBegin(newViewBeginTime);
+
+			if(timeDivChanged)
+				this._updateEventsPosX(this._getVisibleEventNodes());
+
 			this._scrollRequestID = null;
 			this._requestedScrollAmount = 0;
 		});
 	}
 
+	/**
+	 * 
+	 */
 	_beginIsInView() {
 		return ((this._firstRepresentedTime <= this.beginTime) && (this._displayWindow.scrollLeft <= 0));
 	}
 
+	/**
+	 * 
+	 */
 	_endIsInView() {
 		return ((this._lastRepresentedTime >= this.endTime) && (Math.ceil(this._displayWindow.scrollLeft) >= Math.floor(this._timeDiv.clientWidth - this._displayWindow.clientWidth)));
 	}
 
+	/**
+	 * 
+	 */
 	_onClickDezoomButton() {
-		this._setWidthRules(this._initialLevel, this._initialDivWidth);
-		this._unHideOverflowTimeDivs(this.beginTime, this.endTime);
-		this._setSilentScroll(0);
-		this._updateRepresentedTime();
-		this._updateScrollBarCursor();
-		this._updateScrollButtons();
-		this._requestUpdateEventsRows();
+		if(this._timeDivisionsAreInitialized == true) {
+			let levelBefore = this._widgetContainer.className;
+			this._setWidthRules(this._initialLevel, this._initialDivWidth);
+			this._updateTimeDivisions(this.beginTime, this.endTime);
+			this._setSilentScroll(0);
+			this._updateScrollBarCursor();
+			this._updateScrollButtons();
+
+			if(levelBefore != this._widgetContainer.className)
+				this._updateMaxDisplayableRows();
+
+			this._updateEventsPosX(this._getVisibleEventNodes());
+			this._requestUpdateEventsRow();
+		}
 	}
 
 	/**
@@ -1200,21 +1479,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_requestUpdateEventsRows() {
-		if(this._requestUpdateEventsRowsID != null)
-			clearTimeout(this._requestUpdateEventsRowsID);
-
-		this._requestUpdateEventsRowsID = setTimeout(function() {
-			this._updateEventsRows();
-			this._requestUpdateEventsID = null;
-		}.bind(this), this._updateEventsRowsDelay);
-	}
-
-	/**
-	 * 
-	 */
 	_setWidthRules(newLevel, newDivWidth) {
-		while(this._widthRulesStylesheet.rules.length > 0)
+		while(this._widthRulesStylesheet.cssRules.length > 0)
 			this._widthRulesStylesheet.deleteRule(0);
 
 		switch(newLevel) {
@@ -1422,26 +1688,26 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 						label.innerText = current.toString() + "0";
 						break;
 					case "minute" :
-						tens = parseInt(parent.getAttribute("id").substring(14,15));
+						tens = parseInt(parent.getAttribute("id").substring(14,15), 10);
 						label.innerText = tens.toString() + current.toString();
 						break;
 					case "tenseconds" :
 						label.innerText = current.toString() + "0";
 						break;
 					case "second" :
-						tens = parseInt(parent.getAttribute("id").substring(18,19));
+						tens = parseInt(parent.getAttribute("id").substring(18,19), 10);
 						label.innerText = tens.toString() + current.toString();
 						break;
 					case "ahundredmilliseconds" :
 						label.innerText = current.toString() + "00";
 						break;
 					case "tenmilliseconds" :
-						hundreds = parseInt(parent.getAttribute("id").substring(22,23));
+						hundreds = parseInt(parent.getAttribute("id").substring(22,23), 10);
 						label.innerText = hundreds.toString() + current.toString() + "0";
 						break;
 					case "millisecond" :
-						hundreds = parseInt(parent.getAttribute("id").substring(22,23));
-						tens = parseInt(parent.getAttribute("id").substring(24,25));
+						hundreds = parseInt(parent.getAttribute("id").substring(22,23), 10);
+						tens = parseInt(parent.getAttribute("id").substring(24,25), 10);
 						label.innerText = hundreds.toString() + tens.toString() + current.toString();
 						break;
 					default :
@@ -1465,8 +1731,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_initTimeDivisions() {
 		if(this.getAttribute("begin") && this.getAttribute("end")) {
-			let beginTime = parseInt(this.getAttribute("begin"));
-			let endTime = parseInt(this.getAttribute("end"));
+			let beginTime = parseInt(this.getAttribute("begin"), 10);
+			let endTime = parseInt(this.getAttribute("end"), 10);
 
 			if((beginTime != NaN) && (endTime != NaN) && (beginTime <= endTime)) {
 				let displayableDivCount;
@@ -1484,7 +1750,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 				for(let i = 0; i < yearDivisions.length; i++) {
 					let yearDivision = yearDivisions[i];
-					let currentYear = parseInt(yearDivision.getAttribute("id").substring(0,4));
+					let currentYear = parseInt(yearDivision.getAttribute("id").substring(0,4), 10);
 					let beginMonth = (currentYear == beginDate.getFullYear())?(beginDate.getMonth() + 1):1;
 					let endMonth = (currentYear == endDate.getFullYear())?(endDate.getMonth() + 1):12;
 					let monthDifference = (endMonth - beginMonth) + 1;
@@ -1500,7 +1766,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					// browse each existing year subdivision ...
 					for(let i = 0; i < yearDivisions.length; i++) {
 						let yearDivision = yearDivisions[i];
-						let currentYear = parseInt(yearDivision.getAttribute("id").substring(0,4));
+						let currentYear = parseInt(yearDivision.getAttribute("id").substring(0,4), 10);
 						let beginMonth = (currentYear == beginDate.getFullYear())?(beginDate.getMonth() + 1):1;
 						let endMonth = (currentYear == endDate.getFullYear())?(endDate.getMonth() + 1):12;
 
@@ -1515,8 +1781,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					
 					for(let i = 0; i < monthDivisions.length; i++) {
 						let monthDivision = monthDivisions[i];
-						let currentMonth = parseInt(monthDivision.getAttribute("id").substring(5,7));
-						let currentYear = parseInt(monthDivision.getAttribute("id").substring(0,4));
+						let currentMonth = parseInt(monthDivision.getAttribute("id").substring(5,7), 10);
+						let currentYear = parseInt(monthDivision.getAttribute("id").substring(0,4), 10);
 						let daysCountInCurrentMonth = getNumberOfDaysInMonth(currentMonth, currentYear);
 						let beginDay = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)))?(beginDate.getDate()):1;
 						let endDay = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)))?(endDate.getDate()):daysCountInCurrentMonth;
@@ -1532,8 +1798,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 						// browse each existing month subdivision ...
 						for(let i = 0; i < monthDivisions.length; i++) {
 							let monthDivision = monthDivisions[i];
-							let currentMonth = parseInt(monthDivision.getAttribute("id").substring(5,7));
-							let currentYear = parseInt(monthDivision.getAttribute("id").substring(0,4));
+							let currentMonth = parseInt(monthDivision.getAttribute("id").substring(5,7), 10);
+							let currentYear = parseInt(monthDivision.getAttribute("id").substring(0,4), 10);
 							let daysCountInCurrentMonth = getNumberOfDaysInMonth(currentMonth, currentYear);
 							let beginDay = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)))?(beginDate.getDate()):1;
 							let endDay = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)))?(endDate.getDate()):daysCountInCurrentMonth;
@@ -1549,9 +1815,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 						for(let i = 0; i < dayDivisions.length; i++) {
 							let dayDivision = dayDivisions[i];
-							let currentDay = parseInt(dayDivision.getAttribute("id").substring(8,10));
-							let currentMonth = parseInt(dayDivision.getAttribute("id").substring(5,7));
-							let currentYear = parseInt(dayDivision.getAttribute("id").substring(0,4));
+							let currentDay = parseInt(dayDivision.getAttribute("id").substring(8,10), 10);
+							let currentMonth = parseInt(dayDivision.getAttribute("id").substring(5,7), 10);
+							let currentYear = parseInt(dayDivision.getAttribute("id").substring(0,4), 10);
 							let beginHour = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == (beginDate.getDate())))?(beginDate.getHours()):0;
 							let endHour = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == (endDate.getDate())))?(endDate.getHours()):23;
 							let hourDifference = (endHour - beginHour) + 1;
@@ -1566,9 +1832,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 							// browse each existing month subdivision ...
 							for(let i = 0; i < dayDivisions.length; i++) {
 								let dayDivision = dayDivisions[i];
-								let currentDay = parseInt(dayDivision.getAttribute("id").substring(8,10));
-								let currentMonth = parseInt(dayDivision.getAttribute("id").substring(5,7));
-								let currentYear = parseInt(dayDivision.getAttribute("id").substring(0,4));
+								let currentDay = parseInt(dayDivision.getAttribute("id").substring(8,10), 10);
+								let currentMonth = parseInt(dayDivision.getAttribute("id").substring(5,7), 10);
+								let currentYear = parseInt(dayDivision.getAttribute("id").substring(0,4), 10);
 								let beginHour = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == (beginDate.getDate())))?(beginDate.getHours()):0;
 								let endHour = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == (endDate.getDate())))?(endDate.getHours()):23;
 								
@@ -1583,10 +1849,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 							for(let i = 0; i < hourDivisions.length; i++) {
 								let hourDivision = hourDivisions[i];
-								let currentHour = parseInt(hourDivision.getAttribute("id").substring(11,13));
-								let currentDay = parseInt(hourDivision.getAttribute("id").substring(8,10));
-								let currentMonth = parseInt(hourDivision.getAttribute("id").substring(5,7));
-								let currentYear = parseInt(hourDivision.getAttribute("id").substring(0,4));
+								let currentHour = parseInt(hourDivision.getAttribute("id").substring(11,13), 10);
+								let currentDay = parseInt(hourDivision.getAttribute("id").substring(8,10), 10);
+								let currentMonth = parseInt(hourDivision.getAttribute("id").substring(5,7), 10);
+								let currentYear = parseInt(hourDivision.getAttribute("id").substring(0,4), 10);
 								let beginTenMinute = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()))?Math.floor(beginDate.getMinutes() / 10):0;
 								let endTenMinute = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()))?Math.floor(endDate.getMinutes() / 10):5;
 								let tenMinutesDifference = (endTenMinute - beginTenMinute) + 1;
@@ -1600,10 +1866,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 								for(let i = 0; i < hourDivisions.length; i++) {
 									let hourDivision = hourDivisions[i];
-									let currentHour = parseInt(hourDivision.getAttribute("id").substring(11,13));
-									let currentDay = parseInt(hourDivision.getAttribute("id").substring(8,10));
-									let currentMonth = parseInt(hourDivision.getAttribute("id").substring(5,7));
-									let currentYear = parseInt(hourDivision.getAttribute("id").substring(0,4));
+									let currentHour = parseInt(hourDivision.getAttribute("id").substring(11,13), 10);
+									let currentDay = parseInt(hourDivision.getAttribute("id").substring(8,10), 10);
+									let currentMonth = parseInt(hourDivision.getAttribute("id").substring(5,7), 10);
+									let currentYear = parseInt(hourDivision.getAttribute("id").substring(0,4), 10);
 									let beginTenMinute = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()))?Math.floor(beginDate.getMinutes() / 10):0;
 									let endTenMinute = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()))?Math.floor(endDate.getMinutes() / 10):5;
 								
@@ -1618,11 +1884,11 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 								for(let i = 0; i < tenMinutesDivisions.length; i++) {
 									let hourDivision = tenMinutesDivisions[i];
-									let currentTenMinutes = parseInt(hourDivision.getAttribute("id").substring(14,15));
-									let currentHour = parseInt(hourDivision.getAttribute("id").substring(11,13));
-									let currentDay = parseInt(hourDivision.getAttribute("id").substring(8,10));
-									let currentMonth = parseInt(hourDivision.getAttribute("id").substring(5,7));
-									let currentYear = parseInt(hourDivision.getAttribute("id").substring(0,4));
+									let currentTenMinutes = parseInt(hourDivision.getAttribute("id").substring(14,15), 10);
+									let currentHour = parseInt(hourDivision.getAttribute("id").substring(11,13), 10);
+									let currentDay = parseInt(hourDivision.getAttribute("id").substring(8,10), 10);
+									let currentMonth = parseInt(hourDivision.getAttribute("id").substring(5,7), 10);
+									let currentYear = parseInt(hourDivision.getAttribute("id").substring(0,4), 10);
 									let beginMinute = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)))?(beginDate.getMinutes() % 10):0;
 									let endMinute = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)))?(endDate.getMinutes() % 10):9;
 									let minuteDifference = (endMinute - beginMinute) + 1;
@@ -1636,11 +1902,11 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 									for(let i = 0; i < tenMinutesDivisions.length; i++) {
 										let tenMinutesDivision = tenMinutesDivisions[i];
-										let currentTenMinutes = parseInt(tenMinutesDivision.getAttribute("id").substring(14,15));
-										let currentHour = parseInt(tenMinutesDivision.getAttribute("id").substring(11,13));
-										let currentDay = parseInt(tenMinutesDivision.getAttribute("id").substring(8,10));
-										let currentMonth = parseInt(tenMinutesDivision.getAttribute("id").substring(5,7));
-										let currentYear = parseInt(tenMinutesDivision.getAttribute("id").substring(0,4));
+										let currentTenMinutes = parseInt(tenMinutesDivision.getAttribute("id").substring(14,15), 10);
+										let currentHour = parseInt(tenMinutesDivision.getAttribute("id").substring(11,13), 10);
+										let currentDay = parseInt(tenMinutesDivision.getAttribute("id").substring(8,10), 10);
+										let currentMonth = parseInt(tenMinutesDivision.getAttribute("id").substring(5,7), 10);
+										let currentYear = parseInt(tenMinutesDivision.getAttribute("id").substring(0,4), 10);
 										let beginMinute = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)))?(beginDate.getMinutes() % 10):0;
 										let endMinute = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)))?(endDate.getMinutes() % 10):9;
 									
@@ -1655,12 +1921,12 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 									for(let i = 0; i < minutesDivisions.length; i++) {
 										let minuteDivision = minutesDivisions[i];
-										let currentMinute = parseInt(minuteDivision.getAttribute("id").substring(16,17));
-										let currentTenMinutes = parseInt(minuteDivision.getAttribute("id").substring(14,15));
-										let currentHour = parseInt(minuteDivision.getAttribute("id").substring(11,13));
-										let currentDay = parseInt(minuteDivision.getAttribute("id").substring(8,10));
-										let currentMonth = parseInt(minuteDivision.getAttribute("id").substring(5,7));
-										let currentYear = parseInt(minuteDivision.getAttribute("id").substring(0,4));
+										let currentMinute = parseInt(minuteDivision.getAttribute("id").substring(16,17), 10);
+										let currentTenMinutes = parseInt(minuteDivision.getAttribute("id").substring(14,15), 10);
+										let currentHour = parseInt(minuteDivision.getAttribute("id").substring(11,13), 10);
+										let currentDay = parseInt(minuteDivision.getAttribute("id").substring(8,10), 10);
+										let currentMonth = parseInt(minuteDivision.getAttribute("id").substring(5,7), 10);
+										let currentYear = parseInt(minuteDivision.getAttribute("id").substring(0,4), 10);
 										let beginTenSecond = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)) && (currentMinute == (beginDate.getMinutes() % 10)))?Math.floor(beginDate.getSeconds() / 10):0;
 										let endTenSecond = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)) && (currentMinute == (endDate.getMinutes() % 10)))?Math.floor(endDate.getSeconds() / 10):5;
 										let tenSecondDifference = (endTenSecond - beginTenSecond) + 1;
@@ -1674,12 +1940,12 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 										for(let i = 0; i < minutesDivisions.length; i++) {
 											let minuteDivision = minutesDivisions[i];
-											let currentMinute = parseInt(minuteDivision.getAttribute("id").substring(16,17));
-											let currentTenMinutes = parseInt(minuteDivision.getAttribute("id").substring(14,15));
-											let currentHour = parseInt(minuteDivision.getAttribute("id").substring(11,13));
-											let currentDay = parseInt(minuteDivision.getAttribute("id").substring(8,10));
-											let currentMonth = parseInt(minuteDivision.getAttribute("id").substring(5,7));
-											let currentYear = parseInt(minuteDivision.getAttribute("id").substring(0,4));
+											let currentMinute = parseInt(minuteDivision.getAttribute("id").substring(16,17), 10);
+											let currentTenMinutes = parseInt(minuteDivision.getAttribute("id").substring(14,15), 10);
+											let currentHour = parseInt(minuteDivision.getAttribute("id").substring(11,13), 10);
+											let currentDay = parseInt(minuteDivision.getAttribute("id").substring(8,10), 10);
+											let currentMonth = parseInt(minuteDivision.getAttribute("id").substring(5,7), 10);
+											let currentYear = parseInt(minuteDivision.getAttribute("id").substring(0,4), 10);
 											let beginTenSecond = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)) && (currentMinute == (beginDate.getMinutes() % 10)))?Math.floor(beginDate.getSeconds() / 10):0;
 											let endTenSecond = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)) && (currentMinute == (endDate.getMinutes() % 10)))?Math.floor(endDate.getSeconds() / 10):5;
 										
@@ -1694,13 +1960,13 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 										for(let i = 0; i < tenSecondsDivisions.length; i++) {
 											let tenSecondDivision = tenSecondsDivisions[i];
-											let currentTenSeconds = parseInt(tenSecondDivision.getAttribute("id").substring(18,19));
-											let currentMinute = parseInt(tenSecondDivision.getAttribute("id").substring(16,17));
-											let currentTenMinutes = parseInt(tenSecondDivision.getAttribute("id").substring(14,15));
-											let currentHour = parseInt(tenSecondDivision.getAttribute("id").substring(11,13));
-											let currentDay = parseInt(tenSecondDivision.getAttribute("id").substring(8,10));
-											let currentMonth = parseInt(tenSecondDivision.getAttribute("id").substring(5,7));
-											let currentYear = parseInt(tenSecondDivision.getAttribute("id").substring(0,4));
+											let currentTenSeconds = parseInt(tenSecondDivision.getAttribute("id").substring(18,19), 10);
+											let currentMinute = parseInt(tenSecondDivision.getAttribute("id").substring(16,17), 10);
+											let currentTenMinutes = parseInt(tenSecondDivision.getAttribute("id").substring(14,15), 10);
+											let currentHour = parseInt(tenSecondDivision.getAttribute("id").substring(11,13), 10);
+											let currentDay = parseInt(tenSecondDivision.getAttribute("id").substring(8,10), 10);
+											let currentMonth = parseInt(tenSecondDivision.getAttribute("id").substring(5,7), 10);
+											let currentYear = parseInt(tenSecondDivision.getAttribute("id").substring(0,4), 10);
 											let beginSecond = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)) && (currentMinute == (beginDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(beginDate.getSeconds() / 10)))?(beginDate.getSeconds() % 10):0;
 											let endSecond = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)) && (currentMinute == (endDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(endDate.getSeconds() / 10)))?(endDate.getSeconds() % 10):9;
 											let secondDifference = (endSecond - beginSecond) + 1;
@@ -1714,13 +1980,13 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 											for(let i = 0; i < tenSecondsDivisions.length; i++) {
 												let tenSecondDivision = tenSecondsDivisions[i];
-												let currentTenSeconds = parseInt(tenSecondDivision.getAttribute("id").substring(18,19));
-												let currentMinute = parseInt(tenSecondDivision.getAttribute("id").substring(16,17));
-												let currentTenMinutes = parseInt(tenSecondDivision.getAttribute("id").substring(14,15));
-												let currentHour = parseInt(tenSecondDivision.getAttribute("id").substring(11,13));
-												let currentDay = parseInt(tenSecondDivision.getAttribute("id").substring(8,10));
-												let currentMonth = parseInt(tenSecondDivision.getAttribute("id").substring(5,7));
-												let currentYear = parseInt(tenSecondDivision.getAttribute("id").substring(0,4));
+												let currentTenSeconds = parseInt(tenSecondDivision.getAttribute("id").substring(18,19), 10);
+												let currentMinute = parseInt(tenSecondDivision.getAttribute("id").substring(16,17), 10);
+												let currentTenMinutes = parseInt(tenSecondDivision.getAttribute("id").substring(14,15), 10);
+												let currentHour = parseInt(tenSecondDivision.getAttribute("id").substring(11,13), 10);
+												let currentDay = parseInt(tenSecondDivision.getAttribute("id").substring(8,10), 10);
+												let currentMonth = parseInt(tenSecondDivision.getAttribute("id").substring(5,7), 10);
+												let currentYear = parseInt(tenSecondDivision.getAttribute("id").substring(0,4), 10);
 												let beginSecond = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)) && (currentMinute == (beginDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(beginDate.getSeconds() / 10)))?(beginDate.getSeconds() % 10):0;
 												let endSecond = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)) && (currentMinute == (endDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(endDate.getSeconds() / 10)))?(endDate.getSeconds() % 10):9;
 											
@@ -1735,14 +2001,14 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 											for(let i = 0; i < secondsDivisions.length; i++) {
 												let secondDivision = secondsDivisions[i];
-												let currentSecond = parseInt(secondDivision.getAttribute("id").substring(20,21));
-												let currentTenSeconds = parseInt(secondDivision.getAttribute("id").substring(18,19));
-												let currentMinute = parseInt(secondDivision.getAttribute("id").substring(16,17));
-												let currentTenMinutes = parseInt(secondDivision.getAttribute("id").substring(14,15));
-												let currentHour = parseInt(secondDivision.getAttribute("id").substring(11,13));
-												let currentDay = parseInt(secondDivision.getAttribute("id").substring(8,10));
-												let currentMonth = parseInt(secondDivision.getAttribute("id").substring(5,7));
-												let currentYear = parseInt(secondDivision.getAttribute("id").substring(0,4));
+												let currentSecond = parseInt(secondDivision.getAttribute("id").substring(20,21), 10);
+												let currentTenSeconds = parseInt(secondDivision.getAttribute("id").substring(18,19), 10);
+												let currentMinute = parseInt(secondDivision.getAttribute("id").substring(16,17), 10);
+												let currentTenMinutes = parseInt(secondDivision.getAttribute("id").substring(14,15), 10);
+												let currentHour = parseInt(secondDivision.getAttribute("id").substring(11,13), 10);
+												let currentDay = parseInt(secondDivision.getAttribute("id").substring(8,10), 10);
+												let currentMonth = parseInt(secondDivision.getAttribute("id").substring(5,7), 10);
+												let currentYear = parseInt(secondDivision.getAttribute("id").substring(0,4), 10);
 												let beginHundredMillisecond = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)) && (currentMinute == (beginDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(beginDate.getSeconds() / 10)) && (currentSecond == (beginDate.getSeconds() % 10)))?Math.floor(beginDate.getMilliseconds() / 100):0;
 												let endHundredMillisecond = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)) && (currentMinute == (endDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(endDate.getSeconds() / 10)) && (currentSecond == (endDate.getSeconds() % 10)))?Math.floor(endDate.getMilliseconds() / 100):9;
 												let hundredMillisecondDifference = (endHundredMillisecond - beginHundredMillisecond) + 1;
@@ -1756,14 +2022,14 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 												for(let i = 0; i < secondsDivisions.length; i++) {
 													let secondDivision = secondsDivisions[i];
-													let currentSecond = parseInt(secondDivision.getAttribute("id").substring(20,21));
-													let currentTenSeconds = parseInt(secondDivision.getAttribute("id").substring(18,19));
-													let currentMinute = parseInt(secondDivision.getAttribute("id").substring(16,17));
-													let currentTenMinutes = parseInt(secondDivision.getAttribute("id").substring(14,15));
-													let currentHour = parseInt(secondDivision.getAttribute("id").substring(11,13));
-													let currentDay = parseInt(secondDivision.getAttribute("id").substring(8,10));
-													let currentMonth = parseInt(secondDivision.getAttribute("id").substring(5,7));
-													let currentYear = parseInt(secondDivision.getAttribute("id").substring(0,4));
+													let currentSecond = parseInt(secondDivision.getAttribute("id").substring(20,21), 10);
+													let currentTenSeconds = parseInt(secondDivision.getAttribute("id").substring(18,19), 10);
+													let currentMinute = parseInt(secondDivision.getAttribute("id").substring(16,17), 10);
+													let currentTenMinutes = parseInt(secondDivision.getAttribute("id").substring(14,15), 10);
+													let currentHour = parseInt(secondDivision.getAttribute("id").substring(11,13), 10);
+													let currentDay = parseInt(secondDivision.getAttribute("id").substring(8,10), 10);
+													let currentMonth = parseInt(secondDivision.getAttribute("id").substring(5,7), 10);
+													let currentYear = parseInt(secondDivision.getAttribute("id").substring(0,4), 10);
 													let beginHundredMillisecond = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)) && (currentMinute == (beginDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(beginDate.getSeconds() / 10)) && (currentSecond == (beginDate.getSeconds() % 10)))?Math.floor(beginDate.getMilliseconds() / 100):0;
 													let endHundredMillisecond = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)) && (currentMinute == (endDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(endDate.getSeconds() / 10)) && (currentSecond == (endDate.getSeconds() % 10)))?Math.floor(endDate.getMilliseconds() / 100):9;
 												
@@ -1778,15 +2044,15 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 												for(let i = 0; i < hundredMillisecondsDivisions.length; i++) {
 													let hundredMillisecondsDivision = hundredMillisecondsDivisions[i];
-													let currentHundredMillisecond = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(22,23));
-													let currentSecond = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(20,21));
-													let currentTenSeconds = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(18,19));
-													let currentMinute = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(16,17));
-													let currentTenMinutes = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(14,15));
-													let currentHour = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(11,13));
-													let currentDay = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(8,10));
-													let currentMonth = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(5,7));
-													let currentYear = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(0,4));
+													let currentHundredMillisecond = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(22,23), 10);
+													let currentSecond = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(20,21), 10);
+													let currentTenSeconds = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(18,19), 10);
+													let currentMinute = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(16,17), 10);
+													let currentTenMinutes = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(14,15), 10);
+													let currentHour = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(11,13), 10);
+													let currentDay = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(8,10), 10);
+													let currentMonth = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(5,7), 10);
+													let currentYear = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(0,4), 10);
 													let beginTenMillisecond = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)) && (currentMinute == (beginDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(beginDate.getSeconds() / 10)) && (currentSecond == (beginDate.getSeconds() % 10)) && (currentHundredMillisecond == Math.floor(beginDate.getMilliseconds() / 100)))?(Math.floor(beginDate.getMilliseconds() / 10) % 10):0;
 													let endTenMillisecond = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)) && (currentMinute == (endDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(endDate.getSeconds() / 10)) && (currentSecond == (endDate.getSeconds() % 10)) && (currentHundredMillisecond == Math.floor(endDate.getMilliseconds() / 100)))?(Math.floor(endDate.getMilliseconds() / 10) % 10):9;
 													let tenMillisecondDifference = (endTenMillisecond - beginTenMillisecond) + 1;
@@ -1800,15 +2066,15 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 													for(let i = 0; i < hundredMillisecondsDivisions.length; i++) {
 														let hundredMillisecondsDivision = hundredMillisecondsDivisions[i];
-														let currentHundredMillisecond = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(22,23));
-														let currentSecond = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(20,21));
-														let currentTenSeconds = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(18,19));
-														let currentMinute = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(16,17));
-														let currentTenMinutes = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(14,15));
-														let currentHour = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(11,13));
-														let currentDay = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(8,10));
-														let currentMonth = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(5,7));
-														let currentYear = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(0,4));
+														let currentHundredMillisecond = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(22,23), 10);
+														let currentSecond = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(20,21), 10);
+														let currentTenSeconds = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(18,19), 10);
+														let currentMinute = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(16,17), 10);
+														let currentTenMinutes = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(14,15), 10);
+														let currentHour = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(11,13), 10);
+														let currentDay = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(8,10), 10);
+														let currentMonth = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(5,7), 10);
+														let currentYear = parseInt(hundredMillisecondsDivision.getAttribute("id").substring(0,4), 10);
 														let beginTenMillisecond = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)) && (currentMinute == (beginDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(beginDate.getSeconds() / 10)) && (currentSecond == (beginDate.getSeconds() % 10)) && (currentHundredMillisecond == Math.floor(beginDate.getMilliseconds() / 100)))?(Math.floor(beginDate.getMilliseconds() / 10) % 10):0;
 														let endTenMillisecond = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)) && (currentMinute == (endDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(endDate.getSeconds() / 10)) && (currentSecond == (endDate.getSeconds() % 10)) && (currentHundredMillisecond == Math.floor(endDate.getMilliseconds() / 100)))?(Math.floor(endDate.getMilliseconds() / 10) % 10):9;
 														
@@ -1823,16 +2089,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 													for(let i = 0; i < tenMillisecondsDivisions.length; i++) {
 														let tenMillisecondsDivision = tenMillisecondsDivisions[i];
-														let currentTenMillisecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(24,25));
-														let currentHundredMillisecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(22,23));
-														let currentSecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(20,21));
-														let currentTenSeconds = parseInt(tenMillisecondsDivision.getAttribute("id").substring(18,19));
-														let currentMinute = parseInt(tenMillisecondsDivision.getAttribute("id").substring(16,17));
-														let currentTenMinutes = parseInt(tenMillisecondsDivision.getAttribute("id").substring(14,15));
-														let currentHour = parseInt(tenMillisecondsDivision.getAttribute("id").substring(11,13));
-														let currentDay = parseInt(tenMillisecondsDivision.getAttribute("id").substring(8,10));
-														let currentMonth = parseInt(tenMillisecondsDivision.getAttribute("id").substring(5,7));
-														let currentYear = parseInt(tenMillisecondsDivision.getAttribute("id").substring(0,4));
+														let currentTenMillisecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(24,25), 10);
+														let currentHundredMillisecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(22,23), 10);
+														let currentSecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(20,21), 10);
+														let currentTenSeconds = parseInt(tenMillisecondsDivision.getAttribute("id").substring(18,19), 10);
+														let currentMinute = parseInt(tenMillisecondsDivision.getAttribute("id").substring(16,17), 10);
+														let currentTenMinutes = parseInt(tenMillisecondsDivision.getAttribute("id").substring(14,15), 10);
+														let currentHour = parseInt(tenMillisecondsDivision.getAttribute("id").substring(11,13), 10);
+														let currentDay = parseInt(tenMillisecondsDivision.getAttribute("id").substring(8,10), 10);
+														let currentMonth = parseInt(tenMillisecondsDivision.getAttribute("id").substring(5,7), 10);
+														let currentYear = parseInt(tenMillisecondsDivision.getAttribute("id").substring(0,4), 10);
 														let beginMillisecond = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)) && (currentMinute == (beginDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(beginDate.getSeconds() / 10)) && (currentSecond == (beginDate.getSeconds() % 10)) && (currentHundredMillisecond == Math.floor(beginDate.getMilliseconds() / 100)) && (currentTenMillisecond == (Math.floor(beginDate.getMilliseconds() / 10) % 10)))?(beginDate.getMilliseconds() % 10):0;
 														let endMillisecond = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)) && (currentMinute == (endDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(endDate.getSeconds() / 10)) && (currentSecond == (endDate.getSeconds() % 10)) && (currentHundredMillisecond == Math.floor(endDate.getMilliseconds() / 100)) && (currentTenMillisecond == (Math.floor(endDate.getMilliseconds() / 10) % 10)))?(endDate.getMilliseconds() % 10):9;
 														let millisecondDifference = (endMillisecond - beginMillisecond) + 1;
@@ -1848,16 +2114,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 														for(let i = 0; i < tenMillisecondsDivisions.length; i++) {
 															let tenMillisecondsDivision = tenMillisecondsDivisions[i];
-															let currentTenMillisecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(24,25));
-															let currentHundredMillisecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(22,23));
-															let currentSecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(20,21));
-															let currentTenSeconds = parseInt(tenMillisecondsDivision.getAttribute("id").substring(18,19));
-															let currentMinute = parseInt(tenMillisecondsDivision.getAttribute("id").substring(16,17));
-															let currentTenMinutes = parseInt(tenMillisecondsDivision.getAttribute("id").substring(14,15));
-															let currentHour = parseInt(tenMillisecondsDivision.getAttribute("id").substring(11,13));
-															let currentDay = parseInt(tenMillisecondsDivision.getAttribute("id").substring(8,10));
-															let currentMonth = parseInt(tenMillisecondsDivision.getAttribute("id").substring(5,7));
-															let currentYear = parseInt(tenMillisecondsDivision.getAttribute("id").substring(0,4));
+															let currentTenMillisecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(24,25), 10);
+															let currentHundredMillisecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(22,23), 10);
+															let currentSecond = parseInt(tenMillisecondsDivision.getAttribute("id").substring(20,21), 10);
+															let currentTenSeconds = parseInt(tenMillisecondsDivision.getAttribute("id").substring(18,19), 10);
+															let currentMinute = parseInt(tenMillisecondsDivision.getAttribute("id").substring(16,17), 10);
+															let currentTenMinutes = parseInt(tenMillisecondsDivision.getAttribute("id").substring(14,15), 10);
+															let currentHour = parseInt(tenMillisecondsDivision.getAttribute("id").substring(11,13), 10);
+															let currentDay = parseInt(tenMillisecondsDivision.getAttribute("id").substring(8,10), 10);
+															let currentMonth = parseInt(tenMillisecondsDivision.getAttribute("id").substring(5,7), 10);
+															let currentYear = parseInt(tenMillisecondsDivision.getAttribute("id").substring(0,4), 10);
 															let beginMillisecond = ((currentYear == beginDate.getFullYear()) && (currentMonth == (beginDate.getMonth() + 1)) && (currentDay == beginDate.getDate()) && (currentHour == beginDate.getHours()) && (currentTenMinutes == Math.floor(beginDate.getMinutes() / 10)) && (currentMinute == (beginDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(beginDate.getSeconds() / 10)) && (currentSecond == (beginDate.getSeconds() % 10)) && (currentHundredMillisecond == Math.floor(beginDate.getMilliseconds() / 100)) && (currentTenMillisecond == (Math.floor(beginDate.getMilliseconds() / 10) % 10)))?(beginDate.getMilliseconds() % 10):0;
 															let endMillisecond = ((currentYear == endDate.getFullYear()) && (currentMonth == (endDate.getMonth() + 1)) && (currentDay == endDate.getDate()) && (currentHour == endDate.getHours()) && (currentTenMinutes == Math.floor(endDate.getMinutes() / 10)) && (currentMinute == (endDate.getMinutes() % 10)) && (currentTenSeconds == Math.floor(endDate.getSeconds() / 10)) && (currentSecond == (endDate.getSeconds() % 10)) && (currentHundredMillisecond == Math.floor(endDate.getMilliseconds() / 100)) && (currentTenMillisecond == (Math.floor(endDate.getMilliseconds() / 10) % 10)))?(endDate.getMilliseconds() % 10):9;
 
@@ -2019,7 +2285,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._initialLevel= newLevel;
 	}
 
-
 	/**
 	 * 
 	 */
@@ -2046,8 +2311,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					if(movementUnit == 0)
 						verticalMovement = verticalMovement / 28;
 
-					let mouseRelativeX = event.offsetX - this._displayWindow.scrollLeft;
-					this._requestZoomIncrement(verticalMovement, mouseRelativeX);
+					let displayWindowRelativeMouseX = event.clientX - this._displayWindow.getBoundingClientRect().left;
+					let timeDivRelativeMouseX = displayWindowRelativeMouseX + this._displayWindow.scrollLeft;
+					let mouseTime = this._getMouseTime(timeDivRelativeMouseX);
+					this._requestZoomIncrement(verticalMovement, mouseTime, displayWindowRelativeMouseX);
 				}
 			}
 		}
@@ -2102,34 +2369,33 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			this._requestUnsetZoomCursorID = setTimeout(() => {
 				this._displayWindow.classList.remove(zoomClass);
 				this._requestUnsetZoomCursorID = null;
-			}, this._requestUnsetZoomCursorDelay);
+			});
 		}
 	}
 
 	/**
 	 * 
 	 */
-	_getMouseTime(mouseRelativeX) {
+	_getMouseTime(timeDivRelativeMouseX) {
 		let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
-		let mouseAbsoluteX = mouseRelativeX + this._displayWindow.scrollLeft;
-		return (this._firstRepresentedTime + (mouseAbsoluteX * timeOverWidthRatio));
+		return (this._firstRepresentedTime + (timeDivRelativeMouseX * timeOverWidthRatio));
 	}
 
 	/**
 	 * 
 	 */
-	_resetScrollForLastMousePositionAndTime() {
+	_setScrollForMousePositionAndTime(mouseTime, displayWindowRelativeMouseX) {
 		let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
-		let mouseTimeOffset = this._requestedZoomMouseTime - this._firstRepresentedTime;
-		let newMouseAbsoluteX = mouseTimeOffset * widthOverTimeRatio;
-		let newScrollLeft = newMouseAbsoluteX - this._requestedZoomMouseRelativeX;
+		let mouseTimeOffset = mouseTime - this._firstRepresentedTime;
+		let timeDivRelativeMouseX = mouseTimeOffset * widthOverTimeRatio;
+		let newScrollLeft = timeDivRelativeMouseX - displayWindowRelativeMouseX;
 		this._setSilentScroll(newScrollLeft);
 	}
 
 	/**
 	 * 
 	 */
-	_requestZoomIncrement(incrementAmount, mouseRelativeX) {
+	_requestZoomIncrement(incrementAmount, mouseTime, displayWindowRelativeMouseX) {
 		let zoomDenied = false;
 
 		if(incrementAmount > 0)
@@ -2143,8 +2409,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		}
 		else {
 			this._requestedZoomIncrementAmount += incrementAmount;
-			this._requestedZoomMouseRelativeX = mouseRelativeX;
-			this._requestedZoomMouseTime = this._getMouseTime(mouseRelativeX);
 
 			if(this._requestedZoomIncrementAmount != 0) {
 				if(this._requestedZoomIncrementAmount > 0)
@@ -2156,20 +2420,34 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					clearTimeout(this._requestZoomIncrementID);
 
 				this._requestZoomIncrementID = setTimeout(() => {
-					Promise.all([this._timeDivisionsInitialized, this._zoomInitialized/*, this._connected*/]).then(() => {
+					Promise.all([this._timeDivisionsInitialized, this._zoomInitialized]).then(() => {
 						let zoomAmount = this._requestedZoomIncrementAmount;
 						this._requestedZoomIncrementAmount = 0;
-						this._incrementZoom(zoomAmount);
+						let divisionsLevelHasChanged = this._incrementZoom(zoomAmount);
 
 						let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
-						let newViewBeginTime = this._requestedZoomMouseTime - (mouseRelativeX * timeOverWidthRatio);
-						let newViewEndTime = this._requestedZoomMouseTime + ((this._displayWindow.clientWidth - mouseRelativeX) * timeOverWidthRatio);
-						this._updateTimeDivisions(newViewBeginTime, newViewEndTime);
+						let newViewBeginTime = mouseTime - (displayWindowRelativeMouseX * timeOverWidthRatio);
+						let newViewEndTime = mouseTime + ((this._displayWindow.clientWidth - displayWindowRelativeMouseX) * timeOverWidthRatio);
+						
+						let newTimeDivBoundaries = this._getTimeDivBoundariesForView(newViewBeginTime, newViewEndTime);
+						let timeDivNeedsToChange = ((newTimeDivBoundaries.beginTime != this._firstRepresentedTime) || (newTimeDivBoundaries.endTime != this._lastRepresentedTime));
 
-						this._resetScrollForLastMousePositionAndTime();
+						if(timeDivNeedsToChange || divisionsLevelHasChanged) {
+							let firstBefore = this._firstRepresentedTime;
+							let lastBefore = this._lastRepresentedTime;
+							this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
+							let timeDivHasChanged = ((this._firstRepresentedTime != firstBefore) || (this._lastRepresentedTime != lastBefore));
+
+							if(timeDivHasChanged)
+								this._updateEventsPosX(this._getVisibleEventNodes());
+						}
+						
+						if(divisionsLevelHasChanged)
+							this._updateMaxDisplayableRows();
+
+						this._requestUpdateEventsRow();
+						this._setScrollForMousePositionAndTime(mouseTime, displayWindowRelativeMouseX);
 						this._updateScrollBarCursor();
-						this._requestUpdateEventsRows();
-
 						this._requestZoomIncrementID = null;
 					});
 				});
@@ -2267,104 +2545,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_updateRepresentedTime() {
-		let oldFirstRepresentedTime = this._firstRepresentedTime;
-		let oldLastRepresentedTime = this._lastRepresentedTime;
 		this._firstRepresentedTime = this._getActualFirstRepresentedTime();
 		this._lastRepresentedTime = this._getActualLastRepresentedTime();
-
-		if((oldFirstRepresentedTime != this._firstRepresentedTime) || (oldLastRepresentedTime != this._lastRepresentedTime))
-			this.dispatchEvent(new CustomEvent("update-represented-time"));
-	}
-
-	/**
-	 * 
-	 */
-	_hideOverflowTimeDivs(directionIsFromBegining, timeLimit) {
-		let units = Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit);
-		let currentUnitRank = units.indexOf(this._widgetContainer.className);
-
-		for(let i = 0; i <= currentUnitRank; i++) {
-			let selector = "";
-			
-			for(let j = 0; j <= i; j++) {
-				let unit = units[j];
-				selector += ".time-division-" + unit + ":not(.overflow)";
-
-				if(j < i)
-					selector += " > ";
-			}
-
-			let hideableTimeDivs = this._timeDiv.querySelectorAll(selector);
-			let timeLimitHit = false;
-
-			for(let j = 0; !timeLimitHit && (j < hideableTimeDivs.length); j++) {
-				let candidate;
-
-				if(directionIsFromBegining) {
-					candidate = hideableTimeDivs[j];
-					timeLimitHit = (candidate._getEndTime() > timeLimit);
-				}
-				else {
-					candidate = hideableTimeDivs[hideableTimeDivs.length - (j + 1)];
-					timeLimitHit = (candidate._getBeginTime() < timeLimit);
-				}
-
-				if(!timeLimitHit)
-					candidate.classList.add("overflow");
-			}
-		}
-	}
-
-	/**
-	 * 
-	 */
-	_unHideOverflowTimeDivs(fromTime, toTime) {
-		let units = Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit);
-		let currentUnitRank = units.indexOf(this._widgetContainer.className);
-
-		for(let i = 0; i <= currentUnitRank; i++) {
-			let selector = "";
-			
-			for(let j = 0; j <= i; j++) {
-				let unit = units[j];
-				selector += ".time-division-" + unit;
-
-				if(j < i)
-					selector += ":not(.overflow) > ";
-				else
-					selector += ".overflow";
-			}
-			
-			let hidenTimeDivs = this._timeDiv.querySelectorAll(selector);
-
-			for(let j = 0; j < hidenTimeDivs.length; j++) {
-				let candidate = hidenTimeDivs[j];
-
-				if((candidate._getEndTime() > fromTime) && (candidate._getBeginTime() < toTime))
-					candidate.classList.remove("overflow");
-			}
-		}
-	}
-
-	/**
-	 * 
-	 */
-	_updateTimeDivisions(viewBeginTime, viewEndTime) {
-		let representedDuration = (this._lastRepresentedTime - this._firstRepresentedTime);
-		let timeOverWidthRatio = representedDuration / this._timeDiv.clientWidth;
-		let minLeftTime = viewBeginTime - (2 * this._displayWindow.clientWidth * timeOverWidthRatio);
-		let maxRightTime = viewEndTime + (2 * this._displayWindow.clientWidth * timeOverWidthRatio);
-		this._unHideOverflowTimeDivs(minLeftTime, maxRightTime);
-		this._updateViewSubdivisions(minLeftTime, maxRightTime);
-		this._hideOverflowTimeDivs(true, minLeftTime);
-		this._hideOverflowTimeDivs(false, maxRightTime);
-		this._updateRepresentedTime();
 	}
 
 	/**
 	 * 
 	 */
 	_incrementZoom(increment) {
+		let divisionsLevelHasChanged = false;
+
 		if(increment != 0) {
 			let newLevel = this._widgetContainer.className;
 			let newWidth = this._currentLevelDivWidth * Math.exp(-increment / 10);
@@ -2508,22 +2698,13 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._isZoomedOut = false;
 			}
 
+			divisionsLevelHasChanged = (newLevel != this._widgetContainer.className);
+
 			if((newLevel != this._widgetContainer.className) || (newWidth != this._currentLevelDivWidth))
 				this._setWidthRules(newLevel, newWidth);
 		}
-	}
 
-	/**
-	 * 
-	 */
-	_timeDivIsInView(timeDiv) {
-		let divClientRect = timeDiv.getBoundingClientRect();
-		let divLeft = divClientRect.left;
-		let divRight = divClientRect.right;
-		let containerClientRect = this._displayWindow.getBoundingClientRect();
-		let containerLeft = containerClientRect.left;
-		let containerRight = containerClientRect.right;
-		return ((divRight >= containerLeft) && (divLeft <= containerRight)); 
+		return divisionsLevelHasChanged;
 	}
 
 	/**
@@ -2552,7 +2733,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 				eventsCountPerPixel[x] = currentPixelEventCount;
 			}
-			// ---
 
 			// paint the scrollbar
 			this._scrollBarBackground.setAttribute("width", scrollBarWidth);
@@ -2572,7 +2752,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					canvasContext.fillRect(x, 0, 1, scrollBarHeight);
 				}
 			}
-			// ---
 		});
 	}
 }

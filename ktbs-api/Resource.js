@@ -61,8 +61,11 @@ export class Resource {
 						}),
 						mode: "cors",
 						credentials: "include",
-						cache: "no-cache"
+						cache: "default"
 					};
+
+					if(this._etag)
+						fetchParameters.headers.append("If-None-Match", this._etag);
 					
 					fetch(this._data_read_uri, fetchParameters)
 						.then(function(response) {

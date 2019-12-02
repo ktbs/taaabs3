@@ -1,14 +1,14 @@
-#container {
+:host {
 	position: absolute;
 	transition-property: bottom;
-	transition-duration: .4s;
-	transition-timing-function: ease-out;
+	transition-duration: .6s;
+	transition-timing-function: ease-in;
 }
 
-:host([visible = "false"]) #container, :host([visible = "0"])  #container,
-:host:not([row]) #container,
-#container.row-is-overflow, 
-#container.posx-is-overflow {
+:host([visible = "false"]), :host([visible = "0"]),
+:host(:not([posx-initialized])), :host(:not([row-initialized])),
+:host(.row-is-overflow),
+:host(.posx-is-overflow) {
 	display: none;
 }
 
@@ -45,6 +45,7 @@
 	cursor: pointer;
 	height: 12px;
 	outline: none;
+	width: 100%;
 }
 
 :host(:not([symbol]):not([color])) #marker {
