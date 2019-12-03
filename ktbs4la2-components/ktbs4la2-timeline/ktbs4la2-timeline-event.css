@@ -24,6 +24,7 @@
 	top: -5px;
 	padding: 0px 4px 0px 2px;
 	cursor: default;
+	z-index: 4;
 }
 
 #hidden-siblings-marker:hover {
@@ -46,6 +47,7 @@
 	height: 12px;
 	outline: none;
 	width: 100%;
+	z-index: 3;
 }
 
 :host(:not([symbol]):not([color])) #marker {
@@ -108,7 +110,7 @@
 #popup {
 	display: none;
 	position: absolute;
-	z-index: 4;
+	z-index: 5;
 	left: 15px;
 	bottom: 5px;
 	background-color: white;

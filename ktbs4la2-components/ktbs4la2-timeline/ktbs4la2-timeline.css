@@ -9,6 +9,8 @@
 	text-align: right;
 	max-width: 70px;
 	min-width: 70px;
+	padding-top: 10px;
+	height: calc(100% - 10px);
 }
 
 .legend-label {
@@ -58,7 +60,7 @@
 	min-width: calc(100% - 90px);
 	display: flex;
 	flex-direction: column;
-	height: 100%;
+	height: calc(100% - 10px);
 	padding-right: 20px;
 }
 
@@ -66,6 +68,8 @@
 	overflow: hidden;
 	width: 100%;
 	flex-grow: 1;
+	position: relative;
+	padding-top: 10px;
 }
 
 #timeline-container {
@@ -91,25 +95,43 @@
 	width: 100%;
 }
 
+#timeline-cursor {
+	position: absolute;
+	height: 100%;
+	width: 1pt;
+	background-color: red;
+	top: 0px;
+	left: 0px;
+	z-index: 2;
+	display: none;
+}
+
+#timeline-cursor-label {
+	color: red;
+	font-size: 7pt;
+	margin-left: 2px;
+	width: 110px;
+}
+
 /* ------------------------------------------------- */
 
-#display-window.scrollable #events {
+#display-window.scrollable #events, #display-window.scrollable #timeline-cursor  {
 	cursor: grab;
 }
 
-#display-window.scrolled #events {
+#display-window.scrolled #events, #display-window.scrolled #timeline-cursor  {
 	cursor: grabbing;
 }
 
-#display-window.zooming-in #events {
+#display-window.zooming-in #events, #display-window.zooming-in #timeline-cursor  {
 	cursor: zoom-in;
 }
 
-#display-window.zooming-out #events {
+#display-window.zooming-out #events, #display-window.zooming-out #timeline-cursor  {
 	cursor: zoom-out;
 }
 
-#display-window.zoom-denied #events {
+#display-window.zoom-denied #events, #display-window.zoom-denied #timeline-cursor  {
 	cursor: not-allowed;
 }
 

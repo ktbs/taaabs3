@@ -150,10 +150,12 @@ class KTBS4LA2CallbackQueue {
 	 * 
 	 */
 	_processNextCallback() {
-		if(this._queuedCallbacks.length > 0)
-			this._queuedCallbacks.shift()();
-		else
-			this.stop();
+		if(this.isRunning) {
+			if(this._queuedCallbacks.length > 0)
+				this._queuedCallbacks.shift()();
+			else
+				this.stop();
+		}
 	}
 }
 
@@ -342,8 +344,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._visibleEventsNodes = null;
 		this._eventsNodesInView = null;
 
-		this._bindedDragDisplayWindowFunction = this._onDragDisplayWindow.bind(this);
-		this._bindedStopDraggingDisplayWindowFunction = this._onStopDraggingDisplayWindow.bind(this);
+		this._bindedOnDragFunction = this._onDrag.bind(this);
+		this._bindedOnStopDraggingFunction = this._onStopDragging.bind(this);
 		this._displayWindowDragMouseTime;
 
 		this._watchScroll = true;
@@ -371,6 +373,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		this._updateEventsRowQueue = new KTBS4LA2CallbackQueue();
 		this._updateEventsRowQueue.processIntervalDelay = 10;
+
+		this._updateTimeLineCursorID = null;
 
 		this._resolveBeginSet;
 		this._rejectBeginSet;
@@ -412,6 +416,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._componentReady.then(() => {
 					this._initTimeDivisions();
 					this._initZoom();
+
+					this._timelineCursor.style.display = "block";
+					this._timelineCursorLabel.innerText = this._getFormattedDate(this._getMouseTime(0));
+
 					this._updateMaxDisplayableRows();
 				});
 			}.bind(this))
@@ -455,10 +463,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._widgetContainer = this.shadowRoot.querySelector("#widget-container");
 
 		this._timeDiv = this.shadowRoot.querySelector("#time");
+
 		this._displayWindow = this.shadowRoot.querySelector("#display-window");
 		this._displayWindow.addEventListener("wheel", this._onMouseWheel.bind(this), { passive: false });
-		this._displayWindow.addEventListener("mousedown", this._onDisplayWindowMouseDown.bind(this));
 		this._displayWindow.addEventListener("scroll", this._onScroll.bind(this));
+		this._displayWindow.addEventListener("mousemove", this._onDisplayWindowMouseMove.bind(this));
+		this._displayWindow.addEventListener("mousedown", this._onDisplayWindowMouseDown.bind(this));
+		
+		this._timelineCursor = this.shadowRoot.querySelector("#timeline-cursor");
+		this._timelineCursorLabel = this.shadowRoot.querySelector("#timeline-cursor-label");
+		
 		this._scrollBar = this.shadowRoot.querySelector("#scrollbar");
 		this._scrollBarBackground = this.shadowRoot.querySelector("#scrollbar-background");
 		this._scrollBarBackground.addEventListener("click", this._onClickScrollBarBackGround.bind(this));
@@ -484,6 +498,39 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		}
 		catch(error) {
 			this.emitErrorEvent(error);
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_getFormattedDate(timestamp) {
+		let date = new Date(parseInt(timestamp));
+
+		return (date.getFullYear() + "-" 
+			+ (date.getMonth() + 1).toString().padStart(2, '0') + "-" 
+			+ date.getDate().toString().padStart(2, '0') + " "
+			+ date.getHours().toString().padStart(2, '0') + ":"
+			+ date.getMinutes().toString().padStart(2, '0') + ":"
+			+ date.getSeconds().toString().padStart(2, '0') + ":"
+			+ date.getMilliseconds().toString().padStart(3, '0'));
+	}
+
+	/**
+	 * 
+	 */
+	_onDisplayWindowMouseMove(event) {
+		if(this._timeDivisionsAreInitialized && !this._displayWindow.classList.contains("scrolled")) {
+			event.preventDefault();
+
+			if(this._updateTimeLineCursorID != null)
+				clearTimeout(this._updateTimeLineCursorID);
+
+			this._updateTimeLineCursorID = setTimeout(() => {
+				let timeDivRelativeMouseX = event.clientX - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
+				this._timelineCursor.style.left = timeDivRelativeMouseX + "px";
+				this._timelineCursorLabel.innerText = this._getFormattedDate(this._getMouseTime(timeDivRelativeMouseX));
+			});
 		}
 	}
 
@@ -1058,12 +1105,20 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			if(timeDivNeedsToChange) {
 				let firstBefore = this._firstRepresentedTime;
 				let lastBefore = this._lastRepresentedTime;
+
+				// memorise the position of timeline's cursor
+				let timelineCursorPosition = this._timelineCursor.getBoundingClientRect().left - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
+				let timelineCursorTime = this._getMouseTime(timelineCursorPosition);
+
 				this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
 				this._updateEventsPosX(this._getVisibleEventNodes());
 				let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
 				let newTimeOffset = viewBeginTime - this._firstRepresentedTime;
 				let newScrollLeft = newTimeOffset * widthOverTimeRatio;
 				this._setSilentScroll(newScrollLeft);
+
+				// re-position timeline's cursor at the right place
+				this._setTimelineCursorPositionForTime(timelineCursorTime);
 			}
 
 			this._requestUpdateTimeDivisionsID = null;
@@ -1218,8 +1273,13 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		if(timeDivNeedsToChange) {
 			let firstRepTimeBefore = this._firstRepresentedTime;
 			let lastRepTimeBefore = this._lastRepresentedTime;
+			// memorise the position of timeline's cursor
+			let timelineCursorPosition = this._timelineCursor.getBoundingClientRect().left - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
+			let timelineCursorTime = this._getMouseTime(timelineCursorPosition);
 			this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
 			timeDivHasChanged = ((this._firstRepresentedTime != firstRepTimeBefore) || (this._lastRepresentedTime != lastRepTimeBefore));
+			// re-position timeline's cursor at the right place
+			this._setTimelineCursorPositionForTime(timelineCursorTime);
 		}
 
 		let viewWidthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
@@ -1243,15 +1303,15 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			if(!this._displayWindow.classList.contains("scrolled"))
 				this._displayWindow.classList.add("scrolled");
 
-			this._displayWindow.addEventListener("mousemove", this._bindedDragDisplayWindowFunction, true);
-			window.document.addEventListener("mouseup", this._bindedStopDraggingDisplayWindowFunction, true);
+			window.document.addEventListener("mousemove", this._bindedOnDragFunction, true);
+			window.document.addEventListener("mouseup", this._bindedOnStopDraggingFunction, true);
 		}
 	}
 
 	/**
 	 * 
 	 */
-	_onDragDisplayWindow(event) {
+	_onDrag(event) {
 		event.preventDefault();
 		let displayWindowRelativeMouseX = event.clientX - this._displayWindow.getBoundingClientRect().left;
 		let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
@@ -1264,10 +1324,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onStopDraggingDisplayWindow(event) {
+	_onStopDragging(event) {
 		event.preventDefault();
-		this._displayWindow.removeEventListener("mousemove", this._bindedDragDisplayWindowFunction, true);
-		window.document.removeEventListener("mouseup", this._bindedStopDraggingDisplayWindowFunction, true);
+		window.document.removeEventListener("mousemove", this._bindedOnDragFunction, true);
+		window.document.removeEventListener("mouseup", this._bindedOnStopDraggingFunction, true);
 
 		if(this._displayWindow.classList.contains("scrolled"))
 			this._displayWindow.classList.remove("scrolled");
@@ -1398,14 +1458,26 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	_onClickDezoomButton() {
 		if(this._timeDivisionsAreInitialized == true) {
 			let levelBefore = this._widgetContainer.className;
+
+			// memorise the position of timeline's cursor
+			let timelineCursorPosition = this._timelineCursor.getBoundingClientRect().left - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
+			let timelineCursorTime = this._getMouseTime(timelineCursorPosition);
+						
 			this._setWidthRules(this._initialLevel, this._initialDivWidth);
 			this._updateTimeDivisions(this.beginTime, this.endTime);
 			this._setSilentScroll(0);
+
+			// re-position timeline's cursor at the right place
+			this._setTimelineCursorPositionForTime(timelineCursorTime);
+
 			this._updateScrollBarCursor();
 			this._updateScrollButtons();
 
 			if(levelBefore != this._widgetContainer.className)
 				this._updateMaxDisplayableRows();
+
+			if(this._displayWindow.classList.contains("scrollable"))
+				this._displayWindow.classList.remove("scrollable");
 
 			this._updateEventsPosX(this._getVisibleEventNodes());
 			this._requestUpdateEventsRow();
@@ -1489,130 +1561,13 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._widthRulesStylesheet.insertRule(".time-division-year.year-365 { width: " + (newDivWidth * 365 / 366) + "px; }");
 				break;
 			case "month":
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 12) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 12 * 365 / 365) + "px; }");
 				this._widthRulesStylesheet.insertRule(".time-division-month.month-31 { width: " + newDivWidth + "px; }");
 				this._widthRulesStylesheet.insertRule(".time-division-month.month-30 { width: " + (newDivWidth * 30 / 31) + "px; }");
 				this._widthRulesStylesheet.insertRule(".time-division-month.month-29 { width: " + (newDivWidth * 29 / 31) + "px; }");
 				this._widthRulesStylesheet.insertRule(".time-division-month.month-28 { width: " + (newDivWidth * 28 / 31) + "px; }");
 				break;
-			case "day":
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-day { width: " + newDivWidth + "px; }");
-				break;
-			case "hour":
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-hour { width: " + newDivWidth + "px; }");
-				break;
-			case "tenminutes":
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 6) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 6) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 6) + "px }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 6) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 6) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 6) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 6) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 6) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenminutes { width: " + newDivWidth + "px; }");
-				break;
-			case "minute":
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 60) + "px }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-minute { width: " + newDivWidth + "px; }");
-				break;
-			case "tenseconds":
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 6 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 6 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 6 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 6 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 6 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 6 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 6 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 6 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 6 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-minute:not(.subdivided) { width: " + (newDivWidth * 6) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenseconds { width: " + newDivWidth + "px; }");
-				break;
-			case "second":
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 3600) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 3600) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 3600) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 3600) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 3600) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 3600) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 3600) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 3600) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 10 * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-minute:not(.subdivided) { width: " + (newDivWidth * 60) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenseconds:not(.subdivided) { width: " + (newDivWidth * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-second { width: " + newDivWidth + "px; }");
-				break;
-			case "ahundredmilliseconds":
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 3600 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 3600 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 3600 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 3600 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 3600 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 3600 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 3600 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 3600 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 10 * 60 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-minute:not(.subdivided) { width: " + (newDivWidth * 60 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenseconds:not(.subdivided) { width: " + (newDivWidth * 10 * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-second:not(.subdivided) { width: " + (newDivWidth * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-ahundredmilliseconds { width: " + newDivWidth + "px; }");
-				break;
-			case "tenmilliseconds":
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 3600 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 3600 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 3600 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 3600 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 3600 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 3600 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 3600 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 3600 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 10 * 60 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-minute:not(.subdivided) { width: " + (newDivWidth * 60 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenseconds:not(.subdivided) { width: " + (newDivWidth * 10 * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-second:not(.subdivided) { width: " + (newDivWidth * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-ahundredmilliseconds:not(.subdivided) { width: " + (newDivWidth * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenmilliseconds { width: " + newDivWidth + "px; }");
-				break;
-			case "millisecond":
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 3600 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 3600 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 3600 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 3600 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 3600 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 3600 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 3600 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 3600 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 10 * 60 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-minute:not(.subdivided) { width: " + (newDivWidth * 60 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenseconds:not(.subdivided) { width: " + (newDivWidth * 10 * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-second:not(.subdivided) { width: " + (newDivWidth * 1000) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-ahundredmilliseconds:not(.subdivided) { width: " + (newDivWidth * 100) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-tenmilliseconds:not(.subdivided) { width: " + (newDivWidth * 10) + "px; }");
-				this._widthRulesStylesheet.insertRule(".time-division-millisecond { width: " + newDivWidth + "px; }");
-				break;
+			default :
+				this._widthRulesStylesheet.insertRule(".time-division-" + newLevel + " { width: " + newDivWidth + "px; }");
 		}
 
 		this._widgetContainer.className = newLevel;
@@ -2369,7 +2324,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			this._requestUnsetZoomCursorID = setTimeout(() => {
 				this._displayWindow.classList.remove(zoomClass);
 				this._requestUnsetZoomCursorID = null;
-			});
+			}, 500);
 		}
 	}
 
@@ -2379,6 +2334,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	_getMouseTime(timeDivRelativeMouseX) {
 		let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
 		return (this._firstRepresentedTime + (timeDivRelativeMouseX * timeOverWidthRatio));
+	}
+
+	/**
+	 * 
+	 */
+	_setTimelineCursorPositionForTime(timelineCursorTime) {
+		let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
+		let timelineCursorTimeOffset = timelineCursorTime - this._firstRepresentedTime;
+		let newTimelineCursorLeft = timelineCursorTimeOffset * widthOverTimeRatio;
+		this._timelineCursor.style.left = newTimelineCursorLeft + "px";
 	}
 
 	/**
@@ -2423,6 +2388,11 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					Promise.all([this._timeDivisionsInitialized, this._zoomInitialized]).then(() => {
 						let zoomAmount = this._requestedZoomIncrementAmount;
 						this._requestedZoomIncrementAmount = 0;
+
+						// memorise the position of timeline's cursor
+						let timelineCursorPosition = this._timelineCursor.getBoundingClientRect().left - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
+						let timelineCursorTime = this._getMouseTime(timelineCursorPosition);
+						
 						let divisionsLevelHasChanged = this._incrementZoom(zoomAmount);
 
 						let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
@@ -2448,6 +2418,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 						this._requestUpdateEventsRow();
 						this._setScrollForMousePositionAndTime(mouseTime, displayWindowRelativeMouseX);
 						this._updateScrollBarCursor();
+
+						// re-position timeline's cursor at the right place
+						this._setTimelineCursorPositionForTime(timelineCursorTime);
+
 						this._requestZoomIncrementID = null;
 					});
 				});
