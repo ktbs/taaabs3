@@ -82,9 +82,20 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	onComponentReady() {
 		this._timeline = this.shadowRoot.querySelector("#timeline");
 		this._timeline.setAttribute("lang", this._lang);
+
+		this._timeline.addEventListener("request-fullscreen", this._onTimelineRequestFullscreen.bind(this), true);
+
 		this._styleSheetSelector = this.shadowRoot.querySelector("#slylesheet-selector");
 		this._styleSheetSelector.addEventListener("change", this._onChangeStyleSheetSelector.bind(this));
 		this._legend = this.shadowRoot.querySelector("#legend");
+	}
+
+	/**
+	 * 
+	 */
+	_onTimelineRequestFullscreen(event) {
+		event.preventDefault();
+		this.requestFullscreen();
 	}
 
 	/**

@@ -4,6 +4,21 @@ import {KTBS4LA2TimelineEvent} from "./ktbs4la2-timeline-event.js";
 /**
  * 
  */
+function getFormattedDate(timestamp) {
+	let date = new Date(parseInt(timestamp));
+
+	return (date.getFullYear() + "-" 
+		+ (date.getMonth() + 1).toString().padStart(2, '0') + "-" 
+		+ date.getDate().toString().padStart(2, '0') + " "
+		+ date.getHours().toString().padStart(2, '0') + ":"
+		+ date.getMinutes().toString().padStart(2, '0') + ":"
+		+ date.getSeconds().toString().padStart(2, '0') + ":"
+		+ date.getMilliseconds().toString().padStart(3, '0'));
+}
+
+/**
+ * 
+ */
 function isLeapYear(year) {
 	return (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0));
 }
@@ -418,7 +433,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					this._initZoom();
 
 					this._timelineCursor.style.display = "block";
-					this._timelineCursorLabel.innerText = this._getFormattedDate(this._getMouseTime(0));
+					this._timelineCursorLabel.innerText = getFormattedDate(this._getMouseTime(0));
 
 					this._updateMaxDisplayableRows();
 				});
@@ -492,6 +507,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._scrollRightButton.addEventListener("mouseup", this._onScrollRightButtonMouseUp.bind(this));
 		this._scrollRightButton.addEventListener("mouseout", this._onScrollRightButtonMouseUp.bind(this));
 
+		this._toggleFullscreenButton = this.shadowRoot.querySelector("#toggle-fullscreen-button");
+		this._toggleFullscreenButton.addEventListener("click", this._onClickToggleFullscreenButton.bind(this));
+
 		try {
 			let displayWindowResizeObserver = new ResizeObserver(this._onResizeWidgetContainer.bind(this));
 			displayWindowResizeObserver.observe(this._widgetContainer);
@@ -504,16 +522,15 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_getFormattedDate(timestamp) {
-		let date = new Date(parseInt(timestamp));
+	_onClickToggleFullscreenButton(event) {
+		event.stopPropagation();
 
-		return (date.getFullYear() + "-" 
-			+ (date.getMonth() + 1).toString().padStart(2, '0') + "-" 
-			+ date.getDate().toString().padStart(2, '0') + " "
-			+ date.getHours().toString().padStart(2, '0') + ":"
-			+ date.getMinutes().toString().padStart(2, '0') + ":"
-			+ date.getSeconds().toString().padStart(2, '0') + ":"
-			+ date.getMilliseconds().toString().padStart(3, '0'));
+		if(!document.fullscreenElement) {
+			if(this.dispatchEvent(new Event("request-fullscreen", {cancelable: true})))
+				this.requestFullscreen();
+		}
+		else
+			document.exitFullscreen();
 	}
 
 	/**
@@ -529,7 +546,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			this._updateTimeLineCursorID = setTimeout(() => {
 				let timeDivRelativeMouseX = event.clientX - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
 				this._timelineCursor.style.left = timeDivRelativeMouseX + "px";
-				this._timelineCursorLabel.innerText = this._getFormattedDate(this._getMouseTime(timeDivRelativeMouseX));
+				this._timelineCursorLabel.innerText = getFormattedDate(this._getMouseTime(timeDivRelativeMouseX));
 			});
 		}
 	}
