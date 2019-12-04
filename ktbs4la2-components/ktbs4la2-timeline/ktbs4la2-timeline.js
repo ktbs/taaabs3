@@ -118,13 +118,6 @@ class KTBS4LA2CallbackQueue {
 	/**
 	 * 
 	 */
-	get hasPendingCallback() {
-		return (this._queuedCallbacks.length > 0);
-	}
-
-	/**
-	 * 
-	 */
 	add(callback) {
 		this._queuedCallbacks.push(callback);
 	}
@@ -165,12 +158,14 @@ class KTBS4LA2CallbackQueue {
 	 * 
 	 */
 	_processNextCallback() {
-		if(this.isRunning) {
-			if(this._queuedCallbacks.length > 0)
-				this._queuedCallbacks.shift()();
-			else
-				this.stop();
-		}
+		setTimeout(() => {
+			if(this.isRunning) {
+				if(this._queuedCallbacks.length > 0)
+					this._queuedCallbacks.shift()();
+				else
+					this.stop();
+			}
+		});
 	}
 }
 
@@ -1293,8 +1288,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			// memorise the position of timeline's cursor
 			let timelineCursorPosition = this._timelineCursor.getBoundingClientRect().left - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
 			let timelineCursorTime = this._getMouseTime(timelineCursorPosition);
+			
 			this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
 			timeDivHasChanged = ((this._firstRepresentedTime != firstRepTimeBefore) || (this._lastRepresentedTime != lastRepTimeBefore));
+			
 			// re-position timeline's cursor at the right place
 			this._setTimelineCursorPositionForTime(timelineCursorTime);
 		}
@@ -1578,13 +1575,130 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._widthRulesStylesheet.insertRule(".time-division-year.year-365 { width: " + (newDivWidth * 365 / 366) + "px; }");
 				break;
 			case "month":
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 12) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 12 * 365 / 365) + "px; }");
 				this._widthRulesStylesheet.insertRule(".time-division-month.month-31 { width: " + newDivWidth + "px; }");
 				this._widthRulesStylesheet.insertRule(".time-division-month.month-30 { width: " + (newDivWidth * 30 / 31) + "px; }");
 				this._widthRulesStylesheet.insertRule(".time-division-month.month-29 { width: " + (newDivWidth * 29 / 31) + "px; }");
 				this._widthRulesStylesheet.insertRule(".time-division-month.month-28 { width: " + (newDivWidth * 28 / 31) + "px; }");
 				break;
-			default :
-				this._widthRulesStylesheet.insertRule(".time-division-" + newLevel + " { width: " + newDivWidth + "px; }");
+			case "day":
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-day { width: " + newDivWidth + "px; }");
+				break;
+			case "hour":
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-hour { width: " + newDivWidth + "px; }");
+				break;
+			case "tenminutes":
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 6) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 6) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 6) + "px }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 6) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 6) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 6) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 6) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 6) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenminutes { width: " + newDivWidth + "px; }");
+				break;
+			case "minute":
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 60) + "px }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-minute { width: " + newDivWidth + "px; }");
+				break;
+			case "tenseconds":
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 6 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 6 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 6 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 6 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 6 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 6 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 6 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 6 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 6 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-minute:not(.subdivided) { width: " + (newDivWidth * 6) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenseconds { width: " + newDivWidth + "px; }");
+				break;
+			case "second":
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 3600) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 3600) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 3600) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 3600) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 3600) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 3600) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 3600) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 3600) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 10 * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-minute:not(.subdivided) { width: " + (newDivWidth * 60) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenseconds:not(.subdivided) { width: " + (newDivWidth * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-second { width: " + newDivWidth + "px; }");
+				break;
+			case "ahundredmilliseconds":
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 3600 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 3600 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 3600 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 3600 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 3600 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 3600 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 3600 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 3600 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 10 * 60 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-minute:not(.subdivided) { width: " + (newDivWidth * 60 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenseconds:not(.subdivided) { width: " + (newDivWidth * 10 * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-second:not(.subdivided) { width: " + (newDivWidth * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-ahundredmilliseconds { width: " + newDivWidth + "px; }");
+				break;
+			case "tenmilliseconds":
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 3600 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 3600 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 3600 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 3600 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 3600 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 3600 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 3600 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 3600 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 10 * 60 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-minute:not(.subdivided) { width: " + (newDivWidth * 60 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenseconds:not(.subdivided) { width: " + (newDivWidth * 10 * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-second:not(.subdivided) { width: " + (newDivWidth * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-ahundredmilliseconds:not(.subdivided) { width: " + (newDivWidth * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenmilliseconds { width: " + newDivWidth + "px; }");
+				break;
+			case "millisecond":
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-366:not(.subdivided) { width: " + (newDivWidth * 366 * 24 * 3600 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-year.year-365:not(.subdivided) { width: " + (newDivWidth * 365 * 24 * 3600 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-31:not(.subdivided) { width: " + (newDivWidth * 31 * 24 * 3600 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-30:not(.subdivided) { width: " + (newDivWidth * 30 * 24 * 3600 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-29:not(.subdivided) { width: " + (newDivWidth * 29 * 24 * 3600 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-month.month-28:not(.subdivided) { width: " + (newDivWidth * 28 * 24 * 3600 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-day:not(.subdivided) { width: " + (newDivWidth * 24 * 3600 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-hour:not(.subdivided) { width: " + (newDivWidth * 3600 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenminutes:not(.subdivided) { width: " + (newDivWidth * 10 * 60 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-minute:not(.subdivided) { width: " + (newDivWidth * 60 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenseconds:not(.subdivided) { width: " + (newDivWidth * 10 * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-second:not(.subdivided) { width: " + (newDivWidth * 1000) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-ahundredmilliseconds:not(.subdivided) { width: " + (newDivWidth * 100) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-tenmilliseconds:not(.subdivided) { width: " + (newDivWidth * 10) + "px; }");
+				this._widthRulesStylesheet.insertRule(".time-division-millisecond { width: " + newDivWidth + "px; }");
+				break;
 		}
 
 		this._widgetContainer.className = newLevel;
@@ -2413,6 +2527,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 						let divisionsLevelHasChanged = this._incrementZoom(zoomAmount);
 
 						let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
+						
 						let newViewBeginTime = mouseTime - (displayWindowRelativeMouseX * timeOverWidthRatio);
 						let newViewEndTime = mouseTime + ((this._displayWindow.clientWidth - displayWindowRelativeMouseX) * timeOverWidthRatio);
 						

@@ -145,6 +145,10 @@
 	padding-top: 20px;
 }
 
+.time-division.overflow {
+	display: none;
+}
+
 #widget-container.minute .time-division-tenminutes,
 #widget-container.tenseconds .time-division-tenminutes,
 #widget-container.second .time-division-tenminutes,
@@ -160,10 +164,6 @@
 #widget-container.millisecond .time-division-tenmilliseconds
 {
 	padding-top: 0;
-}
-
-.time-division.overflow, .time-division.overflow * {
-	display: none;
 }
 
 .time-division > .label {
