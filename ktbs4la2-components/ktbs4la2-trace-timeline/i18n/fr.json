@@ -1,4 +1,6 @@
 {
-    "Stylesheet": "Feuille de style",
-    "Default": "Par défaut"
+    "Stylesheet": "Feuille de styles",
+    "Default stylesheet generated automatically": "Feuille de styles par défaut génerée automatiquement",
+    "Default": "Par défaut",
+    "Unknown obsel type": "Type d'obsel inconnu"
 }

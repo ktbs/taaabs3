@@ -397,7 +397,7 @@
 	opacity: 1;
 }
 
-:host(:fullscreen) #toggle-fullscreen-button {
+:host(:fullscreen) #toggle-fullscreen-button, :fullscreen #toggle-fullscreen-button {
 	background-image: url('{my-component-folder}/exit-fulllscreen.svg');
 }
 

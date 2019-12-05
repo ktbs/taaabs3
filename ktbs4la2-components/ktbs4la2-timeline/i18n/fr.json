@@ -17,5 +17,9 @@
 	"Hour": "Heure",
 	"Minute": "Minute",
 	"Second": "Seconde",
-	"Millisecond": "Milliseconde
+	"Millisecond": "Milliseconde",
+	"Zoom all the way out": "Dé-zoomer totalement",
+	"Scroll left": "Faire défiler vers la gauche",
+	"Scroll right": "Faire défiler vers la droite",
+	"Toggle fullscreen": "Activer/désactiver le mode plein écran"
 }

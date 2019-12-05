@@ -341,7 +341,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	constructor() {
-		super(import.meta.url);
+		super(import.meta.url, true, true);
 
 		this._beginTime = null;
 		this._endTime = null;
@@ -512,6 +512,18 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		catch(error) {
 			this.emitErrorEvent(error);
 		}
+
+		this._yearLabel = this.shadowRoot.querySelector("#year-label");
+		this._monthLabel = this.shadowRoot.querySelector("#month-label");
+		this._dayLabel = this.shadowRoot.querySelector("#day-label");
+		this._hourLabel = this.shadowRoot.querySelector("#hour-label");
+		this._minuteLabel = this.shadowRoot.querySelector("#minute-label");
+		this._secondLabel = this.shadowRoot.querySelector("#second-label");
+		this._millisecondLabel = this.shadowRoot.querySelector("#millisecond-label");
+		/*
+		this._ = this.shadowRoot.querySelector("#");
+		this._ = this.shadowRoot.querySelector("#");
+		this._ = this.shadowRoot.querySelector("#");*/
 	}
 
 	/**
@@ -2859,6 +2871,32 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				}
 			}
 		});
+	}
+
+	/**
+	 * 
+	 */
+	_updateStringsTranslation() {
+		this._yearLabel.innerText = this._translateString("Year");
+		this._monthLabel.innerText = this._translateString("Month");
+		this._dayLabel.innerText = this._translateString("Day");
+		this._hourLabel.innerText = this._translateString("Hour");
+		this._minuteLabel.innerText = this._translateString("Minute");
+		this._secondLabel.innerText = this._translateString("Second");
+		this._millisecondLabel.innerText = this._translateString("Millisecond");
+		this._dezoomButton.setAttribute("title", this._translateString("Zoom all the way out"));
+		this._scrollLeftButton.setAttribute("title", this._translateString("Scroll left"));
+		this._scrollRightButton.setAttribute("title", this._translateString("Scroll right"));
+		this._toggleFullscreenButton.setAttribute("title", this._translateString("Toggle fullscreen"));
+
+		// update month time divisions labels
+		let monthSubdivsLabels = this._timeDiv.querySelectorAll(".time-division-month > .label");
+		
+		for(let i = 0; i < monthSubdivsLabels.length; i++) {
+			let aMonthLabel = monthSubdivsLabels[i];
+			let monthNumber = parseInt(aMonthLabel.parentNode.getAttribute("id").substring(5,7), 10);
+			aMonthLabel.innerText = this._translateString(KTBS4LA2Timeline.monthNames[monthNumber]);
+		}
 	}
 }
 

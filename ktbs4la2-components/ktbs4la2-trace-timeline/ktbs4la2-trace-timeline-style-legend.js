@@ -29,7 +29,8 @@ class KTBS4LA2TraceTimelineStyleLegend extends TemplatedHTMLElement {
 		let observedAttributes = super.observedAttributes;
         observedAttributes.push('color');
         observedAttributes.push('symbol');
-        observedAttributes.push('rule-id');
+		observedAttributes.push('rule-id');
+		observedAttributes.push('label');
 		return observedAttributes;
     }
     
@@ -40,10 +41,16 @@ class KTBS4LA2TraceTimelineStyleLegend extends TemplatedHTMLElement {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
 
 		if(attributeName == "rule-id") {
-            this._componentReady.then(() => {
+			if(!this.hasAttribute("label"))
+				this._componentReady.then(() => {
+					this._label.innerText = newValue;
+				});
+		}
+		else if(attributeName == "label") {
+			this._componentReady.then(() => {
                 this._label.innerText = newValue;
             });
-        }
+		}
         else if(attributeName == "color") {
             this._componentReady.then(() => {
                 if(this.hasAttribute("symbol")) {

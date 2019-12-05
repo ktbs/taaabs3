@@ -22,7 +22,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	constructor() {
-		super(import.meta.url, true, false);
+		super(import.meta.url, true, true);
 
 		this._trace = null;
 
@@ -82,10 +82,10 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	onComponentReady() {
 		this._timeline = this.shadowRoot.querySelector("#timeline");
 		this._timeline.setAttribute("lang", this._lang);
-
 		this._timeline.addEventListener("request-fullscreen", this._onTimelineRequestFullscreen.bind(this), true);
-
 		this._styleSheetSelector = this.shadowRoot.querySelector("#slylesheet-selector");
+		this._styleSheetIcon = this.shadowRoot.querySelector("#stylesheet-icon");
+		this._defaultStylesheetSelectorEntry = this.shadowRoot.querySelector("#default");
 		this._styleSheetSelector.addEventListener("change", this._onChangeStyleSheetSelector.bind(this));
 		this._legend = this.shadowRoot.querySelector("#legend");
 	}
@@ -357,7 +357,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_getCatchAllRule() {
 		let catchAllRule = new Object();
-		catchAllRule.id = this._translateString("Unknown obsel type");
+		catchAllRule.label = this._translateString("Unknown obsel type");
+		catchAllRule.id = "unknown";
 		catchAllRule.rules = new Array();
 		catchAllRule.symbol = new Object();
 		let aRuleRule = new Object();
@@ -635,6 +636,9 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			let styleNode = document.createElement("ktbs4la2-trace-timeline-style-legend");
 			styleNode.setAttribute("rule-id", aRule.id);
 
+			if(aRule.label)
+				styleNode.setAttribute("label", this._translateString(aRule.label));
+
 			if(aRule.symbol.symbol)
 				styleNode.setAttribute("symbol", JSSpecialCharToHTMLHex(aRule.symbol.symbol));
 			else if(aRule.symbol.shape)
@@ -878,6 +882,23 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					});
 			});
 		}
+	}
+
+	/**
+	 * 
+	 */
+	_updateStringsTranslation() {
+		this._styleSheetIcon.setAttribute("title", this._translateString("Stylesheet"));
+		this._styleSheetIcon.setAttribute("alt", this._translateString("Stylesheet"));
+		this._styleSheetSelector.setAttribute("title", this._translateString("Stylesheet"));
+		this._defaultStylesheetSelectorEntry.setAttribute("title", this._translateString("Default stylesheet generated automatically"));
+		this._defaultStylesheetSelectorEntry.innerText = this._translateString("Default");
+		this._timeline.setAttribute("lang", this._lang);
+
+		let unknownObselTypeLegend = this._legend.querySelector("ktbs4la2-trace-timeline-style-legend[rule-id=\"unknown\"]");
+
+		if(unknownObselTypeLegend)
+			unknownObselTypeLegend.setAttribute("label", this._translateString("Unknown obsel type"));
 	}
 }
 
