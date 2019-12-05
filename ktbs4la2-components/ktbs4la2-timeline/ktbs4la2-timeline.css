@@ -393,11 +393,15 @@
 	z-index: 5;
 }
 
+#toggle-fullscreen-button * {
+	outline: none;
+}
+
 #toggle-fullscreen-button:hover {
 	opacity: 1;
 }
 
-:host(:fullscreen) #toggle-fullscreen-button, :fullscreen #toggle-fullscreen-button {
+:host(:fullscreen) #toggle-fullscreen-button, :host-context(:fullscreen) #toggle-fullscreen-button {
 	background-image: url('{my-component-folder}/exit-fulllscreen.svg');
 }
 
