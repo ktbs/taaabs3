@@ -552,17 +552,24 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_updateVerticalCursor(event) {
+		let timeDivRelativeMouseX = event.clientX - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
+		this._timelineCursor.style.left = timeDivRelativeMouseX + "px";
+		this._timelineCursorLabel.innerText = getFormattedDate(this._getMouseTime(timeDivRelativeMouseX));
+	}
+
+	/**
+	 * 
+	 */
 	_onDisplayWindowMouseMove(event) {
 		if(this._timeDivisionsAreInitialized && !this._displayWindow.classList.contains("scrolled")) {
 			event.preventDefault();
-
+			
 			if(this._updateTimeLineCursorID != null)
 				clearTimeout(this._updateTimeLineCursorID);
 
 			this._updateTimeLineCursorID = setTimeout(() => {
-				let timeDivRelativeMouseX = event.clientX - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
-				this._timelineCursor.style.left = timeDivRelativeMouseX + "px";
-				this._timelineCursorLabel.innerText = getFormattedDate(this._getMouseTime(timeDivRelativeMouseX));
+				this._updateVerticalCursor(event);
 			});
 		}
 	}
@@ -1410,30 +1417,35 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_incrementScroll(scrollIncrement) {
-		let widthIncrementUnit = 40;
+	_requestIncrementScroll(scrollIncrement) {
 		this._requestedScrollAmount += scrollIncrement;
-		let representedDuration = this._lastRepresentedTime - this._firstRepresentedTime;
-		let timeOverWidthRatio = representedDuration / this._timeDiv.clientWidth;
-		let viewDuration = this._displayWindow.clientWidth * timeOverWidthRatio;
-
+		
 		if(this._scrollRequestID != null)
 			clearTimeout(this._scrollRequestID);
 
 		this._scrollRequestID = setTimeout(() => {
-			let viewWidthIncrement = widthIncrementUnit * this._requestedScrollAmount;
-			let viewTimeIncrement = timeOverWidthRatio * viewWidthIncrement;
-			let newViewBeginTime = this._getViewBeginTime() + viewTimeIncrement;
-			let firstBefore = this._firstRepresentedTime;
-			let lastBefore = this._lastRepresentedTime;
-			let timeDivChanged = this._setViewBegin(newViewBeginTime);
-
-			if(timeDivChanged)
-				this._updateEventsPosX(this._getVisibleEventNodes());
-
-			this._scrollRequestID = null;
-			this._requestedScrollAmount = 0;
+			this._incrementScroll();
 		});
+	}
+
+	/**
+	 * 
+	 */
+	_incrementScroll() {
+		let widthIncrementUnit = 40;
+		let representedDuration = this._lastRepresentedTime - this._firstRepresentedTime;
+		let timeOverWidthRatio = representedDuration / this._timeDiv.clientWidth;
+		let viewWidthIncrement = widthIncrementUnit * this._requestedScrollAmount;
+		let viewTimeIncrement = timeOverWidthRatio * viewWidthIncrement;
+		let newViewBeginTime = this._getViewBeginTime() + viewTimeIncrement;
+		let firstBefore = this._firstRepresentedTime;
+		let lastBefore = this._lastRepresentedTime;
+		let timeDivChanged = this._setViewBegin(newViewBeginTime);
+
+		if(timeDivChanged)
+			this._updateEventsPosX(this._getVisibleEventNodes());
+
+		this._requestedScrollAmount = 0;
 	}
 
 	/**
@@ -1487,14 +1499,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_onScrollLeftButtonMouseDown(event) {
 		event.preventDefault();
-		this._incrementScroll(-1);
+		//this._incrementScroll(-1);
+		this._requestIncrementScroll(-1);
 
 		if(this._scrollLeftButtonPressedIntervalID != null)
 			clearInterval(this._scrollLeftButtonPressedIntervalID);
 		
 		this._scrollLeftButtonPressedIntervalID = setInterval(() => {
 			if(!this._beginIsInView())
-				this._incrementScroll(-1);
+				//this._incrementScroll(-1);
+				this._requestIncrementScroll(-1);
 			else {
 				clearInterval(this._scrollLeftButtonPressedIntervalID);
 				this._scrollLeftButtonPressedIntervalID = null;
@@ -1519,14 +1533,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_onScrollRightButtonMouseDown(event) {
 		event.preventDefault();
-		this._incrementScroll(1);
+		//this._incrementScroll(1);
+		this._requestIncrementScroll(1);
 
 		if(this._scrollRightButtonPressedIntervalID != null)
 			clearInterval(this._scrollRightButtonPressedIntervalID);
 
 		this._scrollRightButtonPressedIntervalID = setInterval(() => {
 			if(!this._endIsInView())
-				this._incrementScroll(1);
+				//this._incrementScroll(1);
+				this._requestIncrementScroll(1);
 			else {
 				clearInterval(this._scrollRightButtonPressedIntervalID);
 				this._scrollRightButtonPressedIntervalID = null;
@@ -2369,6 +2385,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onMouseWheel(event) {
+		// Ctrl+Wheel = Zoom in/out
 		if(event.ctrlKey) {
 			event.preventDefault();
 
@@ -2388,11 +2405,38 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				}
 			}
 		}
-		/*
-		// @TODO: détecter shift+roulette => scroll horizontal
-		else if() { 
+		// Shift+Wheel = Scroll left/right
+		else if(event.shiftKey) {
+			event.preventDefault();
+			
+			if(this._timeDivisionsAreInitialized == true) {
+				// when the users scrolls with a mouse wheel, event.deltaX is always equals to 0
+				// but when the users uses a trackpad, event can have non 0 values for both deltaX and deltaY, and the usefull one is deltaX
+				// at this point, there is no way to determine wether the user uses a mouse or a trackpad
+				// so, we can only guess that when deltaX has a value != 0, that's the one to use, and if deltaX == 0, it's probably a mouse, so we use deltaY
+				// the inconvenient with this method, is that if the user does a vertical movement with a trackpad, it will be mistaken for a mouse wheel scroll, so scrolling can be triggered by Shift+vertical movement 
+				let horizontalMovement = (event.deltaX == 0)?event.deltaY:event.deltaX;
+				
+				if(horizontalMovement && (horizontalMovement != 0)) {
+					let movementUnit = event.deltaMode;
 
-		}*/
+					if(movementUnit == 0)
+						horizontalMovement = horizontalMovement / (28 * 3);
+					
+					if(((horizontalMovement < 0 ) && !this._beginIsInView()) || ((horizontalMovement > 0 ) && !this._endIsInView())) {
+						this._requestedScrollAmount += horizontalMovement;
+
+						if(this._scrollRequestID != null)
+							clearTimeout(this._scrollRequestID);
+
+						this._scrollRequestID = setTimeout(() => {
+							this._incrementScroll();
+							this._updateVerticalCursor(event);
+						});
+					}
+				}
+			}
+		}
 	}
 
 	/**
