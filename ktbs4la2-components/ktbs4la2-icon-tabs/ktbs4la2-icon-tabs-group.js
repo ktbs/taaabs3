@@ -1,4 +1,5 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
+import "./ktbs4la2-icon-tab.js";
 
 class KTBS4LA2IconTabsGroup extends TemplatedHTMLElement {
 
@@ -6,7 +7,7 @@ class KTBS4LA2IconTabsGroup extends TemplatedHTMLElement {
 	 * 
 	 */
 	constructor() {
-        super(import.meta.url);
+        super(import.meta.url, true, false);
         this._tabsNodesObserver = new MutationObserver(this._onChildNodesMutation.bind(this));
 		this._tabsNodesObserver.observe(this, { childList: true, subtree: false });
 	}
@@ -28,6 +29,13 @@ class KTBS4LA2IconTabsGroup extends TemplatedHTMLElement {
 		this._componentReady.then(() => {
             this._updateTabs();
         });
+    }
+
+    /**
+     * 
+     */
+    diconnectedCallBack() {
+        this._tabsNodesObserver.disconnect();
     }
 
     /**

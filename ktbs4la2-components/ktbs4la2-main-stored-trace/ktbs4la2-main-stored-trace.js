@@ -3,7 +3,7 @@ import {StoredTrace} from "../../ktbs-api/StoredTrace.js";
 
 import "../ktbs4la2-main-related-resource/ktbs4la2-main-related-resource.js";
 import "../ktbs4la2-trace-stats/ktbs4la2-trace-stats.js";
-import "../ktbs4la2-icon-tabs/ktbs4la2-icon-tabs.js";
+import "../ktbs4la2-icon-tabs/ktbs4la2-icon-tabs-group.js";
 import "../ktbs4la2-trace-obsels/ktbs4la2-trace-obsels.js";
 import "../ktbs4la2-trace-timeline/ktbs4la2-trace-timeline.js";
 

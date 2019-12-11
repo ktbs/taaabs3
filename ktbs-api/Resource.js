@@ -47,7 +47,7 @@ export class Resource {
 	 * Attemps to asynchronously read an existing object's data to the REST service and returns a promise.
 	 * @return Promise
 	 */
-	_read_data() {
+	_read_data(abortSignal = null) {
 		if(this._uri) {
 			if(this._data_read == null) {
 				this._data_read = new Promise((resolve, reject) => {
@@ -66,6 +66,9 @@ export class Resource {
 
 					if(this._etag)
 						fetchParameters.headers.append("If-None-Match", this._etag);
+
+					if(abortSignal)
+						fetchParameters.signal = abortSignal;
 					
 					fetch(this._data_read_uri, fetchParameters)
 						.then(function(response) {

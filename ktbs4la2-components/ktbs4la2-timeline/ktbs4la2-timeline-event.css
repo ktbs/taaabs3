@@ -116,7 +116,7 @@
 	background-color: white;
 	border: 1px solid #AAA;
 	border-radius: 10px;
-	padding: 0 15px 0 5px;
+	padding: 5px 18px 0 5px;
 	text-align: right;
 }
 
@@ -127,19 +127,20 @@
 #close-button {
 	cursor: pointer;
 	opacity: 0.3;
-	position: relative;
+	position: absolute;
 	top: 2px;
-	right: -13px;
-	display: inline-block;
+	right: 2px;
+	display: block;
+	background-size: contain;
+	background-image: url('{my-component-folder}/close.svg');
+	background-repeat: no-repeat;
+	width: 16px;
+	height: 16px;
+	z-index: 6;
 }
 
 #close-button:hover {
 	opacity: 1;
-}
-
-#close-icon {
-	width: 16px;
-	height: 16px;
 }
 
 #popup-content {

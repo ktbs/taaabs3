@@ -15,10 +15,12 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	constructor(componentJSPath, fetchStylesheet = true) {
-		super(componentJSPath, fetchStylesheet);
+	constructor(componentJSPath, fetchStylesheet = true, fetchTranslation = true) {
+		super(componentJSPath, fetchStylesheet, fetchTranslation);
 
 		this._ktbsResource = null;
+
+		this._abortController = new AbortController();
 
 		// pre-create a promise that will be resolved when the ktbs resource has been succesfully loaded
 		this._resolveKtbsResourceLoaded;
@@ -93,7 +95,7 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 			this._ktbsResource = KtbsResourceElement.resourceInstances[uri];*/
 			this._ktbsResource = new (this._getKtbsResourceClass())(uri);
 		
-			this._ktbsResource._read_data()
+			this._ktbsResource._read_data(this._abortController.signal)
 				.then(function() {
 					this._resolveKtbsResourceLoaded();
 				}.bind(this))
@@ -138,8 +140,16 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	disconnectedCallback() {
+		this._abortController.abort();
+	}
+
+	/**
+	 * 
+	 */
 	onktbsResourceLoadFailed(error) {
-		this.emitErrorEvent(error);
+		if((error.name != "AbortError") || !this._abortController.signal.aborted)
+			this.emitErrorEvent(error);
 	}
 
 	/**

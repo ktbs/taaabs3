@@ -96,6 +96,13 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_updateStringsTranslation() {
+		this._closeButton.setAttribute("title", this._translateString("Close"));
+	}
+
+	/**
+	 * 
+	 */
 	get beginTime() {
 		if(this._beginTime == null) {
 			if(this.hasAttribute("begin")) {

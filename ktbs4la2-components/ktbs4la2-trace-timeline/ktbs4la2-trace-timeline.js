@@ -74,6 +74,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._context = null;
 		this._styleSheets = new Array();
 		this._currentStylesheet = null;
+		this._abortController = new AbortController();
 	}
 
 	/**
@@ -88,6 +89,13 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._defaultStylesheetSelectorEntry = this.shadowRoot.querySelector("#default");
 		this._styleSheetSelector.addEventListener("change", this._onChangeStyleSheetSelector.bind(this));
 		this._legend = this.shadowRoot.querySelector("#legend");
+	}
+
+	/**
+	 * 
+	 */
+	disconnectedCallback() {
+		this._abortController.abort();
 	}
 
 	/**
@@ -120,12 +128,13 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 			this._trace = KtbsResourceElement.resourceInstances[newValue];
 
-			this._trace._read_data()
+			this._trace._read_data(this._abortController.signal)
 				.then(function() {
 					this._resolveTraceLoaded();
 				}.bind(this))
 				.catch(function(error) {
-					this._rejectTraceLoaded(error);
+					if((error.name != "AbortError") || !this._abortController.signal.aborted)
+						this._rejectTraceLoaded(error);
 				}.bind(this));
 			// ---
 
@@ -137,12 +146,13 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 			this._stats = KtbsResourceElement.resourceInstances[statsUri];
 
-			this._stats._read_data()
+			this._stats._read_data(this._abortController.signal)
 				.then(function() {
 					this._resolveStatsLoaded();
 				}.bind(this))
 				.catch(function(error) {
-					this._rejectStatsLoaded(error);
+					if((error.name != "AbortError") || !this._abortController.signal.aborted)
+						this._rejectStatsLoaded(error);
 				}.bind(this));
 			// ---
 
@@ -154,7 +164,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 			this._obselList = KtbsResourceElement.resourceInstances[obselsUri];
 
-			this._obselList._read_first_obsel_page(100)
+			this._obselList._read_first_obsel_page(100, this._abortController.signal)
 				.then((response) => {
 					// we assume the "context" section will be the same for every obsel page
 					if(!this._context)
@@ -163,7 +173,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					this._onObselListPageRead(response.obsels, response.nextPageURI);
 				})
 				.catch((error) => {
-					this._onObselListPageReadFailed(error);
+					if((error.name != "AbortError") || !this._abortController.signal.aborted)
+						this._onObselListPageReadFailed(error);
 				});
 
 			this._allObselsLoaded.finally(() => {
@@ -231,18 +242,19 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onTraceLoaded() {
 		let model_uri = this._trace.get_model_uri();
-
+		
 		if(!KtbsResourceElement.resourceInstances[model_uri])
 			KtbsResourceElement.resourceInstances[model_uri] = new Model(model_uri);
 
 		this._model = KtbsResourceElement.resourceInstances[model_uri];
 
-		this._model._read_data()
+		this._model._read_data(this._abortController.signal)
 			.then(function() {
 				this._resolveModelLoaded();
 			}.bind(this))
 			.catch(function(error) {
-				this._rejectModelLoaded(error);
+				if((error.name != "AbortError") || !this._abortController.signal.aborted)
+					this._rejectModelLoaded(error);
 			}.bind(this));
 	}
 
@@ -376,7 +388,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		defaultStyleSheet.name = this._translateString("Default");
 		defaultStyleSheet.description = this._translateString("Automatically generated stylesheet (one symbol and color for each obsel type)");
 		defaultStyleSheet.rules = new Array();
-		let model_uri = this._model.get_id();
+		let model_uri = this._model._uri;
 		let obselTypes = this._model.list_obsel_types();
 
 		for(let i = 0; i < obselTypes.length; i++) {
@@ -557,7 +569,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_obselMatchesSubruleType(subrule, obsel) {
 		let rawObselType = obsel["@type"];
-
+		
 		return(
 				(subrule.type == "*")
 			||	(rawObselType == subrule.type) 
@@ -862,25 +874,28 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onObselListPageRead(obsels, nextPageURI) {
-		this._componentReady.then(() => {
-			setTimeout(() => {
-				this._addObsels(obsels);
+		if(!this._abortController.signal.aborted) {
+			this._componentReady.then(() => {
+				setTimeout(() => {
+					this._addObsels(obsels);
+				});
 			});
-		});
-		
-		if(nextPageURI == null) {
-			this._resolveAllObselsLoaded();
-		}
-		else {
-			setTimeout(() => {
-				this._obselList._read_obsel_page(nextPageURI)
-					.then((response) => {
-						this._onObselListPageRead(response.obsels, response.nextPageURI);
-					})
-					.catch((error) => {
-						this._onObselListPageReadFailed(error);
-					});
-			});
+			
+			if(nextPageURI == null) {
+				this._resolveAllObselsLoaded();
+			}
+			else {
+				setTimeout(() => {
+					this._obselList._read_obsel_page(nextPageURI, this._abortController.signal)
+						.then((response) => {
+							this._onObselListPageRead(response.obsels, response.nextPageURI);
+						})
+						.catch((error) => {
+							if((error.name != "AbortError") || !this._abortController.signal.aborted)
+								this._onObselListPageReadFailed(error);
+						});
+				});
+			}
 		}
 	}
 

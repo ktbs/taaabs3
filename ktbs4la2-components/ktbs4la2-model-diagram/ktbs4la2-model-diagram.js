@@ -10,7 +10,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 * 
 	 */
 	constructor() {
-		super(import.meta.url, true);
+		super(import.meta.url, true, false);
 	}
 
 	/**

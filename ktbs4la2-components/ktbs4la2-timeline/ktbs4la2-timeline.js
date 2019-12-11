@@ -158,14 +158,12 @@ class KTBS4LA2CallbackQueue {
 	 * 
 	 */
 	_processNextCallback() {
-		setTimeout(() => {
-			if(this.isRunning) {
-				if(this._queuedCallbacks.length > 0)
-					this._queuedCallbacks.shift()();
-				else
-					this.stop();
-			}
-		});
+		if(this.isRunning) {
+			if(this._queuedCallbacks.length > 0)
+				this._queuedCallbacks.shift()();
+			else
+				this.stop();
+		}
 	}
 }
 
@@ -386,6 +384,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		this._updateTimeLineCursorID = null;
 
+		this._displayWindowResizeObserver = null;
+
 		this._resolveBeginSet;
 		this._rejectBeginSet;
 
@@ -506,8 +506,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._toggleFullscreenButton.addEventListener("click", this._onClickToggleFullscreenButton.bind(this));
 
 		try {
-			let displayWindowResizeObserver = new ResizeObserver(this._onResizeWidgetContainer.bind(this));
-			displayWindowResizeObserver.observe(this._widgetContainer);
+			this._displayWindowResizeObserver = new ResizeObserver(this._onResizeWidgetContainer.bind(this));
+			this._displayWindowResizeObserver.observe(this._widgetContainer);
 		}
 		catch(error) {
 			this.emitErrorEvent(error);
@@ -520,10 +520,17 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._minuteLabel = this.shadowRoot.querySelector("#minute-label");
 		this._secondLabel = this.shadowRoot.querySelector("#second-label");
 		this._millisecondLabel = this.shadowRoot.querySelector("#millisecond-label");
-		/*
-		this._ = this.shadowRoot.querySelector("#");
-		this._ = this.shadowRoot.querySelector("#");
-		this._ = this.shadowRoot.querySelector("#");*/
+	}
+
+	/**
+	 * 
+	 */
+	disconnectedCallback() {
+		if(this._updateEventsRowQueue.isRunning)
+			this._updateEventsRowQueue.stop();
+
+		if(this._displayWindowResizeObserver != null)
+			this._displayWindowResizeObserver.disconnect();
 	}
 
 	/**
@@ -571,8 +578,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					clearTimeout(this._onDisplayWindowChangeHeightID);
 
 				this._onDisplayWindowChangeHeightID = setTimeout(() => {
-					if(this._updateMaxDisplayableRows())
+					if(this._updateMaxDisplayableRows()) {
 						this._requestUpdateEventsRow();
+					}
 
 					this._onDisplayWindowChangeHeightID = null;
 				});
@@ -663,7 +671,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_onSelectTimelineEvent(event) {
 		let timelineEventID = event.target.getAttribute("id");
-		let previouslySelectedEvents = this.querySelectorAll("ktbs4la2-timeline-event.selected:not([id = \"" + timelineEventID + "\"])");
+		let previouslySelectedEvents = this.querySelectorAll("ktbs4la2-timeline-event.selected:not([id = \"" + CSS.escape(timelineEventID) + "\"])");
 
 		for(let i = 0; i < previouslySelectedEvents.length; i++)
 			previouslySelectedEvents[i].classList.remove("selected");
@@ -673,10 +681,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_getAllEventNodes() {
-		if(this._allEventNodes == null) {
-			this._allEventNodes = Array.from(this.querySelectorAll("ktbs4la2-timeline-event"));
-			this._allEventNodes.sort(KTBS4LA2TimelineEvent.compareEventsOrder);
-		}
+		if(this._allEventNodes == null)
+			this._allEventNodes = Array.from(this.querySelectorAll("ktbs4la2-timeline-event")).sort(KTBS4LA2TimelineEvent.compareEventsOrder);
 
 		return this._allEventNodes;
 	}
@@ -685,10 +691,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_getVisibleEventNodes() {
-		if(this._visibleEventsNodes == null) {
-			this._visibleEventsNodes = Array.from(this.querySelectorAll("ktbs4la2-timeline-event:not([visible = \"false\"]):not([visible = \"0\"])"));
-			this._visibleEventsNodes.sort(KTBS4LA2TimelineEvent.compareEventsOrder);
-		}
+		if(this._visibleEventsNodes == null)
+			this._visibleEventsNodes = Array.from(this.querySelectorAll("ktbs4la2-timeline-event:not([visible = \"false\"]):not([visible = \"0\"])")).sort(KTBS4LA2TimelineEvent.compareEventsOrder);
 
 		return this._visibleEventsNodes;
 	}
@@ -803,13 +807,15 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let eventPosXIsOverflow = ((currentEvent.endTime < this._firstRepresentedTime) || (currentEvent.beginTime > this._lastRepresentedTime));
 
 			if(!eventPosXIsOverflow) {
-				let timeOffset = currentEvent.beginTime - this._firstRepresentedTime;
+				let eventPaintBeginTime = (currentEvent.beginTime >= this._firstRepresentedTime)?currentEvent.beginTime:this._firstRepresentedTime;
+				let timeOffset = eventPaintBeginTime - this._firstRepresentedTime;
 				let posX = (timeOffset / timelineDuration) * 100;
 				currentEvent.style.left = posX + "%";
 
 				if(currentEvent.hasAttribute("end") && (!(currentEvent.hasAttribute("shape") || currentEvent.hasAttribute("symbol")) || (currentEvent.getAttribute("shape") == "duration-bar"))) {
-					let eventDuration = currentEvent.endTime - currentEvent.beginTime;
-					let eventPercentageWidth = (eventDuration / timelineDuration) * 100;
+					let eventPaintEndTime = (currentEvent.endTime <= this._lastRepresentedTime)?currentEvent.endTime:this._lastRepresentedTime;
+					let eventPaintDuration = eventPaintEndTime - eventPaintBeginTime;
+					let eventPercentageWidth = (eventPaintDuration / timelineDuration) * 100;
 					currentEvent.style.width = eventPercentageWidth + "%";
 				}
 
@@ -838,7 +844,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		if(events.length > 0) {
 			this._updateEventsRowQueue.add(() => {
-				this._updateEventsRow(0, events.length - 1, 10, true);
+				this._updateEventsRow(0, 10);
 			});
 
 			this._updateEventsRowQueue.start();
@@ -848,7 +854,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_updateEventsRow(fromRank, toRank, maxBatchTime = null, initNewOrdering = true, previousEventsPerRow = null, previousEventsTimePerRow = null, minDisplayableTime = null, eventsNewRows = new Array(), eventsNewHiddenSiblinbgsCounts = new Array(), hiddenEventsCountSinceLastVisible = 0) {
+	_updateEventsRow(fromRank, maxBatchTime = null, previousEventsPerRow = new Array(), previousEventsTimePerRow = new Array(), minDisplayableTime = this._firstRepresentedTime, eventsNewRows = new Array(), eventsNewHiddenSiblinbgsCounts = new Array(), hiddenEventsCountSinceLastVisible = 0, lastVisibleMaxRowEvent = null) {
 		let batchBeginTime = performance.now();
 		let timeLineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
 		let timeOverWidthRatio = timeLineDuration / this._timeDiv.clientWidth;
@@ -859,70 +865,34 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let pixelsEndThreshold = 1;
 			let timeEndThreshold = timeOverWidthRatio * pixelsEndThreshold;
 			let events = this._getVisibleEventNodes();
-			
-			// initialize usefull data about already assigned rows if needed
-			if((initNewOrdering == false) && (fromRank > 0)) {
-				if((previousEventsPerRow == null) || (previousEventsTimePerRow == null)) {
-					previousEventsPerRow = new Array();
-					previousEventsTimePerRow = new Array();
-
-					for(let row = 0; row < this._maxDisplayableRows; row++) {
-						let selector = "ktbs4la2-timeline-event[row = \"" + row + "\"]:not(.row-is-overflow):not([visible = \"false\"]):not([visible = \"0\"]):nth-child(-n + " + (fromRank - 1) + ")";
-						let selectedEvents = this.querySelectorAll(selector);
-						
-						if(selectedEvents.length > 0) {
-							let lastEvent = selectedEvents[selectedEvents.length - 1];
-							previousEventsPerRow[row] = lastEvent;
-							previousEventsTimePerRow[row] = lastEvent.beginTime;
-						}
-						else
-							break;
-					}
-
-					if(previousEventsTimePerRow.length >= this._maxDisplayableRows)
-						minDisplayableTime = Math.min(...previousEventsTimePerRow) + timeBeginThreshold;
-					else
-						minDisplayableTime = this._firstRepresentedTime;
-				}
-
-				if(minDisplayableTime == null) {
-					if(previousEventsTimePerRow.length >= this._maxDisplayableRows)
-						minDisplayableTime = Math.min(...previousEventsTimePerRow) + timeBeginThreshold;
-					else
-						minDisplayableTime = this._firstRepresentedTime;
-				}
-			}
-			else {
-				previousEventsPerRow = new Array();
-				previousEventsTimePerRow = new Array();
-				minDisplayableTime = this._firstRepresentedTime;
-			}
-			// --- done
-
-			let i, lastVisibleMaxRowEvent;
+			let i;
 
 			// we browse visible events
-			for(i = fromRank; i <= toRank; i++) {
+			for(i = fromRank; i < events.length; i++) {
 				let currentEvent = events[i];
 				let availableRow = null;
 
 				if(currentEvent.beginTime >= minDisplayableTime) {
 					// we browse the "previousEventsPerRow" Array
-					for(let j = 0; (availableRow == null) && (j < this._maxDisplayableRows) && (j < previousEventsPerRow.length); j++) {
-						let previousEvent = previousEventsPerRow[j];
+					for(let j = 0; (j < this._maxDisplayableRows) && (j < previousEventsPerRow.length); j++) {
+						let rowPreviousEvent = previousEventsPerRow[j];
 
-						if(previousEvent.hasAttribute("symbol") || (previousEvent.hasAttribute("shape") && (previousEvent.getAttribute("shape") != "duration-bar"))) {
-							let timeDelta = currentEvent.beginTime - previousEvent.beginTime;
+						if((rowPreviousEvent.hasAttribute("shape") && (rowPreviousEvent.getAttribute("shape") != "duration-bar")) || rowPreviousEvent.hasAttribute("symbol")) {
+							let timeDelta = currentEvent.beginTime - rowPreviousEvent.beginTime;
 
-							if(timeDelta >= timeBeginThreshold)
+							if(timeDelta >= timeBeginThreshold) {
 								availableRow = j;
+								break;
+							}
 						}
 						else {
-							let timeBeginDelta = currentEvent.beginTime - previousEvent.beginTime;
-							let timeEndDelta = currentEvent.beginTime - previousEvent.endTime;
+							let timeBeginDelta = currentEvent.beginTime - rowPreviousEvent.beginTime;
+							let timeEndDelta = currentEvent.beginTime - rowPreviousEvent.endTime;
 
-							if((timeBeginDelta >= timeBeginThreshold) && (timeEndDelta >= timeEndThreshold))
+							if((timeBeginDelta >= timeBeginThreshold) && (timeEndDelta >= timeEndThreshold)) {
 								availableRow = j;
+								break;
+							}
 						}
 					}
 				}
@@ -934,8 +904,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					if(availableRow == (this._maxDisplayableRows - 1))
 						lastVisibleMaxRowEvent = currentEvent;
 
-					if(currentEvent.getAttribute("row") != availableRow)
-						eventsNewRows[currentEvent.id] = availableRow;
+					if(parseInt(currentEvent.getAttribute("row"), 10) != availableRow)
+						eventsNewRows.push({event: currentEvent, row: availableRow});
 					
 					previousEventsPerRow[availableRow] = currentEvent;
 					previousEventsTimePerRow[availableRow] = currentEvent.beginTime;
@@ -950,7 +920,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				}
 				else {
 					if(currentEvent.getAttribute("row") != null)
-						eventsNewRows[currentEvent.id] = null;
+						eventsNewRows.push({event: currentEvent, row: null});
 
 					if(!lastVisibleMaxRowEvent && (previousEventsPerRow.length > 0))
 						lastVisibleMaxRowEvent = previousEventsPerRow[this._maxDisplayableRows - 1];
@@ -963,12 +933,12 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					}
 				}
 				
-				if((maxBatchTime != null) && (i < toRank)) {
+				if((maxBatchTime != null) && (i < (events.length - 1))) {
 					let currentTime = performance.now();
 
 					if((currentTime - batchBeginTime) > maxBatchTime) {
 						this._updateEventsRowQueue.add(() => {
-							this._updateEventsRow(i + 1, toRank, maxBatchTime, false, previousEventsPerRow, previousEventsTimePerRow, minDisplayableTime, eventsNewRows, eventsNewHiddenSiblinbgsCounts, hiddenEventsCountSinceLastVisible);
+							this._updateEventsRow(i + 1, maxBatchTime, previousEventsPerRow, previousEventsTimePerRow, minDisplayableTime, eventsNewRows, eventsNewHiddenSiblinbgsCounts, hiddenEventsCountSinceLastVisible, lastVisibleMaxRowEvent);
 						});
 
 						break;
@@ -977,14 +947,14 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			}
 
 			// if the batch has been processed to the end
-			if(i >= toRank) {
+			if(i >= (events.length - 1)) {
 				// all events rows have been recalculated, now we apply them in bulk
-				for(let eventId in eventsNewRows) {
-					let eventRow = eventsNewRows[eventId];
-					let event = this.querySelector("#" + eventId);
+				for(let j in eventsNewRows) {
+					let event = eventsNewRows[j].event;
+					let row = eventsNewRows[j].row;
 
-					if(eventRow != null) {
-						event.setAttribute("row", eventRow);
+					if(row != null) {
+						event.setAttribute("row", row);
 
 						if(event.classList.contains("row-is-overflow"))
 							event.classList.remove("row-is-overflow");
@@ -1001,7 +971,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				}
 
 				for(let eventId in eventsNewHiddenSiblinbgsCounts) {
-					let event = this.querySelector("#" + eventId);
+					let event = this.querySelector("#" + CSS.escape(eventId));
 					let hiddenSiblingsCount = eventsNewHiddenSiblinbgsCounts[eventId];
 
 					if(hiddenSiblingsCount != null)
@@ -2284,7 +2254,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let timeDivs = this._timeDiv.querySelectorAll(".time-division-" + newLevel);
 		let newDivWidth = this._displayWindow.clientWidth / timeDivs.length;
 
-		while(newDivWidth < KTBS4LA2Timeline.minDivisionWidthPerUnit[newLevel]) {
+		while((newLevel != "year") && (newDivWidth < KTBS4LA2Timeline.minDivisionWidthPerUnit[newLevel])) {
 			switch(newLevel) {
 				case "millisecond":
 					newLevel = "tenmilliseconds";

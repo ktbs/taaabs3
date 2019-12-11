@@ -16,10 +16,7 @@ export class Trace extends Resource {
 	 * @return Model
 	 */
 	get_model_uri() {
-		if((this._parsedJson.hasModel) && (this._parsedJson.hasModel.substr(0, 4) == "http"))
-			return this._parsedJson.hasModel;
-		else
-			return this._uri + this._parsedJson.hasModel;
+		return new URL(this._parsedJson.hasModel, this._uri);
 	}
 
 	/**

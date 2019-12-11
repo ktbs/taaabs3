@@ -6,7 +6,7 @@ class KTBS4LA2MainSubsection extends TemplatedHTMLElement {
 	 * 
 	 */
 	constructor() {
-		super(import.meta.url);
+		super(import.meta.url, true, true);
 	}
 
 	/**

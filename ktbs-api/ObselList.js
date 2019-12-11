@@ -150,7 +150,7 @@ export class ObselList extends Resource {
 	/**
 	 * 
 	 */
-	_read_obsel_page(pageURI) {
+	_read_obsel_page(pageURI, abortSignal = null) {
 		let page_read = new Promise((resolve, reject) => {
 				let fetchParameters = { 
 					method: "GET",
@@ -161,6 +161,9 @@ export class ObselList extends Resource {
 					credentials: "include",
 					cache: "default"
 				};
+
+				if(abortSignal)
+					fetchParameters.signal = abortSignal;
 
 				fetch(pageURI, fetchParameters)
 					.then(function(response) {
@@ -204,9 +207,9 @@ export class ObselList extends Resource {
 	/**
 	 * 
 	 */
-	_read_first_obsel_page(limit = 500) {
+	_read_first_obsel_page(limit = 500, abortSignal = null) {
 		let firstPageURI = this._get_first_page_uri(limit);
-		return this._read_obsel_page(firstPageURI);
+		return this._read_obsel_page(firstPageURI, abortSignal);
 	}
 
 	/**
