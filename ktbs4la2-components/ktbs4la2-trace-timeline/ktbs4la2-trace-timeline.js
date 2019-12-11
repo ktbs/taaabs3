@@ -74,7 +74,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._context = null;
 		this._styleSheets = new Array();
 		this._currentStylesheet = null;
-		this._abortController = new AbortController();
 	}
 
 	/**
@@ -89,13 +88,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._defaultStylesheetSelectorEntry = this.shadowRoot.querySelector("#default");
 		this._styleSheetSelector.addEventListener("change", this._onChangeStyleSheetSelector.bind(this));
 		this._legend = this.shadowRoot.querySelector("#legend");
-	}
-
-	/**
-	 * 
-	 */
-	disconnectedCallback() {
-		this._abortController.abort();
 	}
 
 	/**

@@ -526,6 +526,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	disconnectedCallback() {
+		super.disconnectedCallback();
+		
 		if(this._updateEventsRowQueue.isRunning)
 			this._updateEventsRowQueue.stop();
 

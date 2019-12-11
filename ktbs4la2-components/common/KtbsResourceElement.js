@@ -20,8 +20,6 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 
 		this._ktbsResource = null;
 
-		this._abortController = new AbortController();
-
 		// pre-create a promise that will be resolved when the ktbs resource has been succesfully loaded
 		this._resolveKtbsResourceLoaded;
 		this._rejectKtbsResourceLoaded;
@@ -135,13 +133,6 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 
 		if(!this.getAttribute("uri"))
 			this._rejectUriSet(new Error("Missing required attribute \"uri\"."));
-	}
-
-	/**
-	 * 
-	 */
-	disconnectedCallback() {
-		this._abortController.abort();
 	}
 
 	/**

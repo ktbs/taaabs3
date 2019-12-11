@@ -16,7 +16,8 @@ class TemplatedHTMLElement extends HTMLElement {
 		this._bindedAncestorLangChangefunction = this._onAncestorLangChange.bind(this);
 		this._langInheritedFromAncestor = null;
 		this._lang = 'en';
-		this._templateFetched = TemplatedHTMLElement.getComponentTemplate(this._componentJSPath, fetchStylesheet);
+		this._abortController = new AbortController();
+		this._templateFetched = TemplatedHTMLElement.getComponentTemplate(this._componentJSPath, fetchStylesheet, this._abortController.signal);
 
 		// pre-create a promise that will be resolved when the template has been succesfully fetched
 		this._resolveComponentReady;
@@ -111,6 +112,13 @@ class TemplatedHTMLElement extends HTMLElement {
 	/**
 	 * 
 	 */
+	disconnectedCallback() {
+		this._abortController.abort();
+	}
+
+	/**
+	 * 
+	 */
 	_onAncestorLangChange(event) {
 		this._initTranslationPromise();
 		
@@ -160,7 +168,7 @@ class TemplatedHTMLElement extends HTMLElement {
 			this._resolveTranslationFetched(null);
 		}
 		else {
-			TemplatedHTMLElement._getComponentTranslation(this._componentJSPath, this._lang)
+			TemplatedHTMLElement._getComponentTranslation(this._componentJSPath, this._lang, this._abortController.signal)
 				.then(function(translationArray) {
 					this._resolveTranslationFetched(translationArray);
 				}.bind(this))
@@ -173,11 +181,11 @@ class TemplatedHTMLElement extends HTMLElement {
 	/**
 	 * 
 	 */
-	static _getComponentTranslation(componentJSPath, lang) {
+	static _getComponentTranslation(componentJSPath, lang, abortSignal) {
 		if(this.translationPromises[componentJSPath] && this.translationPromises[componentJSPath][lang])
 			return this.translationPromises[componentJSPath][lang];
 		else {
-			let translationPromise = this._fetchComponentTranslation(componentJSPath, lang);
+			let translationPromise = this._fetchComponentTranslation(componentJSPath, lang, abortSignal);
 
 			if(!this.translationPromises[componentJSPath])
 				this.translationPromises[componentJSPath] = new Array();
@@ -190,7 +198,7 @@ class TemplatedHTMLElement extends HTMLElement {
 	/**
 	 * 
 	 */
-	static _fetchComponentTranslation(componentJSPath, lang) {
+	static _fetchComponentTranslation(componentJSPath, lang, abortSignal) {
 		return new Promise(function(resolve, reject) {
 
 			// we try to find the last slash ("/") character in the component JS file path to extract it's parent folder path
@@ -206,7 +214,7 @@ class TemplatedHTMLElement extends HTMLElement {
 				let translationPath = componentFolderPath + "/i18n/" + lang + ".json";
 
 				// we try to fetch the translation from http://myserver.com/my/path/to/my-component/i18n/{lang}.po
-				fetch(translationPath)
+				fetch(translationPath, {signal: abortSignal})
 					.then(fetchTranslationResponse => {
 						// if the HTTP request to fetch the translation responded successfully
 						if(fetchTranslationResponse.ok) {
@@ -283,11 +291,11 @@ class TemplatedHTMLElement extends HTMLElement {
 	/**
 	 * 
 	 */
-	static getComponentTemplate(componentJSPath, fetchStylesheet = true) {
+	static getComponentTemplate(componentJSPath, fetchStylesheet = true, abortSignal) {
 		if(this.templatePromises[componentJSPath])
 			return this.templatePromises[componentJSPath];
 		else {
-			let templatePromise = this.fetchComponentTemplate(componentJSPath, fetchStylesheet);
+			let templatePromise = this.fetchComponentTemplate(componentJSPath, fetchStylesheet, abortSignal);
 			this.templatePromises[componentJSPath] = templatePromise;
 			return templatePromise;
 		}
@@ -299,7 +307,7 @@ class TemplatedHTMLElement extends HTMLElement {
 	 * @param fetchStylesheet whether or not we sould also fetch a CSS stylesheet and add it to the template content (default : true)
 	 * @return Promise
 	 */
-	static fetchComponentTemplate(componentJSPath, fetchStylesheet = true) {
+	static fetchComponentTemplate(componentJSPath, fetchStylesheet = true, abortSignal) {
 		return new Promise(function(resolve, reject) {
 			// we check if the given URL of the JS file ends with ".js". If it doesn't, we won't know how to build the template and stylesheet URLs
 			if(componentJSPath.substring(componentJSPath.length - 3) == ".js") {
@@ -308,79 +316,79 @@ class TemplatedHTMLElement extends HTMLElement {
 				let componentBasePath = componentJSPath.substring(0, componentJSPath.length - 3);
 
 				// we try to fetch the HTML template from http://myserver.com/my/path/to/my-component.html
-				fetch(componentBasePath + ".html").then(fetchTemplateResponse => {
+				fetch(componentBasePath + ".html", {signal: abortSignal})
+					.then(fetchTemplateResponse => {
+						// if the HTTP request to fetch the HTML template responded successfully
+						if(fetchTemplateResponse.ok) {
 
-					// if the HTTP request to fetch the HTML template responded successfully
-					if(fetchTemplateResponse.ok) {
+							// when the response content from the HTTP request has been successfully read
+							fetchTemplateResponse.text().then(fetchTemplateResponseText => {
 
-						// when the response content from the HTTP request has been successfully read
-						fetchTemplateResponse.text().then(fetchTemplateResponseText => {
+								// we analyse the URL of the component to find it's parent folder's absolute URL
+								let componentBasePathURLObject = new URL(componentBasePath);
+								let pathParts = componentBasePathURLObject.pathname.split("/");
+								let folderParts = pathParts.splice(0, pathParts.length - 1);
+								let componentFolder = componentBasePathURLObject.origin + folderParts.join("/");
 
-							// we analyse the URL of the component to find it's parent folder's absolute URL
-							let componentBasePathURLObject = new URL(componentBasePath);
-							let pathParts = componentBasePathURLObject.pathname.split("/");
-							let folderParts = pathParts.splice(0, pathParts.length - 1);
-							let componentFolder = componentBasePathURLObject.origin + folderParts.join("/");
+								// in the HTML template content, we replace occurences of "{my-component-folder}" with the component's parent folder's absolute URL
+								let tokenRegex = new RegExp('\\{my-component-folder\\}','g');
+								let processedTemplateContent = fetchTemplateResponseText.trim().replace(tokenRegex, componentFolder);
 
-							// in the HTML template content, we replace occurences of "{my-component-folder}" with the component's parent folder's absolute URL
-							let tokenRegex = new RegExp('\\{my-component-folder\\}','g');
-							let processedTemplateContent = fetchTemplateResponseText.trim().replace(tokenRegex, componentFolder);
+								// if we also want to fetch a CSS stylesheet
+								if(fetchStylesheet == true) {
+				
+									// we try to fetch the content of the component stylesheet
+									fetch(componentBasePath + ".css", {signal: abortSignal})
+										.then(fetchStyleResponse => {
+											// if the HTTP request to fetch the CSS stylesheet responded successfully
+											if(fetchStyleResponse.ok) {
 
-							// if we also want to fetch a CSS stylesheet
-							if(fetchStylesheet == true) {
-			
-								// we try to fetch the content of the component stylesheet
-								fetch(componentBasePath + ".css").then(fetchStyleResponse => {
+												// when the response content from the HTTP request has been successfully read
+												fetchStyleResponse.text().then(fetchStyleResponseText => {
+											
+													// in the CSS stylesheet content, we replace occurences of "{my-component-folder}" with the component's parent folder's absolute URL
+													let processedStylesheetContent = fetchStyleResponseText.trim().replace(tokenRegex, componentFolder);
 
-									// if the HTTP request to fetch the CSS stylesheet responded successfully
-									if(fetchStyleResponse.ok) {
-
-										// when the response content from the HTTP request has been successfully read
-										fetchStyleResponse.text().then(fetchStyleResponseText => {
-									
-											// in the CSS stylesheet content, we replace occurences of "{my-component-folder}" with the component's parent folder's absolute URL
-											let processedStylesheetContent = fetchStyleResponseText.trim().replace(tokenRegex, componentFolder);
-
-											// finally, we resolve the returned promise, providing the extracted template and stylesheet
-											let rawTemplate = "<style>" + processedStylesheetContent + "</style>" + processedTemplateContent;
-											resolve(rawTemplate);
-										})
-										// if the fetched content of the CSS stylesheet could not be read
-										.catch(function (error) {
+													// finally, we resolve the returned promise, providing the extracted template and stylesheet
+													let rawTemplate = "<style>" + processedStylesheetContent + "</style>" + processedTemplateContent;
+													resolve(rawTemplate);
+												})
+												// if the fetched content of the CSS stylesheet could not be read
+												.catch(function (error) {
+													// we reject the returned promise
+													reject(error);
+												});
+											}
+											else
+												reject(new Error("Could not fetch CSS stylesheet for component " + componentBasePath));
+										}).
+										// if the fetching of the CSS stylesheet failed
+										catch(function(error) {
 											// we reject the returned promise
 											reject(error);
 										});
-									}
-									else
-										reject(new Error("Could not fetch CSS stylesheet for component " + componentBasePath));
-								}).
-								// if the fetching of the CSS stylesheet failed
-								catch(function(error) {
-									// we reject the returned promise
-									reject(error);
-								});
-							}
-							// we don't want to fetch a CSS stylesheet
-							else {
-								// finally, we resolve the returned promise, providing the extracted template
-								resolve(processedTemplateContent);
-							}
-						})
-						// if the fetched content of the HTML template could not be read
-						.catch(function (error) {
-							// we reject the returned promise
-							reject(error);
-						});
-					}
-					else
-						// response for HTTP request to fetch the HTML template is not OK
-						reject(new Error("Could not fetch HTML template for component " + componentBasePath));
-				})
-				// if the fetching of the HTML template failed
-				.catch(function (error) {
-					// we log and display the error
-					reject(error);
-				});
+								}
+								// we don't want to fetch a CSS stylesheet
+								else {
+									// finally, we resolve the returned promise, providing the extracted template
+									resolve(processedTemplateContent);
+								}
+							})
+							// if the fetched content of the HTML template could not be read
+							.catch(function (error) {
+								// we reject the returned promise
+								reject(error);
+							});
+						}
+						else
+							// response for HTTP request to fetch the HTML template is not OK
+							reject(new Error("Could not fetch HTML template for component " + componentBasePath));
+					})
+					// if the fetching of the HTML template failed
+					.catch(function (error) {
+						// we log and display the error
+						reject(error);
+					});
 			}
 			else
 				// componentJSPath doesn't end with ".js"
