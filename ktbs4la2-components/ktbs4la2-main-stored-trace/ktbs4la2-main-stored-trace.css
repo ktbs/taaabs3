@@ -12,7 +12,7 @@
 	padding-bottom: var(--main-padding, 20px);
 	border-bottom: 1px solid #aaa;
 	display: block;
-	z-index: 2;
+	z-index: 6;
 	box-shadow: 0 10px 8px -8px gray;
 	margin-bottom: 10px;
 }
