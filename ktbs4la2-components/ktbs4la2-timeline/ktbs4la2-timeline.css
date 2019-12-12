@@ -5,6 +5,10 @@
 	position: relative;
 }
 
+#widget-container[hidden] {
+	visibility: hidden;
+}
+
 #legend {
 	margin-right: 2px;
 	text-align: right;

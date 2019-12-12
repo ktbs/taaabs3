@@ -2,5 +2,6 @@
     "Stylesheet": "Feuille de styles",
     "Default stylesheet generated automatically": "Feuille de styles par défaut génerée automatiquement",
     "Default": "Par défaut",
-    "Unknown obsel type": "Type d'obsel inconnu"
+    "Unknown obsel type": "Type d'obsel inconnu",
+    "Waiting for server response...": "En attente de la réponse du serveur..."
 }

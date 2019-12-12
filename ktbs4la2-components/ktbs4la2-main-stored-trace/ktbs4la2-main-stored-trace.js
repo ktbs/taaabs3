@@ -56,6 +56,31 @@ class KTBS4LA2MainStoredTrace extends KtbsResourceElement {
 	/**
 	 * 
 	 */
+	attributeChangedCallback(attributeName, oldValue, newValue) {
+		super.attributeChangedCallback(attributeName, oldValue, newValue);
+
+		if(attributeName == "uri")
+			this._componentReady.then(() => {
+				let statsElement = document.createElement("ktbs4la2-trace-stats");
+				statsElement.setAttribute("uri", this.getAttribute("uri") + "@stats");
+				statsElement.setAttribute("slot", "stats");
+				this.appendChild(statsElement);
+
+				let obselsTimelineElement = document.createElement("ktbs4la2-trace-timeline");
+				obselsTimelineElement.setAttribute("uri", this.getAttribute("uri"));
+				obselsTimelineElement.setAttribute("slot", "obsels-timeline");
+				this.appendChild(obselsTimelineElement);
+
+				let obselsTableElement = document.createElement("ktbs4la2-trace-obsels");
+				obselsTableElement.setAttribute("uri", this.getAttribute("uri") + "@obsels");
+				obselsTableElement.setAttribute("slot", "obsels-table");
+				this.appendChild(obselsTableElement);
+			});
+	}
+
+	/**
+	 * 
+	 */
 	onktbsResourceLoaded() {
 		this._componentReady.then(() => {
 			
@@ -76,21 +101,6 @@ class KTBS4LA2MainStoredTrace extends KtbsResourceElement {
 			modelElement.setAttribute("uri", this._ktbsResource.get_model_uri());
 			modelElement.setAttribute("slot", "model");
 			this.appendChild(modelElement);
-
-			let statsElement = document.createElement("ktbs4la2-trace-stats");
-			statsElement.setAttribute("uri", this.getAttribute("uri") + "@stats");
-			statsElement.setAttribute("slot", "stats");
-			this.appendChild(statsElement);
-
-			let obselsTimelineElement = document.createElement("ktbs4la2-trace-timeline");
-			obselsTimelineElement.setAttribute("uri", this.getAttribute("uri"));
-			obselsTimelineElement.setAttribute("slot", "obsels-timeline");
-			this.appendChild(obselsTimelineElement);
-
-			let obselsTableElement = document.createElement("ktbs4la2-trace-obsels");
-			obselsTableElement.setAttribute("uri", this.getAttribute("uri") + "@obsels");
-			obselsTableElement.setAttribute("slot", "obsels-table");
-			this.appendChild(obselsTableElement);
 		});
 	}
 

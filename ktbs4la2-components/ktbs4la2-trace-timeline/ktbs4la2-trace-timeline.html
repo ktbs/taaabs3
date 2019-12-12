@@ -1,4 +1,4 @@
-<div id="container">
+<div id="container" class="waiting">
     <div id="stylesheet-tools">
         <form id="stylesheet-selection">
             <label for="slylesheet-selector">
@@ -13,5 +13,13 @@
         <div id="legend"></div>
     </div>
 
-    <ktbs4la2-timeline id="timeline"></ktbs4la2-timeline>
+    <div id="timeline-container">
+        <slot name="timeline"></slot>
+    </div>
+
+    <div id="wait-message-container">
+        <div id="wait-message">{translate: 'Waiting for server response...'}</div>
+    </div>
+
+    <div id="error-message"></div>
 </div>

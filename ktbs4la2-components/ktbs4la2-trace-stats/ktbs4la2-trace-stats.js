@@ -20,6 +20,7 @@ class KTBS4LA2TraceStats extends KtbsResourceElement {
 	 * 
 	 */
 	onComponentReady() {
+		this._container = this.shadowRoot.querySelector("#container");
 		this._beginContainer = this.shadowRoot.querySelector("#begin-container");
 		this._beginLabel = this.shadowRoot.querySelector("#begin-label");
 		this._beginTag = this.shadowRoot.querySelector("#begin");
@@ -32,8 +33,8 @@ class KTBS4LA2TraceStats extends KtbsResourceElement {
 		this._countTag = this.shadowRoot.querySelector("#count");
 		this._countLabel = this.shadowRoot.querySelector("#count-label");
 		this._pieChart = this.shadowRoot.querySelector("#obsels-types-pie-chart");
-		this._errorNameDiv = this.shadowRoot.querySelector("#error-name");
-		this._errorMessageDiv = this.shadowRoot.querySelector("#error-message");
+		this._waitMessage = this.shadowRoot.querySelector("#wait-message");
+		this._errorMessage = this.shadowRoot.querySelector("#error-message");
 	}
 
 	/**
@@ -125,6 +126,9 @@ class KTBS4LA2TraceStats extends KtbsResourceElement {
 			}
 			else
 				this._pieChart.style.display = "none";
+
+			if(this._container.classList.contains("waiting"))
+				this._container.classList.remove("waiting");
 		});
 	}
 
@@ -135,9 +139,8 @@ class KTBS4LA2TraceStats extends KtbsResourceElement {
 		super.onktbsResourceLoadFailed(error);
 
 		this._componentReady.then(() => {
-			this.setAttribute("status", "error");
-			this._errorNameDiv.innerText = error.name;
-			this._errorMessageDiv.innerText = error.message;
+			this._container.className = "error";
+			this._errorMessage.innerText = "Error : " + error;
 		});
 	}
 
@@ -152,6 +155,7 @@ class KTBS4LA2TraceStats extends KtbsResourceElement {
 	 * 
 	 */
 	_updateStringsTranslation() {
+		this._waitMessage.innerText = this._translateString("Waiting for server response...");
 		this._beginLabel.innerText = this._translateString("Begin") + " :";
 		this._endLabel.innerText = this._translateString("End") + " :";
 		this._durationLabel.innerText = this._translateString("Duration") + " :";

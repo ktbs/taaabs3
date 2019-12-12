@@ -387,19 +387,15 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._displayWindowResizeObserver = null;
 
 		this._resolveBeginSet;
-		this._rejectBeginSet;
 
 		this._beginSet = new Promise(function(resolve, reject) {
 			this._resolveBeginSet = resolve;
-			this._rejectBeginSet = reject;
 		}.bind(this));
 
 		this._resolveEndSet;
-		this._rejectEndSet;
 
 		this._endSet = new Promise(function(resolve, reject) {
 			this._resolveEndSet = resolve;
-			this._rejectEndSet = reject;
 		}.bind(this));
 
 		this._timeDivisionsAreInitialized = false;
@@ -421,26 +417,30 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			this._resolveZoomInitialized = resolve;
 		});
 
-		Promise.all([this._beginSet, this._endSet])
+		Promise.all([this._beginSet, this._endSet, this._componentReady])
 			.then(function() {
-				this._componentReady.then(() => {
-					this._initTimeDivisions();
-					this._initZoom();
+				if(this._widgetContainer.hasAttribute("hidden"))
+					this._widgetContainer.removeAttribute("hidden");
 
-					this._timelineCursor.style.display = "block";
-					this._timelineCursorLabel.innerText = getFormattedDate(this._getMouseTime(0));
-
-					this._updateMaxDisplayableRows();
-				});
-			}.bind(this))
-			.catch(function() {
-				this.emitErrorEvent(new Error("Missing required attribute \"begin\" and/or \"end\""));
+				if(this._displayWindow.clientWidth > 0)
+					this._initDisplay();
 			}.bind(this));
 
 		this._eventsNodesObserver = new MutationObserver(this._onEventsNodesMutation.bind(this));
 		this._eventsNodesObserver.observe(this, { childList: true, subtree: true, attributes: true, attributeFilter: ["visible"]});
 
 		this.addEventListener("select-timeline-event", this._onSelectTimelineEvent.bind(this));
+	}
+
+	/**
+	 * 
+	 */
+	_initDisplay() {
+		this._initTimeDivisions();
+		this._initZoom();
+		this._timelineCursor.style.display = "block";
+		this._timelineCursorLabel.innerText = getFormattedDate(this._getMouseTime(0));
+		this._updateMaxDisplayableRows();
 	}
 
 	/**
@@ -578,46 +578,47 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onResizeWidgetContainer(entries, observer) {
-		if(this._timeDivisionsAreInitialized == true) {
-			// widget's height has changed
-			if((this._displayWindow.clientHeight != 0) && (this._lastKnownDisplayWindowHeight != this._displayWindow.clientHeight)) {		
-				this._lastKnownDisplayWindowHeight = this._displayWindow.clientHeight;
+		if((this._displayWindow.clientWidth != 0) && !this._timeDivisionsAreInitialized)
+			this._initDisplay();
 
-				if(this._onDisplayWindowChangeHeightID != null)
-					clearTimeout(this._onDisplayWindowChangeHeightID);
+		// widget's height has changed
+		if((this._displayWindow.clientHeight != 0) && (this._lastKnownDisplayWindowHeight != this._displayWindow.clientHeight)) {		
+			this._lastKnownDisplayWindowHeight = this._displayWindow.clientHeight;
 
-				this._onDisplayWindowChangeHeightID = setTimeout(() => {
-					if(this._updateMaxDisplayableRows()) {
+			if(this._onDisplayWindowChangeHeightID != null)
+				clearTimeout(this._onDisplayWindowChangeHeightID);
+
+			this._onDisplayWindowChangeHeightID = setTimeout(() => {
+				if(this._updateMaxDisplayableRows()) {
+					this._requestUpdateEventsRow();
+				}
+
+				this._onDisplayWindowChangeHeightID = null;
+			});
+		}
+
+		// widget's width has changed
+		if((this._displayWindow.clientWidth != 0) && (this._lastKnownDisplayWindowWidth != this._displayWindow.clientWidth)) {
+			this._lastKnownDisplayWindowWidth = this._displayWindow.clientWidth;
+
+			if(this._onDisplayWindowChangeWidthID != null)
+				clearTimeout(this._onDisplayWindowChangeWidthID);
+
+			this._onDisplayWindowChangeWidthID = setTimeout(() => {
+				this._timeDivisionsInitialized.then(() => {
+					this._initZoomParams();
+
+					if(this._isZoomedOut == true) {
+						this._setWidthRules(this._initialLevel, this._initialDivWidth);
 						this._requestUpdateEventsRow();
 					}
-
-					this._onDisplayWindowChangeHeightID = null;
+					
+					this._updateScrollBarCursor();
+					this._updateScrollBarContent();
 				});
-			}
 
-			// widget's width has changed
-			if((this._displayWindow.clientWidth != 0) && (this._lastKnownDisplayWindowWidth != this._displayWindow.clientWidth)) {
-				this._lastKnownDisplayWindowWidth = this._displayWindow.clientWidth;
-
-				if(this._onDisplayWindowChangeWidthID != null)
-					clearTimeout(this._onDisplayWindowChangeWidthID);
-
-				this._onDisplayWindowChangeWidthID = setTimeout(() => {
-					this._timeDivisionsInitialized.then(() => {
-						this._initZoomParams();
-
-						if(this._isZoomedOut == true) {
-							this._setWidthRules(this._initialLevel, this._initialDivWidth);
-							this._requestUpdateEventsRow();
-						}
-						
-						this._updateScrollBarCursor();
-						this._updateScrollBarContent();
-					});
-
-					this._onDisplayWindowChangeWidthID = null;
-				});
-			}
+				this._onDisplayWindowChangeWidthID = null;
+			});
 		}
 	}
 

@@ -20,6 +20,13 @@ export class ComputedTrace extends Trace {
 	}*/
 
 	/**
+	 * 
+	 */
+	get_method_uri() {
+		return new URL(this._parsedJson.hasMethod, this._uri);
+	}
+
+	/**
 	 * List the names of all the parameters of this trace.
 	 * @param bool include_inherited – defaults to true and means that parameters inherited from the method should be included
 	 * @return string

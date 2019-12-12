@@ -1,4 +1,4 @@
-<div id="container">
+<div id="container" class="waiting">
 	<div id="numbers">
 		<div class="stat" id="begin-container">
 			<strong id="begin-label">{translate: 'Begin'} :</strong>
@@ -26,8 +26,9 @@
 		title="{translate: 'Obsels count per obsel types'}">
 	</ktbs4la2-pie-chart>
 
-	<div id="error">
-		<div id="error-name"></div>
-		<div id="error-message"></div>
+	<div id="wait-message-container">
+		<div id="wait-message">{translate: 'Waiting for server response...'}</div>
 	</div>
+
+	<div id="error-message"></div>
 </div>
