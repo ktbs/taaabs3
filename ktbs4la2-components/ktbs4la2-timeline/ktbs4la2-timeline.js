@@ -543,7 +543,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		if(!document.fullscreenElement) {
 			if(this.dispatchEvent(new Event("request-fullscreen", {cancelable: true})))
-				this.requestFullscreen();
+				this._widgetContainer.requestFullscreen();
 		}
 		else
 			document.exitFullscreen();
@@ -982,12 +982,15 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 				for(let eventId in eventsNewHiddenSiblinbgsCounts) {
 					let event = this.querySelector("#" + CSS.escape(eventId));
-					let hiddenSiblingsCount = eventsNewHiddenSiblinbgsCounts[eventId];
 
-					if(hiddenSiblingsCount != null)
-						event.setAttribute("hidden-siblinbgs-count", hiddenSiblingsCount);
-					else
-						event.removeAttribute("hidden-siblinbgs-count");
+					if(event) {
+						let hiddenSiblingsCount = eventsNewHiddenSiblinbgsCounts[eventId];
+
+						if(hiddenSiblingsCount != null)
+							event.setAttribute("hidden-siblinbgs-count", hiddenSiblingsCount);
+						else
+							event.removeAttribute("hidden-siblinbgs-count");
+					}
 				}
 			}
 			

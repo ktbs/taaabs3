@@ -15,7 +15,6 @@
 	max-width: 70px;
 	min-width: 70px;
 	padding-top: 10px;
-	height: calc(100% - 10px);
 }
 
 .legend-label {
@@ -65,7 +64,6 @@
 	min-width: calc(100% - 90px);
 	display: flex;
 	flex-direction: column;
-	height: calc(100% - 10px);
 	padding-right: 20px;
 }
 
@@ -88,7 +86,7 @@
 
 #time {
 	height: 100%;
-	min-height: 150px;
+	min-height: 175px;
 	display: flex;
 	flex-direction: row;
 }
@@ -317,7 +315,6 @@
 #scroll-tools {
 	position: relative;
 	height: 20px;
-	margin-top: 2px;
 }
 
 #scroll-tools button {
@@ -427,12 +424,12 @@
 	opacity: 1;
 }
 
-:host(:fullscreen) #toggle-fullscreen-button, :host-context(:fullscreen) #toggle-fullscreen-button {
+#widget-container:fullscreen #toggle-fullscreen-button,
+:host-context(:fullscreen) #toggle-fullscreen-button {
 	background-image: url('{my-component-folder}/exit-fulllscreen.svg');
 }
 
-:host(:fullscreen) {
+#widget-container:fullscreen {
 	background-color: white;
-	padding-left: 5px;
-	padding-right: 5px;
+	padding: 5px 5px 5px 5px;
 }

@@ -1,14 +1,12 @@
-:host(:fullscreen) {
-	background-color: white;
-	padding-left: 5px;
-	padding-right: 5px;
-	padding-top: 5px;
-}
-
 #container {
 	display: flex;
 	flex-flow: column;
 	height: 100%;
+}
+
+#container:fullscreen {
+	background-color: white;
+	padding: 5px 5px 5px 5px;
 }
 
 #stylesheet-tools {
@@ -63,6 +61,7 @@
 
 #timeline-container {
 	flex-grow : 1;	
+	position: relative;
 }
 
 #wait-message-container {
@@ -95,6 +94,7 @@
 	background-image: url('{my-component-folder}/error.svg');
 	background-repeat: no-repeat;
 	background-position: 5px 50%;
+	background-size: 16px 16px;
 	font-size: 10pt;
 	padding-left: 25px;
 }
@@ -106,4 +106,110 @@
 #container.waiting #stylesheet-tools, #container.waiting #timeline-container,
 #container.error #stylesheet-tools, #container.error #timeline-container {
 	display: none;
+}
+
+
+/* -------------------------- */
+
+#obsels-loading-indications {
+	position: absolute;
+	bottom: 22px;
+	width: 100%;
+}
+
+#load-control {
+	width: 70px;
+	text-align: right;
+}
+
+#obsels-load-control-button {
+	cursor: pointer;
+	opacity: 0.3;
+	background-color:white;
+	background-repeat: no-repeat;
+	border: none;
+	border-radius: 2px;
+	height: 16px;
+	width: 16px;
+	outline: none;
+	float: right;
+	padding: 0 0;
+	margin-left: 3px;
+}
+
+#obsels-load-control-button:hover {
+	opacity: 1;
+}
+
+#obsels-loading-indications.loading #obsels-load-control-button {
+	background-image: url('{my-component-folder}/stop.svg');
+}
+
+#obsels-loading-indications.loaded #obsels-load-control-button,
+#obsels-loading-indications.error #obsels-load-control-button,
+#obsels-loading-indications.stopped #obsels-load-control-button {
+	background-image: url('{my-component-folder}/reload.svg');
+}
+
+#loading-status-icon {
+	width: 16px;
+	height: 16px;
+	background-repeat: no-repeat;
+	float: right;
+	padding: 0 0;
+}
+
+#obsels-loading-indications.loading #loading-status-icon {
+	background-image: url('{my-component-folder}/blue-spinner.svg');
+}
+
+#obsels-loading-indications.loaded #loading-status-icon {
+	background-image: url('{my-component-folder}/tick.svg');
+}
+
+#obsels-loading-indications.error #loading-status-icon {
+	background-image: url('{my-component-folder}/error.svg');
+}
+
+#obsels-loading-indications.stopped #loading-status-icon {
+	background-image: url('{my-component-folder}/user_stop.svg');
+}
+
+#progress-bar-container {
+	padding-left: 70px;
+	padding-right: 16px;
+	z-index: 5;
+	position: relative;
+    bottom: -14px;
+}
+
+#progress-bar {
+	height: 2px;
+	max-width: 100%;
+}
+
+#obsels-loading-indications.loading #progress-bar {
+	background-color: royalblue;
+	opacity: 0.5;
+}
+
+#obsels-loading-indications.loaded #progress-bar {
+	background-color: green;
+	width: 100% !important;
+	animation-name: fade-out;
+	animation-duration: 3s;
+	animation-fill-mode: forwards;
+	animation-delay: 1s;
+}
+
+@keyframes fade-out {
+	to {
+		opacity: 0;
+		visibility: hidden;
+	}
+}
+
+#obsels-loading-indications.error #progress-bar,
+#obsels-loading-indications.stopped #progress-bar {
+	visibility: hidden;
 }

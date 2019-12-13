@@ -3,5 +3,11 @@
     "Default stylesheet generated automatically": "Feuille de styles par défaut génerée automatiquement",
     "Default": "Par défaut",
     "Unknown obsel type": "Type d'obsel inconnu",
-    "Waiting for server response...": "En attente de la réponse du serveur..."
+    "Waiting for server response...": "En attente de la réponse du serveur...",
+    "Loading": "Chargement en cours",
+    "Loading complete": "Chargement effectué",
+    "Error : ": "Erreur : ",
+    "Loading stopped by user": "Chargement arrêté par l'utilisateur",
+    "Stop loading": "Arrêter le chargement",
+    "Reload": "Recharger"
 }

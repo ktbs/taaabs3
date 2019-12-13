@@ -29,14 +29,17 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._resolveAllObselsLoaded;
 		this._rejectAllObselsLoaded;
 
-		this._allObselsLoaded = new Promise(function(resolve, reject) {
+		/*this._allObselsLoaded = new Promise(function(resolve, reject) {
 			this._resolveAllObselsLoaded = resolve;
 			this._rejectAllObselsLoaded = reject;
-		}.bind(this));
+		}.bind(this));*/
 
 		this._context = null;
 		this._styleSheets = new Array();
 		this._currentStylesheet = null;
+		this._traceUri = null;
+
+		this._obselsLoadingAbortController = new AbortController();
 	}
 
 	/**
@@ -55,7 +58,58 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._timeline.setAttribute("lang", this._lang);
 		this._timeline.setAttribute("slot", "timeline");
 		this._timeline.addEventListener("request-fullscreen", this._onTimelineRequestFullscreen.bind(this), true);
+		this._obselsLoadingIndications = this.shadowRoot.querySelector("#obsels-loading-indications");
+		this._obselsLoadControlButton = this.shadowRoot.querySelector("#obsels-load-control-button");
+		this._obselsLoadControlButton.addEventListener("click", this._onClickObselsLoadControlButton.bind(this));
+		this._loadingStatusIcon = this.shadowRoot.querySelector("#loading-status-icon");
+		this._progressBar = this.shadowRoot.querySelector("#progress-bar");
 		this.appendChild(this._timeline);
+	}
+
+	/**
+	 * 
+	 */
+	disconnectedCallback() {
+		super.disconnectedCallback();
+		this._obselsLoadingAbortController.abort();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickObselsLoadControlButton(event) {
+		switch(this._obselsLoadingIndications.className) {
+			case "loading":
+				this._stopObselsLoading();
+				break;
+			default:
+				this._reloadObsels();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_stopObselsLoading() {
+		this._obselsLoadingAbortController.abort();
+		this._obselsLoadingIndications.className = "stopped";
+		this._obselsLoadControlButton.setAttribute("title", this._translateString("Reload"));
+		this._loadingStatusIcon.setAttribute("title", this._translateString("Loading stopped by user"));
+	}
+
+	/**
+	 * 
+	 */
+	_reloadObsels() {
+		this._obselsLoadingAbortController = new AbortController();
+		this._timeline.innerHTML = "";
+		this._context = null;
+		this._obsels = new Array();
+		this._progressBar.style.width = "0%";
+		this._obselsLoadControlButton.setAttribute("title", this._translateString("Stop loading"));
+		this._loadingStatusIcon.setAttribute("title", this._translateString("Loading"));
+		this._obselsLoadingIndications.className = "loading";
+		this._initObselsLoading();
 	}
 
 	/**
@@ -63,7 +117,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onTimelineRequestFullscreen(event) {
 		event.preventDefault();
-		this.requestFullscreen();
+		this._container.requestFullscreen();
 	}
 
 	/**
@@ -109,27 +163,47 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			// ---
 
 			// load obsels, in order to populate the timeline
-			let obselsUri = newValue + "@obsels";
-			this._obselList = new ObselList(obselsUri);
-
-			this._obselList._read_first_obsel_page(100, this._abortController.signal)
-				.then((response) => {
-					// we assume the "context" section will be the same for every obsel page
-					if(!this._context)
-						this._context = response.context;
-
-					this._onObselListPageRead(response.obsels, response.nextPageURI);
-				})
-				.catch((error) => {
-					if((error.name != "AbortError") || !this._abortController.signal.aborted)
-						this._onObselListPageReadFailed(error);
-				});
-
-			this._allObselsLoaded.finally(() => {
-				this._onObselLoadEnded();
-			});
+			this._traceUri = newValue;
+			this._initObselsLoading();
 			// ---
 		}
+	}
+
+	/**
+	 * 
+	 */
+	_initObselsLoading() {
+		let obselsUri = this._traceUri + "@obsels";
+		this._obselList = new ObselList(obselsUri);
+
+		this._allObselsLoaded = new Promise(function(resolve, reject) {
+			this._resolveAllObselsLoaded = resolve;
+			this._rejectAllObselsLoaded = reject;
+		}.bind(this));
+
+		this._obselList._read_first_obsel_page(100, this._obselsLoadingAbortController.signal)
+			.then((response) => {
+				// we assume the "context" section will be the same for every obsel page
+				if(!this._context)
+					this._context = response.context;
+
+				this._onObselListPageRead(response.obsels, response.nextPageURI);
+			})
+			.catch((error) => {
+				if((error.name != "AbortError") || !this._obselsLoadingAbortController.signal.aborted)
+					this._onObselListPageReadFailed(error);
+			});
+
+		this._allObselsLoaded
+			.then(() => {
+				this._progressBar.style.width = "100%";
+				this._obselsLoadControlButton.setAttribute("title", this._translateString("Reload"));
+				this._loadingStatusIcon.setAttribute("title", this._translateString("Loading complete"));
+				this._obselsLoadingIndications.className = "loaded";
+			})
+			.finally(() => {
+				this._onObselLoadEnded();
+			});
 	}
 
 	/**
@@ -668,7 +742,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			let minTime = this._stats.get_min_time();
 			let maxTime = this._stats.get_max_time();
 
-			if(minTime && maxTime) {
+			if((minTime != null) && (minTime != undefined) && (maxTime != null) && (maxTime != undefined)) {
 				this._timeline.setAttribute("begin", minTime);
 				this._timeline.setAttribute("end", maxTime);
 
@@ -678,6 +752,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			else {
 				this._setError("Cannot retrieve minTime and/or maxTime attributes froms stats");
 			}
+
+			this._expectedObselCount = this._stats.get_obsel_count();
 		}.bind(this));
 	}
 
@@ -833,15 +909,29 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onObselListPageReadFailed(error) {
-		this._rejectAllObselsLoaded(error);
+		this._obselsLoadingAbortController.abort();
+
+		this._componentReady.then(() => {
+			this._obselsLoadControlButton.setAttribute("title", this._translateString("Reload"));
+			this._loadingStatusIcon.setAttribute("title", this._translateString("Error : ") + error);
+			this._obselsLoadingIndications.className = "error";
+			this._rejectAllObselsLoaded(error);
+		});
 	}
 
 	/**
 	 * 
 	 */
 	_onObselListPageRead(obsels, nextPageURI) {
-		if(!this._abortController.signal.aborted) {
+		if(!this._obselsLoadingAbortController.signal.aborted) {
 			this._componentReady.then(() => {
+				if(this._expectedObselCount) {
+					let currentObselCount = this._obsels.length + obsels.length;
+					let loadedObselsPercentage = (currentObselCount / this._expectedObselCount) * 100;
+					this._progressBar.style.width = loadedObselsPercentage + "%";
+					this._loadingStatusIcon.setAttribute("title", this._translateString("Loading") + " (" + Math.floor(loadedObselsPercentage) + "%)");
+				}
+
 				setTimeout(() => {
 					this._addObsels(obsels);
 				});
@@ -852,12 +942,12 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			}
 			else {
 				setTimeout(() => {
-					this._obselList._read_obsel_page(nextPageURI, this._abortController.signal)
+					this._obselList._read_obsel_page(nextPageURI, this._obselsLoadingAbortController.signal)
 						.then((response) => {
 							this._onObselListPageRead(response.obsels, response.nextPageURI);
 						})
 						.catch((error) => {
-							if((error.name != "AbortError") || !this._abortController.signal.aborted)
+							if((error.name != "AbortError") || !this._obselsLoadingAbortController.signal.aborted)
 								this._onObselListPageReadFailed(error);
 						});
 				});

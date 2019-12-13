@@ -15,6 +15,17 @@
 
     <div id="timeline-container">
         <slot name="timeline"></slot>
+
+        <div id="obsels-loading-indications" class="loading">
+            <div id="load-control">
+                <div id="loading-status-icon" title="{translate: 'Loading...'}"></div>
+                <button id="obsels-load-control-button" title="{translate: 'Stop loading'}"></button>
+            </div>
+
+            <div id="progress-bar-container">
+                <div id="progress-bar" style="width: 0%;"></div>
+            </div>
+        </div>
     </div>
 
     <div id="wait-message-container">
