@@ -1,4 +1,5 @@
-import {KtbsResourceElement} from "../common/KtbsResourceElement.js";
+import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
+import {Trace} from "../../ktbs-api/Trace.js";
 import {TraceStats} from "../../ktbs-api/TraceStats.js";
 
 import "../ktbs4la2-pie-chart/ktbs4la2-pie-chart.js";
@@ -6,14 +7,84 @@ import "../ktbs4la2-pie-chart/ktbs4la2-pie-chart.js";
 /**
  * 
  */
-class KTBS4LA2TraceStats extends KtbsResourceElement {
+class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 
 	/**
 	 * 
 	 */
 	constructor() {
-		super(import.meta.url);
-		this._resolveTypeSet();
+		super(import.meta.url, true, true);
+
+		this._originTime = 0;
+
+		this._resolveTraceLoaded;
+		this._rejectTraceLoaded;
+
+		this._traceLoaded =  new Promise((resolve, reject) => {
+			this._resolveTraceLoaded = resolve;
+			this._rejectTraceLoaded = reject;
+		});
+
+		this._traceLoaded.then(() => {
+			this._onTraceLoaded();
+		})
+
+		this._resolveStatsLoaded;
+		this._rejectStatsLoaded;
+
+		this._statsLoaded =  new Promise((resolve, reject) => {
+			this._resolveStatsLoaded = resolve;
+			this._rejectStatsLoaded = reject;
+		});
+
+		this._statsLoaded.then(() => {
+			this._onStatsLoaded();
+		});
+	}
+
+	/**
+	 * 
+	 */
+	static get observedAttributes() {
+		let observedAttributes = super.observedAttributes;
+		observedAttributes.push('uri');
+		return observedAttributes;
+	}
+
+	/**
+	 * 
+	 */
+	attributeChangedCallback(attributeName, oldValue, newValue) {
+		super.attributeChangedCallback(attributeName, oldValue, newValue);
+
+		if(attributeName == "uri") {
+			this._trace = new Trace(newValue);
+
+			this._trace._read_data(this._abortController.signal)
+				.then(() => {
+					this._resolveTraceLoaded();
+				})
+				.catch((error) => {
+					this._rejectTraceLoaded(error);
+
+					if((error.name != "AbortError") || !this._abortController.signal.aborted)
+						this._setError(error);
+				});
+
+			let statsUri = newValue + "@stats";
+			this._stats = new TraceStats(statsUri);
+
+			this._stats._read_data(this._abortController.signal)
+				.then(() => {
+					this._resolveStatsLoaded();
+				})
+				.catch((error) => {
+					this._rejectStatsLoaded();
+
+					if((error.name != "AbortError") || !this._abortController.signal.aborted)
+						this._setError(error);
+				});
+		}
 	}
 
 	/**
@@ -86,34 +157,50 @@ class KTBS4LA2TraceStats extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	onktbsResourceLoaded() {
+	_onTraceLoaded() {
+		let traceOriginString = this._trace.get_origin();
+
+		if(traceOriginString != undefined) {
+			let parsedOrigin = Date.parse(traceOriginString);
+
+			if(!isNaN(parsedOrigin))
+				this._originTime = parsedOrigin;
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onStatsLoaded() {
 		this._componentReady.then(() => {
-			let minTime = this._ktbsResource.get_min_time();
+			this._traceLoaded.then(() => {
+				if(this._stats.get_min_time() != undefined) {
+					let minTime = parseInt(this._stats.get_min_time(), 10) + this._originTime;
+					this._beginTag.innerText = this.formatTimeStampToDate(minTime);
+				}
+				else
+					this._beginContainer.style.display = "none";
 
-			if(minTime != null)
-				this._beginTag.innerText = this.formatTimeStampToDate(minTime);
-			else
-				this._beginContainer.style.display = "none";
+				if(this._stats.get_max_time() != undefined) {
+					let maxTime = parseInt(this._stats.get_max_time(), 10) + this._originTime;
+					this._endTag.innerText = this.formatTimeStampToDate(maxTime);
+				}
+				else
+					this._endContainer.style.display = "none";
+			});
 
-			let maxTime = this._ktbsResource.get_max_time();
-
-			if(maxTime != null)
-				this._endTag.innerText = this.formatTimeStampToDate(maxTime);
-			else
-				this._endContainer.style.display = "none";
-
-			let duration = this._ktbsResource.get_duration();
+			let duration = this._stats.get_duration();
 
 			if(duration != null)
 				this._durationTag.innerText = this.formatTimeStampDeltaToDuration(duration);
 			else
 				this._durationContainer.style.display = "none";
 
-			let obselCount = this._ktbsResource.get_obsel_count();
+			let obselCount = this._stats.get_obsel_count();
 			this._countTag.innerText = obselCount;
 
 			if(obselCount > 0) {
-				let obselCountPerType = this._ktbsResource.get_obsel_count_per_type();
+				let obselCountPerType = this._stats.get_obsel_count_per_type();
 
 				for(let i = 0; i < obselCountPerType.length; i++) {
 					let type = obselCountPerType[i]["stats:hasObselType"];
@@ -135,20 +222,11 @@ class KTBS4LA2TraceStats extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	onktbsResourceLoadFailed(error) {
-		super.onktbsResourceLoadFailed(error);
-
+	_setError(error) {
 		this._componentReady.then(() => {
 			this._container.className = "error";
 			this._errorMessage.innerText = "Error : " + error;
 		});
-	}
-
-	/**
-	 * 
-	 */
-	_getKtbsResourceClass() {
-		return TraceStats;
 	}
 
 	/**
@@ -160,7 +238,7 @@ class KTBS4LA2TraceStats extends KtbsResourceElement {
 		this._endLabel.innerText = this._translateString("End") + " :";
 		this._durationLabel.innerText = this._translateString("Duration") + " :";
 
-		let duration = this._ktbsResource.get_duration();
+		let duration = this._stats.get_duration();
 
 		if(duration != null)
 			this._durationTag.innerText = this.formatTimeStampDeltaToDuration(duration);

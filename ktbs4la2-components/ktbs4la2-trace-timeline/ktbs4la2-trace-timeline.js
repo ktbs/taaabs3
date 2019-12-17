@@ -1,5 +1,4 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
-import {KtbsResourceElement} from "../common/KtbsResourceElement.js";
 
 import {Trace} from "../../ktbs-api/Trace.js";
 import {Model} from "../../ktbs-api/Model.js";
@@ -26,18 +25,24 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 		this._obsels = new Array();
 
+
+		this._resolveTraceLoaded;
+		this._rejectTraceLoaded;
+
+		this._traceLoaded =  new Promise((resolve, reject) => {
+			this._resolveTraceLoaded = resolve;
+			this._rejectTraceLoaded = reject;
+		});
+
+
 		this._resolveAllObselsLoaded;
 		this._rejectAllObselsLoaded;
-
-		/*this._allObselsLoaded = new Promise(function(resolve, reject) {
-			this._resolveAllObselsLoaded = resolve;
-			this._rejectAllObselsLoaded = reject;
-		}.bind(this));*/
 
 		this._context = null;
 		this._styleSheets = new Array();
 		this._currentStylesheet = null;
 		this._traceUri = null;
+		this._originTime = 0;
 
 		this._obselsLoadingAbortController = new AbortController();
 	}
@@ -54,6 +59,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._legend = this.shadowRoot.querySelector("#legend");
 		this._waitMessage = this.shadowRoot.querySelector("#wait-message");
 		this._errorMessage = this.shadowRoot.querySelector("#error-message");
+		this._emptyMessage = this.shadowRoot.querySelector("#empty-message");
 		this._timeline = document.createElement("ktbs4la2-timeline");
 		this._timeline.setAttribute("lang", this._lang);
 		this._timeline.setAttribute("slot", "timeline");
@@ -140,12 +146,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 			this._trace._read_data(this._abortController.signal)
 				.then(() => {
-					this._onTraceLoaded();
+					this._resolveTraceLoaded();
 				})
 				.catch((error) => {
 					if((error.name != "AbortError") || !this._abortController.signal.aborted)
 						this._setError(error);
 				});
+
+			this._traceLoaded.then(() => {
+				this._onTraceLoaded();
+			});
 			// ---
 
 			// load stats, in order to get trace begin and trace end dates
@@ -196,10 +206,12 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 		this._allObselsLoaded
 			.then(() => {
-				this._progressBar.style.width = "100%";
-				this._obselsLoadControlButton.setAttribute("title", this._translateString("Reload"));
-				this._loadingStatusIcon.setAttribute("title", this._translateString("Loading complete"));
-				this._obselsLoadingIndications.className = "loaded";
+				this._componentReady.then(() => {
+					this._progressBar.style.width = "100%";
+					this._obselsLoadControlButton.setAttribute("title", this._translateString("Reload"));
+					this._loadingStatusIcon.setAttribute("title", this._translateString("Loading complete"));
+					this._obselsLoadingIndications.className = "loaded";
+				});
 			})
 			.finally(() => {
 				this._onObselLoadEnded();
@@ -261,6 +273,15 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onTraceLoaded() {
+		let traceOriginString = this._trace.get_origin();
+
+		if(traceOriginString != undefined) {
+			let parsedOrigin = Date.parse(traceOriginString);
+
+			if(!isNaN(parsedOrigin))
+				this._originTime = parsedOrigin;
+		}
+
 		let model_uri = this._trace.get_model_uri();
 		this._model = new Model(model_uri);
 
@@ -280,8 +301,10 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_setError(error) {
-		this._container.className = "error";
-		this._errorMessage.innerText = "Error : " + error;
+		this._componentReady.then(() => {
+			this._container.className = "error";
+			this._errorMessage.innerText = "Error : " + error;
+		});
 	}
 
 	/**
@@ -730,7 +753,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					obselEventNode.setAttribute("visible", false);
 			}
 			else
-				console.error("Could not found event node for obsel " + anObsel["@id"]);
+				this.emitErrorEvent(new Error("Could not found event node for obsel " + anObsel["@id"]));
 		}
 	}
 
@@ -738,23 +761,32 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onStatsLoaded() {
-		this._componentReady.then(function() {
-			let minTime = this._stats.get_min_time();
-			let maxTime = this._stats.get_max_time();
+		this._expectedObselCount = (this._stats.get_obsel_count() != undefined)?this._stats.get_obsel_count():0;
 
-			if((minTime != null) && (minTime != undefined) && (maxTime != null) && (maxTime != undefined)) {
-				this._timeline.setAttribute("begin", minTime);
-				this._timeline.setAttribute("end", maxTime);
+		if(this._expectedObselCount != 0) {
+			this._traceLoaded.then(() => {
+				if((this._stats.get_min_time() != undefined) && (this._stats.get_max_time() != undefined)) {
+					let minTime = this._stats.get_min_time() + this._originTime;
+					let maxTime = this._stats.get_max_time() + this._originTime;
+					
+					this._componentReady.then(() => {
+						this._timeline.setAttribute("begin", minTime);
+						this._timeline.setAttribute("end", maxTime);
 
-				if(this._container.classList.contains("waiting"))
-					this._container.classList.remove("waiting");
-			}
-			else {
-				this._setError("Cannot retrieve minTime and/or maxTime attributes froms stats");
-			}
-
-			this._expectedObselCount = this._stats.get_obsel_count();
-		}.bind(this));
+						if(this._container.classList.contains("waiting"))
+							this._container.classList.remove("waiting");
+					});
+				}
+				else {
+					this._setError("Cannot retrieve minTime and/or maxTime attributes froms stats");
+				}
+			});
+		}
+		else {
+			this._componentReady.then(() => {
+				this._container.className = "empty";
+			});
+		}
 	}
 
 	/**
@@ -776,7 +808,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_getObselTitleHint(obsel) {
-		let eventBeginDate = new Date(obsel.begin);
+		let eventBeginDate = new Date(obsel.begin + this._originTime);
 
 		let beginDateString = eventBeginDate.getFullYear() + "-" 
 						+ (eventBeginDate.getMonth() + 1).toString().padStart(2, '0') + "-" 
@@ -791,7 +823,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					beginDateString;
 
 		if(obsel.end != obsel.begin) {
-			let eventEndDate = new Date(obsel.end);
+			let eventEndDate = new Date(obsel.end + this._originTime);
 		
 			let endDateString = eventEndDate.getFullYear() + "-" 
 						+ (eventEndDate.getMonth() + 1).toString().padStart(2, '0') + "-" 
@@ -817,8 +849,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		for(let i = 0; i < obsels.length; i++) {
 			let obsel = obsels[i];
 			let eventElement = document.createElement("ktbs4la2-timeline-event");
-			eventElement.setAttribute("begin", obsel.begin);
-			eventElement.setAttribute("end", obsel.end);
+			eventElement.setAttribute("begin", (obsel.begin + this._originTime));
+			eventElement.setAttribute("end", (obsel.end + this._originTime));
 			eventElement.setAttribute("id", obsel["@id"]);
 			eventElement.setAttribute("title", this._getObselTitleHint(obsel));
 			eventElement.setAttribute("href", this.getAttribute("uri") + obsel["@id"]);
@@ -965,6 +997,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._defaultStylesheetSelectorEntry.setAttribute("title", this._translateString("Default stylesheet generated automatically"));
 		this._defaultStylesheetSelectorEntry.innerText = this._translateString("Default");
 		this._waitMessage.innerText = this._translateString("Waiting for server response...");
+		this._emptyMessage.innerText = this._translateString("No obsel to display");
 		this._timeline.setAttribute("lang", this._lang);
 
 		let unknownObselTypeLegend = this._legend.querySelector("ktbs4la2-trace-timeline-style-legend[rule-id=\"unknown\"]");

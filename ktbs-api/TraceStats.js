@@ -9,20 +9,14 @@ export class TraceStats extends Resource {
 	 * 
 	 */
 	get_min_time() {
-		if(this._parsedJson['stats:minTime'] != undefined)
-			return this._parsedJson['stats:minTime'];
-		else
-			return null;
+		return this._parsedJson['stats:minTime'];
 	}
 
 	/**
 	 * 
 	 */
 	get_max_time() {
-		if(this._parsedJson['stats:maxTime'] != undefined)
-			return this._parsedJson['stats:maxTime'];
-		else
-			return null;
+		return this._parsedJson['stats:maxTime'];
 	}
 
 	/**

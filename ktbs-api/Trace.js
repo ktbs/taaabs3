@@ -31,7 +31,7 @@ export class Trace extends Resource {
 	 * @return str
 	 */
 	get_origin() {
-
+		return this._parsedJson.origin;
 	}
 
 	/**

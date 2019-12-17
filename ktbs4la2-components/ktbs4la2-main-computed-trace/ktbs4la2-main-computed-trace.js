@@ -63,7 +63,7 @@ class KTBS4LA2MainComputedTrace extends KtbsResourceElement {
 		if(attributeName == "uri")
 			this._componentReady.then(() => {
 				let statsElement = document.createElement("ktbs4la2-trace-stats");
-				statsElement.setAttribute("uri", this.getAttribute("uri") + "@stats");
+				statsElement.setAttribute("uri", this.getAttribute("uri"));
 				statsElement.setAttribute("slot", "stats");
 				this.appendChild(statsElement);
 
