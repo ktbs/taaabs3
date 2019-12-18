@@ -80,96 +80,6 @@ function getNumberOfDaysInMonth(month, year) {
 /**
  * 
  */
-class KTBS4LA2CallbackQueue {
-
-	/**
-	 * 
-	 */
-	constructor() {
-		this._queuedCallbacks = new Array();
-		this._processIntervalID = null;
-		this._processIntervalDelay = 1;
-	}
-
-	/**
-	 * 
-	 */
-	get processIntervalDelay() {
-		return this._processIntervalDelay;
-	}
-
-	/**
-	 * 
-	 */
-	set processIntervalDelay(newIntervalDelay) {
-		if((newIntervalDelay === parseInt(newIntervalDelay, 10)) && (newIntervalDelay >= 0))
-			this._processIntervalDelay = newIntervalDelay;
-		else
-			throw new Error("new value for processIntervalDelay parameter must be a non-negative Integer");
-	}
-
-	/**
-	 * 
-	 */
-	get isRunning() {
-		return (this._processIntervalID != null);
-	}
-
-	/**
-	 * 
-	 */
-	add(callback) {
-		this._queuedCallbacks.push(callback);
-	}
-
-	/**
-	 * 
-	 */
-	clear() {
-		if(this.isRunning)
-			this.stop();
-		
-		this._queuedCallbacks = new Array();
-	}
-
-	/**
-	 * 
-	 */
-	start() {
-		if(!this.isRunning)
-			this._processIntervalID = setInterval(this._processNextCallback.bind(this), this._processIntervalDelay);
-		else
-			throw new Error("Already running");
-	}
-
-	/**
-	 * 
-	 */
-	stop() {
-		if(this.isRunning) {
-			clearInterval(this._processIntervalID);
-			this._processIntervalID = null;
-		}
-		else
-			throw new Error("Already stopped");
-	}
-
-	/**
-	 * 
-	 */
-	_processNextCallback() {
-		if(this.isRunning) {
-			if(this._queuedCallbacks.length > 0)
-				this._queuedCallbacks.shift()();
-			else
-				this.stop();
-		}
-	}
-}
-
-/**
- * 
- */
 class KTBS4LA2TimelineSubdivision extends HTMLElement {
 
 	/**
@@ -379,8 +289,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._lastKnownDisplayWindowWidth = null;
 		this._lastKnownDisplayWindowHeight = null;
 
-		this._updateEventsRowQueue = new KTBS4LA2CallbackQueue();
-		this._updateEventsRowQueue.processIntervalDelay = 10;
+		this._updateEventsRowWorker = null;
 
 		this._updateTimeLineCursorID = null;
 
@@ -538,9 +447,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	disconnectedCallback() {
 		super.disconnectedCallback();
-		
-		if(this._updateEventsRowQueue.isRunning)
-			this._updateEventsRowQueue.stop();
+
+		if(this._updateEventsRowWorker)
+			this._updateEventsRowWorker.terminate();
 
 		if(this._displayWindowResizeObserver != null)
 			this._displayWindowResizeObserver.disconnect();
@@ -718,7 +627,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		return this._visibleEventsNodes;
 	}
 
-
 	/**
 	 *
 	 */
@@ -860,158 +768,106 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_requestUpdateEventsRow() {
-		if(this._updateEventsRowQueue.isRunning) {
-			this._updateEventsRowQueue.stop();
-			this._updateEventsRowQueue.clear();
-		}
+		setTimeout(() => {
+			let visibleEventsNodes = this._getVisibleEventNodes();
+			
+			if(visibleEventsNodes.length > 0) {
+				let timeLineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
+				let timeOverWidthRatio = timeLineDuration / this._timeDiv.clientWidth;
 
-		let events = this._getVisibleEventNodes();
+				if(!isNaN(timeOverWidthRatio)) {
+					let eventsData = new Array();
 
-		if(events.length > 0) {
-			this._updateEventsRowQueue.add(() => {
-				this._updateEventsRow(0, 10);
-			});
+					for(let i = 0; i < visibleEventsNodes.length; i++) {
+						let event = visibleEventsNodes[i];
 
-			this._updateEventsRowQueue.start();
-		}
+						eventsData.push({
+							id: event.id,
+							beginTime: event.beginTime,
+							endTime: event.endTime,
+							shape: event.getAttribute("shape"),
+							hasSymbol: event.hasAttribute("symbol"),
+							row: parseInt(event.getAttribute("row"), 10),
+							hasHiddenSiblings: event.hasAttribute("hidden-siblinbgs-count")
+						});
+					}
+
+					let pixelsBeginThreshold = 13;
+					let timeBeginThreshold = timeOverWidthRatio * pixelsBeginThreshold;
+					let pixelsEndThreshold = 1;
+					let timeEndThreshold = timeOverWidthRatio * pixelsEndThreshold;
+
+					let updateEventsRowWorkerData = {
+						eventsData: eventsData,
+						maxDisplayableRows: this._maxDisplayableRows,
+						firstRepresentedTime: this._firstRepresentedTime,
+						timeBeginThreshold: timeBeginThreshold,
+						timeEndThreshold: timeEndThreshold
+					};
+
+					let updateEventsRowWorkerURL = import.meta.url.substr(0, import.meta.url.lastIndexOf('/')) + '/update-events-row-worker.js';
+					
+					if(this._updateEventsRowWorker)
+						this._updateEventsRowWorker.terminate();
+					
+					this._updateEventsRowWorker = new Worker(updateEventsRowWorkerURL);
+
+					this._updateEventsRowWorker.onmessage = ((event) => {
+						setTimeout(() => {
+							let eventsNewRows = event.data.eventsNewRows;
+							let eventsNewHiddenSiblinbgsCounts = event.data.eventsNewHiddenSiblinbgsCounts;
+							this._updateEventsRow(eventsNewRows, eventsNewHiddenSiblinbgsCounts);
+						});
+					});
+
+					this._updateEventsRowWorker.postMessage(updateEventsRowWorkerData);
+				}
+				else
+					throw new Error("Could not determine time/width ratio");
+			}
+		});
 	}
 
 	/**
 	 * 
 	 */
-	_updateEventsRow(fromRank, maxBatchTime = null, previousEventsPerRow = new Array(), previousEventsTimePerRow = new Array(), minDisplayableTime = this._firstRepresentedTime, eventsNewRows = new Array(), eventsNewHiddenSiblinbgsCounts = new Array(), hiddenEventsCountSinceLastVisible = 0, lastVisibleMaxRowEvent = null) {
-		let batchBeginTime = performance.now();
-		let timeLineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
-		let timeOverWidthRatio = timeLineDuration / this._timeDiv.clientWidth;
-		
-		if(!isNaN(timeOverWidthRatio)) {
-			let pixelsBeginThreshold = 13;
-			let timeBeginThreshold = timeOverWidthRatio * pixelsBeginThreshold;
-			let pixelsEndThreshold = 1;
-			let timeEndThreshold = timeOverWidthRatio * pixelsEndThreshold;
-			let events = this._getVisibleEventNodes();
-			let i;
+	_updateEventsRow(eventsNewRows, eventsNewHiddenSiblinbgsCounts) {
+		for(let eventId in eventsNewRows) {
+			let event = this.querySelector("#" + CSS.escape(eventId));
 
-			// we browse visible events
-			for(i = fromRank; i < events.length; i++) {
-				let currentEvent = events[i];
-				let availableRow = null;
+			if(event) {
+				let row = eventsNewRows[eventId];
 
-				if(currentEvent.beginTime >= minDisplayableTime) {
-					// we browse the "previousEventsPerRow" Array
-					for(let j = 0; (j < this._maxDisplayableRows) && (j < previousEventsPerRow.length); j++) {
-						let rowPreviousEvent = previousEventsPerRow[j];
+				if(row != null) {
+					event.setAttribute("row", row);
 
-						if((rowPreviousEvent.hasAttribute("shape") && (rowPreviousEvent.getAttribute("shape") != "duration-bar")) || rowPreviousEvent.hasAttribute("symbol")) {
-							let timeDelta = currentEvent.beginTime - rowPreviousEvent.beginTime;
+					if(event.classList.contains("row-is-overflow"))
+						event.classList.remove("row-is-overflow");
+				}
+				else  {
+					event.removeAttribute("row");
 
-							if(timeDelta >= timeBeginThreshold) {
-								availableRow = j;
-								break;
-							}
-						}
-						else {
-							let timeBeginDelta = currentEvent.beginTime - rowPreviousEvent.beginTime;
-							let timeEndDelta = currentEvent.beginTime - rowPreviousEvent.endTime;
-
-							if((timeBeginDelta >= timeBeginThreshold) && (timeEndDelta >= timeEndThreshold)) {
-								availableRow = j;
-								break;
-							}
-						}
-					}
+					if(!event.classList.contains("row-is-overflow"))
+						event.classList.add("row-is-overflow");
 				}
 
-				if(availableRow == null)
-					availableRow = previousEventsPerRow.length;
-
-				if(availableRow < this._maxDisplayableRows) {
-					if(availableRow == (this._maxDisplayableRows - 1))
-						lastVisibleMaxRowEvent = currentEvent;
-
-					if(parseInt(currentEvent.getAttribute("row"), 10) != availableRow)
-						eventsNewRows.push({event: currentEvent, row: availableRow});
-					
-					previousEventsPerRow[availableRow] = currentEvent;
-					previousEventsTimePerRow[availableRow] = currentEvent.beginTime;
-
-					if(previousEventsPerRow.length >= this._maxDisplayableRows)
-						minDisplayableTime = Math.min(...previousEventsTimePerRow) + timeBeginThreshold;
-
-					hiddenEventsCountSinceLastVisible = 0;
-
-					if(currentEvent.hasAttribute("hidden-siblinbgs-count"))
-						eventsNewHiddenSiblinbgsCounts[currentEvent.id] = null;
-				}
-				else {
-					if(currentEvent.getAttribute("row") != null)
-						eventsNewRows.push({event: currentEvent, row: null});
-
-					if(!lastVisibleMaxRowEvent && (previousEventsPerRow.length > 0))
-						lastVisibleMaxRowEvent = previousEventsPerRow[this._maxDisplayableRows - 1];
-
-					if(lastVisibleMaxRowEvent) {
-						if(!eventsNewHiddenSiblinbgsCounts[lastVisibleMaxRowEvent.id])
-							eventsNewHiddenSiblinbgsCounts[lastVisibleMaxRowEvent.id] = 1;
-						else
-							eventsNewHiddenSiblinbgsCounts[lastVisibleMaxRowEvent.id]++;
-					}
-				}
-				
-				if((maxBatchTime != null) && (i < (events.length - 1))) {
-					let currentTime = performance.now();
-
-					if((currentTime - batchBeginTime) > maxBatchTime) {
-						this._updateEventsRowQueue.add(() => {
-							this._updateEventsRow(i + 1, maxBatchTime, previousEventsPerRow, previousEventsTimePerRow, minDisplayableTime, eventsNewRows, eventsNewHiddenSiblinbgsCounts, hiddenEventsCountSinceLastVisible, lastVisibleMaxRowEvent);
-						});
-
-						break;
-					}
-				}
+				if(!event.hasAttribute("row-initialized"))
+					event.setAttribute("row-initialized", "");
 			}
-
-			// if the batch has been processed to the end
-			if(i >= (events.length - 1)) {
-				// all events rows have been recalculated, now we apply them in bulk
-				for(let j in eventsNewRows) {
-					let event = eventsNewRows[j].event;
-					let row = eventsNewRows[j].row;
-
-					if(row != null) {
-						event.setAttribute("row", row);
-
-						if(event.classList.contains("row-is-overflow"))
-							event.classList.remove("row-is-overflow");
-					}
-					else  {
-						event.removeAttribute("row");
-
-						if(!event.classList.contains("row-is-overflow"))
-							event.classList.add("row-is-overflow");
-					}
-
-					if(!event.hasAttribute("row-initialized"))
-						event.setAttribute("row-initialized", "");
-				}
-
-				for(let eventId in eventsNewHiddenSiblinbgsCounts) {
-					let event = this.querySelector("#" + CSS.escape(eventId));
-
-					if(event) {
-						let hiddenSiblingsCount = eventsNewHiddenSiblinbgsCounts[eventId];
-
-						if(hiddenSiblingsCount != null)
-							event.setAttribute("hidden-siblinbgs-count", hiddenSiblingsCount);
-						else
-							event.removeAttribute("hidden-siblinbgs-count");
-					}
-				}
-			}
-			
 		}
-		else
-			throw new Error("Could not determine time/width ratio");
+
+		for(let eventId in eventsNewHiddenSiblinbgsCounts) {
+			let event = this.querySelector("#" + CSS.escape(eventId));
+
+			if(event) {
+				let hiddenSiblingsCount = eventsNewHiddenSiblinbgsCounts[eventId];
+
+				if(hiddenSiblingsCount != null)
+					event.setAttribute("hidden-siblinbgs-count", hiddenSiblingsCount);
+				else
+					event.removeAttribute("hidden-siblinbgs-count");
+			}
+		}
 	}
 
 	/**
