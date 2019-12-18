@@ -430,6 +430,17 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._eventsNodesObserver.observe(this, { childList: true, subtree: true, attributes: true, attributeFilter: ["visible"]});
 
 		this.addEventListener("select-timeline-event", this._onSelectTimelineEvent.bind(this));
+		this.addEventListener("click", this._onClick.bind(this));
+	}
+
+	/**
+	 * 
+	 */
+	_onClick(event) {
+		if(event.target instanceof KTBS4LA2TimelineEvent) {
+			event.preventDefault();
+			event.target.toggleSelect();
+		}
 	}
 
 	/**
@@ -769,9 +780,13 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let currentMutationRecord = mutationRecords[i];
 
 			if(currentMutationRecord.type == "childList") {
-				if(currentMutationRecord.addedNodes.length > 0) {
-					newlyAddedNodes = newlyAddedNodes.concat(...currentMutationRecord.addedNodes);
-					nodeAdded = true;
+				for(let j = 0; j < currentMutationRecord.addedNodes.length; j++) {
+					let addedNode = currentMutationRecord.addedNodes[j];
+					
+					if(addedNode.localName == "ktbs4la2-timeline-event") {
+						newlyAddedNodes.push(addedNode);
+						nodeAdded = true;
+					}
 				}
 
 				if(currentMutationRecord.removedNodes.length > 0)
@@ -1303,9 +1318,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onDisplayWindowMouseDown(event) {
-		event.preventDefault();
-
-		if(this._displayWindow.classList.contains("scrollable")) {
+		if(!(event.target instanceof KTBS4LA2TimelineEvent) && this._displayWindow.classList.contains("scrollable")) {
 			let timeDivRelativeMouseX = event.clientX - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
 			this._displayWindowDragMouseTime = this._getMouseTime(timeDivRelativeMouseX);
 			
@@ -1503,7 +1516,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_onScrollLeftButtonMouseDown(event) {
 		event.preventDefault();
-		//this._incrementScroll(-1);
 		this._requestIncrementScroll(-1);
 
 		if(this._scrollLeftButtonPressedIntervalID != null)
@@ -1511,7 +1523,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		
 		this._scrollLeftButtonPressedIntervalID = setInterval(() => {
 			if(!this._beginIsInView())
-				//this._incrementScroll(-1);
 				this._requestIncrementScroll(-1);
 			else {
 				clearInterval(this._scrollLeftButtonPressedIntervalID);
@@ -1537,7 +1548,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_onScrollRightButtonMouseDown(event) {
 		event.preventDefault();
-		//this._incrementScroll(1);
 		this._requestIncrementScroll(1);
 
 		if(this._scrollRightButtonPressedIntervalID != null)
@@ -1545,7 +1555,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		this._scrollRightButtonPressedIntervalID = setInterval(() => {
 			if(!this._endIsInView())
-				//this._incrementScroll(1);
 				this._requestIncrementScroll(1);
 			else {
 				clearInterval(this._scrollRightButtonPressedIntervalID);

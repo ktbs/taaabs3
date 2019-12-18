@@ -64,6 +64,9 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._timeline.setAttribute("lang", this._lang);
 		this._timeline.setAttribute("slot", "timeline");
 		this._timeline.addEventListener("request-fullscreen", this._onTimelineRequestFullscreen.bind(this), true);
+
+		this._timeline.addEventListener("click", this._onClickTimeline.bind(this), true);
+
 		this._obselsLoadingIndications = this.shadowRoot.querySelector("#obsels-loading-indications");
 		this._obselsLoadControlButton = this.shadowRoot.querySelector("#obsels-load-control-button");
 		this._obselsLoadControlButton.addEventListener("click", this._onClickObselsLoadControlButton.bind(this));
@@ -78,6 +81,36 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	disconnectedCallback() {
 		super.disconnectedCallback();
 		this._obselsLoadingAbortController.abort();
+	}
+
+	/**
+	 * 
+	 */
+	_getObselById(obselID) {
+		let obsel = undefined;
+
+		for(let i = 0; !obsel && (i < this._obsels.length); i++)
+			if(this._obsels[i]["@id"] == obselID)
+				obsel = this._obsels[i];
+
+		return obsel;
+	}
+
+	/**
+	 * 
+	 * @param {*} event 
+	 */
+	_onClickTimeline(event) {
+		if(event.target.localName == "ktbs4la2-timeline-event") {
+			let eventNode = event.target;
+
+			if(!eventNode.classList.contains("selected") && (eventNode.innerHTML == "")) {
+				let obsel = this._getObselById(eventNode.id);
+
+				if(obsel)
+					this._fillObselEventContent(eventNode, obsel);
+			}
+		}
 	}
 
 	/**
@@ -842,8 +875,69 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_fillObselEventContent(eventNode, obsel) {
+		let eventContent = document.createDocumentFragment();
+
+		let idTitle = document.createElement("h3");
+		let eventLink = document.createElement("a");
+		eventLink.setAttribute("href", this.getAttribute("uri") + obsel["@id"]);
+		eventLink.setAttribute("target", "_blank");
+		eventLink.innerText = obsel["@id"];
+		idTitle.appendChild(eventLink);
+		eventContent.appendChild(idTitle);
+
+		let typeLine = document.createElement("p");
+		let typeLabel = document.createElement("strong");
+		typeLabel.innerText = this._translateString("Type") + " : ";
+		typeLine.appendChild(typeLabel);
+
+		let typeValue = document.createElement("span");
+		typeValue.innerText = obsel["@type"];
+		typeLine.appendChild(typeValue);
+		eventContent.appendChild(typeLine);
+
+		let beginLine = document.createElement("p");
+		let beginLabel = document.createElement("strong");
+		beginLabel.innerText = this._translateString("Begin") + " : ";
+		beginLine.appendChild(beginLabel);
+
+		let beginValue = document.createElement("span");
+		beginValue.innerText = this._getFormattedDate(parseInt(obsel.begin));
+		beginLine.appendChild(beginValue);
+		eventContent.appendChild(beginLine);
+
+		let endLine = document.createElement("p");
+		let endLabel = document.createElement("strong");
+		endLabel.innerText = this._translateString("End") + " : ";
+		endLine.appendChild(endLabel);
+
+		let endValue = document.createElement("span");
+		endValue.innerText = this._getFormattedDate(parseInt(obsel.end));
+		endLine.appendChild(endValue);
+		eventContent.appendChild(endLine);
+
+		// display other attributes (custom attributes)
+		let otherAttributesList = document.createElement("ul");
+
+		for(let property_key in obsel) {
+			if(!KTBS4LA2TraceTimeline.obselsSysAttributes.includes(property_key)) {
+				let attribute_value = obsel[property_key];
+				let listItem = document.createElement("li");
+				listItem.innerText = property_key + " : " + attribute_value;
+				otherAttributesList.appendChild(listItem);
+			}
+		}
+
+		eventContent.appendChild(otherAttributesList);
+		// ---
+
+		eventNode.appendChild(eventContent);
+	}
+
+	/**
+	 * 
+	 */
 	_addObsels(obsels) {
-		let sysAttributes = ["@id", "@type", "begin", "beginDT", "end", "hasSourceObsel"];
 		let eventsFragment = document.createDocumentFragment();
 		
 		for(let i = 0; i < obsels.length; i++) {
@@ -874,62 +968,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					eventElement.setAttribute("visible", false);
 			}
 
-			let eventContent = document.createDocumentFragment();
-
-			let idTitle = document.createElement("h3");
-			let eventLink = document.createElement("a");
-			eventLink.setAttribute("href", this.getAttribute("uri") + obsel["@id"]);
-			eventLink.setAttribute("target", "_blank");
-			eventLink.innerText = obsel["@id"];
-			idTitle.appendChild(eventLink);
-			eventContent.appendChild(idTitle);
-
-			let typeLine = document.createElement("p");
-			let typeLabel = document.createElement("strong");
-			typeLabel.innerText = this._translateString("Type") + " : ";
-			typeLine.appendChild(typeLabel);
-
-			let typeValue = document.createElement("span");
-			typeValue.innerText = obsel["@type"];
-			typeLine.appendChild(typeValue);
-			eventContent.appendChild(typeLine);
-
-			let beginLine = document.createElement("p");
-			let beginLabel = document.createElement("strong");
-			beginLabel.innerText = this._translateString("Begin") + " : ";
-			beginLine.appendChild(beginLabel);
-
-			let beginValue = document.createElement("span");
-			beginValue.innerText = this._getFormattedDate(parseInt(obsel.begin));
-			beginLine.appendChild(beginValue);
-			eventContent.appendChild(beginLine);
-
-			let endLine = document.createElement("p");
-			let endLabel = document.createElement("strong");
-			endLabel.innerText = this._translateString("End") + " : ";
-			endLine.appendChild(endLabel);
-
-			let endValue = document.createElement("span");
-			endValue.innerText = this._getFormattedDate(parseInt(obsel.end));
-			endLine.appendChild(endValue);
-			eventContent.appendChild(endLine);
-
-			// display other attributes (custom attributes)
-			let otherAttributesList = document.createElement("ul");
-
-			for(let property_key in obsel) {
-				if(!sysAttributes.includes(property_key)) {
-					let attribute_value = obsel[property_key];
-					let listItem = document.createElement("li");
-					listItem.innerText = property_key + " : " + attribute_value;
-					otherAttributesList.appendChild(listItem);
-				}
-			}
-
-			eventContent.appendChild(otherAttributesList);
-			// ---
-
-			eventElement.appendChild(eventContent);
 			eventsFragment.appendChild(eventElement);
 		}
 
@@ -1006,5 +1044,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			unknownObselTypeLegend.setAttribute("label", this._translateString("Unknown obsel type"));
 	}
 }
+
+KTBS4LA2TraceTimeline.obselsSysAttributes = ["@id", "@type", "begin", "beginDT", "end", "hasSourceObsel"];
 
 customElements.define('ktbs4la2-trace-timeline', KTBS4LA2TraceTimeline);

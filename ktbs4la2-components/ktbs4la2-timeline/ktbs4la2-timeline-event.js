@@ -8,7 +8,7 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 * 
 	 */
 	constructor() {
-		super(import.meta.url);
+		super(import.meta.url, true, true, false);
 		this._beginTime = null;
 		this._endTime = null;
 		this._isVisible = null;
@@ -44,6 +44,7 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 			this._endTime = null;
 		}
 		else if(attributeName == "row") {
+			if(newValue != null)
 			this.style.bottom = (parseInt(newValue, 10) * 15) + "px";
 		}
 		else if(attributeName == "visible") {
@@ -83,14 +84,9 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 * 
 	 */
 	onComponentReady() {
-		this._container = this.shadowRoot.querySelector("#container");
 		this._hiddenSiblingsMarker = this.shadowRoot.querySelector("#hidden-siblings-marker");
 		this._marker = this.shadowRoot.querySelector("#marker");
-		this._marker.addEventListener("click", this._onClickMarker.bind(this));
-		this._popupDiv = this.shadowRoot.querySelector("#popup");
 		this._closeButton = this.shadowRoot.querySelector("#close-button");
-		this._closeButton.addEventListener("click", this._onClickCloseButton.bind(this));
-		this.addEventListener("mousedown", this._onMouseDown.bind(this));
 	}
 
 	/**
@@ -163,30 +159,28 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	_onClickCloseButton(event) {
 		event.preventDefault();
 
-		if(this.classList.contains("selected"))
+		if(this.selected)
 			this.classList.remove("selected");
 	}
 
 	/**
 	 * 
 	 */
-	_onClickMarker(event) {
-		event.preventDefault();
+	get selected() {
+		return this.classList.contains("selected");
+	}
 
-		if(!this.classList.contains("selected")) {
+	/**
+	 * 
+	 */
+	toggleSelect(event) {
+		if(!this.selected) {
 			this.classList.add("selected");
 			let select_event = new CustomEvent("select-timeline-event", {bubbles: true});
 			this.dispatchEvent(select_event);
 		}
 		else
 			this.classList.remove("selected");
-	}
-
-	/**
-	 * 
-	 */
-	_onMouseDown(event) {
-		event.stopPropagation();
 	}
 
 	/**

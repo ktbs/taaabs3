@@ -8,10 +8,11 @@ class TemplatedHTMLElement extends HTMLElement {
 	 * @param string componentJSPath
 	 * @param bool fetchStylesheet
 	 */
-	constructor(componentJSPath, fetchStylesheet = true, fetchTranslation = true) {
+	constructor(componentJSPath, fetchStylesheet = true, fetchTranslation = true, listenAncestorLangChange = true) {
 		super();
 		this._componentJSPath = componentJSPath;
 		this._fetchTranslation = fetchTranslation;
+		this._listenAncestorLangChange = listenAncestorLangChange;
 		this._translatableStrings = new Array();
 		this._bindedAncestorLangChangefunction = this._onAncestorLangChange.bind(this);
 		this._langInheritedFromAncestor = null;
@@ -133,7 +134,14 @@ class TemplatedHTMLElement extends HTMLElement {
 	/**
 	 * 
 	 */
-	_determineLang() {
+	_initLang() {
+		// clear previous listener to the closest ancestor with a "lang" attribute
+		if(this._langInheritedFromAncestor != null) {
+			this._langInheritedFromAncestor.removeEventListener("langchange", this._bindedAncestorLangChangefunction);
+			this._langInheritedFromAncestor = null;
+		}
+
+		// determine which is the language
 		if(this.getAttribute("lang")) {
 			this._lang = this.getAttribute("lang");
 		}
@@ -141,26 +149,16 @@ class TemplatedHTMLElement extends HTMLElement {
 			let closestTranslatableAncestor = this.closest("[lang]");
 
 			if(closestTranslatableAncestor) {
-				this._langInheritedFromAncestor = closestTranslatableAncestor;
-				this._lang = this._langInheritedFromAncestor.getAttribute("lang");
-				this._langInheritedFromAncestor.addEventListener("langchange", this._bindedAncestorLangChangefunction);
+				this._lang = closestTranslatableAncestor.getAttribute("lang");
+
+				if(this._listenAncestorLangChange) {
+					this._langInheritedFromAncestor = closestTranslatableAncestor;
+					this._langInheritedFromAncestor.addEventListener("langchange", this._bindedAncestorLangChangefunction);
+				}
 			}
 			else
 				this._lang = 'en';
 		}
-	}
-
-	/**
-	 * 
-	 */
-	_initLang() {
-		// first, determine which is the language
-		if(this._langInheritedFromAncestor != null) {
-			this._langInheritedFromAncestor.removeEventListener("langchange", this._bindedAncestorLangChangefunction);
-			this._langInheritedFromAncestor = null;
-		}
-		
-		this._determineLang();
 		// --- done
 	
 		// then, fetch the translation if needed
