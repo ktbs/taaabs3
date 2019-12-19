@@ -18,7 +18,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 * 
 	 */
 	constructor() {
-		super(import.meta.url, true);
+		super(import.meta.url, true, true, false);
 		this._is_resizing = false;
 		this._resizing_initial_width = 250;
 		this._resizing_origin_x = null;

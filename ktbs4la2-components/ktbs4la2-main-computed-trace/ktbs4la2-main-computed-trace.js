@@ -136,7 +136,7 @@ class KTBS4LA2MainComputedTrace extends KtbsResourceElement {
 	 * 
 	 */
 	_updateStringsTranslation() {
-		this.resourceTypeLabel.innerText = this._translateString("Stored trace");
+		this.resourceTypeLabel.innerText = this._translateString("Computed trace");
 		this.linkTag.setAttribute("title", this._translateString("See the resource on the REST console (opens in a new tab)"));
 		this.resourceStatusLabel.innerText = this._translateString(this._resourceStatusString);
 		this.modelSubsection.setAttribute("lang", this._lang);

@@ -134,14 +134,7 @@ class TemplatedHTMLElement extends HTMLElement {
 	/**
 	 * 
 	 */
-	_initLang() {
-		// clear previous listener to the closest ancestor with a "lang" attribute
-		if(this._langInheritedFromAncestor != null) {
-			this._langInheritedFromAncestor.removeEventListener("langchange", this._bindedAncestorLangChangefunction);
-			this._langInheritedFromAncestor = null;
-		}
-
-		// determine which is the language
+	_determineLang() {
 		if(this.getAttribute("lang")) {
 			this._lang = this.getAttribute("lang");
 		}
@@ -159,6 +152,20 @@ class TemplatedHTMLElement extends HTMLElement {
 			else
 				this._lang = 'en';
 		}
+	}
+
+	/**
+	 * 
+	 */
+	_initLang() {
+		// clear previous listener to the closest ancestor with a "lang" attribute
+		if(this._langInheritedFromAncestor != null) {
+			this._langInheritedFromAncestor.removeEventListener("langchange", this._bindedAncestorLangChangefunction);
+			this._langInheritedFromAncestor = null;
+		}
+
+		// determine which is the language
+		this._determineLang();
 		// --- done
 	
 		// then, fetch the translation if needed
