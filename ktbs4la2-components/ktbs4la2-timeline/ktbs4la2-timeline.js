@@ -260,6 +260,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		this._allEventNodes = null;
 		this._visibleEventsNodes = null;
+		this._eventsData = null;
 		this._eventsNodesInView = null;
 
 		this._bindedOnDragFunction = this._onDrag.bind(this);
@@ -288,8 +289,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		this._lastKnownDisplayWindowWidth = null;
 		this._lastKnownDisplayWindowHeight = null;
-
-		this._updateEventsRowWorker = null;
 
 		this._updateTimeLineCursorID = null;
 
@@ -340,6 +339,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		this.addEventListener("select-timeline-event", this._onSelectTimelineEvent.bind(this));
 		this.addEventListener("click", this._onClick.bind(this));
+
+		this._updateEventsRowWorker = null;
+		this._requestUpdateEventsRowID = null;
+		this._updateEventsRowID = null;
 	}
 
 	/**
@@ -448,7 +451,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	disconnectedCallback() {
 		super.disconnectedCallback();
 
-		if(this._updateEventsRowWorker)
+		if(this._requestUpdateEventsRowID != null)
+			clearTimeout(this._requestUpdateEventsRowID);
+
+		if(this._updateEventsRowWorker != null)
 			this._updateEventsRowWorker.terminate();
 
 		if(this._displayWindowResizeObserver != null)
@@ -622,7 +628,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_getVisibleEventNodes() {
 		if(this._visibleEventsNodes == null)
-			this._visibleEventsNodes = Array.from(this.querySelectorAll("ktbs4la2-timeline-event:not([visible = \"false\"]):not([visible = \"0\"])")).sort(KTBS4LA2TimelineEvent.compareEventsOrder);
+			this._visibleEventsNodes = Array.from(this.querySelectorAll("ktbs4la2-timeline-event:not([visible = \"false\"]):not([visible = \"0\"])"));
 
 		return this._visibleEventsNodes;
 	}
@@ -710,6 +716,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			setTimeout(() => {
 				this._allEventNodes = null;
 				this._visibleEventsNodes = null;
+				this._eventsData = null;
 
 				this._timeDivisionsInitialized.then(() => {
 					this._updateScrollBarContent();
@@ -720,6 +727,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		}
 		else if(changedEventVisibility) {
 			this._visibleEventsNodes = null;
+			this._eventsData = null;
 			
 			this._componentReady.then(() => {
 				this._updateScrollBarContent();
@@ -767,64 +775,78 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_getEventsData() {
+		if(this._eventsData == null) {
+			this._eventsData = new Array();
+			let visibleEventsNodes = this._getVisibleEventNodes().sort(KTBS4LA2TimelineEvent.compareEventsOrder);
+
+			visibleEventsNodes.forEach((eventNode) => {
+				this._eventsData.push({
+					id: eventNode.id,
+					beginTime: eventNode.beginTime,
+					endTime: eventNode.endTime,
+					shape: eventNode.getAttribute("shape"),
+					hasSymbol: eventNode.hasAttribute("symbol"),
+					row: eventNode.hasAttribute("row")?parseInt(eventNode.getAttribute("row"), 10):null,
+					hasHiddenSiblings: eventNode.hasAttribute("hidden-siblinbgs-count")
+				});
+			});
+		}
+
+		return this._eventsData;
+	}
+
+	/**
+	 * 
+	 */
 	_requestUpdateEventsRow() {
-		setTimeout(() => {
-			let visibleEventsNodes = this._getVisibleEventNodes();
-			
-			if(visibleEventsNodes.length > 0) {
-				let timeLineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
-				let timeOverWidthRatio = timeLineDuration / this._timeDiv.clientWidth;
+		if(this._requestUpdateEventsRowID != null)
+			clearTimeout(this._requestUpdateEventsRowID);
 
-				if(!isNaN(timeOverWidthRatio)) {
-					let eventsData = new Array();
+		if(this._updateEventsRowWorker != null) {
+			this._updateEventsRowWorker.terminate();
+			this._updateEventsRowWorker = null;
+		}
 
-					for(let i = 0; i < visibleEventsNodes.length; i++) {
-						let event = visibleEventsNodes[i];
+		this._requestUpdateEventsRowID = setTimeout(() => {
+			let timeLineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
+			let timeOverWidthRatio = timeLineDuration / this._timeDiv.clientWidth;
 
-						eventsData.push({
-							id: event.id,
-							beginTime: event.beginTime,
-							endTime: event.endTime,
-							shape: event.getAttribute("shape"),
-							hasSymbol: event.hasAttribute("symbol"),
-							row: parseInt(event.getAttribute("row"), 10),
-							hasHiddenSiblings: event.hasAttribute("hidden-siblinbgs-count")
-						});
-					}
+			if(!isNaN(timeOverWidthRatio)) {
+				let pixelsBeginThreshold = 13;
+				let timeBeginThreshold = timeOverWidthRatio * pixelsBeginThreshold;
+				let pixelsEndThreshold = 1;
+				let timeEndThreshold = timeOverWidthRatio * pixelsEndThreshold;
 
-					let pixelsBeginThreshold = 13;
-					let timeBeginThreshold = timeOverWidthRatio * pixelsBeginThreshold;
-					let pixelsEndThreshold = 1;
-					let timeEndThreshold = timeOverWidthRatio * pixelsEndThreshold;
+				let updateEventsRowWorkerData = {
+					eventsData: this._getEventsData(),
+					maxDisplayableRows: this._maxDisplayableRows,
+					firstRepresentedTime: this._firstRepresentedTime,
+					timeBeginThreshold: timeBeginThreshold,
+					timeEndThreshold: timeEndThreshold
+				};
 
-					let updateEventsRowWorkerData = {
-						eventsData: eventsData,
-						maxDisplayableRows: this._maxDisplayableRows,
-						firstRepresentedTime: this._firstRepresentedTime,
-						timeBeginThreshold: timeBeginThreshold,
-						timeEndThreshold: timeEndThreshold
-					};
+				let updateEventsRowWorkerURL = import.meta.url.substr(0, import.meta.url.lastIndexOf('/')) + '/update-events-row-worker.js';
+				this._updateEventsRowWorker = new Worker(updateEventsRowWorkerURL);
+				
+				this._updateEventsRowWorker.onmessage = ((event) => {
+					this._updateEventsRowWorker = null;
+					this._eventsData = event.data.eventsNewData;
 
-					let updateEventsRowWorkerURL = import.meta.url.substr(0, import.meta.url.lastIndexOf('/')) + '/update-events-row-worker.js';
-					
-					if(this._updateEventsRowWorker)
-						this._updateEventsRowWorker.terminate();
-					
-					this._updateEventsRowWorker = new Worker(updateEventsRowWorkerURL);
+					if(this._updateEventsRowID != null)
+						clearTimeout(this._updateEventsRowID);
 
-					this._updateEventsRowWorker.onmessage = ((event) => {
-						setTimeout(() => {
-							let eventsNewRows = event.data.eventsNewRows;
-							let eventsNewHiddenSiblinbgsCounts = event.data.eventsNewHiddenSiblinbgsCounts;
-							this._updateEventsRow(eventsNewRows, eventsNewHiddenSiblinbgsCounts);
-						});
+					this._updateEventsRowID = setTimeout(() => {
+						let eventsNewRows = event.data.eventsNewRows;
+						let eventsNewHiddenSiblinbgsCounts = event.data.eventsNewHiddenSiblinbgsCounts;
+						this._updateEventsRow(eventsNewRows, eventsNewHiddenSiblinbgsCounts);
 					});
+				});
 
-					this._updateEventsRowWorker.postMessage(updateEventsRowWorkerData);
-				}
-				else
-					throw new Error("Could not determine time/width ratio");
+				this._updateEventsRowWorker.postMessage(updateEventsRowWorkerData);
 			}
+			else
+				throw new Error("Could not determine time/width ratio");
 		});
 	}
 

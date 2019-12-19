@@ -1,12 +1,12 @@
 /**
  * 
  */
-onmessage = ((event) => {
-    let eventsData = event.data.eventsData;
-    let maxDisplayableRows = event.data.maxDisplayableRows;
-    let firstRepresentedTime = event.data.firstRepresentedTime;
-    let timeBeginThreshold = event.data.timeBeginThreshold;
-    let timeEndThreshold = event.data.timeEndThreshold;
+addEventListener("message", (messageEvent) => {
+    let eventsData = messageEvent.data.eventsData;
+    let maxDisplayableRows = messageEvent.data.maxDisplayableRows;
+    let firstRepresentedTime = messageEvent.data.firstRepresentedTime;
+    let timeBeginThreshold = messageEvent.data.timeBeginThreshold;
+    let timeEndThreshold = messageEvent.data.timeEndThreshold;
 
     let previousEventsPerRow = new Array();
     let previousEventsTimePerRow = new Array();
@@ -14,9 +14,9 @@ onmessage = ((event) => {
     let eventsNewRows = new Array();
     let eventsNewHiddenSiblinbgsCounts = new Array();
     let hiddenEventsCountSinceLastVisible = 0;
-    let lastVisibleMaxRowEvent = null;
+    let lastVisibleMaxRowEventIndex = null;
 
-    // we browse visible events
+    // we browse events
     for(let i = 0; i < eventsData.length; i++) {
         let currentEvent = eventsData[i];
         let availableRow = null;
@@ -51,10 +51,12 @@ onmessage = ((event) => {
 
         if(availableRow < maxDisplayableRows) {
             if(availableRow == (maxDisplayableRows - 1))
-                lastVisibleMaxRowEvent = currentEvent;
+                lastVisibleMaxRowEventIndex = i;
 
-            if(currentEvent.row != availableRow)
+            if(currentEvent.row != availableRow) {
                 eventsNewRows[currentEvent.id] = availableRow;
+                eventsData[i].row = availableRow;
+            }
             
             previousEventsPerRow[availableRow] = currentEvent;
             previousEventsTimePerRow[availableRow] = currentEvent.beginTime;
@@ -64,27 +66,33 @@ onmessage = ((event) => {
 
             hiddenEventsCountSinceLastVisible = 0;
 
-            if(currentEvent.hasHiddenSiblings)
+            if(currentEvent.hasHiddenSiblings) {
                 eventsNewHiddenSiblinbgsCounts[currentEvent.id] = null;
+                eventsData[i].hasHiddenSiblings = false;
+            }
         }
         else {
-            if(currentEvent.row != null)
+            if(currentEvent.row != null) {
                 eventsNewRows[currentEvent.id] = null;
+                eventsData[i].row = null;
+            }
 
-            if(!lastVisibleMaxRowEvent && (previousEventsPerRow.length > 0))
-                lastVisibleMaxRowEvent = previousEventsPerRow[maxDisplayableRows - 1];
-
-            if(lastVisibleMaxRowEvent) {
-                if(!eventsNewHiddenSiblinbgsCounts[lastVisibleMaxRowEvent.id])
-                    eventsNewHiddenSiblinbgsCounts[lastVisibleMaxRowEvent.id] = 1;
+            if(lastVisibleMaxRowEventIndex) {
+                if(!eventsNewHiddenSiblinbgsCounts[eventsData[lastVisibleMaxRowEventIndex].id])
+                    eventsNewHiddenSiblinbgsCounts[eventsData[lastVisibleMaxRowEventIndex].id] = 1;
                 else
-                    eventsNewHiddenSiblinbgsCounts[lastVisibleMaxRowEvent.id]++;
+                    eventsNewHiddenSiblinbgsCounts[eventsData[lastVisibleMaxRowEventIndex].id]++;
+
+                eventsData[lastVisibleMaxRowEventIndex].hasHiddenSiblings = true;
             }
         }
     }
-
+    
     postMessage({
+        eventsNewData: eventsData,
         eventsNewRows: eventsNewRows,
         eventsNewHiddenSiblinbgsCounts: eventsNewHiddenSiblinbgsCounts
     });
+
+    close();
 });
