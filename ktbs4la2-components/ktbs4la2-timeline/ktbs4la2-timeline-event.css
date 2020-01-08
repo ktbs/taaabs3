@@ -24,7 +24,6 @@
 	top: -5px;
 	padding: 0px 4px 0px 2px;
 	cursor: default;
-	z-index: 4;
 }
 
 #hidden-siblings-marker:hover {
@@ -43,7 +42,6 @@
 	position: relative;
 	cursor: pointer;
 	height: 12px;
-	z-index: 3;
 }
 
 :host(:not([symbol]):not([color])) #marker {
@@ -93,7 +91,6 @@
 }
 
 #marker:hover, :host(.selected) #marker {
-	z-index: 4;
 	height: 14px;
 	top: 1px;
 }
@@ -106,7 +103,7 @@
 #popup {
 	display: none;
 	position: absolute;
-	z-index: 5;
+	z-index: 2;
 	left: 15px;
 	bottom: 5px;
 	background-color: white;
@@ -132,7 +129,6 @@
 	background-repeat: no-repeat;
 	width: 16px;
 	height: 16px;
-	z-index: 6;
 }
 
 #close-button:hover {

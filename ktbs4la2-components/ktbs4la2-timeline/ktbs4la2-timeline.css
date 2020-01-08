@@ -97,6 +97,7 @@
 	top: 0;
 	height: 100%;
 	width: 100%;
+	z-index: 2;
 }
 
 #timeline-cursor {
@@ -106,7 +107,6 @@
 	background-color: red;
 	top: 0px;
 	left: 0px;
-	z-index: 2;
 	display: none;
 }
 
@@ -300,7 +300,6 @@
 	position: absolute;
 	height: 20px;
 	width: 20px;
-	z-index: 2;
 	border: none;
 	background-size: contain;
 	background-repeat: no-repeat;
@@ -343,7 +342,6 @@
 	background-color: #DDD;
 	height: 20px;
 	width: 100%;
-	z-index: 1;
 }
 
 #scrollbar-background {
@@ -392,7 +390,6 @@
 	opacity: 0.3;
 	right: 2px;
 	top: 2px;
-	z-index: 5;
 }
 
 #toggle-fullscreen-button * {

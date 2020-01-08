@@ -195,9 +195,9 @@
 #progress-bar-container {
 	padding-left: 70px;
 	padding-right: 16px;
-	z-index: 5;
 	position: relative;
-    bottom: -14px;
+	bottom: -14px;
+	height: 2px;
 }
 
 #progress-bar {
