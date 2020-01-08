@@ -115,7 +115,6 @@
 	font-size: 7pt;
 	margin-left: 2px;
 	width: 110px;
-	/*will-change: left;*/
 }
 
 /* ------------------------------------------------- */
@@ -147,27 +146,7 @@
 	flex-direction: row;
 	/*animation: fadein 0.5s;*/
 	padding-top: 20px;
-	/*will-change: display;*/
 }
-
-/*
-#widget-container.year .time-division-year,
-#widget-container.day .time-division-day,
-#widget-container.hour .time-division-hour,
-#widget-container.minute .time-division-minute,
-#widget-container.tenseconds .time-division-tenseconds,
-#widget-container.second .time-division-second,
-#widget-container.ahundredmilliseconds .time-division-ahundredmilliseconds,
-#widget-container.tenmilliseconds .time-division-tenmilliseconds,
-#widget-container.millisecond .time-division-millisecond,
-#widget-container.second .time-division-second,
-#widget-container.ahundredmilliseconds .time-division-ahundredmilliseconds,
-#widget-container.tenmilliseconds .time-division-tenmilliseconds,
-#widget-container.millisecond .time-division-millisecond
-{
-	will-change: display, width;
-}*/
-
 
 .time-division.overflow {
 	display: none;

@@ -9,9 +9,6 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 */
 	constructor() {
 		super(import.meta.url, true, true, false);
-		this._beginTime = null;
-		this._endTime = null;
-		this._isVisible = null;
 	}
 
 	/**
@@ -21,7 +18,7 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		let observedAttributes = super.observedAttributes;
 		observedAttributes.push("begin");
 		observedAttributes.push("end");
-		observedAttributes.push("row");
+		//observedAttributes.push("row");
 		observedAttributes.push("visible");
 		observedAttributes.push("href");
 		observedAttributes.push("color");
@@ -38,17 +35,31 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
 
 		if(attributeName == "begin") {
-			this._beginTime = null;
+			if(newValue != null) {
+				this._beginTime = parseInt(newValue, 10);
+
+				if(isNaN(this._beginTime))
+					this.emitErrorEvent(new Error("Cannot parse integer from string : " + newValue));
+			}
+			else
+				this._beginTime = undefined;
 		}
 		else if(attributeName == "end") {
-			this._endTime = null;
+			if(newValue != null) {
+				this._endTime = parseInt(newValue, 10);
+
+				if(isNaN(this._endTime))
+					this.emitErrorEvent(new Error("Cannot parse integer from string : " + newValue));
+			}
+			else
+				this._endTime = undefined;
 		}
-		else if(attributeName == "row") {
+		/*else if(attributeName == "row") {
 			if(newValue != null)
-			this.style.bottom = (parseInt(newValue, 10) * 15) + "px";
-		}
+				this.style.bottom = (parseInt(newValue, 10) * 15) + "px";
+		}*/
 		else if(attributeName == "visible") {
-			this._isVisible = null;
+			this._isVisible = !((newValue == "0") || (newValue == "false"));
 		}
 		else if(attributeName == "href")
 			this._componentReady.then(() => {
@@ -100,19 +111,6 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 * 
 	 */
 	get beginTime() {
-		if(this._beginTime == null) {
-			if(this.hasAttribute("begin")) {
-				let beginTimeInt = parseInt(this.getAttribute("begin"));
-
-				if(!isNaN(beginTimeInt))
-					this._beginTime = beginTimeInt;
-				else
-					throw new Error("Cannot parse integer from string : " + this.getAttribute("begin"));
-			}
-			else
-				this._beginTime = undefined;
-		}
-
 		return this._beginTime;
 	}
 	
@@ -120,37 +118,17 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 * 
 	 */
 	get endTime() {
-		if(this._endTime == null) {
-			if(this.hasAttribute("end")) {
-				let endTimeInt = parseInt(this.getAttribute("end"));
-
-				if(!isNaN(endTimeInt))
-					this._endTime = endTimeInt;
-				else
-					throw new Error("Cannot parse integer from string : " + this.getAttribute("end"));
-			}
-			else
-				this._endTime = this.beginTime;
-		}
-
-		return this._endTime;
+		if(this._endTime != undefined)
+			return this._endTime;
+		else
+			return this._beginTime;
 	}
 
 	/**
 	 * 
 	 */
 	get isVisible() {
-		if(this._isVisible == null) {
-			this._isVisible = (
-					!this.hasAttribute("visible")
-				|| 	(
-						(this.getAttribute("visible") != "0")
-					&&	(this.getAttribute("visible") != "false")
-				)
-			);
-		}
-
-		return this._isVisible;
+		return ((this._isVisible == undefined) || this._isVisible);
 	}
 	
 	/**

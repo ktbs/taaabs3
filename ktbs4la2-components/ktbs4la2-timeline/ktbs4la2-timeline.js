@@ -1,6 +1,8 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 import {KTBS4LA2TimelineEvent} from "./ktbs4la2-timeline-event.js";
 
+import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
+
 /**
  * 
  */
@@ -628,9 +630,54 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_getVisibleEventNodes() {
 		if(this._visibleEventsNodes == null)
-			this._visibleEventsNodes = Array.from(this.querySelectorAll("ktbs4la2-timeline-event:not([visible = \"false\"]):not([visible = \"0\"])"));
+			this._visibleEventsNodes = Array.from(this.querySelectorAll("ktbs4la2-timeline-event:not([visible = \"false\"]):not([visible = \"0\"])")).sort(KTBS4LA2TimelineEvent.compareEventsOrder);
 
 		return this._visibleEventsNodes;
+	}
+
+	/**
+	 * 
+	 */
+	_getDisplayedEventsOverlappingInterval(minTime, maxTime) {
+		let overlappingEvents = new Array();
+		let visibleEvents = this._getVisibleEventNodes();
+
+		for(let i = 0; i < visibleEvents.length; i++) {
+			let currentEvent = visibleEvents[i];
+			let eventOverlapsInterval = ((currentEvent.endTime >= minTime) && (currentEvent.beginTime <= maxTime));
+			
+			if(eventOverlapsInterval && currentEvent.hasAttribute("row"))
+				overlappingEvents.push(currentEvent);
+		}
+		
+		return overlappingEvents;
+	}
+
+
+	/**
+	 * 
+	 */
+	_getIntervalUnion(intervalA, intervalB) {
+		if((intervalA.begin >= intervalB.begin) && (intervalA.end <= intervalB.end)) {
+			// intervalA is included in intervalB
+			return [intervalB];
+		}
+		else if((intervalB.begin >= intervalA.begin) && (intervalB.end <= intervalA.end)) {
+			// intervalB is included in intervalA
+			return [intervalA];
+		}
+		else if(
+				((intervalA.begin >= intervalB.begin) && (intervalA.begin <= intervalB.end))
+			||	((intervalA.end >= intervalB.begin) && (intervalA.end <= intervalB.end))) {
+				// one interval is not included in the other, but the two of them intersect, so their union is one merged interval, which we calculate 
+				let unionBegin = Math.min(intervalA.begin, intervalB.begin);
+				let unionEnd = Math.max(intervalA.end, intervalB.end);
+				return [{begin: unionBegin, end: unionEnd}];
+			}
+		else {
+			// if the two intervals don't intersect, their union is composed of the two distincts intervals
+			return [intervalA, intervalB];
+		}
 	}
 
 	/**
@@ -718,6 +765,11 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._visibleEventsNodes = null;
 				this._eventsData = null;
 
+				this._eventsIndexByBeginTime = null;
+				this._eventsIndexByEndTime = null;
+				this._eventsBeginTimes = null;
+				this._eventsEndTimes = null;
+
 				this._timeDivisionsInitialized.then(() => {
 					this._updateScrollBarContent();
 					this._updateEventsPosX(newlyAddedNodes);
@@ -742,7 +794,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	_updateEventsPosX(events) {
 		let timelineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
 							
-		// we browse all visible events
+		// we browse events
 		for(let i = 0; i < events.length; i++) {
 			let currentEvent = events[i];
 			let eventPosXIsOverflow = ((currentEvent.endTime < this._firstRepresentedTime) || (currentEvent.beginTime > this._lastRepresentedTime));
@@ -778,7 +830,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	_getEventsData() {
 		if(this._eventsData == null) {
 			this._eventsData = new Array();
-			let visibleEventsNodes = this._getVisibleEventNodes().sort(KTBS4LA2TimelineEvent.compareEventsOrder);
+			let visibleEventsNodes = this._getVisibleEventNodes();
 
 			visibleEventsNodes.forEach((eventNode) => {
 				this._eventsData.push({
@@ -854,6 +906,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_updateEventsRow(eventsNewRows, eventsNewHiddenSiblinbgsCounts) {
+		let eventsToUpdatePosX = new Array();
+		
 		for(let eventId in eventsNewRows) {
 			let event = this.querySelector("#" + CSS.escape(eventId));
 
@@ -861,22 +915,18 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				let row = eventsNewRows[eventId];
 
 				if(row != null) {
+					if(!event.hasAttribute("row") && !event.classList.contains("posx-is-overflow"))
+						eventsToUpdatePosX.push(event);
+
 					event.setAttribute("row", row);
-
-					if(event.classList.contains("row-is-overflow"))
-						event.classList.remove("row-is-overflow");
+					event.style.bottom = (row * 15) + "px";
 				}
-				else  {
+				else
 					event.removeAttribute("row");
-
-					if(!event.classList.contains("row-is-overflow"))
-						event.classList.add("row-is-overflow");
-				}
-
-				if(!event.hasAttribute("row-initialized"))
-					event.setAttribute("row-initialized", "");
 			}
 		}
+
+		this._updateEventsPosX(eventsToUpdatePosX);
 
 		for(let eventId in eventsNewHiddenSiblinbgsCounts) {
 			let event = this.querySelector("#" + CSS.escape(eventId));
@@ -1011,7 +1061,17 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				let timelineCursorTime = this._getMouseTime(timelineCursorPosition);
 
 				this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
-				this._updateEventsPosX(this._getVisibleEventNodes());
+				
+				//this._updateEventsPosX(this._getVisibleEventNodes());
+
+				let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
+								
+				for(let i = 0; i < affectedIntervals.length; i++) {
+					let interval = affectedIntervals[i];
+					let eventsToUpdate = this._getDisplayedEventsOverlappingInterval(interval.begin, interval.end);
+					this._updateEventsPosX(eventsToUpdate);
+				}
+
 				let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
 				let newTimeOffset = viewBeginTime - this._firstRepresentedTime;
 				let newScrollLeft = newTimeOffset * widthOverTimeRatio;
@@ -1029,6 +1089,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_updateTimeDivisions(fromTime, toTime, parent = this._timeDiv) {
+		//let debut = performance.now();
 		let subDivs = parent.querySelectorAll(":scope > ktbs4la2-timeline-subdivision");
 
 		// browse parent's sub-divs
@@ -1117,6 +1178,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		if(parent == this._timeDiv)
 			this._updateRepresentedTime();
+
+		/*if(parent == this._timeDiv)
+			console.log("_updateTimeDivisions() : " + (performance.now() - debut));*/
 	}
 
 	/**
@@ -1273,8 +1337,17 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let lastBefore = this._lastRepresentedTime;
 			let timeDivChanged = this._setViewBegin(newViewBegin);
 
-			if(timeDivChanged)
-				this._updateEventsPosX(this._getVisibleEventNodes());
+			if(timeDivChanged) {
+				//this._updateEventsPosX(this._getVisibleEventNodes());
+
+				let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
+								
+				for(let i = 0; i < affectedIntervals.length; i++) {
+					let interval = affectedIntervals[i];
+					let eventsToUpdate = this._getDisplayedEventsOverlappingInterval(interval.begin, interval.end);
+					this._updateEventsPosX(eventsToUpdate);
+				}
+			}
 
 			this._dragScrollBarCursorUpdateViewID = null;
 		});
@@ -1297,6 +1370,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_onClickScrollBarBackGround(event) {
 		event.preventDefault();
+
+		let firstBefore = this._firstRepresentedTime;
+		let lastBefore = this._lastRepresentedTime;
+		
 		let mouseX = event.offsetX;
 		let totalDuration = this.endTime - this.beginTime;
 		let scrollBarTimeOverWidthRatio = totalDuration / this._scrollBar.clientWidth;
@@ -1305,8 +1382,17 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let newViewBeginTime = mouseTime - (viewDuration / 2);
 		let timeDivChanged = this._setViewBegin(newViewBeginTime);
 
-		if(timeDivChanged)
-			this._updateEventsPosX(this._getVisibleEventNodes());
+		if(timeDivChanged) {
+			//this._updateEventsPosX(this._getVisibleEventNodes());
+
+			let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
+								
+			for(let i = 0; i < affectedIntervals.length; i++) {
+				let interval = affectedIntervals[i];
+				let eventsToUpdate = this._getDisplayedEventsOverlappingInterval(interval.begin, interval.end);
+				this._updateEventsPosX(eventsToUpdate);
+			}
+		}
 	}
 
 	/**
@@ -1337,8 +1423,17 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let lastBefore = this._lastRepresentedTime;
 		let timeDivChanged = this._setViewBegin(newViewBeginTime);
 
-		if(timeDivChanged)
-			this._updateEventsPosX(this._getVisibleEventNodes());
+		if(timeDivChanged) {
+			//this._updateEventsPosX(this._getVisibleEventNodes());
+
+			let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
+								
+			for(let i = 0; i < affectedIntervals.length; i++) {
+				let interval = affectedIntervals[i];
+				let eventsToUpdate = this._getDisplayedEventsOverlappingInterval(interval.begin, interval.end);
+				this._updateEventsPosX(eventsToUpdate);
+			}
+		}
 
 		this._requestedScrollAmount = 0;
 	}
@@ -2459,8 +2554,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 							this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
 							let timeDivHasChanged = ((this._firstRepresentedTime != firstBefore) || (this._lastRepresentedTime != lastBefore));
 
-							if(timeDivHasChanged)
-								this._updateEventsPosX(this._getVisibleEventNodes());
+							if(timeDivHasChanged) {
+								//this._updateEventsPosX(this._getVisibleEventNodes());
+								let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
+								
+								for(let i = 0; i < affectedIntervals.length; i++) {
+									let interval = affectedIntervals[i];
+									let eventsToUpdate = this._getDisplayedEventsOverlappingInterval(interval.begin, interval.end);
+									this._updateEventsPosX(eventsToUpdate);
+								}
+							}
 						}
 						
 						if(divisionsLevelHasChanged)

@@ -6,8 +6,8 @@
 }
 
 :host([visible = "false"]), :host([visible = "0"]),
-:host(:not([posx-initialized])), :host(:not([row-initialized])),
-:host(.row-is-overflow),
+:host(:not([row])),
+:host(:not([posx-initialized])),
 :host(.posx-is-overflow) {
 	display: none;
 }
@@ -18,7 +18,7 @@
 	transform: rotate(-90deg);
 	transform-origin: left;
 	opacity: 0.4;
-	display: block;
+	display: none;
 	position: absolute;
 	left: 6px;
 	top: -5px;
@@ -34,19 +34,15 @@
 	font-weight: bold;
 }
 
-:host(:not([hidden-siblinbgs-count])) #hidden-siblings-marker {
-	display: none;
+:host([hidden-siblinbgs-count]) #hidden-siblings-marker {
+	display: block;
 }
 
 #marker {
 	display: inline-block;
 	position: relative;
-	left: 0;
-	top: 0;
 	cursor: pointer;
 	height: 12px;
-	outline: none;
-	width: 100%;
 	z-index: 3;
 }
 
