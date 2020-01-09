@@ -33,7 +33,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			/*if(this.getAttribute("label"))
 				this.titleTag.innerText = this.getAttribute("label");
 			else
-				this.titleTag.innerText = this._ktbsResource.get_relative_id();
+				this.titleTag.innerText = this._ktbsResource.id;
 
 			this.linkTag.href = this.getAttribute("uri");
 			this.linkTag.innerHTML = this.getAttribute("uri");*/

@@ -32,7 +32,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 				if(newValue)
 					this._titleTag.innerText = newValue;
 				else
-					this._titleTag.innerText = this._ktbsResource.get_relative_id();
+					this._titleTag.innerText = this._ktbsResource.id;
 			
 			}.bind(this));
 		}
@@ -69,7 +69,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 
 		Promise.all([this._resourceAttributesSet, this._componentReady]).then(() => {
 			if(!this.getAttribute("label"))
-				this._titleTag.innerText = this._ktbsResource.get_relative_id();
+				this._titleTag.innerText = this._ktbsResource.id;
 
 			this._titleTag.title = this._getTitleHint();
 		});
@@ -93,7 +93,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 			if(this._can_have_children() && this._containerDiv.classList.contains("unfolded"))
 				this._instanciateChildren(true);
 
-			let label = this._ktbsResource.get_label();
+			let label = this._ktbsResource.label;
 			
 			if(label && !this.getAttribute("label"))
 				this._titleTag.innerHTML = label;
@@ -221,80 +221,80 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 				if(!this._childrenInstanciated) {
 					if(this.getAttribute("resource-type") == "Ktbs") {
 						// create base child elements
-						let bases_uris = this._ktbsResource.list_bases_uris();
+						let bases = this._ktbsResource.bases;
 
-						for(let i = 0; i < bases_uris.length; i++) {
-							let baseUri = bases_uris[i];
+						for(let i = 0; i < bases.length; i++) {
+							let base = bases[i];
 							let baseTag = document.createElement("ktbs4la2-nav-resource");
 							baseTag.setAttribute("resource-type", "Base");
-							baseTag.setAttribute("uri", baseUri);
+							baseTag.setAttribute("uri", base.uri);
 							this.appendChild(baseTag);
 						}
 
 						// create method child elements
-						let methods_uris = this._ktbsResource.list_builtin_methods_uris();
+						let builtin_methods = this._ktbsResource.builtin_methods;
 			
-						for(let i = 0; i < methods_uris.length; i++) {
-							let method_uri = methods_uris[i];
+						for(let i = 0; i < builtin_methods.length; i++) {
+							let builtin_method = builtin_methods[i];
 							let methodTag = document.createElement("ktbs4la2-nav-resource");
 							methodTag.setAttribute("resource-type", "Method");
-							methodTag.setAttribute("uri", method_uri);
+							methodTag.setAttribute("uri", builtin_method.uri);
 							this.appendChild(methodTag);
 						}
 					}
 					else if(this.getAttribute("resource-type") == "Base") {
 
 						// create base child elements
-						let bases_uris = this._ktbsResource.list_bases_uris();
+						let bases = this._ktbsResource.bases;
 				
-						for(let i = 0; i < bases_uris.length; i++) {
-							let baseUri = bases_uris[i];
+						for(let i = 0; i < bases.length; i++) {
+							let base = bases[i];
 							let baseTag = document.createElement("ktbs4la2-nav-resource");
 							baseTag.setAttribute("resource-type", "Base");
-							baseTag.setAttribute("uri", baseUri);
+							baseTag.setAttribute("uri", base.uri);
 							this.appendChild(baseTag);
 						}
 
 						// create model child elements
-						let models_uris = this._ktbsResource.list_models_uris();
+						let models = this._ktbsResource.models;
 
-						for(let i = 0; i < models_uris.length; i++) {
-							let modelUri = models_uris[i];
+						for(let i = 0; i < models.length; i++) {
+							let model = models[i];
 							let modelTag = document.createElement("ktbs4la2-nav-resource");
-							modelTag.setAttribute("uri", modelUri);
+							modelTag.setAttribute("uri", model.uri);
 							modelTag.setAttribute("resource-type", "Model");
 							this.appendChild(modelTag);
 						}
 
 						// create stored trace child elements
-						let stored_traces_uris = this._ktbsResource.list_stored_traces_uris();
+						let stored_traces = this._ktbsResource.stored_traces;
 
-						for(let i = 0; i < stored_traces_uris.length; i++) {
-							let storedTraceUri = stored_traces_uris[i];
+						for(let i = 0; i < stored_traces.length; i++) {
+							let storedTrace = stored_traces[i];
 							let storedTraceTag = document.createElement("ktbs4la2-nav-resource");
-							storedTraceTag.setAttribute("uri", storedTraceUri);
+							storedTraceTag.setAttribute("uri", storedTrace.uri);
 							storedTraceTag.setAttribute("resource-type", "StoredTrace");
 							this.appendChild(storedTraceTag);
 						}
 
 						// create method child elements
-						let methods_uris = this._ktbsResource.list_methods_uris();
+						let methods = this._ktbsResource.methods;
 			
-						for(let i = 0; i < methods_uris.length; i++) {
-							let method_uri = methods_uris[i];
+						for(let i = 0; i < methods.length; i++) {
+							let method = methods[i];
 							let methodTag = document.createElement("ktbs4la2-nav-resource");
 							methodTag.setAttribute("resource-type", "Method");
-							methodTag.setAttribute("uri", method_uri);
+							methodTag.setAttribute("uri", method.uri);
 							this.appendChild(methodTag);
 						}
 
 						// create computed trace child elements
-						let computed_traces_uris = this._ktbsResource.list_computed_traces_uris();
+						let computed_traces = this._ktbsResource.computed_traces;
 
-						for(let i = 0; i < computed_traces_uris.length; i++) {
-							let computedTraceUri = computed_traces_uris[i];
+						for(let i = 0; i < computed_traces.length; i++) {
+							let computedTrace = computed_traces[i];
 							let computedTraceTag = document.createElement("ktbs4la2-nav-resource");
-							computedTraceTag.setAttribute("uri", computedTraceUri);
+							computedTraceTag.setAttribute("uri", computedTrace.uri);
 							computedTraceTag.setAttribute("resource-type", "ComputedTrace");
 							this.appendChild(computedTraceTag);
 						}

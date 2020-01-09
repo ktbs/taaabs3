@@ -76,12 +76,12 @@ class KTBS4LA2MainRoot extends KtbsResourceElement {
 			this.errorMessageDiv.innerText = "";
 			this._containerDiv.className = "online";
 
-			let version = this._ktbsResource.get_version();
+			let version = this._ktbsResource.version;
 
 			if(version)
 				this.versionTag.innerHTML = version;
 		
-			let comment = this._ktbsResource.get_comment();
+			let comment = this._ktbsResource.comment;
 
 			if(comment)
 				this.commentTag.innerHTML = comment;
@@ -89,25 +89,25 @@ class KTBS4LA2MainRoot extends KtbsResourceElement {
 			while(this.firstChild)
     			this.removeChild(this.firstChild);
 
-			let bases_uris = this._ktbsResource.list_bases_uris();
+			let bases = this._ktbsResource.bases;
 
-			for(let i = 0; i < bases_uris.length; i++) {
-				let baseUri = bases_uris[i];
+			for(let i = 0; i < bases.length; i++) {
+				let base = bases[i];
 				let baseTag = document.createElement("ktbs4la2-main-related-resource");
 				baseTag.setAttribute("resource-type", "Base");
-				baseTag.setAttribute("uri", baseUri);
+				baseTag.setAttribute("uri", base.uri);
 				baseTag.setAttribute("slot", "bases");
 				this.appendChild(baseTag);
 			}
 
 			// create method child elements
-			let methods_uris = this._ktbsResource.list_builtin_methods_uris();
+			let builtin_methods = this._ktbsResource.builtin_methods;
 
-			for(let i = 0; i < methods_uris.length; i++) {
-				let method_uri = methods_uris[i];
+			for(let i = 0; i < builtin_methods.length; i++) {
+				let builtin_method = builtin_methods[i];
 				let methodTag = document.createElement("ktbs4la2-main-related-resource");
 				methodTag.setAttribute("resource-type", "Method");
-				methodTag.setAttribute("uri", method_uri);
+				methodTag.setAttribute("uri", builtin_method.uri);
 				methodTag.setAttribute("slot", "methods");
 				this.appendChild(methodTag);
 			}
@@ -133,7 +133,7 @@ class KTBS4LA2MainRoot extends KtbsResourceElement {
 
 			this._resourceStatusString = "Error";
 			this.resourceStatusLabel.innerText = this._translateString(this._resourceStatusString);
-			this.errorMessageDiv.innerText = " (" + error.message + ")";
+			this.errorMessageDiv.innerText = " (" + error + ")";
 			this._containerDiv.className = "error";
 		});
 	}

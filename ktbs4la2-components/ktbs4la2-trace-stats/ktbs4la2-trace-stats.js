@@ -60,7 +60,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 		if(attributeName == "uri") {
 			this._trace = new Trace(newValue);
 
-			this._trace._read_data(this._abortController.signal)
+			this._trace.get(this._abortController.signal)
 				.then(() => {
 					this._resolveTraceLoaded();
 				})
@@ -74,7 +74,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 			let statsUri = newValue + "@stats";
 			this._stats = new TraceStats(statsUri);
 
-			this._stats._read_data(this._abortController.signal)
+			this._stats.get(this._abortController.signal)
 				.then(() => {
 					this._resolveStatsLoaded();
 				})
@@ -158,7 +158,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onTraceLoaded() {
-		let traceOriginString = this._trace.get_origin();
+		let traceOriginString = this._trace.origin;
 
 		if(traceOriginString != undefined) {
 			let parsedOrigin = Date.parse(traceOriginString);
@@ -174,33 +174,33 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 	_onStatsLoaded() {
 		this._componentReady.then(() => {
 			this._traceLoaded.then(() => {
-				if(this._stats.get_min_time() != undefined) {
-					let minTime = parseInt(this._stats.get_min_time(), 10) + this._originTime;
+				if(this._stats.min_time != undefined) {
+					let minTime = parseInt(this._stats.min_time, 10) + this._originTime;
 					this._beginTag.innerText = this.formatTimeStampToDate(minTime);
 				}
 				else
 					this._beginContainer.style.display = "none";
 
-				if(this._stats.get_max_time() != undefined) {
-					let maxTime = parseInt(this._stats.get_max_time(), 10) + this._originTime;
+				if(this._stats.max_time != undefined) {
+					let maxTime = parseInt(this._stats.max_time, 10) + this._originTime;
 					this._endTag.innerText = this.formatTimeStampToDate(maxTime);
 				}
 				else
 					this._endContainer.style.display = "none";
 			});
 
-			let duration = this._stats.get_duration();
+			let duration = this._stats.duration;
 
 			if(duration != null)
 				this._durationTag.innerText = this.formatTimeStampDeltaToDuration(duration);
 			else
 				this._durationContainer.style.display = "none";
 
-			let obselCount = this._stats.get_obsel_count();
+			let obselCount = this._stats.obsel_count;
 			this._countTag.innerText = obselCount;
 
 			if(obselCount > 0) {
-				let obselCountPerType = this._stats.get_obsel_count_per_type();
+				let obselCountPerType = this._stats.obsel_count_per_type;
 
 				for(let i = 0; i < obselCountPerType.length; i++) {
 					let type = obselCountPerType[i]["stats:hasObselType"];
@@ -238,7 +238,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 		this._endLabel.innerText = this._translateString("End") + " :";
 		this._durationLabel.innerText = this._translateString("Duration") + " :";
 
-		let duration = this._stats.get_duration();
+		let duration = this._stats.duration;
 
 		if(duration != null)
 			this._durationTag.innerText = this.formatTimeStampDeltaToDuration(duration);

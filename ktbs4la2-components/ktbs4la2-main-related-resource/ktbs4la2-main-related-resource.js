@@ -28,7 +28,7 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 
 		this._componentReady.then(() => {
 			this.linkTag.href = this.getAttribute("uri");
-			this.linkTag.innerText = this._ktbsResource.get_relative_id();
+			this.linkTag.innerText = this._ktbsResource.id;
 			this.linkTag.title = this._getTitleHint();
 		});
 	}
@@ -45,7 +45,7 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	 */
 	onktbsResourceLoaded() {
 		this._componentReady.then(() => {
-			let label = this._ktbsResource.get_label();
+			let label = this._ktbsResource.label;
 
 			if(label)
 				this.linkTag.innerText = label;

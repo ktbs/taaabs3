@@ -1,8 +1,9 @@
 import {Resource} from "./Resource.js";
 import {Base} from "./Base.js";
+import {Method} from "./Method.js";
 
 /**
- * 
+ * Class for the Ktbs root resource type
  */
 export class Ktbs extends Resource {
 
@@ -19,39 +20,33 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * 
+	 * Gets the software version of the service hosting the Ktbs root
+	 * @return string
 	 */
-	get_version() {
-		return this._parsedJson.version;
+	get version() {
+		return this._JSONData.version;
 	}
 
 	/**
-	 * 
+	 * Gets the "comment" of the Ktbs root
 	 */
-	get_comment() {
-		return this._parsedJson["http://www.w3.org/2000/01/rdf-schema#comment"];
+	get comment() {
+		return this._JSONData["http://www.w3.org/2000/01/rdf-schema#comment"];
 	}
 
 	/**
 	 * Return true if this resource is not modifiable.
 	 * @return bool
 	 */
-	get_readonly() {
+	get readonly() {
 		return true;
-	}
-
-	/**
-	 * 
-	 */
-	get_relative_id() {
-		return this.get_id();
 	}
 
 	/**
 	 * Returns a user-friendly label
 	 * @return str
 	 */
-	get_label() {
+	get label() {
 		return null;
 	}
 
@@ -63,15 +58,15 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * List the uris of the builtin methods supported by the kTBS.
+	 * Gets the URIs of the builtin methods supported by the kTBS service
 	 * @return string[]
 	 */
-	list_builtin_methods_uris() {
+	_get_builtin_methods_uris() {
 		let methods_uris = new Array();
 
-		if(this._parsedJson.hasBuiltinMethod instanceof Array) {
-			for(let i = 0; i < this._parsedJson.hasBuiltinMethod.length; i++) {
-				let method_id = this._parsedJson.hasBuiltinMethod[i];
+		if(this._JSONData.hasBuiltinMethod instanceof Array) {
+			for(let i = 0; i < this._JSONData.hasBuiltinMethod.length; i++) {
+				let method_id = this._JSONData.hasBuiltinMethod[i];
 				let method_uri;
 
 				if(method_id.substr(0, 4) == "http")
@@ -87,31 +82,32 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * List the builtin methods supported by the kTBS.
+	 * Gets the builtin methods supported by the kTBS service
 	 * @return Method[]
 	 */
-	/*list_builtin_methods() {
+	get builtin_methods() {
+		let builtin_methods = new Array();
+		let builtin_methods_uris = this._get_builtin_methods_uris();
 
-	}*/
+		for(let i = 0; i < builtin_methods_uris.length; i++) {
+			let builtin_method_URI = builtin_methods_uris[i];
+			let builtin_method = new Method(builtin_method_URI);
+			builtin_methods.push(builtin_method);
+		}
+
+		return builtin_methods;
+	}
 
 	/**
-	 * Return the builtin method identified by the given URI if supported, or null.
-	 * @param string methodUri
-	 * @return Method
+	 * Gets the URIs of the bases in the Ktbs root
+	 * @return string[]
 	 */
-	/*get_builtin_method(methodUri) {
-
-	}*/
-
-	/**
-	 * 
-	 */
-	list_bases_uris() {
+	_get_bases_uris() {
 		let bases_uris = new Array();
 
-		if(this._parsedJson.hasBase instanceof Array) {
-			for(let i = 0; i < this._parsedJson.hasBase.length; i++) {
-				let base_id = this._parsedJson.hasBase[i];
+		if(this._JSONData.hasBase instanceof Array) {
+			for(let i = 0; i < this._JSONData.hasBase.length; i++) {
+				let base_id = this._JSONData.hasBase[i];
 				let base_uri;
 
 				if(base_id.substr(0, 4) == "http")
@@ -127,12 +123,11 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * Returns all the bases in the Ktbs root
-	 * @return Base[]
+	 * Gets the bases in the Ktbs root
 	 */
-	list_bases() {
+	get bases() {
 		let bases = new Array();
-		let bases_uris = this.list_bases_uris();
+		let bases_uris = this._get_bases_uris();
 
 		for(let i = 0; i < bases_uris.length; i++) {
 			let baseURI = bases_uris[i];
@@ -142,27 +137,4 @@ export class Ktbs extends Resource {
 
 		return bases;
 	}
-
-	/**
-	 * Return the base identified by the given URI, or null.
-	 * @param string baseUri
-	 * @return Base
-	 */
-	get_base(baseUri) {
-		if(this._parsedJson.hasBase.includes(baseUri))
-			return new Base(baseUri);
-		else
-			throw new Error("There is no base with uri " + baseUri + "in the Ktbs root " + this._uri);
-	}
-
-
-	/**
-	 * Creates a base inside the current Ktbs and returns it
-	 * @param baseID
-	 * @param baseLabel
-	 * @return Base
-	 */
-	/*create_base(baseID, baseLabel = null) {
-
-	}*/
 }

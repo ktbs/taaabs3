@@ -182,7 +182,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		if(attributeName == "uri") {
 			this._trace = new Trace(newValue);
 
-			this._trace._read_data(this._abortController.signal)
+			this._trace.get(this._abortController.signal)
 				.then(() => {
 					this._resolveTraceLoaded();
 				})
@@ -200,7 +200,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			let statsUri = newValue + "@stats";
 			this._stats = new TraceStats(statsUri);
 
-			this._stats._read_data(this._abortController.signal)
+			this._stats.get(this._abortController.signal)
 				.then(() => {
 					this._onStatsLoaded();
 				})
@@ -229,7 +229,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			this._rejectAllObselsLoaded = reject;
 		}.bind(this));
 
-		this._obselList._read_first_obsel_page(100, this._obselsLoadingAbortController.signal)
+		this._obselList.get_first_obsel_page(100, this._obselsLoadingAbortController.signal)
 			.then((response) => {
 				// we assume the "context" section will be the same for every obsel page
 				if(!this._context)
@@ -311,7 +311,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onTraceLoaded() {
-		let traceOriginString = this._trace.get_origin();
+		let traceOriginString = this._trace.origin;
 
 		if(traceOriginString != undefined) {
 			let parsedOrigin = Date.parse(traceOriginString);
@@ -320,10 +320,9 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				this._originTime = parsedOrigin;
 		}
 
-		let model_uri = this._trace.get_model_uri();
-		this._model = new Model(model_uri);
+		this._model = this._trace.model;
 
-		this._model._read_data(this._abortController.signal).then(() => {
+		this._model.get(this._abortController.signal).then(() => {
 			this._onModelLoaded();
 		});
 	}
@@ -370,7 +369,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		defaultStyleSheet.description = this._translateString("Automatically generated stylesheet (one symbol and color for each obsel type)");
 		defaultStyleSheet.rules = new Array();
 		let model_uri = this._model._uri;
-		let obselTypes = this._model.list_obsel_types();
+		let obselTypes = this._model.obsel_types;
 
 		for(let i = 0; i < obselTypes.length; i++) {
 			let rawObselTypeID = obselTypes[i]["@id"];
@@ -425,7 +424,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				});
 			}
 
-			let modelStyleSheets = this._model.get_stylesheets();
+			let modelStyleSheets = this._model.stylesheets;
 
 			for(let i = 0; i < modelStyleSheets.length; i++) {
 				let aStyleSheet = modelStyleSheets[i];
@@ -690,13 +689,13 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onStatsLoaded() {
-		this._expectedObselCount = (this._stats.get_obsel_count() != undefined)?this._stats.get_obsel_count():0;
+		this._expectedObselCount = (this._stats.obsel_count != undefined)?this._stats.obsel_count:0;
 
 		if(this._expectedObselCount != 0) {
 			this._traceLoaded.then(() => {
-				if((this._stats.get_min_time() != undefined) && (this._stats.get_max_time() != undefined)) {
-					let minTime = this._stats.get_min_time() + this._originTime;
-					let maxTime = this._stats.get_max_time() + this._originTime;
+				if((this._stats.min_time != undefined) && (this._stats.max_time != undefined)) {
+					let minTime = this._stats.min_time + this._originTime;
+					let maxTime = this._stats.max_time + this._originTime;
 					
 					this._componentReady.then(() => {
 						this._timeline.setAttribute("begin", minTime);
@@ -908,7 +907,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			}
 			else {
 				setTimeout(() => {
-					this._obselList._read_obsel_page(nextPageURI, this._obselsLoadingAbortController.signal)
+					this._obselList.get_obsel_page(nextPageURI, this._obselsLoadingAbortController.signal)
 						.then((response) => {
 							this._onObselListPageRead(response.obsels, response.nextPageURI);
 						})

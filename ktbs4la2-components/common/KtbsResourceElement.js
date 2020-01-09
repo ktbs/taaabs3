@@ -30,14 +30,14 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 		}.bind(this));
 
 		this._ktbsResourceLoaded
-			.then(function() {
+			.then(() => {
 				if(this.onktbsResourceLoaded)
 					this.onktbsResourceLoaded();
-			}.bind(this))
-			.catch(function(error) {
+			})
+			.catch((error) => {
 				if(this.onktbsResourceLoadFailed)
 					this.onktbsResourceLoadFailed(error);
-			}.bind(this));
+			});
 		// --- done
 
 
@@ -45,19 +45,19 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 			this._resolveUriSet;
 			this._rejectUriSet;
 
-			this._uriSet = new Promise(function(resolve, reject) {
+			this._uriSet = new Promise((resolve, reject) => {
 				this._resolveUriSet = resolve;
 				this._rejectUriSet = reject;
-			}.bind(this));
+			});
 
 
 			this._resolveTypeSet;
 			this._rejectTypeSet;
 
-			this._typeSet = new Promise(function(resolve, reject) {
+			this._typeSet = new Promise((resolve, reject) => {
 				this._resolveTypeSet = resolve;
 				this._rejectTypeSet = reject;
-			}.bind(this));
+			});
 		// ---
 
 		//
@@ -87,13 +87,9 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 		let uri = this.getAttribute("uri");
 		
 		try {
-			/*if(!KtbsResourceElement.resourceInstances[uri])
-				KtbsResourceElement.resourceInstances[uri] = new (this._getKtbsResourceClass())(uri);
-
-			this._ktbsResource = KtbsResourceElement.resourceInstances[uri];*/
 			this._ktbsResource = new (this._getKtbsResourceClass())(uri);
 		
-			this._ktbsResource._read_data(this._abortController.signal)
+			this._ktbsResource.get(this._abortController.signal)
 				.then(function() {
 					this._resolveKtbsResourceLoaded();
 				}.bind(this))

@@ -1,12 +1,12 @@
 import {Resource} from "./Resource.js";
 
 /**
- * 
+ * Class to help reading obsels list from a Trace, optionally in a paginated fashion
  */
 export class ObselList extends Resource {
 	
 	/**
-	 * 
+	 * Constructor
 	 */
 	constructor(uri = null) {
 		super(uri);
@@ -67,7 +67,8 @@ export class ObselList extends Resource {
 	}
 
 	/**
-	 * 
+	 * Gets the uri to query in order to read resource's data (For some resource types, this might be different from the resource URI, for instance if we need to add some query parameters. In such case, descending resource types must override this method)
+	 * @return string
 	 */
 	get _data_read_uri() {
 		let params = new Array();
@@ -108,9 +109,11 @@ export class ObselList extends Resource {
 	}
 
 	/**
-	 * 
+	 * Builds and returns an URI to fetch the first Obsel page from the Trace
+	 * @param int limit The maximum number of obsels to fetch for this page (default: 500)
+	 * @return string
 	 */
-	_get_first_page_uri(temporary_limit = 500) {
+	_get_first_page_uri(limit = 500) {
 		let params = new Array();
 
 		if(this._after && (this._after != ""))
@@ -119,7 +122,7 @@ export class ObselList extends Resource {
 		if(this._before && (this._before != ""))
 			params.push("before=" + this._before);
 
-		params.push("limit=" + temporary_limit);
+		params.push("limit=" + limit);
 
 		if(this._minb && (this._minb != ""))
 			params.push("minb=" + this._minb);
@@ -148,17 +151,20 @@ export class ObselList extends Resource {
 	}
 
 	/**
-	 * 
+	 * Query the data for one page of the obsel list and returns a Promise attached to the HTTP request
+	 * @param string pageURI the URI of the obsel page
+	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
+	 * @return Promise
 	 */
-	_read_obsel_page(pageURI, abortSignal = null) {
-		let page_read = new Promise((resolve, reject) => {
+	get_obsel_page(pageURI, abortSignal = null) {
+		return new Promise((resolve, reject) => {
 				let fetchParameters = { 
 					method: "GET",
 					headers: new Headers({
 						"Accept": "application/json"
 					}),
-					mode: "cors",
-					credentials: "include",
+					/*mode: "cors",
+					credentials: "include",*/
 					cache: "default"
 				};
 
@@ -200,27 +206,29 @@ export class ObselList extends Resource {
 						reject(error);
 					});
 		});
-
-		return page_read;
 	}
 
 	/**
-	 * 
+	 * Gets the data for the first page of the Obsel list and returns a Promise attached to the HTTP request
+	 * @param int limit The maximum number of obsels to fetch for this page (default: 500)
+	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
+	 * @return Promise
 	 */
-	_read_first_obsel_page(limit = 500, abortSignal = null) {
+	get_first_obsel_page(limit = 500, abortSignal = null) {
 		let firstPageURI = this._get_first_page_uri(limit);
-		return this._read_obsel_page(firstPageURI, abortSignal);
+		return this.get_obsel_page(firstPageURI, abortSignal);
 	}
 
 	/**
-	 * 
+	 * Gets all the obsels of the obsel list
+	 * return Object[]
 	 */
 	get obsels() {
 		let obsels = new Array();
 
-		if(this._parsedJson.obsels instanceof Array) {
-			for(let i = 0; i < this._parsedJson.obsels.length; i++)
-				obsels.push(this._parsedJson.obsels[i]);
+		if(this._JSONData.obsels instanceof Array) {
+			for(let i = 0; i < this._JSONData.obsels.length; i++)
+				obsels.push(this._JSONData.obsels[i]);
 		}
 		
 		return obsels;

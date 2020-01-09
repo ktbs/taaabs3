@@ -40,7 +40,7 @@ class KTBS4LA2MainModel extends KtbsResourceElement {
 			if(this.getAttribute("label"))
 				this.titleTag.innerText = this.getAttribute("label");
 			else
-				this.titleTag.innerText = this._ktbsResource.get_relative_id();
+				this.titleTag.innerText = this._ktbsResource.id;
 
 			this.linkTag.href = this.getAttribute("uri");
 			this.linkTag.innerHTML = this.getAttribute("uri");
@@ -54,7 +54,7 @@ class KTBS4LA2MainModel extends KtbsResourceElement {
 		this._componentReady.then(() => {
 			
 			if(!this.getAttribute("label")) {
-				let label = this._ktbsResource.get_label();
+				let label = this._ktbsResource.label;
 
 				if(label)
 					this.titleTag.innerText = label;
@@ -82,7 +82,7 @@ class KTBS4LA2MainModel extends KtbsResourceElement {
 		this._componentReady.then(() => {
 			this._resourceStatusString = "Error";
 			this.resourceStatusLabel.innerText = this._translateString(this._resourceStatusString);
-			this.errorMessageDiv.innerText = " (" + error.message + ")";
+			this.errorMessageDiv.innerText = " (" + error + ")";
 			this._containerDiv.className = "error";
 		});
 	}

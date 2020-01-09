@@ -124,7 +124,9 @@ class KTBS4LA2TraceObsels extends KtbsResourceElement {
 		if(!this._tableContainer.classList.contains("pending"))
 			this._tableContainer.classList.add("pending");
 
-		this._ktbsResource.force_state_refresh()
+		this._ktbsResource.force_state_refresh();
+
+		this._ktbsResource.get()
 			.then(function() {
 				this.onktbsResourceLoaded();
 			}.bind(this))

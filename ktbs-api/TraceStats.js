@@ -1,53 +1,58 @@
 import {Resource} from "./Resource.js";
 
 /**
- * 
+ * Class to help reading the statistics of a Trace
  */
 export class TraceStats extends Resource {
 
 	/**
-	 * 
+	 * Gets the minimum time (= begin) of the Trace
+	 * @return string
 	 */
-	get_min_time() {
-		return this._parsedJson['stats:minTime'];
+	get min_time() {
+		return this._JSONData['stats:minTime'];
 	}
 
 	/**
-	 * 
+	 * Gets the maximum time (= end) of the Trace
+	 * @return string
 	 */
-	get_max_time() {
-		return this._parsedJson['stats:maxTime'];
+	get max_time() {
+		return this._JSONData['stats:maxTime'];
 	}
 
 	/**
-	 * 
+	 * Gets the total obsels count of the trace
+	 * @return int
 	 */
-	get_obsel_count() {
-		if(this._parsedJson['stats:obselCount'] != undefined)
-			return this._parsedJson['stats:obselCount'];
+	get obsel_count() {
+		if(this._JSONData['stats:obselCount'] != undefined)
+			return this._JSONData['stats:obselCount'];
 		else
 			return 0;
 	}
 
 	/**
-	 * 
+	 * Gets the duration of the Trace
+	 * @return string
 	 */
-	get_duration() {
-		if(this._parsedJson['stats:duration'] != undefined)
-			return this._parsedJson['stats:duration'];
+	get duration() {
+		if(this._JSONData['stats:duration'] != undefined)
+			return this._JSONData['stats:duration'];
 		else
 			return null;
 	}
 
 	/**
-	 * 
+	 * Gets the obsels count of the trace for each obsel type of the model
+	 * @return Array
 	 */
-	get_obsel_count_per_type() {
-		if(this._parsedJson['stats:obselCountPerType'] != undefined) {
-			if(this._parsedJson['stats:obselCountPerType'] instanceof Array)
-				return this._parsedJson['stats:obselCountPerType'];
+	get obsel_count_per_type() {
+		if(this._JSONData['stats:obselCountPerType'] != undefined) {
+			if(this._JSONData['stats:obselCountPerType'] instanceof Array)
+				return this._JSONData['stats:obselCountPerType'];
 			else
-				return new Array(this._parsedJson['stats:obselCountPerType']);
+				return new Array(this._JSONData['stats:obselCountPerType']);
 		}
 		else
 			return new Array();

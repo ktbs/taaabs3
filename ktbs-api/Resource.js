@@ -1,5 +1,7 @@
+import * as KTBSErrors from "./Errors.js";
+
 /**
- * 
+ * Base class for KTBS resources
  */
 export class Resource {
 
@@ -7,127 +9,214 @@ export class Resource {
 	 * Constructor
 	 */
 	constructor(uri = null) {
-		/**
-		 * The object's uri
-		 */
-		this._uri = uri;
 
 		/**
-		 * 
+		 * The resource's uri
 		 */
-		this._parsedJson = new Object();
+		this._uri;
 
 		/**
-		 * 
+		 * The resource's ID relative to its “containing” resource
+		 */
+		this._id;
+
+		/**
+		 * The resource's parent URI
+		 */
+		this._parent_uri;
+
+		/**
+		 * The resource data that can be read from/written to the remote kTBS service 
+		 */
+		this._JSONData = new Object();
+
+		/**
+		 * The resource synchronization status
 		 */
 		this._syncStatus = "needs_sync";
 
-		/**
-		 * 
-		 */
-		this._data_read = null;
-
-		/**
-		 * 
-		 */
-		if(this._uri)
-			this._CRUDState = "read";
-		else
-			this._CRUDState = "create";
+		// if an uri has been specified at instanciation, set it
+		if(uri != null)
+			this.uri = uri;
 	}
 
 	/**
-	 * 
+	 * Gets the resource's URI
+	 */
+	get uri() {
+		return this._uri;
+	}
+
+	/**
+	 * Sets the resource's URI
+	 * @param string uri the new URI for the resource.
+	 * @throws Error Throws an Error if we try to set the URI of a resource that already exists on a kTBS service.
+	 */
+	set uri(uri) {
+		if(this._syncStatus == "needs_sync") {
+			this._uri = uri;
+			this._id = Resource.get_relative_id(uri);
+			this._parent_uri = Resource.get_parent_uri(uri);
+		}
+		else
+			throw new Error("Resource's URI can not be changed anymore");
+	}
+
+	/**
+	 * Gets the uri to query in order to read resource's data (For some resource types, this might be different from the resource URI, for instance if we need to add some query parameters. In such case, descending resource types must override this method)
+	 * @return string
 	 */
 	get _data_read_uri() {
 		return this._uri;
 	}
 
 	/**
+	 * Returns a user-friendly label
+	 * @return string
+	 */
+	get label() {
+		return this._JSONData["label"];
+	}
+
+	/**
+	 * Set a user-friendly label.
+	 * @param string label The new label for the resource
+	 */
+	set label(label) {
+		this._JSONData["label"] = label;
+	}
+
+	/**
+	 * Gets the ID of this resource, relative to its parent resource URI.
+	 * @return string
+	 */
+	get id() {
+		return this._id;
+	}
+
+	/**
+	 * Sets the ID of this resource, relative to its parent resource URI.
+	 * @param string id the new ID for the resource.
+	 * @throws Error Throws an Error if we try to set the ID of a resource that already exists on a kTBS service.
+	 */
+	set id(id) {
+		if(this._syncStatus == "needs_sync")
+			this._id = id;
+		else
+			throw new Error("Resource's ID can not be changed anymore");
+	}
+
+	/**
+	 * Gets the URI of the parent resource, if it exists (= if the resource exists on a kTBS service and is not a KTBS Root)
+	 * @return string
+	 */
+	get parent_uri() {
+		return this._parent_uri;
+	}
+
+	/**
+	 * Sets the resource's parent URI
+	 * @param string parent_uri the new parent URI
+	 * @throws Error Throws an Error if we try to set the parent URI of a resource that already exists on a kTBS service.
+	 */
+	set parent_uri(parent_uri) {
+		if(this._syncStatus == "needs_sync")
+			this._parent_uri = parent_uri;
+		else
+			throw new Error("Resource's parent URI can not be changed anymore");
+	}
+
+	/**
+	 * Return true if this resource is not modifiable (descending resource types should override this method if necessary).
+	 * @return bool
+	 */
+	get readonly() {
+		return false;
+	}
+
+	/**
 	 * Attemps to asynchronously read an existing object's data to the REST service and returns a promise.
+	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
 	 * @return Promise
 	 */
-	_read_data(abortSignal = null) {
+	get(abortSignal = null) {
 		if(this._uri) {
-			if(this._data_read == null) {
-				this._data_read = new Promise((resolve, reject) => {
-					this._syncStatus = "pending";
+			return new Promise((resolve, reject) => {
+				this._syncStatus = "pending";
 
-					let fetchParameters = {
-						method: "GET",
-						headers: new Headers({
-							"Accept": "application/json",
-							//"Authorization": "Basic " + btoa("test:test")
-						}),
-						mode: "cors",
-						credentials: "include",
-						cache: "default"
-					};
+				let fetchParameters = {
+					method: "GET",
+					headers: new Headers({
+						"Accept": "application/json"
+						//"Authorization": "Basic " + btoa("test:test")
+					}),
+					/*mode: "cors",
+					credentials: "include",*/
+					cache: "default"
+				};
 
-					if(this._etag)
-						fetchParameters.headers.append("If-None-Match", this._etag);
+				if(this._etag)
+					fetchParameters.headers.append("If-None-Match", this._etag);
 
-					if(abortSignal)
-						fetchParameters.signal = abortSignal;
-					
-					fetch(this._data_read_uri, fetchParameters)
-						.then(function(response) {
-							// if the HTTP request responded successfully
-							if(response.ok) {
-								if(response.headers.has("etag"))
-									this._etag = response.headers.get("etag");
+				if(abortSignal)
+					fetchParameters.signal = abortSignal;
+				
+				fetch(this._data_read_uri, fetchParameters)
+					.then((response) => {
+						// if the HTTP request responded successfully
+						if(response.ok) {
+							if(response.headers.has("etag"))
+								this._etag = response.headers.get("etag");
 
-								// when the response content from the HTTP request has been successfully read
-								response.json()
-									.then(function(parsedJson) {
-										this._parsedJson = parsedJson;
-										this._syncStatus = "in_sync";
-										resolve();
-									}.bind(this))
-									.catch(error => {
-										this._syncStatus = "error";
-										reject(error);
-									});
-							}
-							else if(response.status == 401) {
-								reject("Authentication required");
-							}
-							else
-								reject("Fetch request to uri \"" + this._data_read_uri + "\"has failed");
-						}.bind(this))
-						.catch(error => {
-							this._syncStatus = "error";
-							reject(error);
-						});
-				});
-			}
-
-			return this._data_read;
+							// when the response content from the HTTP request has been successfully read
+							response.json()
+								.then((parsedJson) => {
+									this._JSONData = parsedJson;
+									this._syncStatus = "in_sync";
+									resolve();
+								})
+								.catch((error) => {
+									this._syncStatus = "error";
+									reject(error);
+								});
+						}
+						else {
+							reject(new KTBSErrors.HttpError(response.status, response.statusText));
+						}
+					})
+					.catch((error) => {
+						this._syncStatus = "error";
+						reject(error);
+					});
+			});
 		}
 		else
 			throw new Error("Cannot read data from a resource without an uri");
 	}
 
-	/**
-	 * Return the URI of this resource relative to its “containing” resource; basically, this is short ‘id’ that could have been used to create this resource in the corresponding ‘create_X’ method
-	 * @return	str
+    /**
+	 * Ensure this resource is up-to-date. While remote resources are expected to perform best-effort to keep in sync with the server, it may sometimes be required to strongly ensure they are up-to-date. For local resources, this is has obviously no effect.
 	 */
-	get_id() {
-		return this._parsedJson["@id"];
+	force_state_refresh() {
+		this._syncStatus = "needs_sync";
+		this._JSONData = new Object();
 	}
 
 	/**
-	 * 
+	 * Extract a resource's ID from it's URI
+	 * @param string uri The URI to extract the ID from
+	 * @returns string
 	 */
-	get_relative_id() {
-		let id_parts = this._uri.split('/');
+	static get_relative_id(uri) {
+		let uri_parts = uri.split('/');
 
-		if(this._uri.charAt(this._uri.length - 1) == '/') {
-			let last_id_part = id_parts[id_parts.length - 2];
+		// if the uri ends with a slash
+		if(uri.charAt(uri.length - 1) == '/') {
+			let last_id_part = uri_parts[uri_parts.length - 2];
 			return last_id_part + '/';
 		}
 		else {
-			let last_id_part = id_parts[id_parts.length - 1];
+			let last_id_part = uri_parts[uri_parts.length - 1];
 			let hash_char_position = last_id_part.indexOf('#');
 
 			if(hash_char_position != -1)
@@ -138,100 +227,24 @@ export class Resource {
 	}
 
 	/**
-	 * 
+	 * Extract a resource's parent URI from it's URI
+	 * @param string uri The URI to extract the parent URI from
+	 * @return string
 	 */
-	set_id(newId) {
-		this._parsedJson["@id"] = newId;
-	}
+	static get_parent_uri(uri) {
+		let uri_parts = uri.split('/');
 
-	/**
-	 * Return the absolute URI of this resource.
-	 * @return uri
-	 */
-	get_uri() {
-		return this._uri;
-	}
+		// if the uri ends with a slash
+		if(uri.charAt(uri.length - 1) == '/')
+			return  uri_parts.slice(0, -2).join('/') + '/';
+		else {
+			let hash_char_position = uri.indexOf('#');
 
-    /**
-	 * Ensure this resource is up-to-date. While remote resources are expected to perform best-effort to keep in sync with the server, it may sometimes be required to strongly ensure they are up-to-date. For local resources, this is has obviously no effect.
-	 * @return Promise	
-	 */
-	force_state_refresh() {
-		this._data_read = null;
-		this._syncStatus = "needs_sync";
-		return this._read_data();
-	}
-
-	/**
-	 * Return true if this resource is not modifiable.
-	 * @return bool
-	 */
-	get_readonly() {
-		return false;
-	}
-
-	/**
-	 * Remove this resource from the KTBS. If the resource can not be removed, an exception must be raised.
-	 */
-	/*remove() {
-		
-	}*/
-
-	/**
-	 * Returns a user-friendly label
-	 * @return str
-	 */
-	get_label() {
-		return this._parsedJson["label"];
-	}
-
-	/**
-	 * Set a user-friendly label.
-	 * @param label str
-	 */
-	set_label(newLabel) {
-		this._parsedJson["label"] = newLabel;
-		//this.notifyListeners("update");
-	}
-
-	/**
-	 * Reset the user-friendly label to its default value.
-	 */
-	reset_label() {
-		this._parsedJson.splice("label", 1);
-	}
-
-	/**
-	 * 
-	 */
-	/*addEventListener(eventType, callback) {
-		if(!this.eventListeners[eventType])
-			this.eventListeners[eventType] = new Array();
-
-		if(!this.eventListeners[eventType].includes(callback))
-			*this.eventListeners[eventType].push(callback)
-	}*/
-
-	/**
-	 * 
-	 */
-	/*removeEventListener(eventType, callback) {
-		if((this.eventListeners[eventType] instanceof Array) && (this.eventListeners[eventType].includes(callback))) {
-			this.eventListeners[eventType].splice(this.eventListeners[eventType].indexOf(callback));
-		}
-	}*/
-
-	/**
-	 * 
-	 */
-	/*notifyListeners(eventType) {
-		if(this.eventListeners[eventType] instanceof Array) {
-			for(let i = 0; i < this.eventListeners[eventType].length; i++) {
-				let callback = this.eventListeners[eventType][i];
-
-				if(callback !== undefined)
-					callback();
+			if(hash_char_position != -1) {
+				return uri.substring(0, hash_char_position);
 			}
+			else
+				return uri_parts.slice(0, -1).join('/') + '/';
 		}
-	}*/
+	}
 }

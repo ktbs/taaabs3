@@ -65,7 +65,7 @@ class KTBS4LA2MainBase extends KtbsResourceElement {
 			if(this.getAttribute("label"))
 				this.titleTag.innerText = this.getAttribute("label");
 			else
-				this.titleTag.innerText = this._ktbsResource.get_relative_id();
+				this.titleTag.innerText = this._ktbsResource.id;
 
 			this.linkTag.href = this.getAttribute("uri");
 			this.linkTag.innerHTML = this.getAttribute("uri");
@@ -79,7 +79,7 @@ class KTBS4LA2MainBase extends KtbsResourceElement {
 		this._componentReady.then(() => {
 			
 			if(!this.getAttribute("label")) {
-				let label = this._ktbsResource.get_label();
+				let label = this._ktbsResource.label;
 
 				if(label)
 					this.titleTag.innerText = label;
@@ -90,13 +90,13 @@ class KTBS4LA2MainBase extends KtbsResourceElement {
 			this._containerDiv.className = "online";
 
 			// create base child elements
-			let bases_uris = this._ktbsResource.list_bases_uris();
+			let bases = this._ktbsResource.bases;
 
-			for(let i = 0; i < bases_uris.length; i++) {
-				let baseUri = bases_uris[i];
+			for(let i = 0; i < bases.length; i++) {
+				let base = bases[i];
 				let baseTag = document.createElement("ktbs4la2-main-related-resource");
 				baseTag.setAttribute("resource-type", "Base");
-				baseTag.setAttribute("uri", baseUri);
+				baseTag.setAttribute("uri", base.uri);
 				baseTag.setAttribute("slot", "bases");
 				this.appendChild(baseTag);
 			}
@@ -109,13 +109,13 @@ class KTBS4LA2MainBase extends KtbsResourceElement {
 			this.appendChild(addBaseButton);
 
 			// create model child elements
-			let models_uris = this._ktbsResource.list_models_uris();
+			let models = this._ktbsResource.models;
 
-			for(let i = 0; i < models_uris.length; i++) {
-				let modelUri = models_uris[i];
+			for(let i = 0; i < models.length; i++) {
+				let model = models[i];
 				let modelTag = document.createElement("ktbs4la2-main-related-resource");
 				modelTag.setAttribute("resource-type", "Model");
-				modelTag.setAttribute("uri", modelUri);
+				modelTag.setAttribute("uri", model.uri);
 				modelTag.setAttribute("slot", "models");
 				this.appendChild(modelTag);
 			}
@@ -128,13 +128,13 @@ class KTBS4LA2MainBase extends KtbsResourceElement {
 			this.appendChild(addModelButton);
 
 			// create stored trace child elements
-			let storedtraces_uris = this._ktbsResource.list_stored_traces_uris();
+			let stored_traces = this._ktbsResource.stored_traces;
 
-			for(let i = 0; i < storedtraces_uris.length; i++) {
-				let storedTraceUri = storedtraces_uris[i];
+			for(let i = 0; i < stored_traces.length; i++) {
+				let storedTrace = stored_traces[i];
 				let storedTraceTag = document.createElement("ktbs4la2-main-related-resource");
 				storedTraceTag.setAttribute("resource-type", "StoredTrace");
-				storedTraceTag.setAttribute("uri", storedTraceUri);
+				storedTraceTag.setAttribute("uri", storedTrace.uri);
 				storedTraceTag.setAttribute("slot", "stored-traces");
 				this.appendChild(storedTraceTag);
 			}
@@ -147,13 +147,13 @@ class KTBS4LA2MainBase extends KtbsResourceElement {
 			this.appendChild(addStoredTraceButton);
 
 			// create method child elements
-			let methods_uris = this._ktbsResource.list_methods_uris();
+			let methods = this._ktbsResource.methods;
 
-			for(let i = 0; i < methods_uris.length; i++) {
-				let method_uri = methods_uris[i];
+			for(let i = 0; i < methods.length; i++) {
+				let method = methods[i];
 				let methodTag = document.createElement("ktbs4la2-main-related-resource");
 				methodTag.setAttribute("resource-type", "Method");
-				methodTag.setAttribute("uri", method_uri);
+				methodTag.setAttribute("uri", method.uri);
 				methodTag.setAttribute("slot", "methods");
 				this.appendChild(methodTag);
 			}
@@ -166,13 +166,13 @@ class KTBS4LA2MainBase extends KtbsResourceElement {
 			this.appendChild(addMethodButton);
 
 			// create stored trace child elements
-			let computedtraces_uris = this._ktbsResource.list_computed_traces_uris();
+			let computed_traces = this._ktbsResource.computed_traces;
 
-			for(let i = 0; i < computedtraces_uris.length; i++) {
-				let computedTraceUri = computedtraces_uris[i];
+			for(let i = 0; i < computed_traces.length; i++) {
+				let computedTrace = computed_traces[i];
 				let computedTraceTag = document.createElement("ktbs4la2-main-related-resource");
 				computedTraceTag.setAttribute("resource-type", "ComputedTrace");
-				computedTraceTag.setAttribute("uri", computedTraceUri);
+				computedTraceTag.setAttribute("uri", computedTrace.uri);
 				computedTraceTag.setAttribute("slot", "computed-traces");
 				this.appendChild(computedTraceTag);
 			}
@@ -195,7 +195,7 @@ class KTBS4LA2MainBase extends KtbsResourceElement {
 		this._componentReady.then(() => {
 			this._resourceStatusString = "Error";
 			this.resourceStatusLabel.innerText = this._translateString(this._resourceStatusString);
-			this.errorMessageDiv.innerText = " (" + error.message + ")";
+			this.errorMessageDiv.innerText = " (" + error + ")";
 			this._containerDiv.className = "error";
 		});
 	}

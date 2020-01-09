@@ -1,63 +1,24 @@
 import {Trace} from "./Trace.js";
+import {Method} from "./Method.js";
 
 /**
- * 
+ * Class for the "ComputedTrace" resource type
  */
 export class ComputedTrace extends Trace {
 
 	/**
-	 * @return Method
+	 * Gets the URI of the trace's Method
+	 * @return string
 	 */
-	/*get_method() {
-
-	}*/
-
-	/**
-	 * @param Method method
-	 */
-	/*set_method(method) {
-
-	}*/
-
-	/**
-	 * 
-	 */
-	get_method_uri() {
-		return new URL(this._parsedJson.hasMethod, this._uri);
+	_get_method_uri() {
+		return new URL(this._JSONData.hasMethod, this._uri).toString();
 	}
 
 	/**
-	 * List the names of all the parameters of this trace.
-	 * @param bool include_inherited – defaults to true and means that parameters inherited from the method should be included
-	 * @return string
+	 * Gets the trace's Method
+	 * @return Method
 	 */
-	/*list_parameters(include_inherited = true) {
-
-	}*/
-
-	/**
-	 * Get the value of a parameter (own or inherited from the method)
-	 * @param string key
-	 * @return str
-	 */
-	/*get_parameter(key) {
-
-	}*/
-
-	/**
-	 * Set the value of a parameter. An exception must be raised if the parameter is inherited
-	 * @param string key
-	 * @param any value
-	 */
-	/*set_parameter(key, value) {
-
-	}*/
-
-	/**
-	 * Unset a parameter. An exception must be raised if the parameter is inherited
-	 * @param string key
-	 */
-	/*del_parameter(key) {
-
-	}*/
+	get method() {
+		return new Method(this._get_method_uri());
+	}
 }
