@@ -1,5 +1,5 @@
 /**
- * Base class for Ktbs Components
+ * Base class for templated components
  */
 class TemplatedHTMLElement extends HTMLElement {
 

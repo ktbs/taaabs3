@@ -253,6 +253,24 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url, true, true);
 
+
+		let updateEventsRowWorkerURL = import.meta.url.substr(0, import.meta.url.lastIndexOf('/')) + '/update-events-row-worker.js';
+		this._updateEventsRowWorkerFetchPromise = fetch(updateEventsRowWorkerURL, {signal: this._abortController.signal});
+
+		this._updateEventsRowWorkerFetchPromise.then((response) => {
+				if(response.ok) {
+					response.text().then((responseText) => {
+						let codeBlob = new Blob([responseText], {type: 'application/javascript'});
+						this._updateEventsRowWorkerObjectURL = URL.createObjectURL(codeBlob);
+					});
+				}
+				else
+					this.emitErrorEvent(new Error("Could not fetch update-events-row-worker.js"));
+			})
+			.catch((error) => {
+				this.emitErrorEvent(error);
+			});
+
 		this._beginTime = null;
 		this._endTime = null;
 		
@@ -878,8 +896,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					timeEndThreshold: timeEndThreshold
 				};
 
-				let updateEventsRowWorkerURL = import.meta.url.substr(0, import.meta.url.lastIndexOf('/')) + '/update-events-row-worker.js';
-				this._updateEventsRowWorker = new Worker(updateEventsRowWorkerURL);
+				/*let updateEventsRowWorkerURL = import.meta.url.substr(0, import.meta.url.lastIndexOf('/')) + '/update-events-row-worker.js';
+				this._updateEventsRowWorker = new Worker(updateEventsRowWorkerURL);*/
+
+				this._updateEventsRowWorker = new Worker(this._updateEventsRowWorkerObjectURL);
 				
 				this._updateEventsRowWorker.onmessage = ((event) => {
 					this._updateEventsRowWorker = null;
@@ -1061,8 +1081,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				let timelineCursorTime = this._getMouseTime(timelineCursorPosition);
 
 				this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
-				
-				//this._updateEventsPosX(this._getVisibleEventNodes());
 
 				let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
 								
@@ -1338,8 +1356,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let timeDivChanged = this._setViewBegin(newViewBegin);
 
 			if(timeDivChanged) {
-				//this._updateEventsPosX(this._getVisibleEventNodes());
-
 				let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
 								
 				for(let i = 0; i < affectedIntervals.length; i++) {
@@ -1383,8 +1399,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let timeDivChanged = this._setViewBegin(newViewBeginTime);
 
 		if(timeDivChanged) {
-			//this._updateEventsPosX(this._getVisibleEventNodes());
-
 			let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
 								
 			for(let i = 0; i < affectedIntervals.length; i++) {
@@ -1424,8 +1438,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let timeDivChanged = this._setViewBegin(newViewBeginTime);
 
 		if(timeDivChanged) {
-			//this._updateEventsPosX(this._getVisibleEventNodes());
-
 			let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
 								
 			for(let i = 0; i < affectedIntervals.length; i++) {
@@ -2555,7 +2567,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 							let timeDivHasChanged = ((this._firstRepresentedTime != firstBefore) || (this._lastRepresentedTime != lastBefore));
 
 							if(timeDivHasChanged) {
-								//this._updateEventsPosX(this._getVisibleEventNodes());
 								let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
 								
 								for(let i = 0; i < affectedIntervals.length; i++) {
