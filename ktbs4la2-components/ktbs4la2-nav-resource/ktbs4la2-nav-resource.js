@@ -97,7 +97,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 			let label = this._ktbsResource.label;
 			
 			if(label && !this.getAttribute("label"))
-				this._titleTag.innerHTML = label;
+				this._titleTag.innerText = label;
 
 			this._titleTag.title = this._getTitleHint();
 

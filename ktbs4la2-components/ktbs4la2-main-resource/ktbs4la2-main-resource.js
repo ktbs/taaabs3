@@ -135,7 +135,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 				this.titleTag.innerText = this._ktbsResource.id;
 
 			this.linkTag.href = this.getAttribute("uri");
-			this.linkTag.innerHTML = this.getAttribute("uri");
+			this.linkTag.innerText = this.getAttribute("uri");
 		});
 	}
 

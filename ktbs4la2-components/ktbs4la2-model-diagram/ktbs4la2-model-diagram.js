@@ -29,15 +29,9 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	connectedCallback() {
 		super.connectedCallback();
 
-		this._componentReady.then(() => {
-			/*if(this.getAttribute("label"))
-				this.titleTag.innerText = this.getAttribute("label");
-			else
-				this.titleTag.innerText = this._ktbsResource.id;
-
-			this.linkTag.href = this.getAttribute("uri");
-			this.linkTag.innerHTML = this.getAttribute("uri");*/
-		});
+		/*this._componentReady.then(() => {
+			
+		});*/
 	}
 
 	/**
