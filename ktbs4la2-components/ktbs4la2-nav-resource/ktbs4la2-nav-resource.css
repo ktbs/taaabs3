@@ -21,7 +21,9 @@
 	background-repeat: no-repeat;
 }
 
-#container.error #unfold-button {
+#container.error #unfold-button,
+#container.authentication-required #unfold-button,
+#container.access-denied #unfold-button {
 	visibility: hidden;
 }
 
@@ -76,35 +78,94 @@
 	background-image: url('{my-component-folder}/ComputedTrace.svg');
 }
 
-#container.error #title {
+#container.error #title,
+#container.authentication-required #title,
+#container.access-denied #title {
 	color: black;
 	font-style: italic;
 	opacity: .5;
+}
+
+#container.error #title {
 	background-position: 10px 10px, 5px 5px;
 }
 
+#container.authentication-required #title,
+#container.access-denied #title {
+	background-position: 15px 12px, 5px 5px;
+}
+
+
 :host([resource-type = "Ktbs"]) #container.error #title {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Ktbs.svg');
+}
+
+:host([resource-type = "Ktbs"]) #container.authentication-required #title {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Ktbs.svg');
+}
+
+:host([resource-type = "Ktbs"]) #container.access-denied #title {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Ktbs.svg');
 }
 
 :host([resource-type = "Base"]) #container.error #title {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Base.svg');
 }
 
+:host([resource-type = "Base"]) #container.authentication-required #title {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Base.svg');
+}
+
+:host([resource-type = "Base"]) #container.access-denied #title {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Base.svg');
+}
+
 :host([resource-type = "Method"]) #container.error #title {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Method.svg');
+}
+
+:host([resource-type = "Method"]) #container.authentication-required #title {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Method.svg');
+}
+
+:host([resource-type = "Method"]) #container.access-denied #title {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Method.svg');
 }
 
 :host([resource-type = "Model"]) #container.error #title {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Model.svg');
 }
 
+:host([resource-type = "Model"]) #container.authentication-required #title {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Model.svg');
+}
+
+:host([resource-type = "Model"]) #container.access-denied #title {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Model.svg');
+}
+
 :host([resource-type = "StoredTrace"]) #container.error #title {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/StoredTrace.svg');
 }
 
+:host([resource-type = "StoredTrace"]) #container.authentication-required #title {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/StoredTrace.svg');
+}
+
+:host([resource-type = "StoredTrace"]) #container.access-denied #title {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/StoredTrace.svg');
+}
+
 :host([resource-type = "ComputedTrace"]) #container.error #title {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/ComputedTrace.svg');
+}
+
+:host([resource-type = "ComputedTrace"]) #container.authentication-required #title {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/ComputedTrace.svg');
+}
+
+:host([resource-type = "ComputedTrace"]) #container.access-denied #title {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/ComputedTrace.svg');
 }
 
 #title:hover, :host(.selected) #title {
@@ -129,7 +190,9 @@
 	display: block;
 }
 
-#container.error #child-list {
+#container.error #child-list, 
+#container.authentication-required #child-list, 
+#container.access-denied  #child-list{
 	display: none !important;
 }
 

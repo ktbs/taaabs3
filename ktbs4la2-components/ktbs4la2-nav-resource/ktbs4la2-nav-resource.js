@@ -1,4 +1,5 @@
 import {KtbsResourceElement} from "../common/KtbsResourceElement.js";
+import * as KTBSErrors from "../../ktbs-api/Errors.js";
 
 /**
  * 
@@ -109,17 +110,30 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	 * 
 	 */
 	onktbsResourceLoadFailed(error) {
-		super.onktbsResourceLoadFailed(error);
+		if((error instanceof KTBSErrors.HttpError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
+			this._componentReady.then(() => {
+				if(error.statusCode == 401) {
+					if(!this._containerDiv.classList.contains("authentication-required"))
+						this._containerDiv.classList.add("authentication-required");
+				}
+				else if(error.statusCode == 403) {
+					if(!this._containerDiv.classList.contains("access-denied"))
+						this._containerDiv.classList.add("access-denied");
+				}
 
-		this._componentReady.then(() => {
-			if(this._can_have_children() && this._childrenInstanciated)
-				this._instanciateChildren(true);
+				this._titleTag.title = this._getTitleHint();
+			});
+		}
+		else {
+			super.onktbsResourceLoadFailed(error);
 
-			if(!this._containerDiv.classList.contains("error"))
-				this._containerDiv.classList.add("error");
+			this._componentReady.then(() => {
+					if(!this._containerDiv.classList.contains("error"))
+						this._containerDiv.classList.add("error");
 
-			this._titleTag.title = this._getTitleHint();
-		});
+				this._titleTag.title = this._getTitleHint();
+			});
+		}
 	}
 
 	/**	

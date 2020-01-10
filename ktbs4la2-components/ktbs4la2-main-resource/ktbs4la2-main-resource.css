@@ -1,0 +1,147 @@
+#container > header {
+	padding-left: 30px;
+	padding-right: 30px;
+	padding-bottom: 30px;
+	position: sticky;
+	top: 0px;
+	background-color: white;
+	padding-top: var(--main-padding, 20px);
+	padding-bottom: var(--main-padding, 20px);
+	border-bottom: 1px solid #aaa;
+	display: block;
+	z-index: 6;
+	box-shadow: 0 10px 8px -8px gray;
+	margin-bottom: 10px;
+}
+
+#resource-type-description {
+	display: table-cell;
+	text-align: center;
+	width: 60px;
+	vertical-align: top;
+}
+
+#resource-type-label {
+	font-size: 8pt;
+	font-weight: bold;
+}
+
+#resource-description {
+	display: table-cell;
+	padding-left: 10px;
+	vertical-align: top;
+}
+
+#title {
+	margin-top: 0;
+	margin-bottom: 3px;
+	font-size: 22pt;
+}
+
+#resource-link {
+	display: block;
+	font-size: 10pt;
+	margin-bottom: 7px;
+	outline: none;
+}
+
+#resource-link:after {
+	content: " [↗]";
+}
+
+#resource-status-label {
+	padding-left: 18px;
+	font-size: 11pt;
+	display: inline;
+}
+
+#container.online #resource-status {
+	background: url('{my-component-folder}/online.svg') no-repeat;
+}
+
+#container.online #resource-status-label {
+	color: #060;
+}
+
+#container.error #resource-status {
+	background: url('{my-component-folder}/error.svg') no-repeat;
+}
+
+#container.error #resource-status-label, #container.error #error-message {
+	color: red;
+}
+
+#error-message {
+	display: none;
+}
+
+#container.error #error-message {
+	display: inline;
+}
+
+#container.error #resource-about {
+	display: none;
+}
+
+:host(:not([resource-type = Ktbs])) #resource-about {
+    display: none;
+}
+
+#resource-type-icon {
+	width: 60px;
+    height: 60px;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+:host([resource-type = Ktbs]) #resource-type-icon {
+    background-image: url('{my-component-folder}/home.svg');
+}
+
+:host([resource-type = Base]) #resource-type-icon {
+    background-image: url('{my-component-folder}/database.svg');
+}
+
+:host([resource-type = Model]) #resource-type-icon {
+    background-image: url('{my-component-folder}/Model.svg');
+}
+
+:host([resource-type = StoredTrace]) #resource-type-icon {
+    background-image: url('{my-component-folder}/StoredTrace.svg');
+}
+
+:host([resource-type = ComputedTrace]) #resource-type-icon {
+    background-image: url('{my-component-folder}/ComputedTrace.svg');
+}
+
+:host([resource-type = Method]) #resource-type-icon {
+    background-image: url('{my-component-folder}/Method.svg');
+}
+
+#child-bases,
+#child-builtin-methods,
+#child-models,
+#child-stored-traces,
+#child-methods,
+#child-computed-traces,
+#resource-head-content,
+#parent-method,
+#model,
+#method,
+#obsels,
+#stats
+{
+    display: none;
+}
+
+:host([resource-type = Ktbs]) #child-bases, :host([resource-type = Base]) #child-bases,
+:host([resource-type = Ktbs]) #child-builtin-methods,
+:host([resource-type = Base]) #child-models, :host([resource-type = Base]) #child-stored-traces, :host([resource-type = Base]) #child-methods, :host([resource-type = Base]) #child-computed-traces,
+:host([resource-type = Model]) #resource-head-content,
+:host([resource-type = Method]) #parent-method, :host([resource-type = Method]) #model,
+:host([resource-type = ComputedTrace]) #method, :host([resource-type = ComputedTrace]) #model, :host([resource-type = ComputedTrace]) #obsels, :host([resource-type = ComputedTrace]) #stats,
+:host([resource-type = StoredTrace]) #model, :host([resource-type = StoredTrace]) #obsels, :host([resource-type = StoredTrace]) #stats
+{
+    display: block;
+}
+
