@@ -1,3 +1,4 @@
+import {ResourceProxy} from "./ResourceProxy.js";
 import {Resource} from "./Resource.js";
 import {Base} from "./Base.js";
 import {Method} from "./Method.js";
@@ -10,13 +11,38 @@ export class Ktbs extends Resource {
 	/**
 	 * Constructor.
 	 * Since the Ktbs root is read-only through the REST service, it can not be created, updated or removed with the current API.
-	 * @param uri the uri of the KtbsRoot : REQUIRED !
+	 * @param URL or string uri the uri of the KtbsRoot : REQUIRED !
 	 */
 	constructor(uri) {
 		if(uri)
 			super(uri);
 		else
 			throw new Error("Missing required parameter \"uri\", or empty value");
+	}
+
+	/**
+	 * Always returns true for Ktbs instances since they are never modifiable.
+	 * @return bool
+	 */
+	get readonly() {
+		return true;
+	}
+
+	/**
+	 * Gets the parent resource of this resource (always null for Ktbs Root instances)
+	 * @return null for Ktbs Root instances
+	 */
+	get parent() {
+		return null;
+	}
+
+	/**
+	 * Sets the parent resource of this resource. Always throws an Error for Ktbs Root instances.
+	 * @param Resource parent the new parent for the resource (must be an instance of either "Ktbs" or "Base").
+	 * @throws Error Always throws an Error for Ktbs Root instances.
+	 */
+	set parent(parent) {
+		throw new Error("Resource's parent can not be set for Ktbs Root instances");
 	}
 
 	/**
@@ -29,22 +55,15 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Gets the "comment" of the Ktbs root
+	 * @return string
 	 */
 	get comment() {
 		return this._JSONData["http://www.w3.org/2000/01/rdf-schema#comment"];
 	}
 
 	/**
-	 * Return true if this resource is not modifiable.
-	 * @return bool
-	 */
-	get readonly() {
-		return true;
-	}
-
-	/**
 	 * Returns a user-friendly label
-	 * @return str
+	 * @return string
 	 */
 	get label() {
 		return null;
@@ -59,21 +78,15 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Gets the URIs of the builtin methods supported by the kTBS service
-	 * @return string[]
+	 * @return URL[]
 	 */
 	_get_builtin_methods_uris() {
 		let methods_uris = new Array();
 
 		if(this._JSONData.hasBuiltinMethod instanceof Array) {
 			for(let i = 0; i < this._JSONData.hasBuiltinMethod.length; i++) {
-				let method_id = this._JSONData.hasBuiltinMethod[i];
-				let method_uri;
-
-				if(method_id.substr(0, 4) == "http")
-					method_uri = method_id;
-				else
-					method_uri = this._uri + method_id;
-
+				let method_uri_string = this._JSONData.hasBuiltinMethod[i];
+				let method_uri = new URL(method_uri_string, this.uri);
 				methods_uris.push(method_uri);
 			}
 		}
@@ -90,8 +103,8 @@ export class Ktbs extends Resource {
 		let builtin_methods_uris = this._get_builtin_methods_uris();
 
 		for(let i = 0; i < builtin_methods_uris.length; i++) {
-			let builtin_method_URI = builtin_methods_uris[i];
-			let builtin_method = new Method(builtin_method_URI);
+			let builtin_method_uri = builtin_methods_uris[i];
+			let builtin_method = ResourceProxy.get_resource(Method, builtin_method_uri);
 			builtin_methods.push(builtin_method);
 		}
 
@@ -100,21 +113,15 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Gets the URIs of the bases in the Ktbs root
-	 * @return string[]
+	 * @return URL[]
 	 */
 	_get_bases_uris() {
 		let bases_uris = new Array();
 
 		if(this._JSONData.hasBase instanceof Array) {
 			for(let i = 0; i < this._JSONData.hasBase.length; i++) {
-				let base_id = this._JSONData.hasBase[i];
-				let base_uri;
-
-				if(base_id.substr(0, 4) == "http")
-					base_uri = base_id;
-				else
-					base_uri = this._uri + base_id;
-
+				let base_uri_string = this._JSONData.hasBase[i];
+				let base_uri = new URL(base_uri_string, this.uri);
 				bases_uris.push(base_uri);
 			}
 		}
@@ -124,14 +131,15 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Gets the bases in the Ktbs root
+	 * @return Base[]
 	 */
 	get bases() {
 		let bases = new Array();
 		let bases_uris = this._get_bases_uris();
 
 		for(let i = 0; i < bases_uris.length; i++) {
-			let baseURI = bases_uris[i];
-			let base = new Base(baseURI);
+			let base_uri = bases_uris[i];
+			let base = ResourceProxy.get_resource(Base, base_uri);
 			bases.push(base);
 		}
 

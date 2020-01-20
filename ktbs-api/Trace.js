@@ -1,17 +1,18 @@
+import {ResourceProxy} from "./ResourceProxy.js";
 import {Resource} from "./Resource.js";
 import {Model} from "./Model.js";
 
 /**
- * Abstract class, base for the "Trace" resource types (StoredTrace and ComputedTrace)
+ * Abstract class, meant to be be inherited by the trace resource types (StoredTrace and ComputedTrace)
  */
 export class Trace extends Resource {
 
 	/**
 	 * Gets the URI of the model of the Trace
-	 * @return string
+	 * @return URL
 	 */
 	_get_model_uri() {
-		return new URL(this._JSONData.hasModel, this._uri).toString();
+		return new URL(this._JSONData.hasModel, this.uri);
 	}
 
 	/**
@@ -19,7 +20,7 @@ export class Trace extends Resource {
 	 * @return Model
 	 */
 	get model() {
-		return new Model(this._get_model_uri());
+		return ResourceProxy.get_resource(Model, this._get_model_uri());
 	}
 
 	/**

@@ -1,4 +1,5 @@
 import {KtbsResourceElement} from "../common/KtbsResourceElement.js";
+import * as KTBSErrors from "../../ktbs-api/Errors.js";
 
 /**
  * 
@@ -16,6 +17,7 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	 * 
 	 */
 	onComponentReady() {
+		this._containerDiv = this.shadowRoot.querySelector("#container");
 		this.linkTag = this.shadowRoot.querySelector("#link");
 		this.linkTag.addEventListener("click", this.onClickLink.bind(this));
 	}
@@ -47,6 +49,9 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 		this._componentReady.then(() => {
 			let label = this._ktbsResource.label;
 
+			if((this._ktbsResource.authentified) && (!this._containerDiv.classList.contains("access-granted")))
+				this._containerDiv.classList.add("access-granted");
+
 			if(label)
 				this.linkTag.innerText = label;
 
@@ -58,14 +63,30 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	 * 
 	 */
 	onktbsResourceLoadFailed(error) {
-		super.onktbsResourceLoadFailed(error);
+		if((error instanceof KTBSErrors.HttpError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
+			this._componentReady.then(() => {
+				if(error.statusCode == 401) {
+					if(!this._containerDiv.classList.contains("authentication-required"))
+						this._containerDiv.classList.add("authentication-required");
+				}
+				else if(error.statusCode == 403) {
+					if(!this._containerDiv.classList.contains("access-denied"))
+						this._containerDiv.classList.add("access-denied");
+				}
 
-		this._componentReady.then(() => {
-			if(!this.linkTag.classList.contains("error"))
-				this.linkTag.classList.add("error");
+				this.linkTag.title = this._getTitleHint();
+			});
+		}
+		else {
+			super.onktbsResourceLoadFailed(error);
 
-			this.linkTag.title = this._getTitleHint();
-		});
+			this._componentReady.then(() => {
+				if(!this._containerDiv.classList.contains("error"))
+					this._containerDiv.classList.add("error");
+
+				this.linkTag.title = this._getTitleHint();
+			});
+		}
 	}
 
 	/**
@@ -83,19 +104,32 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	_getTitleHint() {
 		let hint = this._translateString("Type") + ": " + this.getAttribute("resource-type") + "\n" + 
 					this._translateString("Status") + " : ";
-
-		switch(this._ktbsResource._syncStatus) {
+		
+		switch(this._ktbsResource.syncStatus) {
 			case "in_sync" :
-				hint += this._translateString("Online");
+				if(this._ktbsResource.authentified)
+					hint += this._translateString("Access granted");
+				else
+					hint += this._translateString("Online");
+
 				break;
 			case "needs_sync" :
 				hint += this._translateString("Pending...");
+				break;
+			case "pending" :
+				hint += this._translateString("Pending...");
+				break;
+			case "needs_auth" :
+				hint += this._translateString("Authentication required");
+				break;
+			case "access_denied" :
+				hint += this._translateString("Access denied");
 				break;
 			case "error" :
 				hint += this._translateString("Error");
 				break;
 			default : 
-				hint += this._translateString("Unknown") + " (" + this._ktbsResource._syncStatus + ")";
+				hint += this._translateString("Unknown") + " (" + this._ktbsResource.syncStatus + ")";
 		}
 
 		return hint;

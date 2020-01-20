@@ -51,33 +51,119 @@
 	background-image: url('{my-component-folder}/ComputedTrace.svg');
 }
 
-#link.error {
-	color: black;
+#container.error #link ,
+#container.authentication-required #link,
+#container.access-denied #link {
 	font-style: italic;
 	opacity: .5;
+
+}
+
+#container.error #link {
 	background-position: 12px 15px, 5px 8px;
 }
 
-:host([resource-type = "Ktbs"]) #link.error {
+#container.authentication-required #link,
+#container.access-denied #link {
+	background-position: 22px 25px, 5px 8px;
+}
+
+#container.access-granted #link {
+	background-position: 20px 28px, 5px 8px;
+}
+
+:host([resource-type = "Ktbs"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Ktbs.svg');
 }
 
-:host([resource-type = "Base"]) #link.error {
+:host([resource-type = "Ktbs"]) #container.authentication-required #link {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Ktbs.svg');
+}
+
+:host([resource-type = "Ktbs"]) #container.access-denied #link {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Ktbs.svg');
+}
+
+:host([resource-type = "Ktbs"]) #container.access-granted #link {
+	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Ktbs.svg');
+}
+
+:host([resource-type = "Base"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Base.svg');
 }
 
-:host([resource-type = "Method"]) #link.error {
+:host([resource-type = "Base"]) #container.authentication-required #link {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Base.svg');
+}
+
+:host([resource-type = "Base"]) #container.access-denied #link {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Base.svg');
+}
+
+:host([resource-type = "Base"]) #container.access-granted #link {
+	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Base.svg');
+}
+
+:host([resource-type = "Method"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Method.svg');
 }
 
-:host([resource-type = "Model"]) #link.error {
+:host([resource-type = "Method"]) #container.authentication-required #link {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Method.svg');
+}
+
+:host([resource-type = "Method"]) #container.access-denied #link {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Method.svg');
+}
+
+:host([resource-type = "Method"]) #container.access-granted #link {
+	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Method.svg');
+}
+
+:host([resource-type = "Model"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Model.svg');
 }
 
-:host([resource-type = "StoredTrace"]) #link.error {
+:host([resource-type = "Model"]) #container.authentication-required #link {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Model.svg');
+}
+
+:host([resource-type = "Model"]) #container.access-denied #link {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Model.svg');
+}
+
+:host([resource-type = "Model"]) #container.access-granted #link {
+	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Model.svg');
+}
+
+:host([resource-type = "StoredTrace"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/StoredTrace.svg');
 }
 
-:host([resource-type = "ComputedTrace"]) #link.error {
+:host([resource-type = "StoredTrace"]) #container.authentication-required #link {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/StoredTrace.svg');
+}
+
+:host([resource-type = "StoredTrace"]) #container.access-denied #link {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/StoredTrace.svg');
+}
+
+:host([resource-type = "StoredTrace"]) #container.access-granted #link {
+	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/StoredTrace.svg');
+}
+
+:host([resource-type = "ComputedTrace"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/ComputedTrace.svg');
+}
+
+:host([resource-type = "ComputedTrace"]) #container.authentication-required #link {
+	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/ComputedTrace.svg');
+}
+
+:host([resource-type = "ComputedTrace"]) #container.access-denied #link {
+	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/ComputedTrace.svg');
+}
+
+:host([resource-type = "ComputedTrace"]) #container.access-granted #link {
+	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/ComputedTrace.svg');
 }

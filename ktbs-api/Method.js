@@ -1,3 +1,4 @@
+import {ResourceProxy} from "./ResourceProxy.js";
 import {Resource} from "./Resource.js";
 import {Model} from "./Model.js";
 
@@ -7,69 +8,12 @@ import {Model} from "./Model.js";
 export class Method extends Resource {
 
 	/**
-	 * Attemps to asynchronously read an existing object's data to the REST service and returns a promise.
-	 * @return Promise
-	 */
-	get() {
-		if(this._uri) {
-			return new Promise((resolve, reject) => {
-				this._syncStatus = "pending";
-
-				let fetchParameters = { 
-					method: "GET",
-					headers: new Headers({
-						"Accept": "application/json"
-					}),
-					/*mode: "cors",
-					credentials: "include",*/
-					cache: "no-cache"
-				};
-
-				fetch(this._data_read_uri, fetchParameters)
-					.then(function(response) {
-						// if the HTTP request responded successfully
-						if(response.ok) {
-							if(response.headers.has("etag"))
-								this._etag = response.headers.get("etag");
-
-							// when the response content from the HTTP request has been successfully read
-							response.json()
-								.then(function(parsedJson) {
-									this._JSONData = parsedJson;
-									this._syncStatus = "in_sync";
-									resolve();
-								}.bind(this))
-								.catch(error => {
-									this._syncStatus = "error";
-									reject(error);
-								});
-						}
-						else
-							resolve();
-						/*else if(response.status == 401) {
-							reject();
-						}
-						else
-							reject("Fetch request to uri \"" + this._data_read_uri + "\"has failed");
-						*/
-					}.bind(this))
-					.catch(error => {
-						this._syncStatus = "error";
-						reject(error);
-					});
-			});
-		}
-		else
-			throw new Error("Cannot read data from a resource without an uri");
-	}
-
-	/**
 	 * Gets the URI of the Method's parent Method
-	 * @return string
+	 * @return URL
 	 */
 	_get_parent_method_uri() {
 		if(this._JSONData.hasParentMethod)
-			return new URL(this._JSONData.hasParentMethod, this._uri).toString();
+			return new URL(this._JSONData.hasParentMethod, this.uri);
 		else
 			return null;
 	}
@@ -82,21 +26,21 @@ export class Method extends Resource {
 		let parent_method_uri = this._get_parent_method_uri();
 
 		if(parent_method_uri)
-			return new Method(parent_method_uri);
+			return ResourceProxy.get_resource(Method, parent_method_uri);
 		else
 			return null;
 	}
 
 	/**
 	 * Gets the URI of the Model, if any
-	 * @return string
+	 * @return URL
 	 */
 	_get_model_uri() {
-		let model_uri = null;
+		let model_uri_string = null;
 		let parameters = this._JSONData.parameter;
 
 		if(parameters) {
-			for(let i = 0; (model_uri == null) && (i < parameters.length); i++) {
+			for(let i = 0; (model_uri_string == null) && (i < parameters.length); i++) {
 				let parameterString = parameters[i];
 				let equalCharPos = parameterString.indexOf('=');
 
@@ -104,13 +48,13 @@ export class Method extends Resource {
 					let parameterKey = parameterString.substring(0, equalCharPos);
 					
 					if(parameterKey == "model")
-						model_uri = parameterString.substring(equalCharPos + 1);
+						model_uri_string = parameterString.substring(equalCharPos + 1);
 				}
 			}
 		}
 
-		if(model_uri)
-			return new URL(model_uri, this._uri).toString();
+		if(model_uri_string)
+			return new URL(model_uri_string, this._uri);
 		else
 			return null;
 	}
@@ -123,7 +67,7 @@ export class Method extends Resource {
 		let model_uri = this._get_model_uri();
 
 		if(model_uri != null)
-			return new Model(this._get_model_uri());
+			return ResourceProxy.get_resource(Model, this._get_model_uri());
 		else
 			return null;
 	}

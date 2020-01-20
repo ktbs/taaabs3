@@ -1,3 +1,4 @@
+import {ResourceProxy} from "./ResourceProxy.js";
 import {Trace} from "./Trace.js";
 import {Method} from "./Method.js";
 
@@ -8,10 +9,10 @@ export class ComputedTrace extends Trace {
 
 	/**
 	 * Gets the URI of the trace's Method
-	 * @return string
+	 * @return URL[]
 	 */
 	_get_method_uri() {
-		return new URL(this._JSONData.hasMethod, this._uri).toString();
+		return new URL(this._JSONData.hasMethod, this.uri);
 	}
 
 	/**
@@ -19,6 +20,6 @@ export class ComputedTrace extends Trace {
 	 * @return Method
 	 */
 	get method() {
-		return new Method(this._get_method_uri());
+		return ResourceProxy.get_resource(Method, this._get_method_uri());
 	}
 }

@@ -91,8 +91,8 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	 */
 	onktbsResourceLoaded() {
 		this._componentReady.then(() => {
-			if(this._can_have_children() && this._containerDiv.classList.contains("unfolded"))
-				this._instanciateChildren(true);
+			/*if(this._can_have_children() && this._containerDiv.classList.contains("unfolded"))
+				this._instanciateChildren(true);*/
 
 			let label = this._ktbsResource.label;
 			
@@ -103,6 +103,78 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 
 			if(this._containerDiv.classList.contains("error"))
 				this._containerDiv.classList.remove("error");
+
+			if(this._containerDiv.classList.contains("authentication-required"))
+				this._containerDiv.classList.remove("authentication-required");
+
+			if(this._containerDiv.classList.contains("access-denied"))
+				this._containerDiv.classList.remove("access-denied");
+
+			if((this._ktbsResource.authentified) && (!this._containerDiv.classList.contains("access-granted")))
+				this._containerDiv.classList.add("access-granted");
+		});
+	}
+
+	/**
+	 * 
+	 */
+	_setError() {
+		this._componentReady.then(() => {
+			if(this._containerDiv.classList.contains("authentication-required"))
+				this._containerDiv.classList.remove("authentication-required");
+
+			if(this._containerDiv.classList.contains("access-denied"))
+				this._containerDiv.classList.remove("access-denied");
+
+			if(this._containerDiv.classList.contains("access-granted"))
+				this._containerDiv.classList.remove("access-granted");
+
+			if(!this._containerDiv.classList.contains("error"))
+				this._containerDiv.classList.add("error");
+
+			this._titleTag.title = this._getTitleHint();
+		});
+	}
+
+	/**
+	 * 
+	 */
+	_setAuthRequired() {
+		this._componentReady.then(() => {
+			if(this._containerDiv.classList.contains("access-denied"))
+				this._containerDiv.classList.remove("access-denied");
+
+			if(this._containerDiv.classList.contains("access-granted"))
+				this._containerDiv.classList.remove("access-granted");
+
+			if(this._containerDiv.classList.contains("error"))
+				this._containerDiv.classList.remove("error");
+
+			if(!this._containerDiv.classList.contains("authentication-required"))
+				this._containerDiv.classList.add("authentication-required");
+
+			this._titleTag.title = this._getTitleHint();
+		});
+	}
+
+	/**
+	 * 
+	 */
+	_setAccessDenied() {
+		this._componentReady.then(() => {
+			if(this._containerDiv.classList.contains("authentication-required"))
+				this._containerDiv.classList.remove("authentication-required");
+
+			if(this._containerDiv.classList.contains("access-granted"))
+				this._containerDiv.classList.remove("access-granted");
+
+			if(this._containerDiv.classList.contains("error"))
+				this._containerDiv.classList.remove("error");
+
+			if(!this._containerDiv.classList.contains("access-denied"))
+				this._containerDiv.classList.add("access-denied");
+			
+			this._titleTag.title = this._getTitleHint();
 		});
 	}
 
@@ -110,30 +182,45 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	 * 
 	 */
 	onktbsResourceLoadFailed(error) {
-		if((error instanceof KTBSErrors.HttpError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
-			this._componentReady.then(() => {
-				if(error.statusCode == 401) {
-					if(!this._containerDiv.classList.contains("authentication-required"))
-						this._containerDiv.classList.add("authentication-required");
-				}
-				else if(error.statusCode == 403) {
-					if(!this._containerDiv.classList.contains("access-denied"))
-						this._containerDiv.classList.add("access-denied");
-				}
+		this._componentReady.then(() => {
+			if(this._containerDiv.classList.contains("unfolded"))
+				this._containerDiv.classList.remove("unfolded");
 
-				this._titleTag.title = this._getTitleHint();
-			});
+			if(!this._containerDiv.classList.contains("folded"))
+				this._containerDiv.classList.add("folded");
+
+			let children = this.querySelectorAll("ktbs4la2-nav-resource");
+
+			for(let i = 0; i < children.length; i++) {
+				let aChild = children[i];
+				this.removeChild(aChild);
+			}
+			
+			this._childrenInstanciated = false;
+		});
+
+		if((error instanceof KTBSErrors.HttpError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
+			if(error.statusCode == 401)
+				this._setAuthRequired();
+			else if(error.statusCode == 403)
+				this._setAccessDenied();
 		}
 		else {
 			super.onktbsResourceLoadFailed(error);
-
-			this._componentReady.then(() => {
-					if(!this._containerDiv.classList.contains("error"))
-						this._containerDiv.classList.add("error");
-
-				this._titleTag.title = this._getTitleHint();
-			});
+			this._setError();
 		}
+	}
+
+	/**
+	 * 
+	 */
+	onKtbsResourceChange(data) {
+		this._initktbsResourceLoadedPromise();
+
+		if(this._ktbsResource.syncStatus == "in_sync")
+			this._resolveKtbsResourceLoaded();
+		else
+			this._rejectKtbsResourceLoaded(data);
 	}
 
 	/**	
@@ -151,19 +238,32 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	_getTitleHint() {
 		let hint = this._translateString("Type") + ": " + this.getAttribute("resource-type") + "\n" + 
 					this._translateString("Status") + " : ";
-
-		switch(this._ktbsResource._syncStatus) {
+					
+		switch(this._ktbsResource.syncStatus) {
 			case "in_sync" :
-				hint += this._translateString("Online");
+				if(this._ktbsResource.authentified)
+					hint += this._translateString("Access granted");
+				else
+					hint += this._translateString("Online");
+					
 				break;
 			case "needs_sync" :
 				hint += this._translateString("Pending...");
+				break;
+			case "pending" :
+				hint += this._translateString("Pending...");
+				break;
+			case "needs_auth" :
+				hint += this._translateString("Authentication required");
+				break;
+			case "access_denied" :
+				hint += this._translateString("Access denied");
 				break;
 			case "error" :
 				hint += this._translateString("Error");
 				break;
 			default : 
-				hint += this._translateString("Unknown") + " (" + this._ktbsResource._syncStatus + ")";
+				hint += this._translateString("Unknown") + " (" + this._ktbsResource.syncStatus + ")";
 		}
 
 		return hint;
@@ -233,7 +333,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 		if(this._can_have_children()) {
 			this._ktbsResourceLoaded.then(() => {
 				if(!this._childrenInstanciated) {
-					if(this.getAttribute("resource-type") == "Ktbs") {
+					if((this.getAttribute("resource-type") == "Ktbs") || (this.getAttribute("resource-type") == "Base")) {
 						// create base child elements
 						let bases = this._ktbsResource.bases;
 
@@ -243,32 +343,10 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 							baseTag.setAttribute("resource-type", "Base");
 							baseTag.setAttribute("uri", base.uri);
 							this.appendChild(baseTag);
-						}
-
-						// create method child elements
-						let builtin_methods = this._ktbsResource.builtin_methods;
-			
-						for(let i = 0; i < builtin_methods.length; i++) {
-							let builtin_method = builtin_methods[i];
-							let methodTag = document.createElement("ktbs4la2-nav-resource");
-							methodTag.setAttribute("resource-type", "Method");
-							methodTag.setAttribute("uri", builtin_method.uri);
-							this.appendChild(methodTag);
 						}
 					}
-					else if(this.getAttribute("resource-type") == "Base") {
-
-						// create base child elements
-						let bases = this._ktbsResource.bases;
-				
-						for(let i = 0; i < bases.length; i++) {
-							let base = bases[i];
-							let baseTag = document.createElement("ktbs4la2-nav-resource");
-							baseTag.setAttribute("resource-type", "Base");
-							baseTag.setAttribute("uri", base.uri);
-							this.appendChild(baseTag);
-						}
-
+					
+					if(this.getAttribute("resource-type") == "Base") {
 						// create model child elements
 						let models = this._ktbsResource.models;
 

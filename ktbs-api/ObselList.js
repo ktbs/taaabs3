@@ -68,7 +68,7 @@ export class ObselList extends Resource {
 
 	/**
 	 * Gets the uri to query in order to read resource's data (For some resource types, this might be different from the resource URI, for instance if we need to add some query parameters. In such case, descending resource types must override this method)
-	 * @return string
+	 * @return URL
 	 */
 	get _data_read_uri() {
 		let params = new Array();
@@ -100,18 +100,18 @@ export class ObselList extends Resource {
 		if(this._reverse && (this._reverse != ""))
 			params.push("reverse=" + this._reverse);
 
-		let dataReadUri = this._uri;
+		let dataReadUri = this.uri.toString();
 
 		if(params.length > 0)
 			dataReadUri += "?" + params.join("&");
 
-		return dataReadUri;
+		return new URL(dataReadUri);
 	}
 
 	/**
 	 * Builds and returns an URI to fetch the first Obsel page from the Trace
 	 * @param int limit The maximum number of obsels to fetch for this page (default: 500)
-	 * @return string
+	 * @return URL
 	 */
 	_get_first_page_uri(limit = 500) {
 		let params = new Array();
@@ -142,12 +142,12 @@ export class ObselList extends Resource {
 		if(this._reverse && (this._reverse != ""))
 			params.push("reverse=" + this._reverse);
 
-		let dataReadUri = this._uri;
+		let dataReadUri = this.uri.toString();
 
 		if(params.length > 0)
 			dataReadUri += "?" + params.join("&");
 
-		return dataReadUri;
+		return new URL(dataReadUri);
 	}
 
 	/**
@@ -163,10 +163,13 @@ export class ObselList extends Resource {
 					headers: new Headers({
 						"Accept": "application/json"
 					}),
-					/*mode: "cors",
-					credentials: "include",*/
 					cache: "default"
 				};
+
+				let credentials = this.credentials;
+
+				if((credentials != null) && credentials.id && credentials.password)
+					fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
 
 				if(abortSignal)
 					fetchParameters.signal = abortSignal;
@@ -221,7 +224,7 @@ export class ObselList extends Resource {
 
 	/**
 	 * Gets all the obsels of the obsel list
-	 * return Object[]
+	 * @return Object[]
 	 */
 	get obsels() {
 		let obsels = new Array();

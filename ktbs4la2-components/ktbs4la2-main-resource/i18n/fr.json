@@ -14,7 +14,13 @@
     "Obsels": "Obsels",
     "Pending...": "En attente...",
     "Online": "En ligne",
-	"Error": "Erreur",
+    "Access granted": "Accès autorisé",
+    "Error": "Erreur",
+    "Authentication required": "Authentification requise",
+    "Access denied": "Accès refusé",
+    "Disconnect": "Se déconnecter",
+    "Show additional informations": "Montrer les informations complémentaires",
+    "Hide additional informations": "Cacher les informations complémentaires",
 	"See the resource on the REST console (opens in a new tab)": "Voir la ressource dans la console REST (s'ouvre dans un nouvel onglet)",
 	"Statistics": "Statistiques",
 	"Timeline view" : "Vue chronologique",
@@ -22,5 +28,12 @@
 	"Edit this kTBS root uri and/or label": "Modifier l'uri et/ou l'étiquette de cette racine kTBS",
 	"Remove from my kTBS roots": "Retirer de mes racines kTBS",
 	"Version": "Version",
-	"Parent method": "Méthode-mère"
+    "Parent method": "Méthode-mère",
+    "User name": "Nom d'utilisateur",
+    "Password": "Mot de passe",
+    "Authenticate": "Connexion",
+    "Authentication": "Authentification",
+    "Keep me signed in": "Rester connecté",
+    "Just for this session": "Pour la durée de la session",
+    "Permanently": "Indéfiniment"
 }

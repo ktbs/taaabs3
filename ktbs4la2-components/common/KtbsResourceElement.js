@@ -1,5 +1,6 @@
 import {TemplatedHTMLElement} from "./TemplatedHTMLElement.js";
 
+import {ResourceProxy} from "../../ktbs-api/ResourceProxy.js";
 import {Ktbs} from "../../ktbs-api/Ktbs.js";
 import {Base} from "../../ktbs-api/Base.js";
 import {Method} from "../../ktbs-api/Method.js";
@@ -17,29 +18,8 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	 */
 	constructor(componentJSPath, fetchStylesheet = true, fetchTranslation = true) {
 		super(componentJSPath, fetchStylesheet, fetchTranslation);
-
 		this._ktbsResource = null;
-
-		// pre-create a promise that will be resolved when the ktbs resource has been succesfully loaded
-		this._resolveKtbsResourceLoaded;
-		this._rejectKtbsResourceLoaded;
-
-		this._ktbsResourceLoaded = new Promise(function(resolve, reject) {
-			this._resolveKtbsResourceLoaded = resolve;
-			this._rejectKtbsResourceLoaded = reject;
-		}.bind(this));
-
-		this._ktbsResourceLoaded
-			.then(() => {
-				if(this.onktbsResourceLoaded)
-					this.onktbsResourceLoaded();
-			})
-			.catch((error) => {
-				if(this.onktbsResourceLoadFailed)
-					this.onktbsResourceLoadFailed(error);
-			});
-		// --- done
-
+		this._initktbsResourceLoadedPromise();
 
 		// 
 			this._resolveUriSet;
@@ -64,9 +44,36 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 			this._resourceAttributesSet = Promise.all([this._uriSet, this._typeSet]);
 
 			this._resourceAttributesSet
-				.then(this._onResourceAttributesSet.bind(this))
-				.catch(this._onMissingResourceAttributes.bind(this));
+				.then(() => {
+					this._onResourceAttributesSet();
+				})
+				.catch((error) => {
+					this._onMissingResourceAttributes(error);
+				});
 		// ---
+
+		if(this.onKtbsResourceChange)
+			this._bindedOnKtbsResourceChangeMethod = this.onKtbsResourceChange.bind(this);
+	}
+
+	/**
+	 * Creates a promise that will be resolved when the ktbs resource has been succesfully loaded
+	 */
+	_initktbsResourceLoadedPromise() {
+		this._ktbsResourceLoaded = new Promise(function(resolve, reject) {
+			this._resolveKtbsResourceLoaded = resolve;
+			this._rejectKtbsResourceLoaded = reject;
+		}.bind(this));
+
+		this._ktbsResourceLoaded
+			.then(() => {
+				if(this.onktbsResourceLoaded)
+					this.onktbsResourceLoaded();
+			})
+			.catch((error) => {
+				if(this.onktbsResourceLoadFailed)
+					this.onktbsResourceLoadFailed(error);
+			});
 	}
 
 	/**
@@ -84,18 +91,26 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onResourceAttributesSet() {
-		let uri = this.getAttribute("uri");
+		let uri = new URL(this.getAttribute("uri"));
+		let type = this._getKtbsResourceClass();
 		
 		try {
-			this._ktbsResource = new (this._getKtbsResourceClass())(uri);
+			this._ktbsResource = ResourceProxy.get_resource(type, uri);
+
+			if(this._bindedOnKtbsResourceChangeMethod)
+				this._ktbsResource.addObserver(this._bindedOnKtbsResourceChangeMethod);
 		
-			this._ktbsResource.get(this._abortController.signal)
-				.then(function() {
-					this._resolveKtbsResourceLoaded();
-				}.bind(this))
-				.catch(function(error) {
-					this._rejectKtbsResourceLoaded(error);
-				}.bind(this));
+			if(this._ktbsResource.syncStatus == "in_sync")
+				this._resolveKtbsResourceLoaded();
+			else {
+				this._ktbsResource.get(this._abortController.signal)
+					.then(() => {
+						this._resolveKtbsResourceLoaded();
+					})
+					.catch((error) => {
+						this._rejectKtbsResourceLoaded(error);
+					});
+			}
 		}
 		catch(error) {
 			this.emitErrorEvent(error);
@@ -129,6 +144,16 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 
 		if(!this.getAttribute("uri"))
 			this._rejectUriSet(new Error("Missing required attribute \"uri\"."));
+	}
+
+	/**
+	 * 
+	 */
+	disconnectedCallback() {
+		super.disconnectedCallback();
+
+		if(this._bindedOnKtbsResourceChangeMethod)
+			this._ktbsResource.removeObserver(this._bindedOnKtbsResourceChangeMethod);
 	}
 
 	/**

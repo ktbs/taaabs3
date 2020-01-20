@@ -59,7 +59,13 @@
 	background: url('{my-component-folder}/online.svg') no-repeat;
 }
 
-#container.online #resource-status-label {
+#container.access-granted #resource-status {
+	background: url('{my-component-folder}/lock_open.svg') no-repeat;
+	background-position: 5px 2px;
+}
+
+#container.online #resource-status-label,
+#container.access-granted #resource-status-label {
 	color: #060;
 }
 
@@ -71,6 +77,23 @@
 	color: red;
 }
 
+#container.authentication-required #resource-status {
+	background: url('{my-component-folder}/lock_closed_orange.svg') no-repeat;
+	background-position: 5px 2px;
+}
+
+#container.authentication-required #resource-status-label {
+	color: #FF8C00;
+}
+
+#container.access-denied #resource-status {
+	background: url('{my-component-folder}/lock_crossed.svg') no-repeat;
+}
+
+#container.access-denied #resource-status-label {
+	color: red;
+}
+
 #error-message {
 	display: none;
 }
@@ -79,12 +102,39 @@
 	display: inline;
 }
 
-#container.error #resource-about {
+#disconnect-button {
+	background: url('{my-component-folder}/exit.svg') no-repeat;
+	width: 20px;
+	height: 20px;
+	opacity: 0.25;
+	cursor: pointer;
+	vertical-align: middle;
+	margin-left: 10px;
 	display: none;
 }
 
-:host(:not([resource-type = Ktbs])) #resource-about {
+#disconnect-button:hover {
+	opacity: 1;
+}
+
+#container.access-granted #disconnect-button {
+	display: inline-block;
+}
+
+:host(:not([resource-type = Ktbs])) #resource-about, #container:not(.online):not(.access-granted) #resource-about {
     display: none;
+}
+
+#container:not(.online):not(.access-granted) #resource-contents {
+	display: none;
+}
+
+#authentication {
+	display: none;
+}
+
+#container.authentication-required #authentication, #container.access-denied #authentication {
+	display: block;
 }
 
 #resource-type-icon {
@@ -118,6 +168,83 @@
     background-image: url('{my-component-folder}/Method.svg');
 }
 
+#resource-about {
+	font-size: 10pt;
+}
+
+#resource-about-content {
+	padding-top: 20px;
+}
+
+#resource-about.folded #resource-about-content {
+	display: none;
+}
+
+#resource-about-toggle {
+	cursor: pointer;
+	width: 32px;
+	height: 32px;
+	background-size: 32px 32px;
+	background-repeat: no-repeat;
+	display: block;
+	position: absolute;
+	right: 0px;
+	bottom: 20px;
+}
+
+#resource-about.folded #resource-about-toggle {
+	background-image: url('{my-component-folder}/information-empty.svg');
+}
+
+#resource-about.folded #resource-about-toggle:hover {
+	background-image: url('{my-component-folder}/information-full.svg');
+}
+
+#resource-about.expanded #resource-about-toggle {
+	background-image: url('{my-component-folder}/information-full.svg');
+}
+
+#resource-about.expanded #resource-about-toggle:hover {
+	background-image: url('{my-component-folder}/information-empty.svg');
+}
+
+#root-comment {
+	background-color: cornflowerblue;
+	border: 1px solid royalblue;
+	border-radius: 10px 10px 10px 10px;
+	padding: 10px 10px;
+}
+
+#version-label {
+	font-size: bold;
+}
+
+#root-builin-methods {
+	margin: 0 0;
+	padding-left: 0;
+}
+
+#root-builin-methods h2 {
+	margin: 0 0;
+	font-weight: bold;
+	font-size: 10pt;
+	display: inline-block;
+}
+
+#root-builin-methods li {
+	list-style-type: none;
+	display: inline-block;
+	background: url('{my-component-folder}/Method.svg') no-repeat;
+	background-size: 16px 16px;
+	background-position: 0 1px;
+	margin-right: 10px;
+	padding-left: 18px;
+	padding-bottom: 5px;
+	vertical-align: middle;
+	position: relative;
+	bottom: -2px;
+}
+
 #child-bases,
 #child-builtin-methods,
 #child-models,
@@ -145,3 +272,103 @@
     display: block;
 }
 
+/* ----- Authentication form ------- */
+
+#authentication {
+	text-align: center;
+}
+
+#authentication-form {
+	display: inline-block;
+	margin-top: 20px;
+	border: 1px solid #CCC;
+	border-radius: 16px;
+	padding: 0 0 0 0;
+}
+
+#authentication-form p {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+#authentication-form #auth-error-message {
+	color: red;
+	background-color: pink;
+	margin: 10px 10px 10px 10px;
+	padding: 10px 10px 10px 10px;
+	border-radius: 5px;
+	background-image: url('{my-component-folder}/error.svg');
+	background-repeat: no-repeat;
+	background-position: 5px 50%;
+	background-size: 16px 16px;
+	font-size: 10pt;
+	padding-left: 25px;
+	text-align: left;
+	display: none;
+}
+
+#authentication-form h2 {
+	background-color: #FF8C00;
+	color: #FFFFFF;
+	margin-top: 0;
+	border-radius: 16px 16px 0 0;
+	background-image: url('{my-component-folder}/key_white.svg');
+	background-repeat: no-repeat;
+	background-size: 20px 20px;
+	background-position: 8px 3px;
+	padding-left: 30px;
+	padding-right: 5px;
+}
+
+#authentication-form label {
+	display: inline-block;
+}
+
+#authentication-form p.textfield {
+	text-align: right;
+}
+
+#authentication-form p.textfield input {
+	margin-left: 5px;
+	min-width: 100px;
+}
+
+#authentication-form h3 {
+	font-size: 10pt;
+	text-align: left;
+	margin: 0 0 0 0;
+	padding-left: 10px;
+	font-weight: normal;
+}
+
+#authentication-form #auth_validity_options {
+	text-align: left;
+	margin-top: 0;
+	font-size: 8pt;
+}
+
+#authentication-form #buttons {
+	text-align: center;
+}
+
+#authentication-form #buttons button {
+	background-color: #FF8C00;
+	width: 120px;
+	height: 35px;
+	cursor: pointer;
+	margin-left: 10px;
+	margin-right: 10px;
+	color: white;
+	border: none;
+	opacity: 0.6;
+	font-weight: bold;
+}
+
+#authentication-form #buttons button:hover {
+	opacity: 1;
+}
+
+#authentication-form #validate-authentication:disabled, #authentication-form #validate-authentication:disabled:hover {
+	cursor: default;
+	background-color: #CCC;
+}

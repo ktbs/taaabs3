@@ -4,7 +4,10 @@
 	"Add new child resource": "Ajouter une nouvelle ressource-fille",
 	"Status": "Statut",
 	"Online": "En ligne",
+	"Access granted": "Accès autorisé",
 	"Pending...": "En attente...",
+	"Authentication required": "Authentification requise",
+	"Access denied": "Accès refusé",
 	"Error": "Erreur",
 	"Unknown": "Inconnu"
 }

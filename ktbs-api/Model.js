@@ -6,36 +6,6 @@ import {Resource} from "./Resource.js";
 export class Model extends Resource {
 
 	/**
-	 * Return the URI of this resource relative to its “containing” resource; basically, this is short ‘id’ that could have been used to create this resource in the corresponding ‘create_X’ method
-	 * @return	str
-	 */
-	/*get id() {
-		let graphs = this._JSONData["@graph"];
-
-		if(graphs instanceof Array) {
-			let modelGraph = null;
-
-			for(let i = 0; (modelGraph == null) && (i < graphs.length); i++) {
-				let graph = graphs[i];
-
-				if((graph["@type"]) && (graph["@type"] == "TraceModel"))
-					modelGraph = graph;
-			}
-
-			if(modelGraph != null) {
-				if(modelGraph["@id"])
-					return modelGraph["@id"];
-				else
-					throw new Error("Could not find @id in TraceModel type graph in Model");
-			}
-			else
-				throw new Error("Could not find a TraceModel type graph in Model");
-		}
-		else
-			throw new Error("Could not find @graph in Model");
-	}*/
-
-	/**
 	 * Gets the stylesheets for the Model
 	 * @return Object[]
 	 */

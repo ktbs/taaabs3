@@ -1,3 +1,4 @@
+import {ResourceProxy} from "./ResourceProxy.js";
 import {Resource} from "./Resource.js";
 import {StoredTrace} from "./StoredTrace.js";
 import {ComputedTrace} from "./ComputedTrace.js";
@@ -11,7 +12,7 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the URIs of the stored traces in the Base
-	 * @return string[]
+	 * @return URL[]
 	 */
 	_get_stored_traces_uris() {
 		let stored_traces_uris = new Array();
@@ -19,14 +20,8 @@ export class Base extends Resource {
 		if(this._JSONData.contains instanceof Array) {
 			for(let i = 0; i < this._JSONData.contains.length; i++) {
 				if(this._JSONData.contains[i]["@type"] == "StoredTrace") {
-					let stored_trace_id = this._JSONData.contains[i]["@id"];
-					let stored_trace_uri;
-
-					if(stored_trace_id.substr(0, 4) == "http")
-						stored_trace_uri = stored_trace_id;
-					else
-						stored_trace_uri = this._uri + stored_trace_id;
-
+					let stored_trace_uri_string = this._JSONData.contains[i]["@id"];
+					let stored_trace_uri = new URL(stored_trace_uri_string, this.uri);
 					stored_traces_uris.push(stored_trace_uri);
 				}
 			}
@@ -45,7 +40,7 @@ export class Base extends Resource {
 
 		for(let i = 0; i < stored_traces_uris.length; i++) {
 			let stored_trace_uri = stored_traces_uris[i];
-			let stored_trace = new StoredTrace(stored_trace_uri);
+			let stored_trace = ResourceProxy.get_resource(StoredTrace, stored_trace_uri);
 			stored_traces.push(stored_trace);
 		}
 
@@ -54,7 +49,7 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the URIs of the computed traces in the Base
-	 * @return string[]
+	 * @return URL[]
 	 */
 	_get_computed_traces_uris() {
 		let computed_traces_uris = new Array();
@@ -62,14 +57,8 @@ export class Base extends Resource {
 		if(this._JSONData.contains instanceof Array) {
 			for(let i = 0; i < this._JSONData.contains.length; i++) {
 				if(this._JSONData.contains[i]["@type"] == "ComputedTrace") {
-					let computed_trace_id = this._JSONData.contains[i]["@id"];
-					let computed_trace_uri;
-
-					if(computed_trace_id.substr(0, 4) == "http")
-						computed_trace_uri = computed_trace_id;
-					else
-						computed_trace_uri = this._uri + computed_trace_id;
-
+					let computed_trace_uri_string = this._JSONData.contains[i]["@id"];
+					let computed_trace_uri = new URL(computed_trace_uri_string, this.uri);
 					computed_traces_uris.push(computed_trace_uri);
 				}
 			}
@@ -88,7 +77,7 @@ export class Base extends Resource {
 
 		for(let i = 0; i < computed_traces_uris.length; i++) {
 			let computed_trace_uri = computed_traces_uris[i];
-			let computed_trace = new ComputedTrace(computed_trace_uri);
+			let computed_trace = ResourceProxy.get_resource(ComputedTrace, computed_trace_uri);
 			computed_traces.push(computed_trace);
 		}
 
@@ -97,7 +86,7 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the URIs of the models in the Base
-	 * @return string[]
+	 * @return URL[]
 	 */
 	_get_models_uris() {
 		let models_uris = new Array();
@@ -105,14 +94,8 @@ export class Base extends Resource {
 		if(this._JSONData.contains instanceof Array) {
 			for(let i = 0; i < this._JSONData.contains.length; i++) {
 				if(this._JSONData.contains[i]["@type"] == "TraceModel") {
-					let model_id = this._JSONData.contains[i]["@id"];
-					let model_uri;
-
-					if(model_id.substr(0, 4) == "http")
-						model_uri = model_id;
-					else
-						model_uri = this._uri + model_id;
-
+					let model_uri_string = this._JSONData.contains[i]["@id"];
+					let model_uri = new URL(model_uri_string, this.uri);
 					models_uris.push(model_uri);
 				}
 			}
@@ -131,7 +114,7 @@ export class Base extends Resource {
 
 		for(let i = 0; i < models_uris.length; i++) {
 			let model_uri = models_uris[i];
-			let model = new Model(model_uri);
+			let model = ResourceProxy.get_resource(Model, model_uri);
 			models.push(model);
 		}
 
@@ -140,7 +123,7 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the URIs of the methods in the base.
-	 * @return string[]
+	 * @return URL[]
 	 */
 	_get_methods_uris() {
 		let methods_uris = new Array();
@@ -148,14 +131,8 @@ export class Base extends Resource {
 		if(this._JSONData.contains instanceof Array) {
 			for(let i = 0; i < this._JSONData.contains.length; i++) {
 				if(this._JSONData.contains[i]["@type"] == "Method") {
-					let method_id = this._JSONData.contains[i]["@id"];
-					let method_uri;
-
-					if(method_id.substr(0, 4) == "http")
-						method_uri = method_id;
-					else
-						method_uri = this._uri + method_id;
-
+					let method_uri_string = this._JSONData.contains[i]["@id"];
+					let method_uri = new URL(method_uri_string, this.uri);
 					methods_uris.push(method_uri);
 				}
 			}
@@ -174,7 +151,7 @@ export class Base extends Resource {
 
 		for(let i = 0; i < methods_uris.length; i++) {
 			let method_uri = methods_uris[i];
-			let method = new Method(method_uri);
+			let method = ResourceProxy.get_resource(Method, method_uri);
 			methods.push(method);
 		}
 
@@ -183,7 +160,7 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the URIs of the sub-bases in the Base
-	 * @return string[]
+	 * @return URL[]
 	 */
 	_get_bases_uris() {
 		let bases_uris = new Array();
@@ -191,14 +168,8 @@ export class Base extends Resource {
 		if(this._JSONData.contains instanceof Array) {
 			for(let i = 0; i < this._JSONData.contains.length; i++) {
 				if(this._JSONData.contains[i]["@type"] == "Base") {
-					let base_id = this._JSONData.contains[i]["@id"];
-					let base_uri;
-
-					if(base_id.substr(0, 4) == "http")
-						base_uri = base_id;
-					else
-						base_uri = this._uri + base_id;
-
+					let base_uri_string = this._JSONData.contains[i]["@id"];
+					let base_uri = new URL(base_uri_string, this.uri);
 					bases_uris.push(base_uri);
 				}
 			}
@@ -217,7 +188,7 @@ export class Base extends Resource {
 
 		for(let i = 0; i < bases_uris.length; i++) {
 			let base_uri = bases_uris[i];
-			let base = new Base(base_uri);
+			let base = ResourceProxy.get_resource(Base, base_uri);
 			bases.push(base);
 		}
 

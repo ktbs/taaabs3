@@ -10,6 +10,7 @@
 			<a id="resource-link" target="_blank" title="{translate: 'See the resource on the REST console (opens in a new tab)'}"></a>
 			<div id="resource-status">
 				<div id="resource-status-label">{translate: 'Pending...'}</div>
+				<a id="disconnect-button" title="{translate: 'Disconnect'}"></a>
 				<div id="error-message"></div>
 			</div>
         </div>
@@ -19,12 +20,20 @@
             <div id="tool-remove" title="{translate: 'Remove from my kTBS roots'}"></div>
         </div>
 
-        <div id="resource-about">
-			<p id="root-comment"></p>
+        <div id="resource-about" class="folded">
+			<a id="resource-about-toggle" title="{translate: 'Show additional informations'}"></a>
 
-			<div id="ktbs-version">
-				<span id="version-label">{translate: 'Version'}</span> : 
-				<span id="root-version"></span>
+			<div id="resource-about-content">
+				<p id="root-comment"></p>
+
+				<div id="ktbs-version">
+					<span id="version-label">{translate: 'Version'}</span> : 
+					<span id="root-version"></span>
+				</div>
+
+				<ul id="root-builin-methods">
+					<h2>{translate: 'Builtin methods'}:</h2>
+				</ul>
 			</div>
 		</div>
 	</header>
@@ -36,11 +45,11 @@
 
 		<ktbs4la2-main-subsection id="child-bases" title="{translate: 'Bases'} :" column-width="250px" foldable="true" expanded="true">
 			<slot name="bases"></slot>
-        </ktbs4la2-main-subsection>
-        
-        <ktbs4la2-main-subsection id="child-builtin-methods" title="{translate: 'Builtin methods'} :" column-width="250px" foldable="true" expanded="true">
-			<slot name="builtin-methods"></slot>
 		</ktbs4la2-main-subsection>
+		
+        <!--<ktbs4la2-main-subsection id="child-builtin-methods" title="{translate: 'Builtin methods'} :" column-width="250px" foldable="true" expanded="true">
+			<slot name="builtin-methods"></slot>
+		</ktbs4la2-main-subsection>-->
 
 		<ktbs4la2-main-subsection id="child-models" title="{translate: 'Models'} :" column-width="250px" foldable="true" expanded="true">
 			<slot name="models"></slot>
@@ -85,5 +94,35 @@
 		<ktbs4la2-main-subsection id="stats" title="{translate: 'Statistics'} :" foldable="true" expanded="true">
 			<slot name="stats"></slot>
 		</ktbs4la2-main-subsection>
+	</section>
+
+	<section id="authentication">
+		<form id="authentication-form">
+			<h2>{translate: 'Authentication'}</h2>
+
+			<p id="auth-error-message"></p>
+
+			<p class="textfield">
+				<label for="username">{translate: 'User name'}<span class="required-field">*</span> : </label>
+				<input name="username" id="username" type="text" required />
+			</p>
+		
+			<p class="textfield">
+				<label for="password">{translate: 'Password'}<span class="required-field">*</span> : </label>
+				<input name="password" id="password" type="password" required />
+			</p>
+			
+			<h3>{translate: 'Keep me signed in'}:</h3>
+
+			<p id="auth_validity_options">	
+				<input type="radio" name="auth_validity" id="auth_validity_session" value="session" checked /><label for="auth_validity_session">{translate: 'Just for this session'}</label>
+				<br>
+				<input type="radio" name="auth_validity" id="auth_validity_permanent" value="permanent" /><label for="auth_validity_permanent">{translate: 'Permanently'}</label>
+			</p>
+
+			<p id="buttons">
+				<button type="submit" id="validate-authentication" disabled>{translate: 'Authenticate'}</button>
+			</p>
+		</form>
 	</section>
 </article>

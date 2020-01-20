@@ -1,5 +1,6 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 
+import {ResourceProxy} from "../../ktbs-api/ResourceProxy.js";
 import {Trace} from "../../ktbs-api/Trace.js";
 import {Model} from "../../ktbs-api/Model.js";
 import {TraceStats} from "../../ktbs-api/TraceStats.js";
@@ -69,9 +70,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._timeline.setAttribute("lang", this._lang);
 		this._timeline.setAttribute("slot", "timeline");
 		this._timeline.addEventListener("request-fullscreen", this._onTimelineRequestFullscreen.bind(this), true);
-
 		this._timeline.addEventListener("click", this._onClickTimeline.bind(this), true);
-
 		this._obselsLoadingIndications = this.shadowRoot.querySelector("#obsels-loading-indications");
 		this._obselsLoadControlButton = this.shadowRoot.querySelector("#obsels-load-control-button");
 		this._obselsLoadControlButton.addEventListener("click", this._onClickObselsLoadControlButton.bind(this));
@@ -180,7 +179,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
 
 		if(attributeName == "uri") {
-			this._trace = new Trace(newValue);
+			this._trace = ResourceProxy.get_resource(Trace, newValue);
 
 			this._trace.get(this._abortController.signal)
 				.then(() => {
@@ -198,7 +197,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 			// load stats, in order to get trace begin and trace end dates
 			let statsUri = newValue + "@stats";
-			this._stats = new TraceStats(statsUri);
+			this._stats = ResourceProxy.get_resource(TraceStats, statsUri);
 
 			this._stats.get(this._abortController.signal)
 				.then(() => {
@@ -222,7 +221,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_initObselsLoading() {
 		let obselsUri = this._traceUri + "@obsels";
-		this._obselList = new ObselList(obselsUri);
+		this._obselList = ResourceProxy.get_resource(ObselList, obselsUri);
 
 		this._allObselsLoaded = new Promise(function(resolve, reject) {
 			this._resolveAllObselsLoaded = resolve;
@@ -415,7 +414,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	_onModelLoaded() {
 		this._componentReady.then(() => {
 			let defaultStylesheetGeneratedFromModel = this._generateDefaultStylesheetFromModel();
-
+			
 			if(defaultStylesheetGeneratedFromModel != null) {
 				this._styleSheets.push(defaultStylesheetGeneratedFromModel);
 

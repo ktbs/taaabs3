@@ -3,18 +3,12 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 import "../ktbs4la2-overlay/ktbs4la2-overlay.js";
 import "../ktbs4la2-root-form/ktbs4la2-root-form.js";
 import "../ktbs4la2-nav-resource/ktbs4la2-nav-resource.js";
-
 import "../ktbs4la2-main-documentation/ktbs4la2-main-documentation.js";
-
 import "../ktbs4la2-main-resource/ktbs4la2-main-resource.js";
 
-/*import "../ktbs4la2-main-root/ktbs4la2-main-root.js";
-import "../ktbs4la2-main-base/ktbs4la2-main-base.js";
-import "../ktbs4la2-main-method/ktbs4la2-main-method.js";
-import "../ktbs4la2-main-model/ktbs4la2-main-model.js";
-import "../ktbs4la2-main-stored-trace/ktbs4la2-main-stored-trace.js";
-import "../ktbs4la2-main-computed-trace/ktbs4la2-main-computed-trace.js";*/
-
+/**
+ * 
+ */
 class KTBS4LA2Application extends TemplatedHTMLElement {
 
 	/**

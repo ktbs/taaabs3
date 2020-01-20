@@ -1,4 +1,6 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
+
+import {ResourceProxy} from "../../ktbs-api/ResourceProxy.js";
 import {Trace} from "../../ktbs-api/Trace.js";
 import {TraceStats} from "../../ktbs-api/TraceStats.js";
 
@@ -58,7 +60,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
 
 		if(attributeName == "uri") {
-			this._trace = new Trace(newValue);
+			this._trace = ResourceProxy.get_resource(Trace, newValue);
 
 			this._trace.get(this._abortController.signal)
 				.then(() => {
@@ -72,18 +74,21 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 				});
 
 			let statsUri = newValue + "@stats";
-			this._stats = new TraceStats(statsUri);
+			this._stats = ResourceProxy.get_resource(TraceStats, statsUri);
 
-			this._stats.get(this._abortController.signal)
-				.then(() => {
-					this._resolveStatsLoaded();
-				})
-				.catch((error) => {
-					this._rejectStatsLoaded();
+			if(this._stats.syncStatus == "in_sync")
+				this._resolveStatsLoaded();
+			else
+				this._stats.get(this._abortController.signal)
+					.then(() => {
+						this._resolveStatsLoaded();
+					})
+					.catch((error) => {
+						this._rejectStatsLoaded();
 
-					if((error.name != "AbortError") || !this._abortController.signal.aborted)
-						this._setError(error);
-				});
+						if((error.name != "AbortError") || !this._abortController.signal.aborted)
+							this._setError(error);
+					});
 		}
 	}
 

@@ -1,7 +1,8 @@
+import {ResourceProxy} from "./ResourceProxy.js";
 import * as KTBSErrors from "./Errors.js";
 
 /**
- * Base class for KTBS resources
+ * Abstract class intended to be inherited by KTBS resource types
  */
 export class Resource {
 
@@ -12,28 +13,57 @@ export class Resource {
 
 		/**
 		 * The resource's uri
+		 * @type URL
 		 */
 		this._uri;
 
 		/**
 		 * The resource's ID relative to its “containing” resource
+		 * @type string
 		 */
 		this._id;
 
 		/**
-		 * The resource's parent URI
+		 * The etag provided by the server at the resource latest HTTP query
+		 * @type string
 		 */
-		this._parent_uri;
+		this._etag = null;
 
 		/**
-		 * The resource data that can be read from/written to the remote kTBS service 
+		 * The resource data that can be read from/written to the remote kTBS service
+		 * @type Object
 		 */
 		this._JSONData = new Object();
 
 		/**
 		 * The resource synchronization status
+		 * @type string
 		 */
 		this._syncStatus = "needs_sync";
+
+		/**
+		 * A Promise for the "GET" request allowing to read the resource's data
+		 * @type Promise
+		 */
+		this._getPromise = null;
+
+		/**
+		 * A collection of observers callbacks to notify when the resource's state changes
+		 * @type Array
+		 */
+		this._observers = new Array();
+
+		/**
+		 * Whether or not the resource was get using authentification credentials
+		 * @type boolean
+		 */
+		this._authentified = false;
+
+		/**
+		 * Whether or not we should try to use credentials previously stored in local/session storages for the resource's parent URIs 
+		 * @type boolean
+		 */
+		this._use_parent_credentials = true;
 
 		// if an uri has been specified at instanciation, set it
 		if(uri != null)
@@ -42,6 +72,7 @@ export class Resource {
 
 	/**
 	 * Gets the resource's URI
+	 * @return URL
 	 */
 	get uri() {
 		return this._uri;
@@ -49,17 +80,37 @@ export class Resource {
 
 	/**
 	 * Sets the resource's URI
-	 * @param string uri the new URI for the resource.
+	 * @param URL or String uri the new URI for the resource.
+	 * @throws TypeError Throws a TypeError if the uri parameter is not an instance of URL or String
 	 * @throws Error Throws an Error if we try to set the URI of a resource that already exists on a kTBS service.
 	 */
 	set uri(uri) {
-		if(this._syncStatus == "needs_sync") {
-			this._uri = uri;
-			this._id = Resource.get_relative_id(uri);
-			this._parent_uri = Resource.get_parent_uri(uri);
+		if(this.syncStatus == "needs_sync") {
+			if(uri instanceof URL)
+				this._uri = uri;
+			else if(typeof uri == "string")
+				this._uri = new URL(uri);
+			else
+				throw new TypeError("uri must be of either type \"URL\" or \"String\"");
 		}
 		else
 			throw new Error("Resource's URI can not be changed anymore");
+	}
+
+	/**
+	 * Gets the synchronization status of the resource
+	 * @return string the synchronisation status of the resource
+	 */
+	get syncStatus() {
+		return this._syncStatus;
+	}
+
+	/**
+	 * Gets whether or not the resource was read using authentication credentials.
+	 * @return boolean
+	 */
+	get authentified() {
+		return this._authentified;
 	}
 
 	/**
@@ -91,7 +142,12 @@ export class Resource {
 	 * @return string
 	 */
 	get id() {
-		return this._id;
+		if(this._id)
+			return this._id;
+		else if(this._uri)
+			return Resource.extract_relative_id(this._uri.toString());
+		else
+			return undefined;
 	}
 
 	/**
@@ -100,30 +156,52 @@ export class Resource {
 	 * @throws Error Throws an Error if we try to set the ID of a resource that already exists on a kTBS service.
 	 */
 	set id(id) {
-		if(this._syncStatus == "needs_sync")
+		if(this.syncStatus == "needs_sync")
 			this._id = id;
 		else
 			throw new Error("Resource's ID can not be changed anymore");
 	}
 
 	/**
-	 * Gets the URI of the parent resource, if it exists (= if the resource exists on a kTBS service and is not a KTBS Root)
-	 * @return string
+	 * Gets the parent resource of this resource.
+	 * @return Resource the resource's parent resource if any, or undefined if the resource's parent is unknown (i.e. the resource hasn't been read or recorded yet), or null if the resource doesn't have any parent (i.e. Ktbs Root).
 	 */
-	get parent_uri() {
-		return this._parent_uri;
+	get parent() {
+		if(this._JSONData["inBase"])
+			return ResourceProxy.get_resource(Base, new URL(this._JSONData["inBase"], this.uri));
+		else if(this._JSONData["inRoot"])
+			return ResourceProxy.get_resource(Ktbs, new URL(this._JSONData["inRoot"], this.uri));
+		else
+			return undefined;
 	}
 
 	/**
-	 * Sets the resource's parent URI
-	 * @param string parent_uri the new parent URI
-	 * @throws Error Throws an Error if we try to set the parent URI of a resource that already exists on a kTBS service.
+	 * Sets the parent resource of this resource.
+	 * @param Resource parent the new parent for the resource (must be an instance of either "Ktbs" or "Base").
+	 * @throws TypeError if the parent parameter is not an instance of "Ktbs" nor "Base".
+	 * @throws Error if the resource's parent can not be set anymore (i.e. the resource has already been recorded).
 	 */
-	set parent_uri(parent_uri) {
-		if(this._syncStatus == "needs_sync")
-			this._parent_uri = parent_uri;
+	set parent(parent) {
+		if(this.syncStatus == "needs_sync") {
+			if(parent instanceof Base) {
+				this._JSONData["inBase"] = parent.uri;
+
+				if(this._JSONData["inRoot"])
+					delete this._JSONData["inRoot"];
+			}
+			else if(parent instanceof Ktbs) {
+				this._JSONData["inRoot"] = parent.uri;
+
+				if(this._JSONData["inBase"])
+					delete this._JSONData["inBase"];
+			}
+			else
+				throw new TypeError("Parent resource must be of either type \"Base\" or \"Ktbs\"");
+
+			this._parent_uri = parent.uri;
+		}
 		else
-			throw new Error("Resource's parent URI can not be changed anymore");
+			throw new Error("Resource's parent can not be changed anymore");
 	}
 
 	/**
@@ -135,83 +213,278 @@ export class Resource {
 	}
 
 	/**
+	 * Remove the credentials stored in a given storage for the resource's URI
+	 * @param Storage storage The storage to remove the credentials from
+	 */
+	_removeOwnCredentialsFromStorage(storage) {
+		let storageCredentialsString = storage.getItem("credentials");
+
+		if(storageCredentialsString) {
+			let storageCredentials = JSON.parse(storageCredentialsString);
+
+			if(storageCredentials instanceof Array) {
+				for(let i = 0; i < storageCredentials.length; i++) {
+					let aResourceCredential = storageCredentials[i];
+
+					if(aResourceCredential.uri == this.uri.toString())
+						storageCredentials.splice(i, 1);
+				}
+
+				storageCredentialsString = JSON.stringify(storageCredentials);
+				storage.setItem("credentials", storageCredentialsString);
+			}
+		}
+	}
+
+	/**
+	 * Remove the credentials stored in local/session storages for the resource's URI
+	 */
+	_removeOwnCredentials() {
+		if(window.sessionStorage)
+			this._removeOwnCredentialsFromStorage(sessionStorage);
+
+		if(window.localStorage)
+			this._removeOwnCredentialsFromStorage(localStorage);
+	}
+
+	/**
+	 * Gets the credentials stored in a storage specifically for this resource.
+	 * @param Storage the storage in where to look in the credentials.
+	 * @return Object an object containing the credential informations, or null if no appropriate credentials have been found.
+	 */
+	_getOwnCredentialsFromStorage(storage) {
+		let storageCredentialsString = storage.getItem("credentials");
+
+		if(storageCredentialsString) {
+			let storageCredentials = JSON.parse(storageCredentialsString);
+
+			if(storageCredentials instanceof Array) {
+				for(let i = 0; i < storageCredentials.length; i++) {
+					let aResourceCredential = storageCredentials[i];
+
+					if(aResourceCredential.uri == this.uri.toString())
+						return aResourceCredential;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Gets the credentials stored in a storage for a resource having an uri who is the closest parent of this resource's uri.
+	 * @param Storage the storage in where to look in the credentials.
+	 * @return Object an object containing the credential informations, or null if no appropriate credentials have been found.
+	 */
+	_getParentsCredentialsFromStorage(storage) {
+		let parentCredendials = new Array();
+		let storageCredentialsString = storage.getItem("credentials");
+
+		if(storageCredentialsString) {
+			let storageCredentials = JSON.parse(storageCredentialsString);
+
+			if(storageCredentials instanceof Array) {
+				for(let i = 0; i < storageCredentials.length; i++) {
+					let aResourceCredential = storageCredentials[i];
+
+					if(this.uri.toString().startsWith(aResourceCredential.uri))
+						parentCredendials.push(aResourceCredential);
+				}
+			}
+		}
+		
+		if(parentCredendials.length > 0) {
+			parentCredendials.sort((credentialA, credentialB) => {
+				return (credentialB.length - credentialA.length);
+			});
+
+			return parentCredendials[0];
+		}
+		else
+			return null;
+	}
+
+	/**
+	 * Tries to retrieve the most appropriate credentials for the resource from localStorage or sessionStorage.
+	 * @return Object an object containing the credential informations, or null if no appropriate credentials have been found.
+	 */
+	get credentials() {
+		let credentials = null;
+
+		if(window.sessionStorage)
+			credentials = this._getOwnCredentialsFromStorage(window.sessionStorage);
+
+		if((credentials == null) && (window.localStorage))
+			credentials = this._getOwnCredentialsFromStorage(window.localStorage);
+		
+		if((credentials == null) && (this._use_parent_credentials) && (window.sessionStorage))
+			credentials = this._getParentsCredentialsFromStorage(window.sessionStorage);
+
+		if((credentials == null) && (this._use_parent_credentials) && (window.localStorage))
+			credentials = this._getParentsCredentialsFromStorage(window.localStorage);
+
+		return credentials;
+	}
+
+	/**
+	 * Removes credentials information for the resource, stops using parent's credentials and resets the resource.
+	 */
+	disconnect() {
+		this._removeOwnCredentials();
+		this._use_parent_credentials = false;
+		this.force_state_refresh();
+	}
+
+	/**
 	 * Attemps to asynchronously read an existing object's data to the REST service and returns a promise.
 	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
+	 * @param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
 	 * @return Promise
 	 */
-	get(abortSignal = null) {
+	get(abortSignal = null, credentials = null) {
 		if(this._uri) {
-			return new Promise((resolve, reject) => {
-				this._syncStatus = "pending";
+			if(this._getPromise == null) {
+				this._getPromise = new Promise((resolve, reject) => {
+					this._syncStatus = "pending";
 
-				let fetchParameters = {
-					method: "GET",
-					headers: new Headers({
-						"Accept": "application/json"
-						//"Authorization": "Basic " + btoa("test:test")
-					}),
-					/*mode: "cors",
-					credentials: "include",*/
-					cache: "default"
-				};
+					let fetchParameters = {
+						method: "GET",
+						headers: new Headers({
+							"Accept": "application/json"
+						}),
+						cache: "default"
+					};
 
-				if(this._etag)
-					fetchParameters.headers.append("If-None-Match", this._etag);
+					if(credentials == null)
+						credentials = this.credentials;
 
-				if(abortSignal)
-					fetchParameters.signal = abortSignal;
-				
-				fetch(this._data_read_uri, fetchParameters)
-					.then((response) => {
-						// if the HTTP request responded successfully
-						if(response.ok) {
-							if(response.headers.has("etag"))
-								this._etag = response.headers.get("etag");
+					if((credentials != null) && credentials.id && credentials.password)
+						fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
 
-							// when the response content from the HTTP request has been successfully read
-							response.json()
-								.then((parsedJson) => {
-									this._JSONData = parsedJson;
-									this._syncStatus = "in_sync";
-									resolve();
-								})
-								.catch((error) => {
-									this._syncStatus = "error";
-									reject(error);
-								});
-						}
-						else {
-							reject(new KTBSErrors.HttpError(response.status, response.statusText));
-						}
-					})
-					.catch((error) => {
-						this._syncStatus = "error";
-						reject(error);
-					});
-			});
+					if(this._etag)
+						fetchParameters.headers.append("If-None-Match", this._etag);
+
+					if(abortSignal)
+						fetchParameters.signal = abortSignal;
+					
+					fetch(this._data_read_uri, fetchParameters)
+						.then((response) => {
+							// if the HTTP request responded successfully
+							if(response.ok) {
+								if(response.headers.has("etag"))
+									this._etag = response.headers.get("etag");
+
+								// when the response content from the HTTP request has been successfully read
+								response.json()
+									.then((parsedJson) => {
+										this._authentified = ((credentials != null) && credentials.id && credentials.password);
+										this._JSONData = parsedJson;
+										this._syncStatus = "in_sync";
+										resolve();
+										this.notifyObservers();
+									})
+									.catch((error) => {
+										this._authentified = false;
+										this._syncStatus = "error";
+										reject(error);
+										this.notifyObservers(error);
+									});
+							}
+							else {
+								if(response.status == 401)
+									this._syncStatus = "needs_auth";
+								else if(response.status == 403)
+									this._syncStatus = "access_denied";
+
+								this._etag = null;
+								this._authentified = false;
+								this._getPromise = null;
+								let error = new KTBSErrors.HttpError(response.status, response.statusText);
+								reject(error);
+								this.notifyObservers(error);
+							}
+						})
+						.catch((error) => {
+							this._syncStatus = "error";
+							this._etag = null;
+							this._authentified = false;
+							this._getPromise = null;
+							reject(error);
+							this.notifyObservers(error);
+						});
+				});
+			}
+
+			return this._getPromise;
 		}
 		else
 			throw new Error("Cannot read data from a resource without an uri");
 	}
 
     /**
-	 * Ensure this resource is up-to-date. While remote resources are expected to perform best-effort to keep in sync with the server, it may sometimes be required to strongly ensure they are up-to-date. For local resources, this is has obviously no effect.
+	 * Resets all the resource's data.
 	 */
 	force_state_refresh() {
-		this._syncStatus = "needs_sync";
+		this._etag = null;
 		this._JSONData = new Object();
+		this._getPromise = null;
+		this._syncStatus = "needs_sync";
 	}
 
 	/**
-	 * Extract a resource's ID from it's URI
-	 * @param string uri The URI to extract the ID from
-	 * @returns string
+	 * Registers an new observer to notify when the resource's state changes
+	 * @param function callback the function to add to the observers collection
+	 * @throws TypeError if the provided "callback" argument is not a function
 	 */
-	static get_relative_id(uri) {
-		let uri_parts = uri.split('/');
+	addObserver(callback) {
+		if(typeof callback == 'function')
+			this._observers.push(callback);
+		else
+			throw new TypeError("The provided argument is not a function");
+	}
+
+	/**
+	 * Unregisters an observer so it won't be notified anymore when the resource's state changes
+	 * @param function callback the function to remove from the observers collection
+	 */
+	removeObserver(callback) {
+		let callbackIndex = this._observers.findIndex(candidate => {
+			return (candidate === callback);
+		});
+	  
+		if(callbackIndex !== -1) {
+			this._observers = this._observers.slice(callbackIndex, 1);
+	  }
+	}
+
+	/**
+	 * Notifies the registered observers of a state change of the current resource
+	 * @param Object data the data to send along with the notifications
+	 */
+	notifyObservers(data) {
+		for(let i = 0; i < this._observers.length; i++) {
+			let aCallback = this._observers[i];
+
+			try {
+				(aCallback)(data);
+			}
+			catch(error) {
+				console.log(error);
+			}
+		}
+	}
+
+	/**
+	 * Extract a resource's relative ID from it's URI.
+	 * @param string uri The URI to extract the ID from.
+	 * @return string
+	 * @static
+	 */
+	static extract_relative_id(uri_string) {
+		let uri_parts = uri_string.split('/');
 
 		// if the uri ends with a slash
-		if(uri.charAt(uri.length - 1) == '/') {
+		if(uri_string.charAt(uri_string.length - 1) == '/') {
 			let last_id_part = uri_parts[uri_parts.length - 2];
 			return last_id_part + '/';
 		}
@@ -223,28 +496,6 @@ export class Resource {
 				return last_id_part.substring(hash_char_position);
 			else
 				return last_id_part;
-		}
-	}
-
-	/**
-	 * Extract a resource's parent URI from it's URI
-	 * @param string uri The URI to extract the parent URI from
-	 * @return string
-	 */
-	static get_parent_uri(uri) {
-		let uri_parts = uri.split('/');
-
-		// if the uri ends with a slash
-		if(uri.charAt(uri.length - 1) == '/')
-			return  uri_parts.slice(0, -2).join('/') + '/';
-		else {
-			let hash_char_position = uri.indexOf('#');
-
-			if(hash_char_position != -1) {
-				return uri.substring(0, hash_char_position);
-			}
-			else
-				return uri_parts.slice(0, -1).join('/') + '/';
 		}
 	}
 }
