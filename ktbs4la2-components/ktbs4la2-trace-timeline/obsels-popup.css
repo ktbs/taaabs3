@@ -1,0 +1,19 @@
+ktbs4la2-timeline-event * {
+    white-space: nowrap;
+}
+
+ktbs4la2-timeline-event p.obsel-native-attribute {
+    margin-top: 3px;
+    margin-bottom: 2px;
+}
+
+ktbs4la2-timeline-event ul.obsel-other-attributes {
+    margin: 0 0;
+    padding-left: 0;
+    list-style-type: none;
+}
+
+ktbs4la2-timeline-event ul.obsel-other-attributes li {
+    margin-top: 3px;
+    margin-bottom: 2px;
+}

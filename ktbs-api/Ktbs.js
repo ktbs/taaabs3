@@ -54,14 +54,6 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * Gets the "comment" of the Ktbs root
-	 * @return string
-	 */
-	get comment() {
-		return this._JSONData["http://www.w3.org/2000/01/rdf-schema#comment"];
-	}
-
-	/**
 	 * Returns a user-friendly label
 	 * @return string
 	 */

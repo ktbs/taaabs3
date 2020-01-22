@@ -106,11 +106,9 @@
 	z-index: 2;
 	left: 15px;
 	bottom: 5px;
-	background-color: white;
-	border: 1px solid #AAA;
+	border-width: 1px;
+	border-style: solid;
 	border-radius: 10px;
-	padding: 5px 18px 0 5px;
-	text-align: right;
 }
 
 :host(.selected) #popup {
@@ -131,14 +129,28 @@
 	height: 16px;
 }
 
+#popup.dark #close-button {
+	background-image: url('{my-component-folder}/close-white.svg');
+}
+
 #close-button:hover {
 	opacity: 1;
 }
 
+#popup-header {
+	margin: 0 0;
+	border-radius: 10px 10px 0 0;
+	text-align: center;
+}
+
+#popup.dark #popup-header {
+	color: white;
+}
+
 #popup-content {
-	max-height: 250px;
-	overflow-y: auto;
-	text-align: left;
+	background-color: white;
+	padding: 5px 5px 5px 5px;
+	border-radius: 0 0 10px 10px;
 }
 
 #popup-content * {

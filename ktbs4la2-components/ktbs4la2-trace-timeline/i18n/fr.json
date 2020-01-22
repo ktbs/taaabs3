@@ -10,5 +10,9 @@
     "Loading stopped by user": "Chargement arrêté par l'utilisateur",
     "Stop loading": "Arrêter le chargement",
     "Reload": "Recharger",
-    "No obsel to display": "Aucun obsel à afficher"
+    "No obsel to display": "Aucun obsel à afficher",
+    "Type": "Type",
+    "Begin": "Début",
+    "End": "Fin",
+    "Subject": "Sujet"
 }

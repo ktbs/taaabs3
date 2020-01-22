@@ -67,6 +67,14 @@ export class ObselList extends Resource {
 	}
 
 	/**
+	 * Always returns true for ObselList instances since they are never modifiable.
+	 * @return bool
+	 */
+	get readonly() {
+		return true;
+	}
+
+	/**
 	 * Gets the uri to query in order to read resource's data (For some resource types, this might be different from the resource URI, for instance if we need to add some query parameters. In such case, descending resource types must override this method)
 	 * @return URL
 	 */

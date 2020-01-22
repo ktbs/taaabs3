@@ -253,21 +253,31 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url, true, true);
 
-
 		let updateEventsRowWorkerURL = import.meta.url.substr(0, import.meta.url.lastIndexOf('/')) + '/update-events-row-worker.js';
-		this._updateEventsRowWorkerFetchPromise = fetch(updateEventsRowWorkerURL, {signal: this._abortController.signal});
+		
+		this._resolveFetchUpdateEventsRowWorker;
+		this._rejectFetchUpdateEventsRowWorker;
 
-		this._updateEventsRowWorkerFetchPromise.then((response) => {
+		this._fetchUpdateEventsRowWorkerPromise = new Promise((resolve, reject) => {
+			this._resolveFetchUpdateEventsRowWorker = resolve;
+			this._rejectFetchUpdateEventsRowWorker = reject;
+		});
+		
+		fetch(updateEventsRowWorkerURL, {signal: this._abortController.signal}).then((response) => {
 				if(response.ok) {
 					response.text().then((responseText) => {
 						let codeBlob = new Blob([responseText], {type: 'application/javascript'});
 						this._updateEventsRowWorkerObjectURL = URL.createObjectURL(codeBlob);
+						this._resolveFetchUpdateEventsRowWorker();
 					});
 				}
-				else
+				else {
+					this._rejectFetchUpdateEventsRowWorker();
 					this.emitErrorEvent(new Error("Could not fetch update-events-row-worker.js"));
+				}
 			})
 			.catch((error) => {
+				this._rejectFetchUpdateEventsRowWorker();
 				this.emitErrorEvent(error);
 			});
 
@@ -358,21 +368,9 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._eventsNodesObserver.observe(this, { childList: true, subtree: true, attributes: true, attributeFilter: ["visible"]});
 
 		this.addEventListener("select-timeline-event", this._onSelectTimelineEvent.bind(this));
-		this.addEventListener("click", this._onClick.bind(this));
-
 		this._updateEventsRowWorker = null;
 		this._requestUpdateEventsRowID = null;
 		this._updateEventsRowID = null;
-	}
-
-	/**
-	 * 
-	 */
-	_onClick(event) {
-		if(event.target instanceof KTBS4LA2TimelineEvent) {
-			event.preventDefault();
-			event.target.toggleSelect();
-		}
 	}
 
 	/**
@@ -896,26 +894,25 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					timeEndThreshold: timeEndThreshold
 				};
 
-				/*let updateEventsRowWorkerURL = import.meta.url.substr(0, import.meta.url.lastIndexOf('/')) + '/update-events-row-worker.js';
-				this._updateEventsRowWorker = new Worker(updateEventsRowWorkerURL);*/
+				this._fetchUpdateEventsRowWorkerPromise.then(() => {
+					this._updateEventsRowWorker = new Worker(this._updateEventsRowWorkerObjectURL);
+					
+					this._updateEventsRowWorker.onmessage = ((event) => {
+						this._updateEventsRowWorker = null;
+						this._eventsData = event.data.eventsNewData;
 
-				this._updateEventsRowWorker = new Worker(this._updateEventsRowWorkerObjectURL);
-				
-				this._updateEventsRowWorker.onmessage = ((event) => {
-					this._updateEventsRowWorker = null;
-					this._eventsData = event.data.eventsNewData;
+						if(this._updateEventsRowID != null)
+							clearTimeout(this._updateEventsRowID);
 
-					if(this._updateEventsRowID != null)
-						clearTimeout(this._updateEventsRowID);
-
-					this._updateEventsRowID = setTimeout(() => {
-						let eventsNewRows = event.data.eventsNewRows;
-						let eventsNewHiddenSiblinbgsCounts = event.data.eventsNewHiddenSiblinbgsCounts;
-						this._updateEventsRow(eventsNewRows, eventsNewHiddenSiblinbgsCounts);
+						this._updateEventsRowID = setTimeout(() => {
+							let eventsNewRows = event.data.eventsNewRows;
+							let eventsNewHiddenSiblinbgsCounts = event.data.eventsNewHiddenSiblinbgsCounts;
+							this._updateEventsRow(eventsNewRows, eventsNewHiddenSiblinbgsCounts);
+						});
 					});
+					
+					this._updateEventsRowWorker.postMessage(updateEventsRowWorkerData);
 				});
-
-				this._updateEventsRowWorker.postMessage(updateEventsRowWorkerData);
 			}
 			else
 				throw new Error("Could not determine time/width ratio");
@@ -1107,7 +1104,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_updateTimeDivisions(fromTime, toTime, parent = this._timeDiv) {
-		//let debut = performance.now();
 		let subDivs = parent.querySelectorAll(":scope > ktbs4la2-timeline-subdivision");
 
 		// browse parent's sub-divs
@@ -1196,9 +1192,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		if(parent == this._timeDiv)
 			this._updateRepresentedTime();
-
-		/*if(parent == this._timeDiv)
-			console.log("_updateTimeDivisions() : " + (performance.now() - debut));*/
 	}
 
 	/**

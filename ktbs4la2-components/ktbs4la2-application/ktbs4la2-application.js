@@ -132,31 +132,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.myDashBoardsSubtitle.innerText = this._translateString("My dashboards");
 		this.addDashboardButton.setAttribute("title", this._translateString("Add new dashboard"));
 		this.separatorDiv.setAttribute("title", this._translateString("Resize navigation panel"));
-
-		/*let docElement = this.querySelector("ktbs4la2-iframe[slot = \"main\"]");
-		
-		if(docElement != null) {
-			let currentDocPath = docElement.getAttribute("src");
-
-			// build the source url for the iFrame
-			let iFrameSrc = window.location.origin;
-
-			if(window.location.pathname)
-				iFrameSrc += window.location.pathname;
-			else
-				iFrameSrc += "/";
-
-			iFrameSrc += "doc/";
-
-			if(currentDocPath.substr(0, iFrameSrc.length) == iFrameSrc) {
-				let docLang = currentDocPath.substr(iFrameSrc.length, 2);
-
-				if(docLang != this._lang) {
-					let newDocPath = currentDocPath.replace(currentDocPath.substr(0, iFrameSrc.length + 2), iFrameSrc + this._lang);
-					docElement.setAttribute("src", newDocPath);
-				}
-			}
-		}*/
 	}
 
 	/**
@@ -203,7 +178,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 				this.setOverlay(formElement);
 				break;
 			default:
-				console.error(new Error("Unsupported resource type : " + resourceType));
+				this.emitErrorEvent(new Error("Unsupported resource type : " + resourceType));
 		}
 	}
 
@@ -234,12 +209,12 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 						window.localStorage.setItem("ktbs-roots", JSON.stringify(this.ktbsRoots));
 					}
 					else
-						console.error(new Error("Could not find Ktbs Root with uri " + oldRootUri + " in local cache"));
+						this.emitErrorEvent(new Error("Could not find Ktbs Root with uri " + oldRootUri + " in local cache"));
 				}
 	
 				break;
 			default:
-				console.error(new Error("Unsupported resource type : " + resourceType));
+				this.emitErrorEvent(new Error("Unsupported resource type : " + resourceType));
 		}
 	}
 
@@ -247,6 +222,9 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 * 
 	 */
 	onErrorEvent(event) {
+		event.preventDefault();
+		event.stopPropagation();
+
 		if(event.error)
 			console.error(event.error);
 	}
@@ -321,7 +299,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 				// @TODO
 				break;
 			default:
-				console.error(new Error("History object with unkown type can not be set as main content"));
+				this.emitErrorEvent(new Error("History object with unkown type can not be set as main content"));
 		}
 
 		this.setMainObject(main_type, main_id, ktbs_type, ktbs_label, true);
@@ -397,35 +375,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 				historyLabel += " (" + ktbs_type + ")";
 
-				/*let mainContentTagName = null;
-
-				switch(ktbs_type) {
-					case "Ktbs":
-						mainContentTagName = "ktbs4la2-main-root";
-						break;
-					case "Base":
-						mainContentTagName = "ktbs4la2-main-base";
-						break;
-					case "Method":
-						mainContentTagName = "ktbs4la2-main-method";
-						break;
-					case "Model":
-						mainContentTagName = "ktbs4la2-main-model";
-						break;
-					case "StoredTrace":
-						mainContentTagName = "ktbs4la2-main-stored-trace";
-						break;
-					case "ComputedTrace":
-						mainContentTagName = "ktbs4la2-main-computed-trace";
-						break;
-					case null:
-						mainContentTagName = "ktbs4la2-iframe";
-						break;
-					default:
-						//throw new Error("kTBS resource with unkown type can not be set as main content");
-						console.error(new Error("kTBS resource with unkown type can not be set as main content"));
-				}
-				*/
 				// select the corresponding element in navigation panel
 				let queryString = "[slot = \"nav-ktbs-roots\"][uri = \"" + main_id + "\"], [slot = \"nav-ktbs-roots\"] [uri = \"" + main_id + "\"]";
 				let newSelectedNavElement = this.querySelector(queryString);
@@ -452,7 +401,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 				// @TODO
 				break;
 			default:
-				console.error(new Error("Object with unkown type can not be set as main content"));
+				this.emitErrorEvent(new Error("Object with unkown type can not be set as main content"));
 		}
 
 		// add new content to main
@@ -641,7 +590,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			}
 		}
 		else
-			console.error(new Error("Could not find Ktbs Root with uri " + oldRootUri + " in local storage"));
+			this.emitErrorEvent(new Error("Could not find Ktbs Root with uri " + oldRootUri + " in local storage"));
 
 		this.removeOverlay();
 	}
@@ -655,7 +604,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		newRootElement.setAttribute("label", newRootLabel);
 		newRootElement.setAttribute("resource-type", "Ktbs");
 		newRootElement.setAttribute("slot", "nav-ktbs-roots");
-		//newRootElement.setAttribute("preload-children", "true");
 		this.appendChild(newRootElement);
 	}
 
@@ -715,8 +663,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					this.addRootItem(aRoot.uri, aRoot.label);
 				}
 			}
-			catch(e) {
-				console.error(e);
+			catch(error) {
+				this.emitErrorEvent(error);
 				this.ktbsRoots = new Array();
 			}
 		}

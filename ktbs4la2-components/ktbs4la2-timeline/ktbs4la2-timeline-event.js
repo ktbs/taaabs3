@@ -1,6 +1,7 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 
 import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
+import {lightOrDark} from "../common/colors-utils.js";
 
 export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 
@@ -18,13 +19,13 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 		let observedAttributes = super.observedAttributes;
 		observedAttributes.push("begin");
 		observedAttributes.push("end");
-		//observedAttributes.push("row");
 		observedAttributes.push("visible");
 		observedAttributes.push("href");
 		observedAttributes.push("color");
 		observedAttributes.push("symbol");
 		observedAttributes.push("title");
 		observedAttributes.push("hidden-siblinbgs-count");
+		observedAttributes.push("id");
 		return observedAttributes;
 	}
 
@@ -54,16 +55,14 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 			else
 				this._endTime = undefined;
 		}
-		/*else if(attributeName == "row") {
-			if(newValue != null)
-				this.style.bottom = (parseInt(newValue, 10) * 15) + "px";
-		}*/
 		else if(attributeName == "visible") {
 			this._isVisible = !((newValue == "0") || (newValue == "false"));
 		}
 		else if(attributeName == "href")
 			this._componentReady.then(() => {
 				this._marker.setAttribute("href", newValue);
+				this._popupHeaderLink.setAttribute("href", newValue);
+				this._popupHeaderLink.style.visibility = "visible";
 			});
 		else if(attributeName == "color")
 			this._componentReady.then(() => {
@@ -73,6 +72,10 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 				}
 				else
 					this._marker.style.backgroundColor = newValue;
+
+				this._popup.style.backgroundColor = newValue;
+				this._popup.style.borderColor = newValue;
+				this._popup.className = lightOrDark(newValue);
 			});
 		else if(attributeName == "symbol")
 			this._componentReady.then(() => {
@@ -89,6 +92,10 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 			this._componentReady.then(() => {
 				this._hiddenSiblingsMarker.innerText = "+" + newValue;
 			});
+		else if(attributeName == "id")
+			this._componentReady.then(() => {
+				this._popupHeaderLabel.innerText = newValue;
+			});
 	}
 
 	/**
@@ -97,7 +104,13 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	onComponentReady() {
 		this._hiddenSiblingsMarker = this.shadowRoot.querySelector("#hidden-siblings-marker");
 		this._marker = this.shadowRoot.querySelector("#marker");
+		this._marker.addEventListener("click", this._onClickMarker.bind(this));
 		this._closeButton = this.shadowRoot.querySelector("#close-button");
+		this._closeButton.addEventListener("click", this._onClickCloseButton.bind(this));
+		this._popup = this.shadowRoot.querySelector("#popup");
+		this._popupHeader = this.shadowRoot.querySelector("#popup-header");
+		this._popupHeaderLabel = this.shadowRoot.querySelector("#popup-header-label");
+		this._popupHeaderLink = this.shadowRoot.querySelector("#popup-header-link");
 	}
 
 	/**
@@ -144,6 +157,14 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_onClickMarker(event) {
+		event.preventDefault();
+		this._toggleSelect();
+	}
+
+	/**
+	 * 
+	 */
 	get selected() {
 		return this.classList.contains("selected");
 	}
@@ -151,11 +172,14 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	toggleSelect(event) {
+	_toggleSelect() {
 		if(!this.selected) {
-			this.classList.add("selected");
 			let select_event = new CustomEvent("select-timeline-event", {bubbles: true});
-			this.dispatchEvent(select_event);
+
+			if(this.dispatchEvent(select_event)) {
+				// @TODO positionnement automatique de la popup
+				this.classList.add("selected");
+			}
 		}
 		else
 			this.classList.remove("selected");
