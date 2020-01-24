@@ -18,6 +18,8 @@
 
 	<a id="marker" target="_blank"></a>
 
+	<div id="popup-arrow"></div>
+
 	<div id="popup" title="">
 		<div id="close-button" title="{translate: 'Close'}"></div>
 
@@ -26,8 +28,10 @@
 			<a id="popup-header-link"></a>
 		</h3>
 
-		<div id="popup-content">
-			<slot></slot>
+		<div id="popup-body">
+			<div id="popup-content">
+				<slot></slot>
+			</div>
 		</div>
 	</div>
 </div>

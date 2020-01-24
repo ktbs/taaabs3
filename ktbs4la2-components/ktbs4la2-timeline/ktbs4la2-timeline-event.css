@@ -90,9 +90,12 @@
 	-webkit-mask-image: url('{my-component-folder}/star.svg');
 }
 
-#marker:hover, :host(.selected) #marker {
-	height: 14px;
-	top: 1px;
+:host(:not([symbol]):hover) #marker, :host(:not([symbol]).selected) #marker {
+	box-shadow: 0px 0px 4px 2px #888;
+}
+
+:host([symbol]:hover) #marker, :host([symbol].selected) #marker {
+	text-shadow: 2px 2px 3px #000;
 }
 
 :host([shape]:not([shape = "duration-bar"])) #marker:hover, :host(.selected[shape]:not([shape = "duration-bar"])) #marker {
@@ -100,19 +103,74 @@
 	left: -1px;
 }
 
+@keyframes seethrough {
+	from {
+		opacity: 1;
+	}
+
+	to {
+		opacity: 0.3;
+	}
+}
+
 #popup {
 	display: none;
 	position: absolute;
 	z-index: 2;
-	left: 15px;
-	bottom: 5px;
-	border-width: 1px;
-	border-style: solid;
-	border-radius: 10px;
 }
 
-:host(.selected) #popup {
+#popup-arrow {
+    border-style: solid;
+    content: "";
+	position: absolute;
+	display: none;
+	width: 0; 
+	height: 0; 
+	border-width: 6px 6px 6px 6px;
+}
+
+:host(:not([color])) #popup-arrow {
+	border-color: #888;
+}
+
+:host(.selected) #popup, :host(.selected) #popup-arrow {
 	display: block;
+	animation-name: seethrough;
+	animation-duration: 3s;
+	animation-delay: 2s;
+	animation-fill-mode: forwards;
+}
+
+#popup-arrow.right {
+	border-top-color: transparent !important;
+	border-bottom-color: transparent !important;
+	border-left-width: 0px;
+	bottom: 5px;
+}
+
+#popup-arrow.left {
+	border-top-color: transparent !important;
+	border-bottom-color: transparent !important;
+	border-right-width: 0px;
+	bottom: 5px;
+}
+
+#popup-arrow.above {
+	border-left-color: transparent !important;
+	border-right-color: transparent !important;
+	border-bottom-width: 0px;
+	left: 0px;
+}
+
+#popup-arrow.below {
+	border-left-color: transparent !important;
+	border-right-color: transparent !important;
+	border-top-width: 0px;
+	left: 0px;
+}
+
+:host(:hover.selected) #popup, :host(:hover.selected) #popup-arrow {
+	animation-name: none;
 }
 
 #close-button {
@@ -137,9 +195,13 @@
 	opacity: 1;
 }
 
+:host(:not([color])) #popup-header {
+	background-color: #888;
+}
+
 #popup-header {
 	margin: 0 0;
-	border-radius: 10px 10px 0 0;
+	border-radius: 5px 5px 0 0;
 	text-align: center;
 }
 
@@ -147,10 +209,29 @@
 	color: white;
 }
 
-#popup-content {
+:host(:not([color])) #popup-header {
+	background-color: #888;
+	color: white;
+}
+
+#popup-body {
 	background-color: white;
+	border-width: 1px;
+	border-style: solid;
+	border-radius: 0 0 5px 5px;
+	padding-top: 1px;
+    padding-bottom: 7px;
+	padding-right: 1px;
+	padding-left: 1px;
+}
+
+:host(:not([color])) #popup-body {
+	border-color: #888;
+}
+
+#popup-content {
 	padding: 5px 5px 5px 5px;
-	border-radius: 0 0 10px 10px;
+	overflow-y: auto;
 }
 
 #popup-content * {
