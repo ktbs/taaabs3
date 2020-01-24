@@ -751,7 +751,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			let obselTypeURIHash = obselTypeURI.hash;
 
 			if((obselTypeURIHash != "") && (obselTypeURIHash.charAt(0) == '#')) {
-				let obselTypeID = obselTypeURIHash.substring(1);
+				let obselTypeID = decodeURI(obselTypeURIHash.substring(1));
 				let obselType = this._model.get_obsel_type(obselTypeID);
 
 				if(obselType) {
@@ -814,7 +814,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			let obselTypeURIHash = obselTypeURI.hash;
 
 			if((obselTypeURIHash != "") && (obselTypeURIHash.charAt(0) == '#')) {
-				let obselTypeID = obselTypeURIHash.substring(1);
+				let obselTypeID = decodeURI(obselTypeURIHash.substring(1));
 				let obselType = this._model.get_obsel_type(obselTypeID);
 
 				if(obselType) {
@@ -854,27 +854,31 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		beginLine.appendChild(beginValue);
 		eventContent.appendChild(beginLine);
 
-		let endLine = document.createElement("p");
-		endLine.classList.add("obsel-native-attribute");
-		let endLabel = document.createElement("strong");
-		endLabel.innerText = this._translateString("End") + " : ";
-		endLine.appendChild(endLabel);
+		if(obsel.end) {
+			let endLine = document.createElement("p");
+			endLine.classList.add("obsel-native-attribute");
+			let endLabel = document.createElement("strong");
+			endLabel.innerText = this._translateString("End") + " : ";
+			endLine.appendChild(endLabel);
 
-		let endValue = document.createElement("span");
-		endValue.innerText = this._getFormattedDate(parseInt(obsel.end));
-		endLine.appendChild(endValue);
-		eventContent.appendChild(endLine);
+			let endValue = document.createElement("span");
+			endValue.innerText = this._getFormattedDate(parseInt(obsel.end));
+			endLine.appendChild(endValue);
+			eventContent.appendChild(endLine);
+		}
 
-		let subjectLine = document.createElement("p");
-		subjectLine.classList.add("obsel-native-attribute");
-		let subjectLabel = document.createElement("strong");
-		subjectLabel.innerText = this._translateString("Subject") + " : ";
-		subjectLine.appendChild(subjectLabel);
+		if(obsel.subject) {
+			let subjectLine = document.createElement("p");
+			subjectLine.classList.add("obsel-native-attribute");
+			let subjectLabel = document.createElement("strong");
+			subjectLabel.innerText = this._translateString("Subject") + " : ";
+			subjectLine.appendChild(subjectLabel);
 
-		let subjectValue = document.createElement("span");
-		subjectValue.innerText = obsel.subject;
-		subjectLine.appendChild(subjectValue);
-		eventContent.appendChild(subjectLine);
+			let subjectValue = document.createElement("span");
+			subjectValue.innerText = obsel.subject;
+			subjectLine.appendChild(subjectValue);
+			eventContent.appendChild(subjectLine);
+		}
 
 		// display other attributes (custom attributes)
 		let otherAttributesList = document.createElement("ul");
