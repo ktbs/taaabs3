@@ -487,15 +487,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					}
 				}
 			}
-			else {
-				let potentialModels = this._context[1];
-
-				for(let shortName in potentialModels) {
-					let fullURI = potentialModels[shortName];
-					substitutedString = fullURI + originalString;
-					break;
-				}
-			}
 		}
 		
 		return substitutedString;
@@ -768,7 +759,11 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 							obselTypeLabel = obselTypeID;
 					}
 				}
+				else
+					obselTypeLabel = obselTypeID;
 			}
+			else
+				obselTypeLabel = obsel["@type"];
 		}
 		catch(error) {
 			// broken link to model and/or obsel type, we just keep the raw broken obsel type value
@@ -831,7 +826,11 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 							obselTypeLabel = obselTypeID;
 					}
 				}
+				else
+					obselTypeLabel = obselTypeID;
 			}
+			else
+				obselTypeLabel = obsel["@type"];
 		}
 		catch(error) {
 			// broken link to model and/or obsel type, we just keep the raw broken obsel type value
@@ -889,7 +888,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				let attributeTypeLabel;
 
 				try {
-					let attributeTypeURI = new URL(this._substituteContextString(property_key));
+					let contextSubstitutedAttributeTypeID = this._substituteContextString(property_key);
+					let attributeTypeURI = new URL(contextSubstitutedAttributeTypeID, this._trace.uri);
 					let attributeTypeURIHash = attributeTypeURI.hash;
 
 					if((attributeTypeURIHash != "") && (attributeTypeURIHash.charAt(0) == '#')) {
@@ -910,7 +910,11 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 									attributeTypeLabel = attributeTypeID;
 							}
 						}
+						else
+							attributeTypeLabel = attributeTypeID;
 					}
+					else
+						attributeTypeLabel = contextSubstitutedAttributeTypeID;
 				}
 				catch(error) {
 					// broken link to model and/or obsel type, we just keep the raw broken obsel type value
@@ -1086,6 +1090,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	}
 }
 
-KTBS4LA2TraceTimeline.obselsSysAttributes = ["@id", "@type", "begin", "beginDT", "end", "hasSourceObsel", "subject"];
+KTBS4LA2TraceTimeline.obselsSysAttributes = ["@id", "@type", "begin", "beginDT", "end", "endDT", "hasSourceObsel", "subject"];
 
 customElements.define('ktbs4la2-trace-timeline', KTBS4LA2TraceTimeline);
