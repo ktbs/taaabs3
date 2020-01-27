@@ -79,8 +79,8 @@
 
 :host([shape = "duration-bar"]:hover) #marker, 
 :host([shape = "duration-bar"].selected) #marker,
-:host(:not([shape]):hover) #marker, 
-:host(:not([shape]).selected) #marker {
+:host(:not([shape]):not([symbol]):hover) #marker, 
+:host(:not([shape]):not([symbol]).selected) #marker {
 	box-shadow: 0px 0px 4px 2px #888;
 }
 
