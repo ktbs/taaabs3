@@ -35,23 +35,15 @@
 }
 
 :host([shape = "circle"]) #marker {
-	mask-image: url('{my-component-folder}/../ktbs4la2-timeline/circle.svg');
-	-webkit-mask-image: url('{my-component-folder}/../ktbs4la2-timeline/circle.svg');
+	clip-path: circle(50%);
 }
 
 :host([shape = "diamond"]) #marker {
-	mask-image: url('{my-component-folder}/../ktbs4la2-timeline/diamond.svg');
-	-webkit-mask-image: url('{my-component-folder}/../ktbs4la2-timeline/diamond.svg');
-}
-
-:host([shape = "square"]) #marker {
-	mask-image: url('{my-component-folder}/../ktbs4la2-timeline/square.svg');
-	-webkit-mask-image: url('{my-component-folder}/../ktbs4la2-timeline/square.svg');
+	clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
 :host([shape = "star"]) #marker {
-	mask-image: url('{my-component-folder}/../ktbs4la2-timeline/star.svg');
-	-webkit-mask-image: url('{my-component-folder}/../ktbs4la2-timeline/star.svg');
+	clip-path: polygon( 50% 0, 64% 30%, 97% 35%, 73% 57%, 79% 90%, 50% 75%, 21% 90%, 26% 57%, 2% 35%, 35% 30%);
 }
 
 #label {

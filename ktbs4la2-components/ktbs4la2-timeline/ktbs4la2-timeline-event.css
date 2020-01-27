@@ -41,6 +41,7 @@
 	display: inline-block;
 	position: relative;
 	cursor: pointer;
+	width: 12px;
 	height: 12px;
 }
 
@@ -58,12 +59,6 @@
 	font-size: 11pt;
 }
 
-:host([shape]:not([shape = "duration-bar"])) #marker {
-	width: 12px;
-	mask-repeat: no-repeat;
-	-webkit-mask-repeat: no-repeat;
-}
-
 :host([shape = "duration-bar"]) #marker, :host(:not([shape])) #marker {
 	width: 100%;
 	min-width: 12px;
@@ -71,26 +66,19 @@
 }
 
 :host([shape = "circle"]) #marker {
-	mask-image: url('{my-component-folder}/circle.svg');
-	-webkit-mask-image: url('{my-component-folder}/circle.svg');
+	clip-path: circle(50%);
 }
 
 :host([shape = "diamond"]) #marker {
-	mask-image: url('{my-component-folder}/diamond.svg');
-	-webkit-mask-image: url('{my-component-folder}/diamond.svg');
-}
-
-:host([shape = "square"]) #marker {
-	mask-image: url('{my-component-folder}/square.svg');
-	-webkit-mask-image: url('{my-component-folder}/square.svg');
+	clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
 :host([shape = "star"]) #marker {
-	mask-image: url('{my-component-folder}/star.svg');
-	-webkit-mask-image: url('{my-component-folder}/star.svg');
+	clip-path: polygon( 50% 0, 64% 30%, 97% 35%, 73% 57%, 79% 90%, 50% 75%, 21% 90%, 26% 57%, 2% 35%, 35% 30%);
 }
 
-:host(:not([symbol]):hover) #marker, :host(:not([symbol]).selected) #marker {
+:host([shape = "duration-bar"]:hover) #marker, 
+:host([shape = "duration-bar"].selected) #marker {
 	box-shadow: 0px 0px 4px 2px #888;
 }
 
@@ -98,9 +86,9 @@
 	text-shadow: 2px 2px 3px #000;
 }
 
-:host([shape]:not([shape = "duration-bar"])) #marker:hover, :host(.selected[shape]:not([shape = "duration-bar"])) #marker {
-	width: 14px;
-	left: -1px;
+:host([shape]:not([shape = "duration-bar"]):hover) #marker-container,
+:host([shape]:not([shape = "duration-bar"]).selected) #marker-container {
+	filter: drop-shadow(0px 0px 4px #000);
 }
 
 @keyframes seethrough {
