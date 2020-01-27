@@ -97,7 +97,7 @@
 	}
 
 	to {
-		opacity: 0.3;
+		opacity: 0.25;
 	}
 }
 
@@ -105,6 +105,7 @@
 	display: none;
 	position: absolute;
 	z-index: 2;
+	border-radius: 5px 5px 5px 5px;
 }
 
 #popup-arrow {
@@ -124,9 +125,12 @@
 :host(.selected) #popup, :host(.selected) #popup-arrow {
 	display: block;
 	animation-name: seethrough;
-	animation-duration: 3s;
-	animation-delay: 2s;
+	animation-duration: 0.7s;
 	animation-fill-mode: forwards;
+}
+
+:host(.selected:hover) #popup {
+	box-shadow: 0px 0px 8px 4px #888;
 }
 
 #popup-arrow.right {
@@ -175,7 +179,7 @@
 	height: 16px;
 }
 
-#popup.dark #close-button {
+#popup.dark #close-button, :host(:not([color])) #close-button {
 	background-image: url('{my-component-folder}/close-white.svg');
 }
 
