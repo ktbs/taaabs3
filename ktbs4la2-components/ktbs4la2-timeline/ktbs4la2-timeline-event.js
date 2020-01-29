@@ -321,14 +321,23 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 
 				if(this.parentTimeline) {
 					this.parentTimeline._displayWindow.addEventListener("scroll", this._requestUpdatePopupPositionBindedFunction);
-					this._timelineResizeObserver = new ResizeObserver(this._requestUpdatePopupPositionBindedFunction);
-					this._timelineResizeObserver.observe(this.parentTimeline._widgetContainer);
+
+					try {
+						this._timelineResizeObserver = new ResizeObserver(this._requestUpdatePopupPositionBindedFunction);
+						this._timelineResizeObserver.observe(this.parentTimeline._widgetContainer);
+					}
+					catch(error) {
+						this.emitErrorEvent(error);
+					}
 				}
 			}
 		}
 		else {
 			this.parentTimeline._displayWindow.removeEventListener("scroll", this._requestUpdatePopupPositionBindedFunction);
-			this._timelineResizeObserver.disconnect();
+			
+			if(this._timelineResizeObserver)
+				this._timelineResizeObserver.disconnect();
+				
 			this.classList.remove("selected");
 		}
 	}
