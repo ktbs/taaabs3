@@ -123,6 +123,13 @@ export class Resource {
 	}
 
 	/**
+	 * 
+	 */
+	get context() {
+		return this._JSONData["@context"];
+	}
+
+	/**
 	 * Returns a user-friendly label
 	 * @return string
 	 */
@@ -397,7 +404,7 @@ export class Resource {
 	}
 
 	/**
-	 * Attemps to asynchronously read an existing object's data to the REST service and returns a promise.
+	 * Attemps to asynchronously read an existing object's data from the REST service and returns a Promise.
 	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
 	 * @param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
 	 * @return Promise
@@ -441,7 +448,7 @@ export class Resource {
 										this._authentified = ((credentials != null) && credentials.id && credentials.password);
 										this._JSONData = parsedJson;
 										this._syncStatus = "in_sync";
-										resolve();
+										resolve(response);
 										this.notifyObservers();
 									})
 									.catch((error) => {

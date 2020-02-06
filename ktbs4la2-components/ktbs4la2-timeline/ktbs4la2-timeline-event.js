@@ -313,7 +313,10 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 */
 	_toggleSelect() {
 		if(!this.selected) {
-			let select_event = new CustomEvent("select-timeline-event", {bubbles: true});
+			let select_event = new CustomEvent("select-timeline-event", {
+				cancelable: true,
+				bubbles: true
+			});
 
 			if(this.dispatchEvent(select_event)) {
 				this.classList.add("selected");

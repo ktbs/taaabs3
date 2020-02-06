@@ -291,7 +291,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._allEventNodes = null;
 		this._visibleEventsNodes = null;
 		this._eventsData = null;
-		this._eventsNodesInView = null;
 
 		this._bindedOnDragFunction = this._onDrag.bind(this);
 		this._bindedOnStopDraggingFunction = this._onStopDragging.bind(this);
@@ -324,18 +323,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		this._displayWindowResizeObserver = null;
 
-		this._resolveBeginSet;
-
-		this._beginSet = new Promise(function(resolve, reject) {
-			this._resolveBeginSet = resolve;
-		}.bind(this));
-
-		this._resolveEndSet;
-
-		this._endSet = new Promise(function(resolve, reject) {
-			this._resolveEndSet = resolve;
-		}.bind(this));
-
 		this._timeDivisionsAreInitialized = false;
 		this._resolveTimeDivisionsInitialized;
 		this._rejectTimeDivisionsInitialized;
@@ -355,15 +342,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			this._resolveZoomInitialized = resolve;
 		});
 
-		Promise.all([this._beginSet, this._endSet, this._componentReady])
-			.then(function() {
-				if(this._widgetContainer.hasAttribute("hidden"))
-					this._widgetContainer.removeAttribute("hidden");
-
-				if(this._displayWindow.clientWidth > 0)
-					this._initDisplay();
-			}.bind(this));
-
 		this._eventsNodesObserver = new MutationObserver(this._onEventsNodesMutation.bind(this));
 		this._eventsNodesObserver.observe(this, { childList: true, subtree: true, attributes: true, attributeFilter: ["visible"]});
 
@@ -371,6 +349,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._updateEventsRowWorker = null;
 		this._requestUpdateEventsRowID = null;
 		this._updateEventsRowID = null;
+	
+		this._allowFullScreen = true;
 	}
 
 	/**
@@ -382,6 +362,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._timelineCursor.style.display = "block";
 		this._timelineCursorLabel.innerText = getFormattedDate(this._getMouseTime(0));
 		this._updateMaxDisplayableRows();
+		this._updateEventsPosX(this._getVisibleEventNodes());
+		this._requestUpdateEventsRow();
 	}
 
 	/**
@@ -391,6 +373,11 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let observedAttributes = super.observedAttributes;
 		observedAttributes.push("begin");
 		observedAttributes.push("end");
+		observedAttributes.push("view-begin");
+		observedAttributes.push("zoom-level");
+		observedAttributes.push("div-width");
+		observedAttributes.push("allow-fullscreen");
+		observedAttributes.push("cursor-time");
 		return observedAttributes;
 	}
 
@@ -399,11 +386,67 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	attributeChangedCallback(attributeName, oldValue, newValue) {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
-		
+
 		if(attributeName == "begin")
-			this._resolveBeginSet();
-		else if(attributeName == "end")
-			this._resolveEndSet();
+			this._beginTime = null;
+
+		if(attributeName == "end")
+			this._endTime = null;
+
+		if(((attributeName == "begin") || (attributeName == "end")) && this.hasAttribute("begin") && this.hasAttribute("end"))
+			this._componentReady.then(() => {
+				this._timeDiv.innerHTML = "";
+
+				if(this._timeDiv.classList.contains("subdivided"))
+					this._timeDiv.classList.remove("subdivided");
+
+				if(this._widgetContainer.hasAttribute("hidden"))
+					this._widgetContainer.removeAttribute("hidden");
+
+				if(this._displayWindow.clientWidth > 0)
+					this._initDisplay();
+			});
+
+		if(attributeName == "allow-fullscreen") {
+			this._allowFullScreen = !((newValue == "0") || (newValue == "false"));
+
+			if(!this._allowFullScreen && (document.fullscreenElement === this))
+				document.exitFullscreen();
+		}
+
+		if(attributeName == "cursor-time") {
+			let cursorTime = parseFloat(newValue, 10);
+
+			if(!isNaN(cursorTime)) {
+				this._setTimelineCursorPositionForTime(cursorTime);
+				this._timelineCursorLabel.innerText = getFormattedDate(cursorTime);
+			}
+		}
+
+		if((attributeName == "view-begin") && (newValue)) {
+			let newViewBeginTime = parseFloat(newValue, 10);
+
+			if(!isNaN(newViewBeginTime))
+				this._requestSetView(newViewBeginTime, null, null);
+			else
+				this.emitErrorEvent(new TypeError("Value for \"view-begin\" is not a number"));
+		}
+
+		if((attributeName == "zoom-level") && (newValue)) {
+			if(Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit).includes(newValue))
+				this._requestSetView(null, newValue, null);
+			else
+				this.emitErrorEvent(new TypeError("Value for \"zoom-level\" is not a valid time subdivision unit"));
+		}
+
+		if((attributeName == "div-width") && (newValue)) {
+			let newDivWidth = parseFloat(newValue, 10);
+
+			if(!isNaN(newDivWidth))
+				this._requestSetView(null, null, newDivWidth);
+			else
+				this.emitErrorEvent(new TypeError("Value for \"div-width\" is not a number"));
+		}
 	}
 
 	/**
@@ -485,12 +528,14 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	_onClickToggleFullscreenButton(event) {
 		event.stopPropagation();
 
-		if(!document.fullscreenElement) {
-			if(this.dispatchEvent(new Event("request-fullscreen", {cancelable: true})))
-				this._widgetContainer.requestFullscreen();
+		if(this._allowFullScreen) {
+			if(document.fullscreenElement === null) {
+				if(this.dispatchEvent(new Event("request-fullscreen", {cancelable: true})))
+					this._widgetContainer.requestFullscreen();
+			}
+			else
+				document.exitFullscreen();
 		}
-		else
-			document.exitFullscreen();
 	}
 
 	/**
@@ -499,7 +544,14 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	_updateVerticalCursor(event) {
 		let timeDivRelativeMouseX = event.clientX - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
 		this._timelineCursor.style.left = timeDivRelativeMouseX + "px";
-		this._timelineCursorLabel.innerText = getFormattedDate(this._getMouseTime(timeDivRelativeMouseX));
+		let mouseTime = this._getMouseTime(timeDivRelativeMouseX)
+		this._timelineCursorLabel.innerText = getFormattedDate(mouseTime);
+
+		this.dispatchEvent(new CustomEvent("cursor-move", {
+			bubbles: true,
+			cancelable: false,
+			detail : {cursor_time: mouseTime}
+		}));
 	}
 
 	/**
@@ -509,11 +561,12 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		if(this._timeDivisionsAreInitialized && !this._displayWindow.classList.contains("scrolled")) {
 			event.preventDefault();
 			
-			if(this._updateTimeLineCursorID != null)
+			if(this._updateTimeLineCursorID)
 				clearTimeout(this._updateTimeLineCursorID);
 
 			this._updateTimeLineCursorID = setTimeout(() => {
 				this._updateVerticalCursor(event);
+				this._updateTimeLineCursorID = null;
 			});
 		}
 	}
@@ -669,6 +722,24 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		return overlappingEvents;
 	}
 
+	/**
+	 * 
+	 */
+	_getAllEventsOverlappingInterval(minTime, maxTime) {
+		let overlappingEvents = new Array();
+		let allEvents = this._getAllEventNodes();
+
+		for(let i = 0; i < allEvents.length; i++) {
+			let currentEvent = allEvents[i];
+			let eventOverlapsInterval = ((currentEvent.endTime >= minTime) && (currentEvent.beginTime <= maxTime));
+			
+			if(eventOverlapsInterval && currentEvent.hasAttribute("row"))
+				overlappingEvents.push(currentEvent);
+		}
+		
+		return overlappingEvents;
+	}
+
 
 	/**
 	 * 
@@ -699,7 +770,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 *
 	 */
-	_getViewBeginTime() {
+	get viewBeginTime() {
 		let totalTime = this._lastRepresentedTime - this._firstRepresentedTime;
 		let timeOverWidthRatio = totalTime / this._timeDiv.clientWidth;
 		let leftBorderTimeOffsetTime = this._displayWindow.scrollLeft * timeOverWidthRatio;
@@ -709,7 +780,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_getViewEndTime() {
+	get viewEndTime() {
 		let totalTime = this._lastRepresentedTime - this._firstRepresentedTime;
 		let timeOverWidthRatio = totalTime / this._timeDiv.clientWidth;
 		let rightBorderTimeOffsetTime = (this._displayWindow.scrollLeft + this._displayWindow.clientWidth) * timeOverWidthRatio;
@@ -1064,8 +1135,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			clearTimeout(this._requestUpdateTimeDivisionsID);
 
 		this._requestUpdateTimeDivisionsID = setTimeout(() => {
-			let viewBeginTime = this._getViewBeginTime();
-			let viewEndTime = this._getViewEndTime();
+			let viewBeginTime = this.viewBeginTime;
+			let viewEndTime = this.viewEndTime;
 			let newTimeDivBoundaries = this._getTimeDivBoundariesForView(viewBeginTime, viewEndTime);
 			let timeDivNeedsToChange = ((newTimeDivBoundaries.beginTime != this._firstRepresentedTime) || (newTimeDivBoundaries.endTime != this._lastRepresentedTime));
 
@@ -1231,6 +1302,109 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_requestSetView(newViewBegin = null, newZoomLevel = null, newDivWidth = null) {
+		if(newViewBegin)
+			this._requestedNewViewBegin = newViewBegin;
+
+		if(newZoomLevel)
+			this._requestedNewZoomLevel = newZoomLevel;
+
+		if(newDivWidth)
+			this._requestedNewDivWidth = newDivWidth;
+
+		if(this._requestSetViewID)
+			clearTimeout(this._requestSetViewID);
+
+		this._requestSetViewID = setTimeout(() => {
+			let newLevelHasExceededTop = (
+					((this._initialLevel == "month") && (this._requestedNewZoomLevel == "year"))
+				||	((this._initialLevel == "day") && ((this._requestedNewZoomLevel == "year") || (this._requestedNewZoomLevel == "month")))
+				||	((this._initialLevel == "hour") && ((this._requestedNewZoomLevel == "year") || (this._requestedNewZoomLevel == "month") || (this._requestedNewZoomLevel == "day")))
+				||	((this._initialLevel == "tenminutes") && ((this._requestedNewZoomLevel == "year") || (this._requestedNewZoomLevel == "month") || (this._requestedNewZoomLevel == "day") || (this._requestedNewZoomLevel == "hour")))
+				||	((this._initialLevel == "minute") && ((this._requestedNewZoomLevel == "year") || (this._requestedNewZoomLevel == "month") || (this._requestedNewZoomLevel == "day") || (this._requestedNewZoomLevel == "hour") || (this._requestedNewZoomLevel == "tenminutes")))
+				||	((this._initialLevel == "tenseconds") && ((this._requestedNewZoomLevel == "year") || (this._requestedNewZoomLevel == "month") || (this._requestedNewZoomLevel == "day") || (this._requestedNewZoomLevel == "hour") || (this._requestedNewZoomLevel == "tenminutes") || (this._requestedNewZoomLevel == "minute")))
+				||	((this._initialLevel == "second") && ((this._requestedNewZoomLevel == "year") || (this._requestedNewZoomLevel == "month") || (this._requestedNewZoomLevel == "day") || (this._requestedNewZoomLevel == "hour") || (this._requestedNewZoomLevel == "tenminutes") || (this._requestedNewZoomLevel == "minute") || (this._requestedNewZoomLevel == "tenseconds")))
+				||	((this._initialLevel == "ahundredmilliseconds") && ((this._requestedNewZoomLevel == "year") || (this._requestedNewZoomLevel == "month") || (this._requestedNewZoomLevel == "day") || (this._requestedNewZoomLevel == "hour") || (this._requestedNewZoomLevel == "tenminutes") || (this._requestedNewZoomLevel == "minute") || (this._requestedNewZoomLevel == "tenseconds") || (this._requestedNewZoomLevel == "second")))
+				||	((this._initialLevel == "tenmilliseconds") && ((this._requestedNewZoomLevel == "year") || (this._requestedNewZoomLevel == "month") || (this._requestedNewZoomLevel == "day") || (this._requestedNewZoomLevel == "hour") || (this._requestedNewZoomLevel == "tenminutes") || (this._requestedNewZoomLevel == "minute") || (this._requestedNewZoomLevel == "tenseconds") || (this._requestedNewZoomLevel == "second") || (this._requestedNewZoomLevel == "ahundredmilliseconds")))
+				||	((this._initialLevel == "millisecond"))
+			);
+
+			if(newLevelHasExceededTop)
+				this._requestedNewZoomLevel = this._initialLevel;
+
+			if((this._requestedNewZoomLevel == this._initialLevel) && (this._requestedNewDivWidth < this._initialDivWidth))
+				this._requestedNewDivWidth = this._initialDivWidth;
+
+			let timelineCursorPosition = this._timelineCursor.getBoundingClientRect().left - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
+			let timelineCursorTime = this._getMouseTime(timelineCursorPosition);
+			let divisionsLevelHasChanged = false;
+			
+			if(this._requestedNewZoomLevel || this._requestedNewDivWidth) {
+				let zoomLevel = this._requestedNewZoomLevel?this._requestedNewZoomLevel:this.zoomLevel;
+				divisionsLevelHasChanged = (zoomLevel != this.zoomLevel);
+				let divWidth = this._requestedNewDivWidth?this._requestedNewDivWidth:this.divWidth;
+				this._setWidthRules(zoomLevel, divWidth);
+				this._requestedNewZoomLevel = null;
+				this._requestedNewDivWidth = null;
+			}
+
+			if(this._requestedNewViewBegin) {
+				this._updateRepresentedTime();
+				let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
+				let newViewEndTime = this._requestedNewViewBegin + (this._displayWindow.clientWidth * timeOverWidthRatio);
+				let newTimeDivBoundaries = this._getTimeDivBoundariesForView(this._requestedNewViewBegin, newViewEndTime);
+				let timeDivNeedsToChange = ((newTimeDivBoundaries.beginTime != this._firstRepresentedTime) || (newTimeDivBoundaries.endTime != this._lastRepresentedTime));
+
+				if(timeDivNeedsToChange || divisionsLevelHasChanged) {
+					let firstBefore = this._firstRepresentedTime;
+					let lastBefore = this._lastRepresentedTime;
+					this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
+					this._updateRepresentedTime();
+					let timeDivHasChanged = ((this._firstRepresentedTime != firstBefore) || (this._lastRepresentedTime != lastBefore));
+
+					if(timeDivHasChanged) {
+						let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
+						
+						for(let i = 0; i < affectedIntervals.length; i++) {
+							let interval = affectedIntervals[i];
+							let eventsToUpdate = this._getAllEventsOverlappingInterval(interval.begin, interval.end);
+							this._updateEventsPosX(eventsToUpdate);
+						}
+					}
+				}
+
+				this._setScrollForMousePositionAndTime(this._requestedNewViewBegin, 0);
+				this._updateScrollBarCursor();
+				this._requestedNewViewBegin = null;
+			}
+
+			if((this._requestedNewZoomLevel == this._initialLevel) && (this._requestedNewDivWidth == this._initialDivWidth)) {
+				if(!this._displayWindow.classList.contains("scrollable"))
+					this._displayWindow.classList.remove("scrollable");
+
+				if(!this._scrollBar.classList.contains("scrollable"))
+					this._scrollBar.classList.remove("scrollable");
+			}
+			else {
+				if(!this._displayWindow.classList.contains("scrollable"))
+					this._displayWindow.classList.add("scrollable");
+
+				if(!this._scrollBar.classList.contains("scrollable"))
+					this._scrollBar.classList.add("scrollable");
+			}
+			
+			if(divisionsLevelHasChanged)
+				this._updateMaxDisplayableRows();
+
+			this._requestUpdateEventsRow();
+			this._setTimelineCursorPositionForTime(timelineCursorTime);
+			this._requestSetViewID = null;
+		});
+	}
+
+	/**
+	 * 
+	 */
 	_setViewBegin(newViewBegin) {
 		let timeDivHasChanged = false;
 
@@ -1294,6 +1468,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let newMouseAbsoluteX = mouseTimeOffset * widthOverTimeRatio;
 		let newScrollLeft = newMouseAbsoluteX - displayWindowRelativeMouseX;
 		this._displayWindow.scrollLeft = newScrollLeft;
+		this._notifyViewChange();
 	}
 
 	/**
@@ -1323,7 +1498,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			this._scrollBarDragOrigin = event.clientX;
 			let scrollBarCursorLeftValue = this._scrollBarCursor.style.left;
 			this._scrollBarCursorOrigin = parseFloat(scrollBarCursorLeftValue.substring(0, scrollBarCursorLeftValue.length - 2));
-			this._scrollBarDragViewBeginOrigin = this._getViewBeginTime();
+			this._scrollBarDragViewBeginOrigin = this.viewBeginTime;
 			window.document.addEventListener("mousemove", this._bindedDragScrollBarCursorFunction, true);
 			window.document.addEventListener("mouseup", this._bindedStopDraggingScrollBarCursorFunction, true);
 		}
@@ -1358,6 +1533,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				}
 			}
 
+			this._notifyViewChange();
 			this._dragScrollBarCursorUpdateViewID = null;
 		});
 	}
@@ -1387,7 +1563,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let totalDuration = this.endTime - this.beginTime;
 		let scrollBarTimeOverWidthRatio = totalDuration / this._scrollBar.clientWidth;
 		let mouseTime = this.beginTime + (mouseX * scrollBarTimeOverWidthRatio);
-		let viewDuration = this._getViewEndTime() - this._getViewBeginTime();
+		let viewDuration = this.viewEndTime - this.viewBeginTime;
 		let newViewBeginTime = mouseTime - (viewDuration / 2);
 		let timeDivChanged = this._setViewBegin(newViewBeginTime);
 
@@ -1400,6 +1576,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._updateEventsPosX(eventsToUpdate);
 			}
 		}
+
+		this._notifyViewChange();
 	}
 
 	/**
@@ -1425,7 +1603,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let timeOverWidthRatio = representedDuration / this._timeDiv.clientWidth;
 		let viewWidthIncrement = widthIncrementUnit * this._requestedScrollAmount;
 		let viewTimeIncrement = timeOverWidthRatio * viewWidthIncrement;
-		let newViewBeginTime = this._getViewBeginTime() + viewTimeIncrement;
+		let newViewBeginTime = this.viewBeginTime + viewTimeIncrement;
 		let firstBefore = this._firstRepresentedTime;
 		let lastBefore = this._lastRepresentedTime;
 		let timeDivChanged = this._setViewBegin(newViewBeginTime);
@@ -1440,6 +1618,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			}
 		}
 
+		this._notifyViewChange();
 		this._requestedScrollAmount = 0;
 	}
 
@@ -1486,6 +1665,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 			this._updateEventsPosX(this._getVisibleEventNodes());
 			this._requestUpdateEventsRow();
+			this._notifyViewChange();
 		}
 	}
 
@@ -2359,7 +2539,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		}
 
 		this._initialDivWidth = newDivWidth;
-		this._initialLevel= newLevel;
+		this._initialLevel = newLevel;
 	}
 
 	/**
@@ -2581,6 +2761,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 						this._setTimelineCursorPositionForTime(timelineCursorTime);
 
 						this._requestZoomIncrementID = null;
+						this._notifyViewChange();
 					});
 				});
 			}
@@ -2693,7 +2874,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 			// user zoomed out
 			if(increment > 0) {
-				while(newWidth < KTBS4LA2Timeline.minDivisionWidthPerUnit[newLevel]) {
+				while((newLevel != "year") && (newWidth < KTBS4LA2Timeline.minDivisionWidthPerUnit[newLevel])) {
 					switch(newLevel) {
 						case "millisecond":
 							newLevel = "tenmilliseconds";
@@ -2911,6 +3092,34 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let monthNumber = parseInt(aMonthLabel.parentNode.getAttribute("id").substring(5,7), 10);
 			aMonthLabel.innerText = this._translateString(KTBS4LA2Timeline.monthNames[monthNumber]);
 		}
+	}
+
+	/**
+	 * 
+	 */
+	get zoomLevel() {
+		return this._widgetContainer.className;
+	}
+
+	get divWidth() {
+		return this._currentLevelDivWidth;
+	}
+
+	/**
+	 * 
+	 */
+	_notifyViewChange() {
+		this.dispatchEvent(
+			new CustomEvent("view-change", {
+				bubbles: true,
+				cancelable: false,
+				detail : {
+					begin: this.viewBeginTime,
+					zoom_level: this.zoomLevel,
+					div_width: this.divWidth
+				}
+			})
+		);
 	}
 }
 

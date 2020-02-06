@@ -19,6 +19,13 @@
 	flex-direction: row;
 }
 
+:host([allow-change-stylesheet = "0"][show-stylesheet-legend = "0"]) #stylesheet-tools,
+:host([allow-change-stylesheet = "0"][show-stylesheet-legend = "false"]) #stylesheet-tools,
+:host([allow-change-stylesheet = "false"][show-stylesheet-legend = "0"]) #stylesheet-tools,
+:host([allow-change-stylesheet = "false"][show-stylesheet-legend = "false"]) #stylesheet-tools {
+	display: none;
+}
+
 #stylesheet-selection {
 	border-right: 1px solid #EEE;
 	display: inline-flex;
@@ -52,6 +59,10 @@
 	margin: 0 0;
 	padding-left: 10px;
 	text-align: left;
+}
+
+:host([show-stylesheet-legend = "0"]) #legend, :host([show-stylesheet-legend = "false"]) #legend {
+	display: none;
 }
 
 #legend > * {

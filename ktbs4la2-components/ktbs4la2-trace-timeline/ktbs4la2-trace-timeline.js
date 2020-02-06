@@ -40,9 +40,32 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			this._rejectTraceLoaded = reject;
 		});
 
+		this._resolveModelLoaded;
+		this._rejectModelLoaded;
+
+		this._modelLoaded =  new Promise((resolve, reject) => {
+			this._resolveModelLoaded = resolve;
+			this._rejectModelLoaded = reject;
+		});
+
+		this._modelLoaded
+			.then(() => {
+				this._onModelLoaded();
+			})
+			.catch((error) => {
+				this.emitErrorEvent(error);
+			});
 
 		this._resolveAllObselsLoaded;
 		this._rejectAllObselsLoaded;
+
+		this._resolveStylesheetsBuilded;
+		this._rejectStylesheetsBuilded;
+
+		this._stylesheetsBuilded =  new Promise((resolve, reject) => {
+			this._resolveStylesheetsBuilded = resolve;
+			this._rejectStylesheetsBuilded = reject;
+		});
 
 		this._context = null;
 		this._styleSheets = new Array();
@@ -51,6 +74,9 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._originTime = 0;
 
 		this._obselsLoadingAbortController = new AbortController();
+
+		this._allowFullScreen = true;
+		this._allowChangeStylesheet = true;
 	}
 
 	/**
@@ -69,6 +95,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._timeline = document.createElement("ktbs4la2-timeline");
 		this._timeline.setAttribute("lang", this._lang);
 		this._timeline.setAttribute("slot", "timeline");
+		this._timeline.setAttribute("allow-fullscreen", this.hasAttribute("allow-fullscreen")?this.getAttribute("allow-fullscreen"):"true");
 		this._timeline.addEventListener("request-fullscreen", this._onTimelineRequestFullscreen.bind(this), true);
 		this._timeline.addEventListener("click", this._onClickTimeline.bind(this), true);
 		this._obselsLoadingIndications = this.shadowRoot.querySelector("#obsels-loading-indications");
@@ -166,7 +193,9 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onTimelineRequestFullscreen(event) {
 		event.preventDefault();
-		this._container.requestFullscreen();
+
+		if(this._allowFullScreen)
+			this._container.requestFullscreen();
 	}
 
 	/**
@@ -175,6 +204,9 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	static get observedAttributes() {
 		let observedAttributes = super.observedAttributes;
 		observedAttributes.push('uri');
+		observedAttributes.push("allow-fullscreen");
+		observedAttributes.push("allow-change-stylesheet");
+		observedAttributes.push("stylesheet");
 		return observedAttributes;
 	}
 
@@ -220,6 +252,66 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			this._initObselsLoading();
 			// ---
 		}
+		
+		if(attributeName == "allow-fullscreen") {
+			this._allowFullScreen = !((newValue == "0") || (newValue == "false"));
+
+			this._componentReady.then(() => {
+				this._timeline.setAttribute("allow-fullscreen", newValue);
+			});
+
+			if(!this._allowFullScreen && (document.fullscreenElement === this))
+				document.exitFullscreen();
+		}
+
+		if(attributeName == "allow-change-stylesheet") {
+			this._allowChangeStylesheet = !((newValue == "0") || (newValue == "false"));
+
+			this._componentReady.then(() => {
+				if(this._allowChangeStylesheet)
+					this._styleSheetSelector.removeAttribute("disabled");
+				else
+					this._styleSheetSelector.setAttribute("disabled", true);
+			});
+		}
+
+		if(attributeName == "stylesheet") {
+			this._stylesheetsBuilded.then(() => {
+				let newStyleSheet = null;
+				
+				for(let i = 0; i < this._styleSheets.length; i++) {
+					let aStylesheet = this._styleSheets[i];
+
+					if(aStylesheet.name.toLowerCase() == newValue.toLowerCase()) {
+						newStyleSheet = aStylesheet;
+						break;
+					}
+				}
+
+				if((newStyleSheet) && (newStyleSheet != this._currentStylesheet))
+					this._componentReady.then(() => {
+						this._applyStyleSheet(newStyleSheet, false);
+					});
+			});
+		}
+	}
+
+	/**
+	 * 
+	 */
+	hasStylesheet(stylesheet_id) {
+		let stylesheetFound = false;
+
+		for(let i = 0; i < this._styleSheets.length; i++) {
+			let aStylesheet = this._styleSheets[i];
+
+			if(aStylesheet.name.toLowerCase() == stylesheet_id.toLowerCase()) {
+				stylesheetFound = true;
+				break;
+			}
+		}
+
+		return stylesheetFound;
 	}
 
 	/**
@@ -233,14 +325,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			this._resolveAllObselsLoaded = resolve;
 			this._rejectAllObselsLoaded = reject;
 		}.bind(this));
+		
+		let firstObselPage = this._obselList.get_first_page(100);
 
-		this._obselList.get_first_obsel_page(100, this._obselsLoadingAbortController.signal)
+		firstObselPage.get(this._obselsLoadingAbortController.signal)
 			.then((response) => {
 				// we assume the "context" section will be the same for every obsel page
 				if(!this._context)
-					this._context = response.context;
+					this._context = firstObselPage.context;
 
-				this._onObselListPageRead(response.obsels, response.nextPageURI);
+				this._onObselListPageRead(firstObselPage);
 			})
 			.catch((error) => {
 				if((error.name != "AbortError") || !this._obselsLoadingAbortController.signal.aborted)
@@ -303,12 +397,14 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onObselLoadEnded() {
 		this._componentReady.then(() => {
-			if(this._styleSheets.length == 0) {
+			this._modelLoaded.catch(() => {
 				let defaultStyleSheet = this._generateDefaultStylesheetFromObsels();
 
-				if(defaultStyleSheet != null)
-					this._applyStyleSheet(defaultStyleSheet);
-			}
+				if((defaultStyleSheet != null) && (!this.hasAttribute("stylesheet") || (this.getAttribute("stylesheet").toLowerCase() == "default")))
+					this._applyStyleSheet(defaultStyleSheet, false);
+
+				this._resolveStylesheetsBuilded();
+			});
 		});
 	}
 
@@ -327,9 +423,13 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 		this._model = this._trace.model;
 
-		this._model.get(this._abortController.signal).then(() => {
-			this._onModelLoaded();
-		});
+		this._model.get(this._abortController.signal)
+			.then(() => {
+				this._resolveModelLoaded();
+			})
+			.catch(() => {
+				this._rejectModelLoaded();
+			});
 	}
 
 	/**
@@ -422,9 +522,10 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			if(defaultStylesheetGeneratedFromModel != null) {
 				this._styleSheets.unshift(defaultStylesheetGeneratedFromModel);
 
-				setTimeout(() => {
-					this._applyStyleSheet(defaultStylesheetGeneratedFromModel);
-				});
+				if(!this.hasAttribute("stylesheet") || (this.getAttribute("stylesheet").toLowerCase() == "default"))
+					setTimeout(() => {
+						this._applyStyleSheet(defaultStylesheetGeneratedFromModel, false);
+					});
 			}
 
 			let modelStyleSheets = this._model.stylesheets;
@@ -439,9 +540,10 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				this._styleSheetSelector.appendChild(styleSheetSelectorEntry);
 			}
 
-			if(modelStyleSheets.length > 0)
-				if(this._styleSheetSelector.hasAttribute("disabled"))
-					this._styleSheetSelector.removeAttribute("disabled");
+			if((modelStyleSheets.length > 0) && (this._allowChangeStylesheet) && (this._styleSheetSelector.hasAttribute("disabled")))
+				this._styleSheetSelector.removeAttribute("disabled");
+
+			this._resolveStylesheetsBuilded();
 		});
 	}
 
@@ -449,16 +551,17 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onChangeStyleSheetSelector(event) {
-		setTimeout(() => {
-			let styleSheetID = parseInt(this._styleSheetSelector.value);
+		if(this._allowChangeStylesheet)
+			setTimeout(() => {
+				let styleSheetID = parseInt(this._styleSheetSelector.value);
 
-			if(!isNaN(styleSheetID)) {
-				let newStyleSheet = this._styleSheets[styleSheetID];
+				if(!isNaN(styleSheetID)) {
+					let newStyleSheet = this._styleSheets[styleSheetID];
 
-				if(newStyleSheet != this._currentStylesheet)
-					this._applyStyleSheet(newStyleSheet);
-			}
-		});
+					if(newStyleSheet != this._currentStylesheet)
+						this._applyStyleSheet(newStyleSheet, true);
+				}
+			});
 	}
 
 	/**
@@ -628,11 +731,25 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_applyStyleSheet(stylesheet) {
+	_applyStyleSheet(stylesheet, emit_event = false) {
 		this._currentStylesheet = stylesheet;
 
 		// rebuild the legend
 		this._rebuildLegend(stylesheet);
+
+		// update stylesheet selector if needed (i.e. the stylesheet has been changed, not from the selector, but from the "stylesheet" attribute)
+		if(stylesheet.name != this._styleSheetSelector.value) {
+			let selectorEntries = this._styleSheetSelector.options;
+			
+			for(let i = 0; i < selectorEntries.length; i++) {
+				let anEntry = selectorEntries[i];
+
+				if(anEntry.selected && (anEntry.innerText != stylesheet.name))
+					anEntry.selected = false;
+				else if(!anEntry.selected && (anEntry.innerText == stylesheet.name))
+					anEntry.selected = true;
+			}
+		}
 
 		// --- apply rules to obsels ---
 		for(let i = 0; i < this._obsels.length; i++) {
@@ -672,6 +789,15 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			else
 				this.emitErrorEvent(new Error("Could not found event node for obsel " + anObsel["@id"]));
 		}
+
+		if(emit_event)
+			this.dispatchEvent(
+				new CustomEvent("set-stylesheet", {
+					bubbles: true,
+					cancelable: false,
+					detail : {stylesheet_id: stylesheet.name}
+				})
+			);
 	}
 
 	/**
@@ -992,29 +1118,31 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onObselListPageRead(obsels, nextPageURI) {
+	_onObselListPageRead(obselsListPage) {
 		if(!this._obselsLoadingAbortController.signal.aborted) {
 			this._componentReady.then(() => {
 				if(this._expectedObselCount) {
-					let currentObselCount = this._obsels.length + obsels.length;
+					let currentObselCount = this._obsels.length + obselsListPage.obsels.length;
 					let loadedObselsPercentage = (currentObselCount / this._expectedObselCount) * 100;
 					this._progressBar.style.width = loadedObselsPercentage + "%";
 					this._loadingStatusIcon.setAttribute("title", this._translateString("Loading") + " (" + Math.floor(loadedObselsPercentage) + "%)");
 				}
 
 				setTimeout(() => {
-					this._addObsels(obsels);
+					this._addObsels(obselsListPage.obsels);
 				});
 			});
 			
-			if(nextPageURI == null) {
+			let nextPage = obselsListPage.next_page;
+
+			if(!nextPage) {
 				this._resolveAllObselsLoaded();
 			}
 			else {
 				setTimeout(() => {
-					this._obselList.get_obsel_page(nextPageURI, this._obselsLoadingAbortController.signal)
-						.then((response) => {
-							this._onObselListPageRead(response.obsels, response.nextPageURI);
+					nextPage.get(this._obselsLoadingAbortController.signal)
+						.then(() => {
+							this._onObselListPageRead(nextPage);
 						})
 						.catch((error) => {
 							if((error.name != "AbortError") || !this._obselsLoadingAbortController.signal.aborted)

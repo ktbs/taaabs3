@@ -404,6 +404,10 @@
 	background-image: url('{my-component-folder}/exit-fulllscreen.svg');
 }
 
+:host([allow-fullscreen = "0"]) #toggle-fullscreen-button, :host([allow-fullscreen = "false"]) #toggle-fullscreen-button {
+	display: none;
+}
+
 #widget-container:fullscreen {
 	background-color: white;
 	padding: 5px 5px 5px 5px;

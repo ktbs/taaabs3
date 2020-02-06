@@ -1,7 +1,9 @@
 import {Resource} from "./Resource.js";
+import {ObselListPage} from "./ObselListPage.js";
+import {ResourceProxy} from "./ResourceProxy.js";
 
 /**
- * Class to help reading obsels list from a Trace, optionally in a paginated fashion
+ * Class to help reading obsels list from a Trace
  */
 export class ObselList extends Resource {
 	
@@ -159,75 +161,13 @@ export class ObselList extends Resource {
 	}
 
 	/**
-	 * Query the data for one page of the obsel list and returns a Promise attached to the HTTP request
-	 * @param string pageURI the URI of the obsel page
-	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
-	 * @return Promise
-	 */
-	get_obsel_page(pageURI, abortSignal = null) {
-		return new Promise((resolve, reject) => {
-				let fetchParameters = { 
-					method: "GET",
-					headers: new Headers({
-						"Accept": "application/json"
-					}),
-					cache: "default"
-				};
-
-				let credentials = this.credentials;
-
-				if((credentials != null) && credentials.id && credentials.password)
-					fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
-
-				if(abortSignal)
-					fetchParameters.signal = abortSignal;
-
-				fetch(pageURI, fetchParameters)
-					.then(function(response) {
-						// if the HTTP request responded successfully
-						if(response.ok) {
-							let nextPageURI = null;
-							
-							if(response.headers.has("link")) {
-								let linkResponseHeader = response.headers.get("link");
-								let links = linkResponseHeader.split(', ');
-
-								for(let i = 0; (nextPageURI == null) && (i < links.length); i++) {
-									let aLinkData = links[i];
-									let aLinkParts = aLinkData.split(';');
-
-									if((aLinkParts.length == 2) && (aLinkParts[1] == "rel=\"next\""))
-										nextPageURI = aLinkParts[0].substring(1, aLinkParts[0].length - 1);
-								}
-							}
-
-							// when the response content from the HTTP request has been successfully read
-							response.json()
-								.then(function(parsedJson) {
-									resolve({context: parsedJson["@context"], obsels: parsedJson.obsels, nextPageURI: nextPageURI});
-								}.bind(this))
-								.catch(error => {
-									reject(error);
-								});
-						}
-						else
-							reject("Fetch request to uri \"" + pageURI + "\"has failed");
-					}.bind(this))
-					.catch(error => {
-						reject(error);
-					});
-		});
-	}
-
-	/**
 	 * Gets the data for the first page of the Obsel list and returns a Promise attached to the HTTP request
 	 * @param int limit The maximum number of obsels to fetch for this page (default: 500)
-	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
-	 * @return Promise
+	 * @return ObselListPage
 	 */
-	get_first_obsel_page(limit = 500, abortSignal = null) {
+	get_first_page(limit = 500) {
 		let firstPageURI = this._get_first_page_uri(limit);
-		return this.get_obsel_page(firstPageURI, abortSignal);
+		return ResourceProxy.get_resource(ObselListPage, firstPageURI);
 	}
 
 	/**
