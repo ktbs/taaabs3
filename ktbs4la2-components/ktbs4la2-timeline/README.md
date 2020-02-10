@@ -45,22 +45,103 @@ Each of these two elements is decribed in details below.
 # \<ktbs4la2-timeline\>
 
 ## Attributes
-| Name | Description | Format | Required | Default |
-| ----:|:----------- |:------ |:-------- |:------- |
-| begin | The maximum begining time of the timeline.<br><br> Note that the widget might choose to start the timeline representation a little bit earlier (but never later) for conveniance, in order to display a consistant time-division level at initial state. | Millisecond timestamp | Required | |
-| end | The minimum ending time of the timeline.<br><br> Note that the widget might choose to end the timeline representation a little bit later (but never earlier) for conveniance, in order to display a consistant time-division level at initial state. |   Millisecond timestamp | Required | |
-| allow-fullscreen | Whether or not the widget should display a "fullscreen" button and allow switching to fullscreen mode. | "true", "1", "false" or "0" | Optional | "true" |
-| cursor-time | Allows to temporarily force the position of the timeline's cursor (= the vertical red line under the mouse pointer).<br><br> **Important** : note this will be ignored when the user manually moves the cursor. Besides, this attribute value will not be automatically updated to expose the cursor's position (for this purpose, use instead the "cursor-move" events described further below). | Millisecond timestamp | Optional | |
-| view-begin | Allows to temporarily force the begining of the displayed portion of the timeline.<br><br> **Important** : note this will be ignored when the user manually changes the view. Besides, this attribute value will not be automatically updated to expose the view's state (for this purpose, use instead the "view-change" events described further below). | Millisecond timestamp | Optional | |
-| zoom-level | Allows to temporarily force the smallest time-division unit displayed in the view.<br><br> **Important** : note this will be ignored when the user manually changes the view. Besides, this attribute value will not be automatically updated to expose the view's state (for this purpose, use instead the "view-change" events described further below). | "year", "month", "day", "hour", "tenminutes", "minute", "tenseconds", "second", "ahundredmilliseconds", "tenmilliseconds" or "millisecond" | Optional | |
-| div-width | Allows to temporarily force the width (in pixels) for each time division of the smallest unit currently displayed in the view.<br><br> **Important** : note this will be ignored when the user manually changes the view. Besides, this attribute value will not be automatically updated to expose the view's state (for this purpose, use instead the "view-change" events described further below). | Integer | Optional | |
+
+### begin
+
+The maximum begining time of the timeline.
+
+Note that the widget might choose to start the timeline representation a little bit earlier (but never later) for conveniance, in order to display a consistant time-division level at initial state.
+
++ **format**: Millisecond timestamp
++ **required**
+  
+### end
+
+The minimum ending time of the timeline.
+  
+Note that the widget might choose to end the timeline representation a little bit later (but never earlier) for conveniance, in order to display a consistant time-division level at initial state.
+  
++ **format**: Millisecond timestamp
++ **required**
+  
+### allow-fullscreen
+
+Whether or not the widget should display a "fullscreen" button and allow switching to fullscreen mode.
+  
++ **format**: "true", "1", "false" or "0"
++ **optional**
++ **default**: "true"
+
+### cursor-time
+
+Allows to temporarily force the position of the timeline's cursor (= the vertical red line under the mouse pointer).
+  
+**Important** : note this will be ignored when the user manually moves the cursor. Besides, this attribute value will not be automatically updated to expose the cursor's position (for this purpose, use instead the "cursor-move" events described further below).
+  
++ **fomat**: Millisecond timestamp
++ **optional**
+  
+### view-begin
+
+Allows to temporarily force the begining of the displayed portion of the timeline.
+  
+**Important** : note this will be ignored when the user manually changes the view. Besides, this attribute value will not be automatically updated to expose the view's state (for this purpose, use instead the "view-change" events described further below).
+  
++ **format**: Millisecond timestamp
++ **optional**
+
+### zoom-level
+
+Allows to temporarily force the smallest time-division unit displayed in the view.
+  
+**Important** : note this will be ignored when the user manually changes the view. Besides, this attribute value will not be automatically updated to expose the view's state (for this purpose, use instead the "view-change" events described further below).
+  
++ **format**: "year", "month", "day", "hour", "tenminutes", "minute", "tenseconds", "second", "ahundredmilliseconds", "tenmilliseconds" or "millisecond"
++ **optional**
+  
+### div-width
+
+Allows to temporarily force the width (in pixels) for each time division of the smallest unit currently displayed in the view.
+  
+**Important** : note this will be ignored when the user manually changes the view. Besides, this attribute value will not be automatically updated to expose the view's state (for this purpose, use instead the "view-change" events described further below).
+ 
++ **format**: Integer
++ **optional**
+
 
 ## Emitted events
-| Type | Description | Bubbles | Cancelable | Detail |
-| ----:|:----------- |:------- |:---------- |:------ |
-| request-fullscreen | Emitted when the users clicks the "fullscreen" button.<br> A third-party script can listen to this event to perform tasks before the widget switches to fullscreen, or even cancel the event in order to prevent the user from switching to fullscreen. | true | true | |
-| cursor-move | Emitted when the users moves the timeline's cursor (= the vertical red line under the mouse pointer) over the timeline | true | false | **cursor_time** : the new time of the cursor (format : millisecond timestamp) |
-| view-change | Emitted when the users zooms in/out or scrolls through the timeline. | true | false | **begin** : the begining of the displayed portion of the timeline (format millisecond timestamp).<br><br>**zoom_level** : the smallest time-division unit displayed in the view (can be either one of "year", "month", "day", "hour", "tenminutes", "minute", "tenseconds", "second", "ahundredmilliseconds", "tenmilliseconds" or "millisecond").<br><br>**div_width** : the width (in pixels) of each time-division of "zoom_level". |
+
+### request-fullscreen
+
+Emitted when the users clicks the "fullscreen" button.<br> A third-party script can listen to this event to perform tasks before the widget switches to fullscreen, or even cancel the event in order to prevent the user from switching to fullscreen.
+  
++ **bubbles**: true
++ **cancelable**: true
+  
+### cursor-move
+
+Emitted when the users moves the timeline's cursor (= the vertical red line under the mouse pointer) over the timeline.
+  
++ **bubbles**: true
++ **cancelable**: false
+
+Details:
+
++ **cursor_time**: the new time of the cursor (format : millisecond timestamp)
+    
+### view-change
+
+Emitted when the users zooms in/out or scrolls through the timeline.
+  
++ **bubbles**: true
++ **cancelable**: false
+
+Details:
+
++ **begin**: the begining of the displayed portion of the timeline (format millisecond timestamp)
++ **zoom_level**: the smallest time-division unit displayed in the view (can be either one of "year", "month", "day", "hour", "tenminutes", "minute", "tenseconds", "second", "ahundredmilliseconds", "tenmilliseconds" or "millisecond")
++ **div_width**: the width (in pixels) of each time-division of "zoom_level"
+
 
 ## Child nodes
 Only children **\<ktbs4la2-timeline-event\>** elements will be represented, any other content will be discarded.
@@ -68,6 +149,8 @@ Only children **\<ktbs4la2-timeline-event\>** elements will be represented, any 
 # \<ktbs4la2-timeline-event\>
 
 ## Attributes
+
+
 | Name | Description | Format | Required | Default |
 | ----:|:----------- |:------ |:-------- |:------- |
 | id | A unique identifier for the event. | Almost anything as long as it's valid HTML-wise , and unique within the parent timeline. | Required | |
