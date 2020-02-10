@@ -58,14 +58,14 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
      */
     _onChildTraceTimelineSetStylesheet(event) {
         if((this.syncStylesheets) && (event.target.localName == "ktbs4la2-trace-timeline")) {
-            let stylesheet_id = event.detail.stylesheet_id;
+            let stylesheetId = event.detail.stylesheetId;
             let childTraceTimelines = this.trace_timelines;
 
             for(let i = 0; i < childTraceTimelines.length; i++) {
                 let aTimeline = childTraceTimelines[i];
 
-                if((aTimeline !== event.target) && (aTimeline.getAttribute("stylesheet") != stylesheet_id) && aTimeline.hasStylesheet(stylesheet_id))
-                    aTimeline.setAttribute("stylesheet", stylesheet_id);
+                if((aTimeline !== event.target) && (aTimeline.getAttribute("stylesheet") != stylesheetId) && aTimeline.hasStylesheet(stylesheetId))
+                    aTimeline.setAttribute("stylesheet", stylesheetId);
             }
         }
     }

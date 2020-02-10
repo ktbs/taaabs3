@@ -550,7 +550,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this.dispatchEvent(new CustomEvent("cursor-move", {
 			bubbles: true,
 			cancelable: false,
-			detail : {cursor_time: mouseTime}
+			detail : {cursorTime: mouseTime}
 		}));
 	}
 
@@ -3115,8 +3115,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				cancelable: false,
 				detail : {
 					begin: this.viewBeginTime,
-					zoom_level: this.zoomLevel,
-					div_width: this.divWidth
+					zoomLevel: this.zoomLevel,
+					divWidth: this.divWidth
 				}
 			})
 		);

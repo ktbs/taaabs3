@@ -795,7 +795,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				new CustomEvent("set-stylesheet", {
 					bubbles: true,
 					cancelable: false,
-					detail : {stylesheet_id: stylesheet.name}
+					detail : {stylesheetId: stylesheet.name}
 				})
 			);
 	}

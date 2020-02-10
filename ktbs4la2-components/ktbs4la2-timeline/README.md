@@ -127,7 +127,7 @@ Emitted when the users moves the timeline's cursor (= the vertical red line unde
 
 Details:
 
-+ **cursor_time**: the new time of the cursor (format : millisecond timestamp)
++ **cursorTime**: the new time of the cursor (format : millisecond timestamp)
     
 ### view-change
 
@@ -139,8 +139,8 @@ Emitted when the users zooms in/out or scrolls through the timeline.
 Details:
 
 + **begin**: the begining of the displayed portion of the timeline (format millisecond timestamp)
-+ **zoom_level**: the smallest time-division unit displayed in the view (can be either one of "year", "month", "day", "hour", "tenminutes", "minute", "tenseconds", "second", "ahundredmilliseconds", "tenmilliseconds" or "millisecond")
-+ **div_width**: the width (in pixels) of each time-division of "zoom_level"
++ **zoomLevel**: the smallest time-division unit displayed in the view (can be either one of "year", "month", "day", "hour", "tenminutes", "minute", "tenseconds", "second", "ahundredmilliseconds", "tenmilliseconds" or "millisecond")
++ **divWidth**: the width (in pixels) of each time-division of "zoomLevel"
 
 
 ## Child nodes

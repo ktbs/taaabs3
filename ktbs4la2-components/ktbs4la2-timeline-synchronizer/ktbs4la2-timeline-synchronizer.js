@@ -164,8 +164,8 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
     _onChildTimelineViewChange(event) {
        if((this.syncView) && (event.target.localName == "ktbs4la2-timeline")) {
             let newViewBeginTime = event.detail.begin;
-            let newZoomLevel = event.detail.zoom_level;
-            let newDivWidth = event.detail.div_width;
+            let newZoomLevel = event.detail.zoomLevel;
+            let newDivWidth = event.detail.divWidth;
 
             if(this._syncChildViewsID)
                 clearTimeout(this._syncChildViewsID);
@@ -198,7 +198,7 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
      */
     _onChildTimelineCursorMove(event) {
         if((this.syncCursor) && (event.target.localName == "ktbs4la2-timeline")) {
-            let cursorTime = event.detail.cursor_time;
+            let cursorTime = event.detail.cursorTime;
 
             if(this._syncChildCursorsID)
                 clearTimeout(this._syncChildCursorsID);

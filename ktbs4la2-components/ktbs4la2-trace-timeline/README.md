@@ -83,7 +83,7 @@ Emitted when the users changes the current stylesheet.
 
 Details:
 
-**stylesheet_id**: ID of the newly selected stylesheet
+**stylesheetId**: ID of the newly selected stylesheet
 
 ## Child nodes
 Any nested content will be discarded.
