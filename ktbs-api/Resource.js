@@ -236,9 +236,9 @@ export class Resource {
 	 */
 	get parent() {
 		if(this._JSONData["inBase"])
-			return ResourceProxy.get_resource(Base, new URL(this._JSONData["inBase"], this.uri));
+			return ResourceProxy.get_resource("Base", new URL(this._JSONData["inBase"], this.uri));
 		else if(this._JSONData["inRoot"])
-			return ResourceProxy.get_resource(Ktbs, new URL(this._JSONData["inRoot"], this.uri));
+			return ResourceProxy.get_resource("Ktbs", new URL(this._JSONData["inRoot"], this.uri));
 		else
 			return undefined;
 	}

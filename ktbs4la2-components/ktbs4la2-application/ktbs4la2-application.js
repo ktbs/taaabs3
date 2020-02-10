@@ -5,6 +5,7 @@ import "../ktbs4la2-root-form/ktbs4la2-root-form.js";
 import "../ktbs4la2-nav-resource/ktbs4la2-nav-resource.js";
 import "../ktbs4la2-main-documentation/ktbs4la2-main-documentation.js";
 import "../ktbs4la2-main-resource/ktbs4la2-main-resource.js";
+import { ResourceProxy } from "../../ktbs-api/ResourceProxy.js";
 
 /**
  * 
@@ -19,7 +20,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._is_resizing = false;
 		this._resizing_initial_width = 250;
 		this._resizing_origin_x = null;
-		this.navSelectedElement = null;
+		this._selectedNavElement = null;
+		this._selectedResourceHierarchy = new Array();
 		this._bindedResizeFunction = this.resize.bind(this);
 		this._bindedStopresizingFunction = this.stopResizing.bind(this);
 	}
@@ -140,19 +142,19 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	onNavNodesMutation(mutationRecord, observer) {
 		let mainElement = this.querySelector("[slot = \"main\"]");
 
-		if((this.navSelectedElement == null) && (mainElement != null)) {
-			let selectedNavFound = false;
-
-			for(let i = 0; !selectedNavFound && (i < mutationRecord.length); i++) {
+		if((this._selectedNavElement == null) && (mainElement != null)) {
+			for(let i = 0; i < mutationRecord.length; i++) {
 				let addedNodes = mutationRecord[i].addedNodes;
 		
-				for(let j = 0; !selectedNavFound && (j < addedNodes.length); j++) {
+				for(let j = 0; j < addedNodes.length; j++) {
 					let addedNode = addedNodes[j];
 
 					if((addedNode.localName == "ktbs4la2-nav-resource") && (addedNode.getAttribute("uri") == mainElement.getAttribute("uri"))) {
 						addedNode.classList.add("selected");
-						this.navSelectedElement = addedNode;
-						selectedNavFound = true;
+						this._selectedNavElement = addedNode;
+					}
+					else if((addedNode.localName == "ktbs4la2-nav-resource") && (this._resourceUriIsParentOfSelected(addedNode.getAttribute("uri")))) {
+						addedNode.classList.add("parent-of-selected");
 					}
 				}
 			}
@@ -225,8 +227,12 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		event.preventDefault();
 		event.stopPropagation();
 
-		if(event.error)
+		if(this.debug && event.error)
 			console.error(event.error);
+	}
+
+	get debug() {
+		return ((this.getAttribute("debug") == "true") || (this.getAttribute("debug") == "1"));
 	}
 
 	/**
@@ -316,10 +322,16 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			mainElements[i].remove();
 
 		// de-select currently selected navigation panel element
-		if((this.navSelectedElement != null) && this.navSelectedElement.classList.contains("selected"))
-			this.navSelectedElement.classList.remove("selected");
+		if((this._selectedNavElement != null) && this._selectedNavElement.classList.contains("selected"))
+			this._selectedNavElement.classList.remove("selected");
 
-		this.navSelectedElement = null;
+		let previousSelectedParents =  this.querySelectorAll("[slot = \"nav-ktbs-roots\"].parent-of-selected, [slot = \"nav-ktbs-roots\"] .parent-of-selected");
+
+		for(let i = 0; i < previousSelectedParents.length; i++)
+			previousSelectedParents[i].classList.remove("parent-of-selected");
+
+		this._selectedNavElement = null;
+		this._selectedResourceHierarchy = new Array();
 
 		// prepare new main element
 		let mainContentChildrenTag;		
@@ -381,8 +393,12 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 				if(newSelectedNavElement) {
 					newSelectedNavElement.classList.add("selected");
-					this.navSelectedElement = newSelectedNavElement;
+					this._selectedNavElement = newSelectedNavElement;
 				}
+
+				let ktbsResource = ResourceProxy.get_resource(ktbs_type, main_id);
+				this._selectedResourceHierarchy.unshift(ktbsResource);
+				this._highlightNavParent(ktbsResource);
 
 				// instantiate the new main element
 				mainContentChildrenTag = document.createElement("ktbs4la2-main-resource");
@@ -416,6 +432,45 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			history.pushState(historyState, historyLabel, historyURL);
 
 		window.document.title = historyLabel;
+	}
+
+	/**
+	 * 
+	 */
+	_highlightNavParent(ktbsResource) {
+		ktbsResource.get(this._abortController.signal).then(() => {
+			let resourceParent = ktbsResource.parent;
+
+			if(resourceParent) {
+				this._selectedResourceHierarchy.unshift(resourceParent);
+				let queryString = "[slot = \"nav-ktbs-roots\"][uri = \"" + resourceParent.uri + "\"], [slot = \"nav-ktbs-roots\"] [uri = \"" + resourceParent.uri + "\"]";
+				let parentNavElement = this.querySelector(queryString);
+				
+				if(parentNavElement)
+					if(!parentNavElement.classList.contains("parent-of-selected"))
+						parentNavElement.classList.add("parent-of-selected");
+
+				this._highlightNavParent(resourceParent);
+			}
+		});
+	}
+
+	/**
+	 * 
+	 */
+	_resourceUriIsParentOfSelected(uri) {
+		let isParentOfSelected = false;
+
+		for(let i = 0; i < (this._selectedResourceHierarchy.length - 1); i++) {
+			let aParent = this._selectedResourceHierarchy[i];
+
+			if(aParent.uri == uri) {
+				isParentOfSelected = true;
+				break;
+			}
+		}
+
+		return isParentOfSelected;
 	}
 
 	/**
@@ -462,7 +517,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	onSelectNavElement(event) {
 		let newSelectedElement = event.target;
 
-		if((this.navSelectedElement == null) || (this.navSelectedElement.getAttribute("uri") != newSelectedElement.getAttribute("uri")))
+		if((this._selectedNavElement == null) || (this._selectedNavElement.getAttribute("uri") != newSelectedElement.getAttribute("uri")))
 			this.setMainObject("ktbs-resource", newSelectedElement.getAttribute("uri"), newSelectedElement.getAttribute("resource-type"), newSelectedElement.getAttribute("label"));
 	}
 

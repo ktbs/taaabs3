@@ -199,6 +199,12 @@
 	background-color: var(--color-highlight, royalblue);
 }
 
+:host(.parent-of-selected) #title {
+	border-style: solid;
+	border-width: 1px;
+	border-color: var(--color-highlight, royalblue);
+}
+
 :host(.selected) #title:hover {
 	cursor: default;
 }
