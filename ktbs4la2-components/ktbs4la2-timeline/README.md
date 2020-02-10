@@ -150,23 +150,93 @@ Only children **\<ktbs4la2-timeline-event\>** elements will be represented, any 
 
 ## Attributes
 
+### id
 
-| Name | Description | Format | Required | Default |
-| ----:|:----------- |:------ |:-------- |:------- |
-| id | A unique identifier for the event. | Almost anything as long as it's valid HTML-wise , and unique within the parent timeline. | Required | |
-| begin | The begining time of the event. | Millisecond timestamp | Required | |
-| end | The ending time of the event.<br> If none is provided, the event will be considered an "instant" event, meaning it's ending time is the same as it's begining time.<br><br> **Important**: only events with "duration-bar" shape (default) can represent the event's length over the timeline| Millisecond timestamp | Optional | Same as *begin* |
-| title | A string that will be displayed as a "tootltip" (or "hint") to the user when hovering the event's marker. | String | Optional | |
-| href | If provided, the event's marker will also be a hyperlink pointing to the URL provided by this attribute. | URL | Optional | |
-| color | A color for the event's maker, aswell as detail-popup's header and border. | Any valid HTML/CSS color. | Optional | #888 (grey) |
-| shape | A pre-defined shape for the event's marker. <br>Only events with a "duration-bar" shape (default) can represent the event's length over the timeline. <br><br> **Important**: note this attribute is mutually exclusive with "symbol".| "duration-bar", "circle", "diamond" or "star" | Optional | "duration-bar" |
-| symbol | An arbitrary symbol (printable character / emoji) that will be used to represent the event's marker. <br/>!!! Note this attribute is mutually exclusive with "shape". | Character (whole Unicode range supported) | Optional | |
-| visible | Allows to hide or unhide the event. | true", "1", "false", "0" | Optional | "true" |
+A unique identifier for the event.
+
++ **format**: Almost anything as long as it's valid HTML-wise , and unique within the parent timeline.
++ **required**
+
+### begin
+
+The begining time of the event.
+
++ **format**: Millisecond timestamp
++ **required**
+
+### end
+
+The ending time of the event.
+
+If none is provided, the event will be considered an "instant" event, meaning it's ending time is the same as it's begining time
+
+**Important**: only events with "duration-bar" shape (default) can represent the event's length over the timeline
+
++ **format**: Millisecond timestamp
++ **optional**
++ **default**: Same as *begin*
+
+### title
+
+A string that will be displayed as a "tootltip" (or "hint") to the user when hovering the event's marker.
+
++ **format**: String
++ **optional**
+
+### href
+
+If provided, the event's marker will also be a hyperlink pointing to the URL provided by this attribute.
+
++ **format**: URL
++ **optional**
+
+### color
+
+A color for the event's marker, aswell as detail-popup's header and border.
+
++ **format**: Any valid HTML/CSS color.
++ **optional**
++ **default**: #888 (grey)
+
+### shape
+
+A pre-defined shape for the event's marker.
+
+Only events with a "duration-bar" shape (default) can represent the event's length over the timeline.
+
+**Important**: note this attribute is mutually exclusive with "symbol".
+
++ **format**: "duration-bar", "circle", "diamond" or "star"
++ **optional**
++ **default**: "duration-bar"
+
+### symbol
+
+An arbitrary symbol (printable character / emoji) that will be used to represent the event's marker. 
+
+**Important**: note this attribute is mutually exclusive with "shape". 
+
++ **format**: Character (whole Unicode range supported)
++ **optional**
+
+### visible
+
+Allows to hide or unhide the event.
+
++ **format**: "true", "1", "false", "0"
++ **optional**
++ **default**: "true"
 
 ## Emitted events
-| Type | Description | Bubbles | Cancelable | Detail |
-| ----:|:----------- |:------- |:---------- |:------ |
-| select-timeline-event | Emitted when the users clicks an event, before it's details popup gets opened.<br> A third-party script can listen to this event type to perform operations before the popup gets opened, or can even cancel the event in order to prevent the popup from opening. | true | true | |
+
+### select-timeline-event
+
+Emitted when the users clicks an event, before it's details popup gets opened.
+
+A third-party script can listen to this event type to perform operations before the popup gets opened, or can even cancel the event in order to prevent the popup from opening.
+
++ **bubbles**: true
++ **cancelable**: true
 
 ## Child nodes
 All the children nested inside the element will be shown as the content of the details popup, when opened. The widget will not alter the styling of this content, which is let to the responsibility of the site's developpers.

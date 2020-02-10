@@ -27,26 +27,66 @@ In order to create a timeline widget that fetches its events from a KTBS trace, 
 
 This element is decribed in details below.
 
-
 # \<ktbs4la2-trace-timeline\>
 
 ## Attributes
-| Name | Description | Format | Required | Default |
-| ----:|:----------- |:------ |:-------- |:------- |
-| uri | The uri of the KTBS trace to fetch and display. | URL | Required | |
-| allow-fullscreen | Whether or not the widget should display a "fullscreen" button and allow switching to fullscreen mode.<br><br> **Important**: this attribute value will not be automatically updated to expose the widgets' state (for this purpose, use instead the "set-stylesheet" events described further below). | "true", "1", "false" or "0" | Optional | "true" |
-| stylesheet | Sets which stylesheet should be applied to obsels at startup. | "default" or a valid stylesheet ID from the trace's Model | Optional | "default" |
-| allow-change-stylesheet | Whether or not the user should be able to change the stylesheet currently applied to the obsels. | "true", "1", "false" or "0" | Optional | "true" |
-| show-stylesheet-legend | Whether or not the user should see a legend for the current stylesheet. | "true", "1", "false" or "0" | Optional | "true" |
+
+### uri
+
+The uri of the KTBS trace to fetch and display.
+
++ **format**: URL
++ **required**
+
+### allow-fullscreen
+
+Whether or not the widget should display a "fullscreen" button and allow switching to fullscreen mode.
+
+**Important**: this attribute value will not be automatically updated to expose the widgets' state (for this purpose, use instead the "set-stylesheet" events described further below).
+
++ **format**: "true", "1", "false" or "0"
++ **optional**
++ **default**: "true"
+
+### stylesheet
+
+Sets which stylesheet should be applied to obsels at startup.
+
++ **format**: "default" or a valid stylesheet ID from the trace's Model.
++ **optional**
++ **default**: "default"
+
+### allow-change-stylesheet
+
+Whether or not the user should be able to change the stylesheet currently applied to the obsels.
+
++ **format**: "true", "1", "false" or "0"
++ **optional**
++ **default**: "true"
+
+### show-stylesheet-legend
+
+Whether or not the user should see a legend for the current stylesheet. 
+
++ **format**: "true", "1", "false" or "0"
++ **optional**
++ **default**: "true"
 
 ## Emitted events
-| Type | Description | Bubbles | Cancelable | Detail |
-| ----:|:----------- |:------- |:---------- |:------ |
-| set-stylesheet | Emitted when the users changes the current stylesheet. | true | false | **stylesheet_id**: ID of the newly selected stylesheet |
+
+### set-stylesheet
+
+Emitted when the users changes the current stylesheet.
+
++ **bubbles**: true
++ **cancelable**: false
+
+Details:
+
+**stylesheet_id**: ID of the newly selected stylesheet
 
 ## Child nodes
 Any nested content will be discarded.
-
 
 # EXAMPLE
 See the [sample file](./sample.html) provided alongside this one.

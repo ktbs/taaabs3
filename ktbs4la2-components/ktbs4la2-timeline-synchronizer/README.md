@@ -39,10 +39,22 @@ This element is decribed in details below.
 # \<ktbs4la2-timeline-synchronizer\>
 
 ## Attributes
-| Name | Description | Format | Required | Default |
-| ----:|:----------- |:------ |:-------- |:------- |
-| sync-view | Whether or not we should synchronize the child timelines views. | "true", "1", "false" or "0" | Optional | "true" |
-| sync-cursor | Whether or not we should synchronize the child timelines cursors. | "true", "1", "false" or "0" | Optional | "true" |
+
+### sync-view
+
+Whether or not we should synchronize the child timelines views.
+
++ **format**: "true", "1", "false" or "0"
++ **optional**
++ **default**: "true"
+
+### sync-cursor
+
+Whether or not we should synchronize the child timelines cursors.
+
++ **format**: "true", "1", "false" or "0"
++ **optional**
++ **default**: "true"
 
 ## Child nodes
 Any HTML content can be nested inside the element.  
