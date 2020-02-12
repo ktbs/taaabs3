@@ -29,24 +29,28 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
 
 		if(attributeName == "label") {
-			this._componentReady.then(function() {
+			this._componentReady.then(() => {
 				if(newValue)
 					this._titleTag.innerText = newValue;
 				else
 					this._titleTag.innerText = this._ktbsResource.id;
 			
-			}.bind(this));
+			});
 		}
 		else if(attributeName == "uri") {
-			this._componentReady.then(function() {
+			this._componentReady.then(() => {
 				this._titleTag.href = newValue;
-			}.bind(this));
+				this._titleTag.title = this._getTitleHint();
+
+				if(!this.hasAttribute("label"))
+					this._titleTag.innerText = this._ktbsResource.id;
+			});
 		}
 		else if((attributeName == "preload-children") && (newValue == "true")) {
-			this._ktbsResourceLoaded.then(function() {
+			this._ktbsResourceLoaded.then(() => {
 				if(this._can_have_children())
 					this._instanciateChildren();
-			}.bind(this));
+			});
 		}
 	}
 
@@ -65,17 +69,6 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	connectedCallback() {
-		super.connectedCallback();
-
-		Promise.all([this._resourceAttributesSet, this._componentReady]).then(() => {
-			if(!this.getAttribute("label"))
-				this._titleTag.innerText = this._ktbsResource.id;
-
-			this._titleTag.title = this._getTitleHint();
-		});
-	}
-
 	_updateStringsTranslation() {
 		if(this._containerDiv.classList.contains("folded"))
 			this._unfoldButton.setAttribute("title", this._translateString("Unfold child list"));
@@ -96,7 +89,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 
 			let label = this._ktbsResource.label;
 			
-			if(label && !this.getAttribute("label"))
+			if(label && !this.hasAttribute("label"))
 				this._titleTag.innerText = label;
 
 			this._titleTag.title = this._getTitleHint();
@@ -110,7 +103,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 			if(this._containerDiv.classList.contains("access-denied"))
 				this._containerDiv.classList.remove("access-denied");
 
-			if((this._ktbsResource.authentified) && (!this._containerDiv.classList.contains("access-granted")))
+			if((this._ktbsResource.authentified) && (this._ktbsResource.hasOwnCredendtials) && (!this._containerDiv.classList.contains("access-granted")))
 				this._containerDiv.classList.add("access-granted");
 		});
 	}

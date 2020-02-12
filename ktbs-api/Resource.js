@@ -395,6 +395,22 @@ export class Resource {
 	}
 
 	/**
+	 * Gets if the resource has credentials of its own (as opposed to "inherited from it's parents") in localStorage or sessionStorage
+	 * @return boolean
+	 */
+	get hasOwnCredendtials() {
+		let credentials = null;
+
+		if(window.sessionStorage)
+			credentials = this._getOwnCredentialsFromStorage(window.sessionStorage);
+
+		if((credentials == null) && (window.localStorage))
+			credentials = this._getOwnCredentialsFromStorage(window.localStorage);
+
+		return (credentials != null);
+	}
+
+	/**
 	 * Removes credentials information for the resource, stops using parent's credentials and resets the resource.
 	 */
 	disconnect() {

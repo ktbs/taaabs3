@@ -1,5 +1,9 @@
 <article id="container">
 	<header>
+		<ul id="breadcrumbs">
+			<slot name="breadcrumbs"></slot>
+		</ul>
+
 		<div id="resource-type-description">
 			<div id="resource-type-icon"></div>
 			<div id="resource-type-label"></div>
@@ -46,10 +50,6 @@
 		<ktbs4la2-main-subsection id="child-bases" title="{translate: 'Bases'} :" column-width="250px" foldable="true" expanded="true">
 			<slot name="bases"></slot>
 		</ktbs4la2-main-subsection>
-		
-        <!--<ktbs4la2-main-subsection id="child-builtin-methods" title="{translate: 'Builtin methods'} :" column-width="250px" foldable="true" expanded="true">
-			<slot name="builtin-methods"></slot>
-		</ktbs4la2-main-subsection>-->
 
 		<ktbs4la2-main-subsection id="child-models" title="{translate: 'Models'} :" column-width="250px" foldable="true" expanded="true">
 			<slot name="models"></slot>

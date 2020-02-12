@@ -1,24 +1,39 @@
 #container > header {
-	padding-left: 30px;
-	padding-right: 30px;
-	padding-bottom: 30px;
 	position: sticky;
 	top: 0px;
 	background-color: white;
-	padding-top: var(--main-padding, 20px);
-	padding-bottom: var(--main-padding, 20px);
+	padding-left: var(--main-padding, 10px);
+	padding-right: var(--main-padding, 10px);
+	padding-top: var(--main-padding, 10px);
+	padding-bottom: var(--main-padding, 10px);
 	border-bottom: 1px solid #aaa;
 	display: block;
 	z-index: 6;
 	box-shadow: 0 10px 8px -8px gray;
-	margin-bottom: 10px;
+}
+
+#breadcrumbs {
+	margin-top: 0;
+	margin-bottom: -20px;
+	padding: 0 0;
+	position: relative;
+    left: -12px;
+	top: -10px;
+	height: 50px;
+	transform: scale(0.7);
+	transform-origin: top left;
+}
+
+:host([resource-type = Ktbs]) #breadcrumbs {
+	display: none;
 }
 
 #resource-type-description {
 	display: table-cell;
 	text-align: center;
-	width: 60px;
+	width: 40px;
 	vertical-align: top;
+	padding-left: 10px;
 }
 
 #resource-type-label {
@@ -35,7 +50,7 @@
 #title {
 	margin-top: 0;
 	margin-bottom: 3px;
-	font-size: 22pt;
+	font-size: 16pt;
 }
 
 #resource-link {
@@ -59,13 +74,15 @@
 	background: url('{my-component-folder}/online.svg') no-repeat;
 }
 
-#container.access-granted #resource-status {
+#container.access-granted #resource-status,
+#container.access-inherited #resource-status {
 	background: url('{my-component-folder}/lock_open.svg') no-repeat;
 	background-position: 5px 2px;
 }
 
 #container.online #resource-status-label,
-#container.access-granted #resource-status-label {
+#container.access-granted #resource-status-label,
+#container.access-inherited #resource-status-label {
 	color: #060;
 }
 
@@ -121,11 +138,11 @@
 	display: inline-block;
 }
 
-:host(:not([resource-type = Ktbs])) #resource-about, #container:not(.online):not(.access-granted) #resource-about {
+:host(:not([resource-type = Ktbs])) #resource-about, #container:not(.online):not(.access-granted):not(.access-inherited) #resource-about {
     display: none;
 }
 
-#container:not(.online):not(.access-granted) #resource-contents {
+#container:not(.online):not(.access-granted):not(.access-inherited) #resource-contents {
 	display: none;
 }
 
@@ -138,8 +155,8 @@
 }
 
 #resource-type-icon {
-	width: 60px;
-    height: 60px;
+	width: 40px;
+    height: 40px;
     background-repeat: no-repeat;
     background-size: cover;
 }
@@ -243,6 +260,11 @@
 	vertical-align: middle;
 	position: relative;
 	bottom: -2px;
+}
+
+#resource-contents {
+	padding-left: var(--main-padding, 10px);
+	padding-right: var(--main-padding, 10px);
 }
 
 #child-bases,

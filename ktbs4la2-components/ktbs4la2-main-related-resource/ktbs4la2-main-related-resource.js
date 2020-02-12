@@ -47,9 +47,9 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	 */
 	onktbsResourceLoaded() {
 		this._componentReady.then(() => {
-			let label = this._ktbsResource.label;
+			let label = this.hasAttribute("label")?this.getAttribute("label"):this._ktbsResource.label;
 
-			if((this._ktbsResource.authentified) && (!this._containerDiv.classList.contains("access-granted")))
+			if((this._ktbsResource.authentified) && (this._ktbsResource.hasOwnCredendtials) && (!this._containerDiv.classList.contains("access-granted")))
 				this._containerDiv.classList.add("access-granted");
 
 			if(label)

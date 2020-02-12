@@ -172,11 +172,6 @@
 	overflow-y: auto;
 }
 
-#main-content {
-	padding-left: var(--main-padding, 20px);
-	padding-right: var(--main-padding, 20px);
-}
-
 #overlay {
 	position: fixed;
 	left: 0;

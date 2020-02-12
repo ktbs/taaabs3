@@ -1,6 +1,7 @@
 import {Resource} from "./Resource.js";
 import {ObselType} from "./ObselType.js";
 import {AttributeType} from "./AttributeType.js";
+import {ResourceProxy} from "./ResourceProxy.js";
 
 /**
  * Class for the "Model" resource type
@@ -89,6 +90,39 @@ export class Model extends Resource {
 				return modelOwnGraph["label"];
 			else
 				return modelOwnGraph["http://www.w3.org/2000/01/rdf-schema#label"];
+		}
+		else
+			return undefined;
+	}
+
+	/**
+	 * Gets the "comment" of the resource
+	 * @return string
+	 */
+	get comment() {
+		let modelOwnGraph = this._get_model_own_graph();
+
+		if(modelOwnGraph) {
+			return modelOwnGraph["http://www.w3.org/2000/01/rdf-schema#comment"];
+		}
+		else
+			return undefined;
+	}
+
+	/**
+	 * Gets the parent resource of this resource.
+	 * @return Resource the resource's parent resource if any, or undefined if the resource's parent is unknown (i.e. the resource hasn't been read or recorded yet), or null if the resource doesn't have any parent (i.e. Ktbs Root).
+	 */
+	get parent() {
+		let modelOwnGraph = this._get_model_own_graph();
+
+		if(modelOwnGraph) {
+			if(modelOwnGraph["inBase"])
+				return ResourceProxy.get_resource("Base", new URL(modelOwnGraph["inBase"], this.uri));
+			else if(modelOwnGraph["inRoot"])
+				return ResourceProxy.get_resource("Ktbs", new URL(modelOwnGraph["inRoot"], this.uri));
+			else
+				return undefined;
 		}
 		else
 			return undefined;

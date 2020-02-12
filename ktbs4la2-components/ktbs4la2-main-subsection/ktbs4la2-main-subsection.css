@@ -1,5 +1,5 @@
 #container {
-	margin-bottom: 20px;
+	margin-bottom: 10px;
 }
 
 #separator {
@@ -13,11 +13,6 @@
 
 :host([separator = "false"]) #separator {
 	visibility: hidden;
-}
-
-#text {
-	padding-left: 30px;
-	padding-right: 30px;
 }
 
 #chevron {
@@ -39,11 +34,16 @@
 #title {
 	margin-top: 0;
 	margin-bottom: 0;
-	font-size: 18pt;
+	font-size: 14pt;
 	font-style: italic;
 }
 
-:host([!title]) #title, :host([title = ""]) #title {
+#content {
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+:host(:not([title])) #title, :host([title = ""]) #title {
 	display: none;
 }
 

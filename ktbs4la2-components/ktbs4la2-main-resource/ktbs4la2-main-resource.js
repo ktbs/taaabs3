@@ -33,8 +33,15 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 	 * 
 	 */
 	onComponentReady() {
-		this._containerDiv = this.shadowRoot.querySelector("#container");
-		this.titleTag = this.shadowRoot.querySelector("#title");
+        this._containerDiv = this.shadowRoot.querySelector("#container");
+        
+        let breadcrumbsStylesheetURL = import.meta.url.substr(0, import.meta.url.lastIndexOf('/')) + '/breadcrumbs.css';
+		let breadcrumbsStyleLink = document.createElement("link");
+		breadcrumbsStyleLink.setAttribute("rel", "stylesheet");
+		breadcrumbsStyleLink.setAttribute("href", breadcrumbsStylesheetURL);
+		this.appendChild(breadcrumbsStyleLink);
+
+        this.titleTag = this.shadowRoot.querySelector("#title");
 		this.linkTag = this.shadowRoot.querySelector("#resource-link");		
 		this.resourceTypeLabel = this.shadowRoot.querySelector("#resource-type-label");
 		this.resourceStatusTag = this.shadowRoot.querySelector("#resource-status");
@@ -169,12 +176,24 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
 				if(label)
 					this.titleTag.innerText = label;
-			}
+            }
+            
+            let parentResource = this._ktbsResource.parent;
+
+            if(parentResource)
+                this._addBreadcrumb(parentResource);
 
             if(this._ktbsResource.authentified) {
-                this._resourceStatusString = "Access granted";
+                if(this._ktbsResource.hasOwnCredendtials) {
+                    this._containerDiv.className = "access-granted";
+                    this._resourceStatusString = "Access granted";
+                }
+                else {
+                    this._containerDiv.className = "access-inherited";
+                    this._resourceStatusString = "Access inherited";
+                }
+
                 this.resourceStatusLabel.innerText = this._translateString(this._resourceStatusString);
-                this._containerDiv.className = "access-granted";
             }
             else {
                 this._resourceStatusString = "Online";
@@ -196,8 +215,6 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 }
                 else
                     this.commentTag.style.display = "none";
-
-                
                 
                 // remove previously instanciated builtin-method child elements
                 let childBuiltinMethodElements = this._rootBuiltinMethodList.querySelectorAll("li");
@@ -439,6 +456,45 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             }
 		});
 	}
+
+    /**
+     * 
+     * @param Resource resource 
+     */
+    _addBreadcrumb(resource) {
+        resource.get(this._abortController.signal).then(() => {
+            let breadcrumbItemElement = document.createElement("ktbs4la2-main-related-resource");
+            breadcrumbItemElement.setAttribute("resource-type", resource.constructor.name);
+            breadcrumbItemElement.setAttribute("uri", resource.uri);
+            breadcrumbItemElement.setAttribute("slot", "breadcrumbs");
+            
+            let label = resource.label;
+
+            if(label)
+                breadcrumbItemElement.setAttribute("label", label);
+            else if(resource.constructor.name == "Ktbs") {
+                let rootLabel = null;
+                this.ktbsRoots = JSON.parse(window.localStorage.getItem("ktbs-roots"));
+
+				for(let i = 0; !rootLabel && (i < this.ktbsRoots.length); i++) {
+                    let aRoot = this.ktbsRoots[i];
+                    
+                    if(aRoot.uri == resource.uri)
+                        rootLabel = aRoot.label;
+                }
+                
+                if(rootLabel)
+                    breadcrumbItemElement.setAttribute("label", rootLabel);
+            }
+
+            this.insertBefore(breadcrumbItemElement, this.firstChild);
+
+            let resourceParent = resource.parent;
+
+            if(resourceParent)    
+                this._addBreadcrumb(resourceParent);
+        });
+    }
 
 	/**
 	 * 

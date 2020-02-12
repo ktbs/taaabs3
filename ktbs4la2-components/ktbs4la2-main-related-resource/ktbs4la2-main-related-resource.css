@@ -1,30 +1,33 @@
 #container {
 	display: block;
+	break-inside: avoid;
 }
 
 #link {
-	display: inline-block;
-	width: 100%;
 	text-decoration-line: none;
 	padding-left: 32px;
 	padding-right: 8px;
 	padding-top: 8px;
 	padding-bottom: 8px;
 	background-repeat: no-repeat;
-	background-position: 5px 8px;
+	background-position: 5px 50%;
 	color: black;
-	font-size: 16pt;
 	margin-left: 10px;
 	margin-right: 10px;
 	margin-top: 5px;
 	margin-bottom: 5px;
 	border-radius: 10px;
-	max-width: 90%;
+	display: block;
 	overflow-wrap: break-word;
+	border: 1px solid #E8E8E8;
+	font-size: 14pt;
 }
 
 #link:hover {
-	background-color: #E8E8E8;
+	background-color: var(--color-main, cornflowerblue);
+	border-color: var(--color-main, cornflowerblue);
+	color: white;
+	box-shadow: 0px 0px 4px 2px #888;
 }
 
 :host([resource-type = "Ktbs"]) #link {
@@ -60,16 +63,16 @@
 }
 
 #container.error #link {
-	background-position: 12px 15px, 5px 8px;
+	background-position: 12px calc(50% + 7px), 5px 50%;
 }
 
 #container.authentication-required #link,
 #container.access-denied #link {
-	background-position: 22px 25px, 5px 8px;
+	background-position: 22px calc(50% + 12px), 5px 50%;
 }
 
 #container.access-granted #link {
-	background-position: 20px 28px, 5px 8px;
+	background-position: 20px calc(50% + 12px), 5px 50%;
 }
 
 :host([resource-type = "Ktbs"]) #container.error #link {
