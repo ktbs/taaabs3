@@ -7,8 +7,8 @@ ktbs4la2-main-related-resource[slot = "breadcrumbs"]::after {
     content: "›";
     display: inline-block;
     position: absolute;
-    right: -6px;
-    top: -4px;
+    right: -7px;
+    top: -8px;
     color: #DDD;
     font-stretch: 10%;
     font-size: 30pt;

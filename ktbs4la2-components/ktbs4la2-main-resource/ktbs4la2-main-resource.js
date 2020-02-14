@@ -41,14 +41,18 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 		breadcrumbsStyleLink.setAttribute("href", breadcrumbsStylesheetURL);
 		this.appendChild(breadcrumbsStyleLink);
 
+        this._header = this.shadowRoot.querySelector("#header");
         this.titleTag = this.shadowRoot.querySelector("#title");
 		this.linkTag = this.shadowRoot.querySelector("#resource-link");		
 		this.resourceTypeLabel = this.shadowRoot.querySelector("#resource-type-label");
 		this.resourceStatusTag = this.shadowRoot.querySelector("#resource-status");
         this.resourceStatusLabel = this.shadowRoot.querySelector("#resource-status-label");
+        this._resourceDescription = this.shadowRoot.querySelector("#resource-description");
         this.errorMessageDiv = this.shadowRoot.querySelector("#error-message");
         this.versionTag = this.shadowRoot.querySelector("#root-version");
-		this.commentTag = this.shadowRoot.querySelector("#root-comment");
+        this.commentTag = this.shadowRoot.querySelector("#root-comment");
+        this._foldHeaderButton = this.shadowRoot.querySelector("#fold-header-button");
+        this._foldHeaderButton.addEventListener("click", this._onClickFoldHeaderButton.bind(this))
         this._rootBuiltinMethodList = this.shadowRoot.querySelector("#root-builin-methods");
         this.editButton = this.shadowRoot.querySelector("#tool-edit");
 		this.editButton.addEventListener("click", this.onClickEditButton.bind(this));
@@ -105,7 +109,26 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     obselsTableElement.setAttribute("slot", "obsels-table");
                     this.appendChild(obselsTableElement);
                 }
-			});
+            });
+            
+        if(attributeName == "fold-header") {
+            let folded = (newValue == "true") || (newValue == "1");
+
+            this._componentReady.then(() => {
+                if(folded) {
+                    if(!this._header.classList.contains("condensed"))
+                        this._header.classList.add("condensed");
+
+                        this._foldHeaderButton.setAttribute("title", this._translateString("Expand header"));
+                }
+                else {
+                    if(this._header.classList.contains("condensed"))
+                        this._header.classList.remove("condensed");
+
+                        this._foldHeaderButton.setAttribute("title", this._translateString("Condense header"));
+                }
+            });
+        }
 	}
 
     /**
@@ -467,6 +490,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             breadcrumbItemElement.setAttribute("resource-type", resource.constructor.name);
             breadcrumbItemElement.setAttribute("uri", resource.uri);
             breadcrumbItemElement.setAttribute("slot", "breadcrumbs");
+            breadcrumbItemElement.setAttribute("scale", "0.7");
             
             let label = resource.label;
 
@@ -652,6 +676,39 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             this._aboutSection.classList.add("folded");
             this._toggleAboutVisibilityButton.setAttribute("title", this._translateString("Show additional informations"));
         }
+    }
+
+    /**
+     * 
+     */
+    _onClickFoldHeaderButton(event) {
+        if(this._header.classList.contains("condensed")) {
+            this._foldHeaderButton.setAttribute("title", this._translateString("Condense header"));
+            this._header.classList.remove("condensed");
+
+            this.dispatchEvent(new CustomEvent("unfold-header" , {
+                bubbles: true,
+                cancelable: false
+            }));
+        }
+        else {
+            this._header.classList.add("condensed");
+            this._foldHeaderButton.setAttribute("title", this._translateString("Expand header"));
+
+            this.dispatchEvent(new CustomEvent("fold-header" , {
+                bubbles: true,
+                cancelable: false
+            }));
+        }
+    }
+
+    /**
+     * 
+     */
+    static get observedAttributes() {
+        let attr = super.observedAttributes;
+        attr.push("fold-header");
+        return attr;
     }
 }
 

@@ -4,23 +4,25 @@
 }
 
 #link {
+	--ratio: 1;
 	text-decoration-line: none;
-	padding-left: 32px;
-	padding-right: 8px;
-	padding-top: 8px;
-	padding-bottom: 8px;
+	padding-left: calc(var(--ratio) * 32px);
+	padding-right: calc(var(--ratio) * 8px);
+	padding-top: calc(var(--ratio) * 8px);
+	padding-bottom: calc(var(--ratio) * 8px);
 	background-repeat: no-repeat;
-	background-position: 5px 50%;
+	background-position: calc(var(--ratio) * 5px) 50%;
 	color: black;
-	margin-left: 10px;
-	margin-right: 10px;
-	margin-top: 5px;
-	margin-bottom: 5px;
-	border-radius: 10px;
+	margin-left: calc(var(--ratio) * 10px);
+	margin-right: calc(var(--ratio) * 10px);
+	margin-top: calc(var(--ratio) * 5px);
+	margin-bottom: calc(var(--ratio) * 5px);
+	border-radius: calc(var(--ratio) * 10px);
 	display: block;
 	overflow-wrap: break-word;
 	border: 1px solid #E8E8E8;
-	font-size: 14pt;
+	font-size: calc(var(--ratio) * 14pt);
+	background-size: calc(var(--ratio) * 24px);
 }
 
 #link:hover {
@@ -63,110 +65,134 @@
 }
 
 #container.error #link {
-	background-position: 12px calc(50% + 7px), 5px 50%;
+	background-position: calc(var(--ratio) * 12px) calc(50% + (var(--ratio) * 7px)), calc(var(--ratio) * 5px) 50%;
 }
 
 #container.authentication-required #link,
 #container.access-denied #link {
-	background-position: 22px calc(50% + 12px), 5px 50%;
+	background-position: calc(var(--ratio) * 22px) calc(50% + (var(--ratio) * 12px)), calc(var(--ratio) * 5px) 50%;
 }
 
 #container.access-granted #link {
-	background-position: 20px calc(50% + 12px), 5px 50%;
+	background-position: calc(var(--ratio) * 20px) calc(50% + (var(--ratio) * 12px)), calc(var(--ratio) * 5px) 50%;
 }
 
 :host([resource-type = "Ktbs"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Ktbs.svg');
+	background-size: calc(var(--ratio) * 21px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Ktbs"]) #container.authentication-required #link {
 	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Ktbs.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Ktbs"]) #container.access-denied #link {
 	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Ktbs.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Ktbs"]) #container.access-granted #link {
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Ktbs.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Base"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Base.svg');
+	background-size: calc(var(--ratio) * 21px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Base"]) #container.authentication-required #link {
 	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Base.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Base"]) #container.access-denied #link {
 	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Base.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Base"]) #container.access-granted #link {
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Base.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Method"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Method.svg');
+	background-size: calc(var(--ratio) * 21px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Method"]) #container.authentication-required #link {
 	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Method.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Method"]) #container.access-denied #link {
 	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Method.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Method"]) #container.access-granted #link {
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Method.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Model"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Model.svg');
+	background-size: calc(var(--ratio) * 21px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Model"]) #container.authentication-required #link {
 	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/Model.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Model"]) #container.access-denied #link {
 	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/Model.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "Model"]) #container.access-granted #link {
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Model.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "StoredTrace"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/StoredTrace.svg');
+	background-size: calc(var(--ratio) * 21px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "StoredTrace"]) #container.authentication-required #link {
 	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/StoredTrace.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "StoredTrace"]) #container.access-denied #link {
 	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/StoredTrace.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "StoredTrace"]) #container.access-granted #link {
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/StoredTrace.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "ComputedTrace"]) #container.error #link {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/ComputedTrace.svg');
+	background-size: calc(var(--ratio) * 21px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "ComputedTrace"]) #container.authentication-required #link {
 	background-image: url('{my-component-folder}/lock_closed_orange.svg'), url('{my-component-folder}/ComputedTrace.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "ComputedTrace"]) #container.access-denied #link {
 	background-image: url('{my-component-folder}/lock_crossed.svg'), url('{my-component-folder}/ComputedTrace.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }
 
 :host([resource-type = "ComputedTrace"]) #container.access-granted #link {
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/ComputedTrace.svg');
+	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
 }

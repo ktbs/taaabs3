@@ -48,6 +48,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.addEventListener("error", this.onErrorEvent.bind(this));
 		this.addEventListener("request-edit-ktbs-resource", this.onRequestEditKtbsResource.bind(this));
 		this.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
+		this.addEventListener("fold-header", this._onMainResourceFoldHeader.bind(this));
+		this.addEventListener("unfold-header", this._onMainResourceUnfoldHeader.bind(this));
 		this._navNodesObserver = new MutationObserver(this.onNavNodesMutation.bind(this));
 		this._navNodesObserver.observe(this, { childList: true, subtree: true });
 		this.loadStoredRoots();
@@ -60,6 +62,42 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			let aLangButton = this._langButtons[i];
 			aLangButton.addEventListener("click", this._onClickLangButton.bind(this));
 		}
+	}
+
+	/**
+	 * 
+	 */
+	get mainHeaderFolded() {
+		if(this._mainHeaderFolded === undefined)
+			this._mainHeaderFolded = (window.localStorage.getItem("main-header-folded") == "true");
+
+		return this._mainHeaderFolded;
+	}
+
+	/**
+	 * 
+	 */
+	set mainHeaderFolded(newValue) {
+		if(typeof newValue === "boolean") {
+			this._mainHeaderFolded = newValue;
+			window.localStorage.setItem("main-header-folded", newValue);
+		}
+		else
+			throw new TypeError("Value for mainHeaderFolded must be a Boolean");
+	}
+
+	/**
+	 * 
+	 */
+	_onMainResourceFoldHeader(event) {
+		this.mainHeaderFolded = true;
+	}
+
+	/**
+	 * 
+	 */
+	_onMainResourceUnfoldHeader(event) {
+		this.mainHeaderFolded = false;
 	}
 
 	/**
@@ -412,6 +450,9 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 				if(ktbs_label != null)
 					mainContentChildrenTag.setAttribute("label", ktbs_label);
 
+				if(this.mainHeaderFolded)
+					mainContentChildrenTag.setAttribute("fold-header", "true");
+
 				break;
 			case "dashboard":
 				// @TODO
@@ -452,6 +493,10 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 				this._highlightNavParent(resourceParent);
 			}
+		})
+		.catch((error) => {
+			if(this.debug)
+				console.error(error);
 		});
 	}
 

@@ -134,6 +134,33 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 
 		return hint;
 	}
+
+	/**
+	 * 
+	 */
+	static get observedAttributes() {
+		let attr = super.observedAttributes;
+		attr.push("scale");
+		return attr;
+	}
+
+	/**
+	 * 
+	 */
+	attributeChangedCallback(attributeName, oldValue, newValue) {
+		super.attributeChangedCallback(attributeName, oldValue, newValue);
+		
+		if(attributeName == "scale") {
+			let ratio = parseFloat(newValue, 10);
+
+			if(isNaN(ratio))
+				ratio = 1;
+
+			this._componentReady.then(() => {
+				this.linkTag.style.setProperty('--ratio', ratio);
+			});
+		}
+	}
 }
 
 customElements.define('ktbs4la2-main-related-resource', KTBS4LA2MainRelatedResource);

@@ -30,6 +30,8 @@
 	"Remove from my kTBS roots": "Retirer de mes racines kTBS",
 	"Version": "Version",
     "Parent method": "Méthode-mère",
+    "Condense header": "Réduire l'entête",
+    "Expand header": "Etendre l'entête",
     "User name": "Nom d'utilisateur",
     "Password": "Mot de passe",
     "Authenticate": "Connexion",

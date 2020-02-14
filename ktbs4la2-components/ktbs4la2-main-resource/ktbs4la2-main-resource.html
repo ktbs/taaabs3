@@ -1,23 +1,26 @@
 <article id="container">
-	<header>
+	<header id="header">
 		<ul id="breadcrumbs">
 			<slot name="breadcrumbs"></slot>
 		</ul>
 
-		<div id="resource-type-description">
-			<div id="resource-type-icon"></div>
-			<div id="resource-type-label"></div>
-		</div>
-
-		<div id="resource-description">
-			<h1 id="title"></h1>
-			<a id="resource-link" target="_blank" title="{translate: 'See the resource on the REST console (opens in a new tab)'}"></a>
-			<div id="resource-status">
-				<div id="resource-status-label">{translate: 'Pending...'}</div>
-				<a id="disconnect-button" title="{translate: 'Disconnect'}"></a>
-				<div id="error-message"></div>
+		<div id="resource-description-container">
+			<div id="resource-type-description">
+				<div id="resource-type-icon"></div>
+				<div id="resource-type-label"></div>
 			</div>
-        </div>
+
+			<div id="resource-description">
+				<h1 id="title"></h1>
+				<a id="resource-link" target="_blank" title="{translate: 'See the resource on the REST console (opens in a new tab)'}"></a>
+				
+				<div id="resource-status">
+					<div id="resource-status-label">{translate: 'Pending...'}</div>
+					<a id="disconnect-button" title="{translate: 'Disconnect'}"></a>
+					<div id="error-message"></div>
+				</div>
+			</div>
+		</div>
         
         <div id="resource-tools">
             <div id="tool-edit" title="{translate: 'Edit this kTBS root uri and/or label'}"></div>
@@ -40,6 +43,8 @@
 				</ul>
 			</div>
 		</div>
+
+		<div id="fold-header-button" title="{translate: 'Condense header'}"></div>
 	</header>
 
 	<section id="resource-contents">
