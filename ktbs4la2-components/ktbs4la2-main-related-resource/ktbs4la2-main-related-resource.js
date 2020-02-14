@@ -30,7 +30,12 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 
 		this._componentReady.then(() => {
 			this.linkTag.href = this.getAttribute("uri");
-			this.linkTag.innerText = this._ktbsResource.id;
+
+			if(this._ktbsResource.label)
+				this.linkTag.innerText = this._ktbsResource.label;
+			else
+				this.linkTag.innerText = this._ktbsResource.id;
+
 			this.linkTag.title = this._getTitleHint();
 		});
 	}

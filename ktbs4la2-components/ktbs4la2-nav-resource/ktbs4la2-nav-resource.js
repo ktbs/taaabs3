@@ -335,6 +335,10 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 							let baseTag = document.createElement("ktbs4la2-nav-resource");
 							baseTag.setAttribute("resource-type", "Base");
 							baseTag.setAttribute("uri", base.uri);
+
+							if(base.label)
+								baseTag.setAttribute("label", base.label);
+
 							this.appendChild(baseTag);
 						}
 					}
@@ -348,6 +352,10 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 							let modelTag = document.createElement("ktbs4la2-nav-resource");
 							modelTag.setAttribute("uri", model.uri);
 							modelTag.setAttribute("resource-type", "Model");
+
+							if(model.label)
+								modelTag.setAttribute("label", model.label);
+
 							this.appendChild(modelTag);
 						}
 
@@ -359,6 +367,10 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 							let storedTraceTag = document.createElement("ktbs4la2-nav-resource");
 							storedTraceTag.setAttribute("uri", storedTrace.uri);
 							storedTraceTag.setAttribute("resource-type", "StoredTrace");
+
+							if(storedTrace.label)
+								storedTraceTag.setAttribute("label", storedTrace.label);
+
 							this.appendChild(storedTraceTag);
 						}
 
@@ -370,6 +382,10 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 							let methodTag = document.createElement("ktbs4la2-nav-resource");
 							methodTag.setAttribute("resource-type", "Method");
 							methodTag.setAttribute("uri", method.uri);
+
+							if(method.label)
+								methodTag.setAttribute("label", method.label);
+
 							this.appendChild(methodTag);
 						}
 
@@ -381,6 +397,10 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 							let computedTraceTag = document.createElement("ktbs4la2-nav-resource");
 							computedTraceTag.setAttribute("uri", computedTrace.uri);
 							computedTraceTag.setAttribute("resource-type", "ComputedTrace");
+
+							if(computedTrace.label)
+								computedTraceTag.setAttribute("label", computedTrace.label);
+
 							this.appendChild(computedTraceTag);
 						}
 					}

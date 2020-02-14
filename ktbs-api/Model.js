@@ -96,6 +96,28 @@ export class Model extends Resource {
 	}
 
 	/**
+	 * Set a user-friendly label.
+	 * @param string label The new label for the Model
+	 */
+	set label(label) {
+		let modelOwnGraphRank = this._get_model_own_graph_rank();
+
+		if(modelOwnGraphRank == null) {
+			if(!this._JSONData["@graph"])
+				this._JSONData["@graph"] = new Array();
+
+			this._JSONData["@graph"][0] = {
+				"@type": "TraceModel",
+				"@id": this.uri
+			};
+
+			modelOwnGraphRank = 0;
+		}
+
+		this._JSONData["@graph"][modelOwnGraphRank]["label"] = label;
+	}
+
+	/**
 	 * Gets the "comment" of the resource
 	 * @return string
 	 */

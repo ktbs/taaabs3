@@ -277,6 +277,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     let baseTag = document.createElement("ktbs4la2-main-related-resource");
                     baseTag.setAttribute("resource-type", "Base");
                     baseTag.setAttribute("uri", base.uri);
+
+                    if(base.label)
+                        baseTag.setAttribute("label", base.label);
+
                     baseTag.setAttribute("slot", "bases");
                     this.appendChild(baseTag);
                 }
@@ -307,6 +311,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     let modelTag = document.createElement("ktbs4la2-main-related-resource");
                     modelTag.setAttribute("resource-type", "Model");
                     modelTag.setAttribute("uri", model.uri);
+
+                    if(model.label)
+                        modelTag.setAttribute("label", model.label);
+                    
                     modelTag.setAttribute("slot", "models");
                     this.appendChild(modelTag);
                 }
@@ -335,6 +343,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     let storedTraceTag = document.createElement("ktbs4la2-main-related-resource");
                     storedTraceTag.setAttribute("resource-type", "StoredTrace");
                     storedTraceTag.setAttribute("uri", storedTrace.uri);
+
+                    if(storedTrace.label)
+                        storedTraceTag.setAttribute("label", storedTrace.label);
+
                     storedTraceTag.setAttribute("slot", "stored-traces");
                     this.appendChild(storedTraceTag);
                 }
@@ -363,6 +375,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     let methodTag = document.createElement("ktbs4la2-main-related-resource");
                     methodTag.setAttribute("resource-type", "Method");
                     methodTag.setAttribute("uri", method.uri);
+
+                    if(method.label)
+                        methodTag.setAttribute("label", method.label);
+
                     methodTag.setAttribute("slot", "methods");
                     this.appendChild(methodTag);
                 }
@@ -391,6 +407,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     let computedTraceTag = document.createElement("ktbs4la2-main-related-resource");
                     computedTraceTag.setAttribute("resource-type", "ComputedTrace");
                     computedTraceTag.setAttribute("uri", computedTrace.uri);
+
+                    if(computedTrace.label)
+                        computedTraceTag.setAttribute("label", computedTrace.label);
+
                     computedTraceTag.setAttribute("slot", "computed-traces");
                     this.appendChild(computedTraceTag);
                 }
@@ -435,6 +455,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     let methodElement = document.createElement("ktbs4la2-main-related-resource");
                     methodElement.setAttribute("resource-type", "Method");
                     methodElement.setAttribute("uri", parentMethod.uri);
+
+                    if(parentMethod.label)
+                        methodElement.setAttribute("label", parentMethod.label);
+                    
                     methodElement.setAttribute("slot", "parent-method");
                     this.appendChild(methodElement);
                 }
@@ -453,6 +477,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 let methodElement = document.createElement("ktbs4la2-main-related-resource");
                 methodElement.setAttribute("resource-type", "Method");
                 methodElement.setAttribute("uri", this._ktbsResource.method.uri);
+
+                if(this._ktbsResource.method.label)
+                    methodElement.setAttribute("label", this._ktbsResource.method.label);
+
                 methodElement.setAttribute("slot", "method");
                 this.appendChild(methodElement);
             }
@@ -473,6 +501,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     let modelElement = document.createElement("ktbs4la2-main-related-resource");
                     modelElement.setAttribute("resource-type", "Model");
                     modelElement.setAttribute("uri", model.uri);
+
+                    if(model.label)
+                        modelElement.setAttribute("label", model.label);
+
                     modelElement.setAttribute("slot", "model");
                     this.appendChild(modelElement);
                 }
