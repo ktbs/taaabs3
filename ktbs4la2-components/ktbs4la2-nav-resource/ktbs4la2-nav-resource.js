@@ -63,6 +63,8 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 		this._titleTag.addEventListener("click", this.onClickTitle.bind(this));
 		this._unfoldButton = this.shadowRoot.querySelector("#unfold-button");
 		this._unfoldButton.addEventListener("click", this._toggleFolded.bind(this));
+		this._childList = this.shadowRoot.querySelector("#child-list");
+		this._childListSpinner = this.shadowRoot.querySelector("#childlist-spinner");
 		this.addItemButton = this.shadowRoot.querySelector("#add-item-button");
 	}
 
@@ -76,6 +78,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 			this._unfoldButton.setAttribute("title", this._translateString("Fold child list"));
 
 		this._titleTag.setAttribute("title", this._getTitleHint());
+		this._childListSpinner.innerText = this._translateString("Pending...");
 		this.addItemButton.setAttribute("title", this._translateString("Add new child resource"));
 	}
 
@@ -84,9 +87,6 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	 */
 	onktbsResourceLoaded() {
 		this._componentReady.then(() => {
-			/*if(this._can_have_children() && this._containerDiv.classList.contains("unfolded"))
-				this._instanciateChildren(true);*/
-
 			let label = this._ktbsResource.label;
 			
 			if(label && !this.hasAttribute("label"))
@@ -289,24 +289,31 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	 */
 	_toggleFolded(event) {
 		if(this._can_have_children()) {
-			if(this._containerDiv.classList.contains("folded")) {
-				if(!this._childrenInstanciated)
-					this._instanciateChildren();
+			this._componentReady.then(() => {
+				
+				if(this._containerDiv.classList.contains("folded")) {
+					this._containerDiv.classList.remove("folded");
+					this._containerDiv.classList.add("unfolded");
+					this._unfoldButton.title = this._translateString("Fold child list");
 
-				this._containerDiv.classList.remove("folded");
-				this._containerDiv.classList.add("unfolded");
-				this._unfoldButton.title = this._translateString("Fold child list");
+					if(!this._childrenInstanciated)
+						setTimeout(() => {
+							this._instanciateChildren();
+						});
 
-				if(this.getAttribute("preload-children") == "true")
-					setTimeout(this._preLoadGrandChildren.bind(this), 100);
-			}
-			else {
-				if(this._containerDiv.classList.contains("unfolded"))
-					this._containerDiv.classList.remove("unfolded");
+					if(this.getAttribute("preload-children") == "true")
+						setTimeout(() => {
+							this._preLoadGrandChildren();
+						});
+				}
+				else {
+					if(this._containerDiv.classList.contains("unfolded"))
+						this._containerDiv.classList.remove("unfolded");
 
-				this._containerDiv.classList.add("folded");
-				this._unfoldButton.title = this._translateString("Unfold child list");
-			}
+					this._containerDiv.classList.add("folded");
+					this._unfoldButton.title = this._translateString("Unfold child list");
+				}
+			});
 		}
 		else
 			this.emitErrorEvent(Error("Nav element of resource type \"" + this.getAttribute("resource-type") + "\" cannot be unfolded as they cannot have children resources"));
@@ -322,93 +329,98 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 
 			this._childrenInstanciated = false;
 		}
-
+		
 		if(this._can_have_children()) {
-			this._ktbsResourceLoaded.then(() => {
-				if(!this._childrenInstanciated) {
-					if((this.getAttribute("resource-type") == "Ktbs") || (this.getAttribute("resource-type") == "Base")) {
-						// create base child elements
-						let bases = this._ktbsResource.bases;
+			this._ktbsResourceLoaded
+				.then(() => {
+					if(!this._childrenInstanciated) {
+						if((this.getAttribute("resource-type") == "Ktbs") || (this.getAttribute("resource-type") == "Base")) {
+							// create base child elements
+							let bases = this._ktbsResource.bases;
 
-						for(let i = 0; i < bases.length; i++) {
-							let base = bases[i];
-							let baseTag = document.createElement("ktbs4la2-nav-resource");
-							baseTag.setAttribute("resource-type", "Base");
-							baseTag.setAttribute("uri", base.uri);
+							for(let i = 0; i < bases.length; i++) {
+								let base = bases[i];
+								let baseTag = document.createElement("ktbs4la2-nav-resource");
+								baseTag.setAttribute("resource-type", "Base");
+								baseTag.setAttribute("uri", base.uri);
 
-							if(base.label)
-								baseTag.setAttribute("label", base.label);
+								if(base.label)
+									baseTag.setAttribute("label", base.label);
 
-							this.appendChild(baseTag);
+								this.appendChild(baseTag);
+							}
 						}
+						
+						if(this.getAttribute("resource-type") == "Base") {
+							// create model child elements
+							let models = this._ktbsResource.models;
+
+							for(let i = 0; i < models.length; i++) {
+								let model = models[i];
+								let modelTag = document.createElement("ktbs4la2-nav-resource");
+								modelTag.setAttribute("uri", model.uri);
+								modelTag.setAttribute("resource-type", "Model");
+
+								if(model.label)
+									modelTag.setAttribute("label", model.label);
+
+								this.appendChild(modelTag);
+							}
+
+							// create stored trace child elements
+							let stored_traces = this._ktbsResource.stored_traces;
+
+							for(let i = 0; i < stored_traces.length; i++) {
+								let storedTrace = stored_traces[i];
+								let storedTraceTag = document.createElement("ktbs4la2-nav-resource");
+								storedTraceTag.setAttribute("uri", storedTrace.uri);
+								storedTraceTag.setAttribute("resource-type", "StoredTrace");
+
+								if(storedTrace.label)
+									storedTraceTag.setAttribute("label", storedTrace.label);
+
+								this.appendChild(storedTraceTag);
+							}
+
+							// create method child elements
+							let methods = this._ktbsResource.methods;
+				
+							for(let i = 0; i < methods.length; i++) {
+								let method = methods[i];
+								let methodTag = document.createElement("ktbs4la2-nav-resource");
+								methodTag.setAttribute("resource-type", "Method");
+								methodTag.setAttribute("uri", method.uri);
+
+								if(method.label)
+									methodTag.setAttribute("label", method.label);
+
+								this.appendChild(methodTag);
+							}
+
+							// create computed trace child elements
+							let computed_traces = this._ktbsResource.computed_traces;
+
+							for(let i = 0; i < computed_traces.length; i++) {
+								let computedTrace = computed_traces[i];
+								let computedTraceTag = document.createElement("ktbs4la2-nav-resource");
+								computedTraceTag.setAttribute("uri", computedTrace.uri);
+								computedTraceTag.setAttribute("resource-type", "ComputedTrace");
+
+								if(computedTrace.label)
+									computedTraceTag.setAttribute("label", computedTrace.label);
+
+								this.appendChild(computedTraceTag);
+							}
+						}
+
+						// done
+						this._childrenInstanciated = true;
+						this._childList.classList.add("children-instanciated");
 					}
-					
-					if(this.getAttribute("resource-type") == "Base") {
-						// create model child elements
-						let models = this._ktbsResource.models;
-
-						for(let i = 0; i < models.length; i++) {
-							let model = models[i];
-							let modelTag = document.createElement("ktbs4la2-nav-resource");
-							modelTag.setAttribute("uri", model.uri);
-							modelTag.setAttribute("resource-type", "Model");
-
-							if(model.label)
-								modelTag.setAttribute("label", model.label);
-
-							this.appendChild(modelTag);
-						}
-
-						// create stored trace child elements
-						let stored_traces = this._ktbsResource.stored_traces;
-
-						for(let i = 0; i < stored_traces.length; i++) {
-							let storedTrace = stored_traces[i];
-							let storedTraceTag = document.createElement("ktbs4la2-nav-resource");
-							storedTraceTag.setAttribute("uri", storedTrace.uri);
-							storedTraceTag.setAttribute("resource-type", "StoredTrace");
-
-							if(storedTrace.label)
-								storedTraceTag.setAttribute("label", storedTrace.label);
-
-							this.appendChild(storedTraceTag);
-						}
-
-						// create method child elements
-						let methods = this._ktbsResource.methods;
-			
-						for(let i = 0; i < methods.length; i++) {
-							let method = methods[i];
-							let methodTag = document.createElement("ktbs4la2-nav-resource");
-							methodTag.setAttribute("resource-type", "Method");
-							methodTag.setAttribute("uri", method.uri);
-
-							if(method.label)
-								methodTag.setAttribute("label", method.label);
-
-							this.appendChild(methodTag);
-						}
-
-						// create computed trace child elements
-						let computed_traces = this._ktbsResource.computed_traces;
-
-						for(let i = 0; i < computed_traces.length; i++) {
-							let computedTrace = computed_traces[i];
-							let computedTraceTag = document.createElement("ktbs4la2-nav-resource");
-							computedTraceTag.setAttribute("uri", computedTrace.uri);
-							computedTraceTag.setAttribute("resource-type", "ComputedTrace");
-
-							if(computedTrace.label)
-								computedTraceTag.setAttribute("label", computedTrace.label);
-
-							this.appendChild(computedTraceTag);
-						}
-					}
-
-					// done
-					this._childrenInstanciated = true;
-				}
-			});		
+				})
+				.catch((error) => {
+					this._setError(error);
+				});
 		}
 		else
 			this.emitErrorEvent(new Error("Nav element of resource type \"" + this.getAttribute("resource-type") + "\" cannot have children resources"));

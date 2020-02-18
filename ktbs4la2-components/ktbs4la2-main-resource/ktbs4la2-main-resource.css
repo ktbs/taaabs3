@@ -122,6 +122,10 @@
 	display: none;
 }
 
+#container.pending #resource-status {
+	background: url('{my-component-folder}/blue-spinner.svg') no-repeat;
+}
+
 #container.online #resource-status {
 	background: url('{my-component-folder}/online.svg') no-repeat;
 }

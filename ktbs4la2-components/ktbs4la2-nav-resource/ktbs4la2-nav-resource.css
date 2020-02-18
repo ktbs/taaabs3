@@ -209,6 +209,18 @@
 	cursor: default;
 }
 
+#childlist-spinner {
+	background-image: url('{my-component-folder}/black-spinner.svg');
+	background-repeat: no-repeat;
+	background-size: 16px 16px;
+	background-position: 3px calc(50% - 2px);
+	padding-left: 20px;
+	padding-bottom: 3px;
+	font-style: italic;
+	font-size: 9pt;
+	opacity: 0.3;
+}
+
 #child-list {
 	list-style-type: none;
 	padding-left: 10px;
@@ -217,6 +229,14 @@
 	display: none;
 	border-left: 1px dotted #000;
 	margin-left: 7px;
+}
+
+#child-list:not(.children-instanciated) :not(#childlist-spinner) {
+	display: none;
+}
+
+#child-list.children-instanciated #childlist-spinner {
+	display: none;
 }
 
 :host([resource-type = "Ktbs"]) #container.unfolded #child-list, :host([resource-type = "Base"]) #container.unfolded #child-list {

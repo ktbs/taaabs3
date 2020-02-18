@@ -53,10 +53,10 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	 * Creates a promise that will be resolved when the ktbs resource has been succesfully loaded
 	 */
 	_initktbsResourceLoadedPromise() {
-		this._ktbsResourceLoaded = new Promise(function(resolve, reject) {
+		this._ktbsResourceLoaded = new Promise((resolve, reject) => {
 			this._resolveKtbsResourceLoaded = resolve;
 			this._rejectKtbsResourceLoaded = reject;
-		}.bind(this));
+		});
 
 		this._ktbsResourceLoaded
 			.then(() => {
