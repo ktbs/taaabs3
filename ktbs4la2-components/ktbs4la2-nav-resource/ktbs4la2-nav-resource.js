@@ -208,12 +208,23 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	 * 
 	 */
 	onKtbsResourceChange(data) {
-		this._initktbsResourceLoadedPromise();
-
-		if(this._ktbsResource.syncStatus == "in_sync")
-			this._resolveKtbsResourceLoaded();
-		else
-			this._rejectKtbsResourceLoaded(data);
+		this._componentReady.then(() => {
+			if(		
+					(this._ktbsResource.syncStatus == "in_sync")
+				&&	(
+							(this._containerDiv.classList.contains("error"))
+						||	(this._containerDiv.classList.contains("authentication-required"))
+						||	(this._containerDiv.classList.contains("access-denied"))
+					)
+			)
+				this.onktbsResourceLoaded();
+			else if(
+						((this._ktbsResource.syncStatus == "error") && !this._containerDiv.classList.contains("error"))
+					|| 	((this._ktbsResource.syncStatus == "needs_auth") && !this._containerDiv.classList.contains("authentication-required"))
+					|| 	((this._ktbsResource.syncStatus == "access_denied") && !this._containerDiv.classList.contains("access-denied"))
+					)
+				this.onktbsResourceLoadFailed(data);
+		});
 	}
 
 	/**	
@@ -290,7 +301,6 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	_toggleFolded(event) {
 		if(this._can_have_children()) {
 			this._componentReady.then(() => {
-				
 				if(this._containerDiv.classList.contains("folded")) {
 					this._containerDiv.classList.remove("folded");
 					this._containerDiv.classList.add("unfolded");
