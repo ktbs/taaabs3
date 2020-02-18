@@ -1140,14 +1140,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			}
 			else {
 				setTimeout(() => {
-					nextPage.get(this._obselsLoadingAbortController.signal)
-						.then(() => {
-							this._onObselListPageRead(nextPage);
-						})
-						.catch((error) => {
-							if((error.name != "AbortError") || !this._obselsLoadingAbortController.signal.aborted)
-								this._onObselListPageReadFailed(error);
-						});
+					if(!this._obselsLoadingAbortController.signal.aborted)
+						nextPage.get(this._obselsLoadingAbortController.signal)
+							.then(() => {
+								if(!this._obselsLoadingAbortController.signal.aborted)
+									this._onObselListPageRead(nextPage);
+							})
+							.catch((error) => {
+								if(!(error instanceof DOMException) && (error.name !== "AbortError") && !this._obselsLoadingAbortController.signal.aborted)
+									this._onObselListPageReadFailed(error);
+							});
 				});
 			}
 		}
