@@ -60,7 +60,6 @@ class KTBS4LA2IconTabsGroup extends TemplatedHTMLElement {
         for(let i = 0; i < tabNodes.length; i++) {
             let aTabNode = tabNodes[i];
             let listItem = document.createElement("li");
-            listItem.setAttribute("id", i);
             listItem.setAttribute("title", aTabNode.getAttribute("title"));
             let imgNode = document.createElement("img");
             imgNode.setAttribute("src", aTabNode.getAttribute("icon"));
@@ -89,10 +88,12 @@ class KTBS4LA2IconTabsGroup extends TemplatedHTMLElement {
         for(let i = 0; i < itemListNodes.length; i++) {
             let aListItem = itemListNodes[i];
 
-            if(parseInt(aListItem.getAttribute("id")) == itemRank)
-                aListItem.setAttribute("selected", "true");
+            if(i == itemRank) {
+                if(!aListItem.hasAttribute("selected"))
+                    aListItem.setAttribute("selected", "true");
+            }
             else
-                if(aListItem.getAttribute("selected"))
+                if(aListItem.hasAttribute("selected"))
                     aListItem.removeAttribute("selected");
         }
 
@@ -101,11 +102,13 @@ class KTBS4LA2IconTabsGroup extends TemplatedHTMLElement {
         for(let i = 0; i < tabNodes.length; i++) {
             let aTab = tabNodes[i];
 
-            if(i == itemRank)
-                aTab.setAttribute("slot", "selected-item");
+            if(i == itemRank) {
+                if(!aTab.hasAttribute("selected"))
+                    aTab.setAttribute("selected", "true");
+            }
             else
-                if(aTab.getAttribute("slot"))
-                    aTab.removeAttribute("slot");
+                if(aTab.hasAttribute("selected"))
+                    aTab.removeAttribute("selected");
         }
     }
 }

@@ -1,5 +1,7 @@
 import {ResourceProxy} from "./ResourceProxy.js";
 import {Resource} from "./Resource.js";
+import {Obsel} from "./Obsel.js";
+import {Trace} from "./Trace.js";
 
 /**
  * Class to help reading obsels list from a Trace in a paginated fasion
@@ -69,10 +71,23 @@ export class ObselListPage extends Resource {
      * @return ObselListPage
      */
     get next_page() {
-        if(this.next_page_uri)
-            return ResourceProxy.get_resource(ObselListPage, this.next_page_uri);
-        else
-            return undefined;
+        if(!this._next_page && this.next_page_uri)
+            this._next_page = ResourceProxy.get_resource(ObselListPage, this.next_page_uri);
+        
+        return this._next_page;
+    }
+
+    /**
+     * Gets the Trace the ObselListPage belongs to
+	 * @return Trace
+     */
+    get parent() {
+        if(!this._parent) {
+            let parent_trace_uri = this.resolve_link_uri("./");
+            this._parent = ResourceProxy.get_resource(Trace, parent_trace_uri);
+        }
+
+        return this._parent;
     }
 
     /**
@@ -80,6 +95,28 @@ export class ObselListPage extends Resource {
      * @return Array
      */
     get obsels() {
-        return this._JSONData.obsels;
+        if(!this._obsels) {
+            this._obsels = new Array();
+
+            if(this._JSONData.obsels instanceof Array) {
+                for(let i = 0; i < this._JSONData.obsels.length; i++) {
+                    let obsel_data = this._JSONData.obsels[i];
+                    let obsel_uri = this.resolve_link_uri(obsel_data["@id"]);
+                    let obsel_is_known = ResourceProxy.has_resource(Obsel, obsel_uri);
+                    let obsel = ResourceProxy.get_resource(Obsel, obsel_uri);
+
+                    if(!obsel_is_known) {
+                        obsel.JSONData = obsel_data;
+                        obsel.context = this.context;
+                        obsel.parent = this.parent;
+                        obsel.syncStatus = "in_sync";
+                    }
+
+                    this._obsels.push(obsel);
+                }
+            }
+        }
+
+        return this._obsels;
     }
 }

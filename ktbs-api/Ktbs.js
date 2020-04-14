@@ -73,17 +73,19 @@ export class Ktbs extends Resource {
 	 * @return URL[]
 	 */
 	_get_builtin_methods_uris() {
-		let methods_uris = new Array();
+		if(!this._builtin_methods_uris) {
+			this._builtin_methods_uris = new Array();
 
-		if(this._JSONData.hasBuiltinMethod instanceof Array) {
-			for(let i = 0; i < this._JSONData.hasBuiltinMethod.length; i++) {
-				let method_uri_string = this._JSONData.hasBuiltinMethod[i];
-				let method_uri = new URL(method_uri_string, this.uri);
-				methods_uris.push(method_uri);
+			if(this._JSONData.hasBuiltinMethod instanceof Array) {
+				for(let i = 0; i < this._JSONData.hasBuiltinMethod.length; i++) {
+					let method_uri_string = this._JSONData.hasBuiltinMethod[i];
+					let method_uri = this.resolve_link_uri(method_uri_string);
+					this._builtin_methods_uris.push(method_uri);
+				}
 			}
 		}
 		
-		return methods_uris;
+		return this._builtin_methods_uris;
 	}
 
 	/**
@@ -91,16 +93,18 @@ export class Ktbs extends Resource {
 	 * @return Method[]
 	 */
 	get builtin_methods() {
-		let builtin_methods = new Array();
-		let builtin_methods_uris = this._get_builtin_methods_uris();
+		if(!this._builtin_methods) {
+			this._builtin_methods = new Array();
+			let builtin_methods_uris = this._get_builtin_methods_uris();
 
-		for(let i = 0; i < builtin_methods_uris.length; i++) {
-			let builtin_method_uri = builtin_methods_uris[i];
-			let builtin_method = ResourceProxy.get_resource(Method, builtin_method_uri);
-			builtin_methods.push(builtin_method);
+			for(let i = 0; i < builtin_methods_uris.length; i++) {
+				let builtin_method_uri = builtin_methods_uris[i];
+				let builtin_method = ResourceProxy.get_resource(Method, builtin_method_uri);
+				this._builtin_methods.push(builtin_method);
+			}
 		}
 
-		return builtin_methods;
+		return this._builtin_methods;
 	}
 
 	/**
@@ -108,17 +112,19 @@ export class Ktbs extends Resource {
 	 * @return URL[]
 	 */
 	_get_bases_uris() {
-		let bases_uris = new Array();
+		if(!this._bases_uris) {
+			this._bases_uris = new Array();
 
-		if(this._JSONData.hasBase instanceof Array) {
-			for(let i = 0; i < this._JSONData.hasBase.length; i++) {
-				let base_uri_string = this._JSONData.hasBase[i];
-				let base_uri = new URL(base_uri_string, this.uri);
-				bases_uris.push(base_uri);
+			if(this._JSONData.hasBase instanceof Array) {
+				for(let i = 0; i < this._JSONData.hasBase.length; i++) {
+					let base_uri_string = this._JSONData.hasBase[i];
+					let base_uri = this.resolve_link_uri(base_uri_string);
+					this._bases_uris.push(base_uri);
+				}
 			}
 		}
 
-		return bases_uris;
+		return this._bases_uris;
 	}
 
 	/**
@@ -126,15 +132,17 @@ export class Ktbs extends Resource {
 	 * @return Base[]
 	 */
 	get bases() {
-		let bases = new Array();
-		let bases_uris = this._get_bases_uris();
+		if(!this._bases) {
+			this._bases = new Array();
+			let bases_uris = this._get_bases_uris();
 
-		for(let i = 0; i < bases_uris.length; i++) {
-			let base_uri = bases_uris[i];
-			let base = ResourceProxy.get_resource(Base, base_uri);
-			bases.push(base);
+			for(let i = 0; i < bases_uris.length; i++) {
+				let base_uri = bases_uris[i];
+				let base = ResourceProxy.get_resource(Base, base_uri);
+				this._bases.push(base);
+			}
 		}
 
-		return bases;
+		return this._bases;
 	}
 }

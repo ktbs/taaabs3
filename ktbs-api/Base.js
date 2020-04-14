@@ -1,7 +1,7 @@
 import {ResourceProxy} from "./ResourceProxy.js";
 import {Resource} from "./Resource.js";
-import {StoredTrace} from "./StoredTrace.js";
-import {ComputedTrace} from "./ComputedTrace.js";
+import {Ktbs} from "./Ktbs.js";
+import {StoredTrace, ComputedTrace} from "./Trace.js";
 import {Model} from "./Model.js";
 import {Method} from "./Method.js";
 
@@ -11,30 +11,47 @@ import {Method} from "./Method.js";
 export class Base extends Resource {
 
 	/**
+	 * Gets the parent resource of this resource.
+	 * @return Resource the resource's parent resource if any, or undefined if the resource's parent is unknown (i.e. the resource hasn't been read or recorded yet), or null if the resource doesn't have any parent (i.e. Ktbs Root).
+	 */
+	get parent() {
+		if(!this._parent) {
+			if(this._JSONData["inBase"])
+				this._parent = ResourceProxy.get_resource(Base, this.resolve_link_uri(this._JSONData["inBase"]));
+			else if(this._JSONData["inRoot"])
+				this._parent = ResourceProxy.get_resource(Ktbs, this.resolve_link_uri(this._JSONData["inRoot"]));
+		}
+
+		return this._parent;
+	}
+
+	/**
 	 * Gets the stored traces in the Base
 	 * @return StoredTrace[]
 	 */
 	get stored_traces() {
-		let stored_traces = new Array();
+		if(!this._stored_traces) {
+			this._stored_traces = new Array();
 
-		if(this._JSONData.contains instanceof Array) {
-			for(let i = 0; i < this._JSONData.contains.length; i++) {
-				if(this._JSONData.contains[i]["@type"] == "StoredTrace") {
-					let stored_trace_uri_string = this._JSONData.contains[i]["@id"];
-					let stored_trace_uri = new URL(stored_trace_uri_string, this.uri);
-					let stored_trace = ResourceProxy.get_resource(StoredTrace, stored_trace_uri);
+			if(this._JSONData.contains instanceof Array) {
+				for(let i = 0; i < this._JSONData.contains.length; i++) {
+					if(this._JSONData.contains[i]["@type"] == "StoredTrace") {
+						let stored_trace_uri_string = this._JSONData.contains[i]["@id"];
+						let stored_trace_uri = this.resolve_link_uri(stored_trace_uri_string);
+						let stored_trace = ResourceProxy.get_resource(StoredTrace, stored_trace_uri);
 
-					let stored_trace_label = this._JSONData.contains[i]["label"];
+						let stored_trace_label = this._JSONData.contains[i]["label"];
 
-					if(stored_trace_label && !stored_trace.label)
-						stored_trace.label = stored_trace_label;
+						if(stored_trace_label && !stored_trace.label)
+							stored_trace.label = stored_trace_label;
 
-					stored_traces.push(stored_trace);
+						this._stored_traces.push(stored_trace);
+					}
 				}
 			}
 		}
 
-		return stored_traces;
+		return this._stored_traces;
 	}
 
 	/**
@@ -42,26 +59,28 @@ export class Base extends Resource {
 	 * @return ComputedTrace[]
 	 */
 	get computed_traces() {
-		let computed_traces = new Array();
+		if(!this._computed_traces) {
+			this._computed_traces = new Array();
 
-		if(this._JSONData.contains instanceof Array) {
-			for(let i = 0; i < this._JSONData.contains.length; i++) {
-				if(this._JSONData.contains[i]["@type"] == "ComputedTrace") {
-					let computed_trace_uri_string = this._JSONData.contains[i]["@id"];
-					let computed_trace_uri = new URL(computed_trace_uri_string, this.uri);
-					let computed_trace = ResourceProxy.get_resource(ComputedTrace, computed_trace_uri);
+			if(this._JSONData.contains instanceof Array) {
+				for(let i = 0; i < this._JSONData.contains.length; i++) {
+					if(this._JSONData.contains[i]["@type"] == "ComputedTrace") {
+						let computed_trace_uri_string = this._JSONData.contains[i]["@id"];
+						let computed_trace_uri = this.resolve_link_uri(computed_trace_uri_string);
+						let computed_trace = ResourceProxy.get_resource(ComputedTrace, computed_trace_uri);
 
-					let computed_trace_label = this._JSONData.contains[i]["label"];
+						let computed_trace_label = this._JSONData.contains[i]["label"];
 
-					if(computed_trace_label && !computed_trace.label)
-						computed_trace.label = computed_trace_label;
+						if(computed_trace_label && !computed_trace.label)
+							computed_trace.label = computed_trace_label;
 
-					computed_traces.push(computed_trace);
+						this._computed_traces.push(computed_trace);
+					}
 				}
 			}
 		}
 
-		return computed_traces;
+		return this._computed_traces;
 	}
 
 	/**
@@ -69,26 +88,28 @@ export class Base extends Resource {
 	 * @return Model[]
 	 */
 	get models() {
-		let models = new Array();
+		if(!this._models) {
+			this._models = new Array();
 
-		if(this._JSONData.contains instanceof Array) {
-			for(let i = 0; i < this._JSONData.contains.length; i++) {
-				if(this._JSONData.contains[i]["@type"] == "TraceModel") {
-					let model_uri_string = this._JSONData.contains[i]["@id"];
-					let model_uri = new URL(model_uri_string, this.uri);
-					let model = ResourceProxy.get_resource(Model, model_uri);
+			if(this._JSONData.contains instanceof Array) {
+				for(let i = 0; i < this._JSONData.contains.length; i++) {
+					if(this._JSONData.contains[i]["@type"] == "TraceModel") {
+						let model_uri_string = this._JSONData.contains[i]["@id"];
+						let model_uri = this.resolve_link_uri(model_uri_string);
+						let model = ResourceProxy.get_resource(Model, model_uri);
 
-					let model_label = this._JSONData.contains[i]["label"];
+						let model_label = this._JSONData.contains[i]["label"];
 
-					if(model_label && !model.label)
-						model.label = model_label;
+						if(model_label && !model.label)
+							model.label = model_label;
 
-					models.push(model);
+						this._models.push(model);
+					}
 				}
 			}
 		}
 
-		return models;
+		return this._models;
 	}
 
 	/**
@@ -96,26 +117,28 @@ export class Base extends Resource {
 	 * @return Method[]
 	 */
 	get methods() {
-		let methods = new Array();
+		if(!this._methods) {
+			this._methods = new Array();
 
-		if(this._JSONData.contains instanceof Array) {
-			for(let i = 0; i < this._JSONData.contains.length; i++) {
-				if(this._JSONData.contains[i]["@type"] == "Method") {
-					let method_uri_string = this._JSONData.contains[i]["@id"];
-					let method_uri = new URL(method_uri_string, this.uri);
-					let method = ResourceProxy.get_resource(Method, method_uri);
+			if(this._JSONData.contains instanceof Array) {
+				for(let i = 0; i < this._JSONData.contains.length; i++) {
+					if(this._JSONData.contains[i]["@type"] == "Method") {
+						let method_uri_string = this._JSONData.contains[i]["@id"];
+						let method_uri = this.resolve_link_uri(method_uri_string);
+						let method = ResourceProxy.get_resource(Method, method_uri);
 
-					let method_label = this._JSONData.contains[i]["label"];
+						let method_label = this._JSONData.contains[i]["label"];
 
-					if(method_label && !method.label)
-						method.label = method_label;
+						if(method_label && !method.label)
+							method.label = method_label;
 
-					methods.push(method);
+						this._methods.push(method);
+					}
 				}
 			}
 		}
 
-		return methods;
+		return this._methods;
 	}
 
 	/**
@@ -123,26 +146,28 @@ export class Base extends Resource {
 	 * @return Base[]
 	 */
 	get bases() {
-		let bases = new Array();
+		if(!this._bases) {
+			this._bases = new Array();
 
-		if(this._JSONData.contains instanceof Array) {
-			for(let i = 0; i < this._JSONData.contains.length; i++) {
-				if(this._JSONData.contains[i]["@type"] == "Base") {
-					let base_uri_string = this._JSONData.contains[i]["@id"];
-					let base_uri = new URL(base_uri_string, this.uri);
-					let base = ResourceProxy.get_resource(Base, base_uri);
+			if(this._JSONData.contains instanceof Array) {
+				for(let i = 0; i < this._JSONData.contains.length; i++) {
+					if(this._JSONData.contains[i]["@type"] == "Base") {
+						let base_uri_string = this._JSONData.contains[i]["@id"];
+						let base_uri = this.resolve_link_uri(base_uri_string);
+						let base = ResourceProxy.get_resource(Base, base_uri);
 
-					let base_label = this._JSONData.contains[i]["label"];
+						let base_label = this._JSONData.contains[i]["label"];
 
-					if(base_label && !base.label)
-						base.label = base_label;
+						if(base_label && !base.label)
+							base.label = base_label;
 
-					bases.push(base);
+						this._bases.push(base);
+					}
 				}
 			}
 		}
 
-		return bases;
+		return this._bases;
 	}
 
 	/**
@@ -150,8 +175,11 @@ export class Base extends Resource {
 	 * @return string
 	 */
 	get _data_read_uri() {
-		let dataReadUri = new URL(this.uri);
-		dataReadUri.searchParams.append("prop", "label");
-		return dataReadUri;
+		if(!this._dataReadUri) {
+			this._dataReadUri = new URL(this.uri);
+			this._dataReadUri.searchParams.append("prop", "label");
+		}
+
+		return this._dataReadUri;
 	}
 }

@@ -1,5 +1,10 @@
 import {TemplatedHTMLElement} from "./TemplatedHTMLElement.js";
 import {ResourceProxy} from "../../ktbs-api/ResourceProxy.js";
+import {Ktbs} from "../../ktbs-api/Ktbs.js";
+import {Base} from "../../ktbs-api/Base.js";
+import {Model} from "../../ktbs-api/Model.js";
+import {Method} from "../../ktbs-api/Method.js";
+import {StoredTrace, ComputedTrace} from "../../ktbs-api/Trace.js";
 
 /**
  * 
@@ -163,8 +168,23 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	_getKtbsResourceClass() {
 		let resourceType = this.getAttribute("resource-type");
 
-		if(resourceType)
-			return ResourceProxy.get_resource_class(resourceType);
+		if(resourceType) {
+			if(resourceType.match(/^[a-zA-Z0-9_]+$/)) {
+				try {
+					let JSClass = eval(resourceType);
+
+					if(JSClass && (typeof JSClass === 'function') && (/^\s*class\s+/.test(JSClass.toString())))
+						return JSClass;
+					else
+						throw new Error("\"" + resourceType + "\" is not a class name.");
+				}
+				catch(error) {
+					throw new Error("Unknown class \"" + resourceType + "\"");
+				}
+			}
+			else
+				throw new Error("Invalid class name \"" + resourceType + "\"");
+		}
 		else
 			throw new Error("Missing required attribute \"resource-type\"");
 	}

@@ -24,28 +24,40 @@ export class ObselType {
     }
 
     /**
-     * 
-     * @return string
+     * Gets the relative ID of the obsel type (relative to the Model it is described in)
+     * @returns string
      */
     get id() {
-        let rawID = this._JSONData["@id"];
+        if(!this._id)
+            this._id = decodeURIComponent(this.uri.hash.substring(1));
 
-        if((rawID) && (rawID.charAt(0) == '#'))
-            return rawID.substring(1);
-        else
-            return this._JSONData["@id"];
+        return this._id;
     }
 
     /**
-     * 
-     * @param string id
+     * Sets the relative ID of the obsel type (relative to the Model it is described in)
+     * @param string id the new relative ID for the obsel type
      */
-    set id(id) {
-        this._JSONData["@id"] = '#' + id;
+    set id(new_id) {
+        this._JSONData["@id"] = '#' + encodeURIComponent(new_id);
+        this._id = '#' + new_id;
     }
 
     /**
-     * 
+     * Gets the uri of the obsel type
+     * @returns URL
+     */
+    get uri() {
+        if(!this._uri) {
+            let rawID = this._JSONData["@id"];
+            this._uri = this.parent_model.resolve_link_uri(rawID);
+        }
+
+        return this._uri;
+    }
+
+    /**
+     * Gets the Model the obsel type is described in
      * @return Model
      */
     get parent_model() {
@@ -53,7 +65,7 @@ export class ObselType {
     }
 
     /**
-     * 
+     * Gets the default color (if defined) to use for representing Obsels of the current type
      * @return string
      */
     get suggestedColor() {
@@ -61,15 +73,15 @@ export class ObselType {
     }
 
     /**
-     * 
-     * @param string suggestedColor
+     * Sets the default color to use for representing Obsels of the current type
+     * @param string new_suggestedColor the new default color as a valid HTML/CSS color (hexadecimal, color name etc ...)
      */
-    set suggestedColor(suggestedColor) {
-        this._JSONData["suggestedColor"] = suggestedColor;
+    set suggestedColor(new_suggestedColor) {
+        this._JSONData["suggestedColor"] = new_suggestedColor;
     }
 
     /**
-     * 
+     * Gets the default symbol tu use for representing Obsels of the current type
      * @return string
      */
     get suggestedSymbol() {
@@ -77,11 +89,11 @@ export class ObselType {
     }
 
     /**
-     * 
-     * @param string suggestedSymbol
+     * Sets the default symbol tu use for representing Obsels of the current type
+     * @param string suggestedSymbol the new default symbol as a character (Unicode supported)
      */
-    set suggestedSymbol(suggestedSymbol) {
-        this._JSONData["suggestedSymbol"] = suggestedSymbol;
+    set suggestedSymbol(new_suggestedSymbol) {
+        this._JSONData["suggestedSymbol"] = new_suggestedSymbol;
     }
 
     /**
@@ -89,10 +101,14 @@ export class ObselType {
 	 * @return string
 	 */
 	get label() {
-		if(this._JSONData["label"])
-			return this._JSONData["label"];
-		else
-			return this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+		if(!this._label) {
+			if(this._JSONData["label"])
+				this._label = this._JSONData["label"];
+			else
+				this._label = this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+		}
+
+		return this._label;
 	}
 
 	/**
@@ -119,8 +135,9 @@ export class ObselType {
 	 * Set a user-friendly label.
 	 * @param string label The new label for the resource
 	 */
-	set label(label) {
-		this._JSONData["label"] = label;
+	set label(new_label) {
+        this._JSONData["label"] = new_label;
+        this._label = new_label;
 	}
 
 	/**

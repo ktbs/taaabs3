@@ -1,4 +1,3 @@
-import {ResourceProxy} from "./ResourceProxy.js";
 import * as KTBSErrors from "./Errors.js";
 
 /**
@@ -11,18 +10,6 @@ export class Resource {
 	 * @param URL or string uri the resource's URI
 	 */
 	constructor(uri = null) {
-
-		/**
-		 * The resource's uri
-		 * @type URL
-		 */
-		this._uri;
-
-		/**
-		 * The resource's ID relative to its “containing” resource
-		 * @type string
-		 */
-		this._id;
 
 		/**
 		 * The etag provided by the server at the resource latest HTTP query
@@ -81,16 +68,16 @@ export class Resource {
 
 	/**
 	 * Sets the resource's URI
-	 * @param URL or String uri the new URI for the resource.
+	 * @param URL or String new_uri the new URI for the resource.
 	 * @throws TypeError Throws a TypeError if the uri parameter is not an instance of URL or String
 	 * @throws Error Throws an Error if we try to set the URI of a resource that already exists on a kTBS service.
 	 */
-	set uri(uri) {
+	set uri(new_uri) {
 		if(this.syncStatus == "needs_sync") {
-			if(uri instanceof URL)
-				this._uri = uri;
-			else if(typeof uri == "string")
-				this._uri = new URL(uri);
+			if(new_uri instanceof URL)
+				this._uri = new_uri;
+			else if(typeof new_uri == "string")
+				this._uri = new URL(new_uri);
 			else
 				throw new TypeError("uri must be of either type \"URL\" or \"String\"");
 		}
@@ -104,6 +91,45 @@ export class Resource {
 	 */
 	get syncStatus() {
 		return this._syncStatus;
+	}
+
+	/**
+	 * Sets the synchronization status of the resource
+	 * @param string newStatus the new synchronisation status for the resource
+	 * @throws TypeError if newValue is not a valid status
+	 */
+	set syncStatus(new_syncStatus) {
+		if(
+				(new_syncStatus == "needs_sync")
+			||	(new_syncStatus == "pending")
+			||	(new_syncStatus == "in_sync")
+			||	(new_syncStatus == "error")
+			||	(new_syncStatus == "needs_auth")
+			||	(new_syncStatus == "access_denied")
+		)
+			this._syncStatus = new_syncStatus;
+		else
+			throw new TypeError(new_syncStatus + " is not a valid resource status");
+	}
+
+	/**
+	 * Gets the JSON Data of the resource
+	 * @returns Object
+	 */
+	get JSONData() {
+		return this._JSONData;
+	}
+
+	/**
+	 * Sets the JSON Data for the resource
+	 * @param Object newJSONData the new JSON Data for the resource
+	 * @throws TypeError if newJSONData is not an Object
+	 */
+	set JSONData(new_JSONData) {
+		if(new_JSONData instanceof Object)
+			this._JSONData = new_JSONData;
+		else
+			throw new TypeError("new JSONData must be an Object");
 	}
 
 	/**
@@ -123,10 +149,75 @@ export class Resource {
 	}
 
 	/**
-	 * 
+	 * Gets the context header of the resource's data (used to resolve shortcut links)
+	 * @return Object
 	 */
 	get context() {
 		return this._JSONData["@context"];
+	}
+
+	/**
+	 * Sets the context header of the resource's data (used to resolve shortcut links)
+	 * @param Object new_context the new context header of the resource's data
+	 */
+	set context(new_context) {
+		this._JSONData["@context"] = new_context;
+	}
+
+	/**
+	 * Resolves a link from the current resource to another resource. Supports relative links and shortcut links referring to context.
+	 * @return URL
+	 */
+	resolve_link_uri(link) {
+		if(typeof link == "string") {
+			if(link.startsWith("http://"))
+				// link is absolute
+				return new URL(link);
+			else {
+				let matches = link.match("^(.*):(.*)");
+
+				if(matches != null) {
+					// link seems to be relative to a context shortcut
+					let shortcut = matches[1];
+					let relativeLink = matches[2];
+					let context = this.context;
+					let shortcutSubstitutionURI = null;
+
+					if((context instanceof Array) || (context instanceof Object)) {
+						for(let key in context) {
+							let contextElement = context[key];
+
+							if(contextElement instanceof Object) {
+								for(let shortName in contextElement) {
+									if(shortName == shortcut) {
+										shortcutSubstitutionURI = contextElement[shortName];
+										break;
+									}
+								}
+
+								if(shortcutSubstitutionURI != null)
+									break;
+							}
+						}
+					}
+
+					if(shortcutSubstitutionURI != null) {
+						if(shortcutSubstitutionURI.charAt(shortcutSubstitutionURI.length - 1) == "#") {
+							let uri = new URL(shortcutSubstitutionURI.substring(0, shortcutSubstitutionURI.length - 1));
+							uri.hash = decodeURIComponent(relativeLink);
+							return uri;
+						}
+						else
+							return new URL(relativeLink, shortcutSubstitutionURI);
+					}
+				}
+			}
+
+			// default : link must be relative to the current resource's uri
+			return new URL(link, this.uri);
+		}
+		else
+			throw new TypeError("Parameter \"link\" must be a String");
 	}
 
 	/**
@@ -134,10 +225,14 @@ export class Resource {
 	 * @return string
 	 */
 	get label() {
-		if(this._JSONData["label"])
-			return this._JSONData["label"];
-		else
-			return this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+		if(!this._label) {
+			if(this._JSONData["label"])
+				this._label = this._JSONData["label"];
+			else
+				this._label = this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+		}
+
+		return this._label;
 	}
 
 	/**
@@ -162,10 +257,11 @@ export class Resource {
 
 	/**
 	 * Set a user-friendly label.
-	 * @param string label The new label for the resource
+	 * @param string new_label The new label for the resource
 	 */
-	set label(label) {
-		this._JSONData["label"] = label;
+	set label(new_label) {
+		this._JSONData["label"] = new_label;
+		this._label = new_label;
 	}
 
 	/**
@@ -228,48 +324,6 @@ export class Resource {
 			this._id = id;
 		else
 			throw new Error("Resource's ID can not be changed anymore");
-	}
-
-	/**
-	 * Gets the parent resource of this resource.
-	 * @return Resource the resource's parent resource if any, or undefined if the resource's parent is unknown (i.e. the resource hasn't been read or recorded yet), or null if the resource doesn't have any parent (i.e. Ktbs Root).
-	 */
-	get parent() {
-		if(this._JSONData["inBase"])
-			return ResourceProxy.get_resource("Base", new URL(this._JSONData["inBase"], this.uri));
-		else if(this._JSONData["inRoot"])
-			return ResourceProxy.get_resource("Ktbs", new URL(this._JSONData["inRoot"], this.uri));
-		else
-			return undefined;
-	}
-
-	/**
-	 * Sets the parent resource of this resource.
-	 * @param Resource parent the new parent for the resource (must be an instance of either "Ktbs" or "Base").
-	 * @throws TypeError if the parent parameter is not an instance of "Ktbs" nor "Base".
-	 * @throws Error if the resource's parent can not be set anymore (i.e. the resource has already been recorded).
-	 */
-	set parent(parent) {
-		if(this.syncStatus == "needs_sync") {
-			if(parent instanceof Base) {
-				this._JSONData["inBase"] = parent.uri;
-
-				if(this._JSONData["inRoot"])
-					delete this._JSONData["inRoot"];
-			}
-			else if(parent instanceof Ktbs) {
-				this._JSONData["inRoot"] = parent.uri;
-
-				if(this._JSONData["inBase"])
-					delete this._JSONData["inBase"];
-			}
-			else
-				throw new TypeError("Parent resource must be of either type \"Base\" or \"Ktbs\"");
-
-			this._parent_uri = parent.uri;
-		}
-		else
-			throw new Error("Resource's parent can not be changed anymore");
 	}
 
 	/**
@@ -510,6 +564,7 @@ export class Resource {
 	 */
 	force_state_refresh() {
 		this._etag = null;
+		this._label = null;
 		this._JSONData = new Object();
 		this._getPromise = null;
 		this._syncStatus = "needs_sync";
@@ -549,6 +604,7 @@ export class Resource {
 		for(let i = 0; i < this._observers.length; i++) {
 			let aCallback = this._observers[i];
 
+			// @TODO check if "aCallback" is still a valid reference to a binded function before call, instead of try/catching it
 			try {
 				(aCallback)(data);
 			}

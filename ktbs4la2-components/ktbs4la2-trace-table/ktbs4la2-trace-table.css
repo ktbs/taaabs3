@@ -1,0 +1,314 @@
+#widget-container {
+	width: 100%;
+	height: 100%;
+	position: relative;
+}
+
+#table-container {
+	width: calc(100% - 14px);
+	height: 100%;
+	overflow-y: scroll;
+	position: relative;
+	scrollbar-width: none; /* Hide default scroll-bar for Firefox */
+}
+
+/* Hide default scroll-bar for Safari and Chrome */
+#table-container::-webkit-scrollbar { 
+    display: none;  
+}
+
+#scroll-tools {
+	width: 14px;
+	height: 100%;
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	padding: 0 0;
+}
+
+#scroll-tools button {
+	width: 14px;
+	height: 14px;
+	margin: 0 0;
+	position: absolute;
+	background-repeat: no-repeat;
+	background-size: 50%;
+	background-position: center;
+	background-color: #EEE;
+}
+
+#scroll-tools button, #scroll-tools button:focus, #scroll-tools button:visited {
+	border: none;
+	outline: none;
+}
+
+#scroll-top-button {
+	top: 0px;
+	background-image: url('{my-component-folder}/top-oriented-triangle.svg');
+}
+
+#scroll-top-button[disabled] {
+	pointer-events: none;
+}
+
+#scroll-bottom-button {
+	bottom: 0px;
+	background-image: url('{my-component-folder}/bottom-oriented-triangle.svg');
+}
+
+#scroll-bottom-button[disabled] {
+	pointer-events: none;
+}
+
+#scroll-bar {
+	background-color: #EEE;
+	height: calc(100% - 28px);
+	position: relative;
+	top: 14px;
+}
+
+#scroll-bar-handle {
+	min-height: 20px;
+	background-color: #CCC;
+	position: relative;
+}
+
+#scroll-tools[disabled] #scroll-bar-handle {
+	display: none;
+}
+
+#scroll-tools[disabled] button, #scroll-tools button[disabled] {
+	opacity: 0.3;
+}
+
+#scroll-tools:not([disabled]) #scroll-bar-handle:hover, #scroll-tools:not([disabled]) #scroll-bar-handle.dragged, #scroll-tools:not([disabled]) button:not([disabled]):hover {
+	background-color: #BBB;
+}
+
+#table {
+	width: 100%;
+	height: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	border-left: 1px solid #000;
+	border-right: 1px solid #000;
+}
+
+
+#table th {
+	color: white;
+	font-weight: bold;
+	font-size: 10pt;
+	background-color: var(--nav-background-color, var(--color-main, cornflowerblue));
+	position: sticky;
+	top: 0px;
+}
+
+#table-header-main-cols th {
+	border-top: 0.5px solid #000;
+}
+
+#table th:not(:last-child) {
+	border-right: 0.5px solid white;
+}
+
+#table-header-main-cols th:last-child {
+	border-bottom: 0.5px solid white;
+}
+
+#table tbody td:not(:last-child) {
+	border-right: 0.5px solid #DDD;
+}
+
+#table tbody td {
+	text-align: center;
+}
+
+#table tbody tr[id]:not(:first-child) td {
+	border-top: 0.5px solid #888;
+}
+
+#table tbody tr:not([id]) td {
+	border-top: 0.5px solid #DDD;
+}
+
+#table tbody td.attribute-type-cell {
+	text-align: left;
+}
+
+#table tbody td.attribute-value-cell {
+	text-align: left;
+}
+
+#table-header-attributes-sub-cols th {
+	top: 18px;
+}
+
+/* bug fix: Firefox renders "Type" and "Value" sub-columns slightly differently than Chrome, hence this dirty hack */
+/* @TODO: remove when Firefox and Chrome come to the same rendering */
+@-moz-document url-prefix(){
+    #table-header-attributes-sub-cols th {
+		top: 19.5px;
+	}
+}
+
+#table tbody {
+	font-size: 8pt;
+	width: 100%;
+	overflow-y: auto;
+	min-height: 70px;
+}
+
+#empty-body-row {
+	height: 100%;
+}
+
+#table-body tr.odd { 
+	background: white;
+}
+
+#table-body tr.even {
+	background: #E8E8E8;
+}
+
+#table tbody tr.overflow {
+	display: none;
+}
+
+#table tfoot th {
+	bottom: 0px;
+	border-bottom: 1px solid #000;
+	font-weight: normal;
+	text-align: left;
+}
+
+.checkbox_cell {
+	display: none;
+}
+
+:host([allow-select-obsels = "true"]) #table .checkbox_cell,
+:host([allow-select-obsels = "1"]) #table .checkbox_cell {
+	display: table-cell;
+}
+
+.obsel-type-cell {
+	font-weight: bold;
+}
+
+.obseltype-symbol {
+	font-family: "unifont", "unifont-upper";
+}
+
+/* -------------------------------------------------------- */
+
+
+#toggle-fullscreen-button {
+	background-image: url('{my-component-folder}/go-fulllscreen.svg');
+	background-color:white;
+	background-repeat: no-repeat;
+	background-position: 1px 1px;
+	border: none;
+	border-radius: 2px;
+	height: 20px;
+	width: 20px;
+	outline: none;
+	cursor: pointer;
+	opacity: 0.3;
+	position: absolute;
+	right: 18px;
+	top: 2px;
+}
+
+#toggle-fullscreen-button * {
+	outline: none;
+}
+
+#toggle-fullscreen-button:hover {
+	opacity: 1;
+}
+
+#widget-container:fullscreen #toggle-fullscreen-button,
+:host-context(:fullscreen) #toggle-fullscreen-button {
+	background-image: url('{my-component-folder}/exit-fulllscreen.svg');
+}
+
+:host([allow-fullscreen = "0"]) #toggle-fullscreen-button, :host([allow-fullscreen = "false"]) #toggle-fullscreen-button {
+	display: none;
+}
+
+#widget-container:fullscreen {
+	background-color: white;
+}
+
+/* -------------------------------------------------------- */
+
+#table-container #error-message {
+	display: none;
+}
+
+#table-container.error #table, #table-container.error #obselsperpage {
+	display: none;
+}
+
+#table-container.error #error-message {
+	display: block;
+	color: red;
+}
+
+#toggle-reverse-button {
+	display: inline-block;
+	cursor: pointer;
+	background-repeat: no-repeat;
+	background-position: 0 0;
+	width: 16px;
+	height: 10px;
+	opacity: 0.3;
+	background-image: url('{my-component-folder}/bottom-oriented-triangle.svg');
+}
+
+#toggle-reverse-button:hover {
+	opacity: 1;
+}
+
+#toggle-reverse-button.reversed {
+	background-image: url('{my-component-folder}/top-oriented-triangle.svg');
+}
+
+#wait-message-container {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	vertical-align: middle;
+}
+
+#wait-message-overlay {
+	background-color: black;
+	opacity: 0.5;
+	width: 100%;
+	height: 100%;
+	z-index: 2;
+}
+
+#wait-message-content {
+	position: absolute;
+	top: 100px;
+	left: 50%;
+	transform: translate(-50%);
+	font-weight: bold;
+	font-size: 22pt;
+	display: inline-block;
+	color: white;
+	opacity: 1;
+	z-index: 3;
+}
+
+#table-container #wait-message-container {
+	display: none;
+}
+
+#table-container.pending #wait-message-container {
+	display: block;
+}

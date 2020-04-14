@@ -6,7 +6,7 @@ class KTBS4LA2IconTab extends TemplatedHTMLElement {
 	 * 
 	 */
 	constructor() {
-        super(import.meta.url, false, false);
+        super(import.meta.url, true, false);
 	}
 }
 

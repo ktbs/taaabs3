@@ -8,5 +8,5 @@
 	width="15" 
 	height="10" 
 	viewBox="0 0 14 9">
-		<polygon points="0 0, 7 9, 14 0" fill="black" stroke="black" />
+		<polygon points="1 9, 7 1, 13 9" fill="black" stroke="black" stroke-width="1" />
 </svg>

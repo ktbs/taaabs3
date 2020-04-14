@@ -1,6 +1,7 @@
 import {ResourceProxy} from "./ResourceProxy.js";
 import {Resource} from "./Resource.js";
 import {Model} from "./Model.js";
+import {Base} from "./Base.js";
 
 /**
  * Class for the "Method" resource type
@@ -8,14 +9,27 @@ import {Model} from "./Model.js";
 export class Method extends Resource {
 
 	/**
+	 * Gets the parent Base of this method
+	 * @return Base the method's parent base if any, or undefined if the base's parent is unknown (i.e. the resource hasn't been read or recorded yet)
+	 */
+	get parent() {
+		if(!this._parent) {
+			if(this._JSONData.inBase)
+				this._parent = ResourceProxy.get_resource(Base, this.resolve_link_uri(this._JSONData.inBase));
+		}
+
+		return this._parent;
+	}
+
+	/**
 	 * Gets the URI of the Method's parent Method
 	 * @return URL
 	 */
 	_get_parent_method_uri() {
-		if(this._JSONData.hasParentMethod)
-			return new URL(this._JSONData.hasParentMethod, this.uri);
-		else
-			return null;
+		if(!this._parent_method_uri && this._JSONData.hasParentMethod)
+			this._parent_method_uri = this.resolve_link_uri(this._JSONData.hasParentMethod);
+		
+		return this._parent_method_uri;
 	}
 
 	/**
@@ -23,12 +37,14 @@ export class Method extends Resource {
 	 * @return Method
 	 */
 	get parent_method() {
-		let parent_method_uri = this._get_parent_method_uri();
+		if(!this._parent_method) {
+			let parent_method_uri = this._get_parent_method_uri();
 
-		if(parent_method_uri)
-			return ResourceProxy.get_resource(Method, parent_method_uri);
-		else
-			return null;
+			if(parent_method_uri)
+				this._parent_method = ResourceProxy.get_resource(Method, parent_method_uri);
+		}
+
+		return this._parent_method;
 	}
 
 	/**
@@ -36,27 +52,29 @@ export class Method extends Resource {
 	 * @return URL
 	 */
 	_get_model_uri() {
-		let model_uri_string = null;
-		let parameters = this._JSONData.parameter;
+		if(!this._model_uri) {
+			let model_uri_string = null;
+			let parameters = this._JSONData.parameter;
 
-		if(parameters) {
-			for(let i = 0; (model_uri_string == null) && (i < parameters.length); i++) {
-				let parameterString = parameters[i];
-				let equalCharPos = parameterString.indexOf('=');
+			if(parameters) {
+				for(let i = 0; (model_uri_string == null) && (i < parameters.length); i++) {
+					let parameterString = parameters[i];
+					let equalCharPos = parameterString.indexOf('=');
 
-				if(equalCharPos != -1) {
-					let parameterKey = parameterString.substring(0, equalCharPos);
-					
-					if(parameterKey == "model")
-						model_uri_string = parameterString.substring(equalCharPos + 1);
+					if(equalCharPos != -1) {
+						let parameterKey = parameterString.substring(0, equalCharPos);
+						
+						if(parameterKey == "model")
+							model_uri_string = parameterString.substring(equalCharPos + 1);
+					}
 				}
 			}
+
+			if(model_uri_string)
+				this._model_uri = this.resolve_link_uri(model_uri_string);
 		}
 
-		if(model_uri_string)
-			return new URL(model_uri_string, this._uri);
-		else
-			return null;
+		return this._model_uri;
 	}
 
 	/**
@@ -64,11 +82,13 @@ export class Method extends Resource {
 	 * @return Model
 	 */
 	get model() {
-		let model_uri = this._get_model_uri();
+		if(!this._model) {
+			let model_uri = this._get_model_uri();
 
-		if(model_uri != null)
-			return ResourceProxy.get_resource(Model, this._get_model_uri());
-		else
-			return null;
+			if(model_uri != null)
+				this._model = ResourceProxy.get_resource(Model, this._get_model_uri());
+		}
+		
+		return this._model;
 	}
 }

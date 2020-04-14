@@ -1,0 +1,19 @@
+/*tr:nth-child(even) {
+    background: #CCC;
+}
+
+tr:nth-child(odd) {
+    background: #FFF;
+}*/
+
+td:first-child {
+    text-align: right;
+}
+
+td:last-child {
+    text-align: left;
+}
+
+tr.native-attribute td:first-child {
+    font-weight: bold;
+}

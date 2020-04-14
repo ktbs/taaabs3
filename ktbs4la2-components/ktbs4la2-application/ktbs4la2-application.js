@@ -1,11 +1,16 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
-
+import {ResourceProxy} from "../../ktbs-api/ResourceProxy.js";
+import {Ktbs} from "../../ktbs-api/Ktbs.js";
+import {Base} from "../../ktbs-api/Base.js";
+import {Model} from "../../ktbs-api/Model.js";
+import {Method} from "../../ktbs-api/Method.js";
+import {StoredTrace, ComputedTrace} from "../../ktbs-api/Trace.js";
 import "../ktbs4la2-overlay/ktbs4la2-overlay.js";
 import "../ktbs4la2-root-form/ktbs4la2-root-form.js";
 import "../ktbs4la2-nav-resource/ktbs4la2-nav-resource.js";
 import "../ktbs4la2-main-documentation/ktbs4la2-main-documentation.js";
 import "../ktbs4la2-main-resource/ktbs4la2-main-resource.js";
-import { ResourceProxy } from "../../ktbs-api/ResourceProxy.js";
+
 
 /**
  * 
@@ -352,6 +357,27 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_get_resource_class(resource_class_name) {
+		if(resource_class_name.match(/^[a-zA-Z0-9_]+$/)) {
+			try {
+				let JSClass = eval(resource_class_name);
+
+				if(JSClass && (typeof JSClass === 'function') && (/^\s*class\s+/.test(JSClass.toString())))
+					return JSClass;
+				else
+					throw new Error("\"" + resource_class_name + "\" is not a class name.");
+			}
+			catch(error) {
+				throw new Error("Unknown class \"" + resource_class_name + "\"");
+			}
+		}
+		else
+			throw new Error("Invalid class name \"" + resource_class_name + "\"");
+	}
+
+	/**
+	 * 
+	 */
 	setMainObject(main_type = "documentation", main_id = null, ktbs_type = null, ktbs_label = null, skipHistoryPush = false) {
 		// remove previous main content
 		let mainElements = this.querySelectorAll("[slot = \"main\"]");
@@ -434,7 +460,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					this._selectedNavElement = newSelectedNavElement;
 				}
 
-				let ktbsResource = ResourceProxy.get_resource(ktbs_type, main_id);
+				let ktbsResource = ResourceProxy.get_resource(this._get_resource_class(ktbs_type), main_id);
 				this._selectedResourceHierarchy.unshift(ktbsResource);
 				this._highlightNavParent(ktbsResource);
 

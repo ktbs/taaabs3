@@ -1,0 +1,77 @@
+<ktbs4la2-document-header id="ktbs4la2-timeline-fonts">
+    <style>
+        @font-face {
+            font-family: 'unifont';
+            src: url('{my-component-folder}/../ktbs4la2-timeline/fonts/unifont.woff2') format("woff2");
+        }
+
+        @font-face {
+            font-family: 'unifont-upper';
+            src: url('{my-component-folder}/../ktbs4la2-timeline/fonts/unifont_upper.woff2') format("woff2");
+            unicode-range: U+10000-10FFFF;
+        }
+    </style>
+</ktbs4la2-document-header>
+
+<div id="widget-container">
+	<div id="table-container" class="pending">
+		<table id="table">
+			<col />
+			<col />
+			<col />
+			<col />
+			<col />
+			<col />
+
+			<colgroup span="2"></colgroup>
+
+			<thead id="table-header">
+				<tr id="table-header-main-cols">
+					<th rowspan="2" class="checkbox_cell">
+						<input type="checkbox" id="select_all_obsels" title="Select/unselect all currently displayed obsels" />
+					</th>
+
+					<th id="table-header-id" scope="col" rowspan="2">{translate: '@id'}</th>
+					<th id="table-header-type" scope="col" rowspan="2">{translate: 'Obsel type'}</th>
+					<th id="table-header-subject" scope="col" rowspan="2">{translate: 'Subject'}</th>
+					<th id="table-header-begin" scope="col" rowspan="2">{translate: 'Begin'}</th>
+					<th id="table-header-end" scope="col" rowspan="2">{translate: 'End'}</th>
+					<th id="table-header-attributes" colspan="2" scope="colgroup">{translate: 'Attributes'}</th>
+				</tr>
+
+				<tr id="table-header-attributes-sub-cols">
+					<th id="table-header-attributes-type" scope="col">{translate: 'Attribute type'}</th>
+					<th id="table-header-attributes-value" scope="col">{translate: 'Value'}</th>
+				</tr>
+			</thead>
+
+			<tbody id="table-body"></tbody>
+
+			<tfoot id="table-footer">
+				<tr>
+					<th colspan="8">Lorem ipsum dolor ...</th>
+				</tr>
+			</tfoot>
+		</table>
+
+		<div id="error-message"></div>
+
+		<div id="wait-message-container">
+			<div id="wait-message-overlay"></div>
+			
+			<div id="wait-message-content">{translate: 'Please wait...'}</div>
+		</div>
+	</div>
+
+	<div id="scroll-tools" disabled>
+		<button id="scroll-top-button"></button>
+
+		<div id="scroll-bar">
+			<div id="scroll-bar-handle"></div>
+		</div>
+		
+		<button id="scroll-bottom-button"></button>
+	</div>
+
+	<button id="toggle-fullscreen-button" title="{translate: 'Toggle fullscreen'}"></button>
+</div>

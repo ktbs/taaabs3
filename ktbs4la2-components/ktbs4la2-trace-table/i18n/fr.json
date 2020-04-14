@@ -11,7 +11,10 @@
 	"Clear": "Effacer",
 	"Obsels / page": "Obsels / page",
 	"All": "Tous",
-	"Type": "Type",
+	"Obsel type": "Type d'obsel",
+	"Attribute type": "Type d'attribut",
+	"Value": "Valeur",
+	"Subject": "Sujet",
 	"@id": "@id",
 	"Begin": "Début",
 	"End": "Fin",
@@ -20,5 +23,7 @@
 	"Error": "Erreur",
 	"Reverse obsel ordering": "Inverser l'ordre des obsels",
 	"Restore normal obsel ordering": "Rétablir l'ordre normal des obsels",
-	"Querying server, please wait...": "Interrogation du serveur en cours, veuillez patienter..."
+	"Please wait...": "Veuillez patienter...",
+	"Select/Unselect this obsel": "Séléctionner/Désélectionner cet obsel",
+	"Toggle fullscreen": "Activer/désactiver le mode plein écran"
 }

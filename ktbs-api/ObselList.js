@@ -1,6 +1,8 @@
 import {Resource} from "./Resource.js";
 import {ObselListPage} from "./ObselListPage.js";
 import {ResourceProxy} from "./ResourceProxy.js";
+import {Trace} from "./Trace.js";
+import {Obsel} from "./Obsel.js";
 
 /**
  * Class to help reading obsels list from a Trace
@@ -67,6 +69,19 @@ export class ObselList extends Resource {
 		 */
 		this._reverse = null;
 	}
+
+	/**
+     * Gets the Trace the ObselList belongs to
+	 * @return Trace
+     */
+    get parent() {
+		if(!this._parent) {
+			let parent_trace_uri = this.resolve_link_uri("./");
+			this._parent = ResourceProxy.get_resource(Trace, parent_trace_uri);
+		}
+
+		return this._parent;
+    }
 
 	/**
 	 * Always returns true for ObselList instances since they are never modifiable.
@@ -152,12 +167,12 @@ export class ObselList extends Resource {
 		if(this._reverse && (this._reverse != ""))
 			params.push("reverse=" + this._reverse);
 
-		let dataReadUri = this.uri.toString();
+		let first_page_uri_string = this.uri.toString();
 
 		if(params.length > 0)
-			dataReadUri += "?" + params.join("&");
+			first_page_uri_string += "?" + params.join("&");
 
-		return new URL(dataReadUri);
+		return new URL(first_page_uri_string);
 	}
 
 	/**
@@ -172,16 +187,29 @@ export class ObselList extends Resource {
 
 	/**
 	 * Gets all the obsels of the obsel list
-	 * @return Object[]
+	 * @return Obsel[]
 	 */
 	get obsels() {
 		let obsels = new Array();
 
 		if(this._JSONData.obsels instanceof Array) {
-			for(let i = 0; i < this._JSONData.obsels.length; i++)
-				obsels.push(this._JSONData.obsels[i]);
+			for(let i = 0; i < this._JSONData.obsels.length; i++) {
+				let obsel_data = this._JSONData.obsels[i];
+				let obsel_uri = this.resolve_link_uri(obsel_data["@id"]);
+				let obsel_is_known = ResourceProxy.has_resource(Obsel, obsel_uri);
+				let obsel = ResourceProxy.get_resource(Obsel, obsel_uri);
+
+				if(!obsel_is_known) {
+					obsel.JSONData = obsel_data;
+					obsel.context = this.context;
+					obsel.parent = this.parent;
+					obsel.syncStatus = "in_sync";
+				}
+
+				obsels.push(obsel);
+			}
 		}
-		
-		return obsels;
+
+        return obsels;
 	}
 }

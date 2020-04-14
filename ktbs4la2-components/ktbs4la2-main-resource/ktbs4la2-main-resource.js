@@ -1,10 +1,4 @@
 import {KtbsResourceElement} from "../common/KtbsResourceElement.js";
-import {Ktbs} from "../../ktbs-api/Ktbs.js";
-import {Base} from "../../ktbs-api/Base.js";
-import {Model} from "../../ktbs-api/Model.js";
-import {StoredTrace} from "../../ktbs-api/StoredTrace.js";
-import {Method} from "../../ktbs-api/Method.js";
-import {ComputedTrace} from "../../ktbs-api/ComputedTrace.js";
 import * as KTBSErrors from "../../ktbs-api/Errors.js";
 
 import "../ktbs4la2-main-subsection/ktbs4la2-main-subsection.js";
@@ -13,7 +7,7 @@ import "../ktbs4la2-add-resource-button/ktbs4la2-add-resource-button.js";
 import "../ktbs4la2-model-diagram/ktbs4la2-model-diagram.js";
 import "../ktbs4la2-trace-stats/ktbs4la2-trace-stats.js";
 import "../ktbs4la2-icon-tabs/ktbs4la2-icon-tabs-group.js";
-import "../ktbs4la2-trace-obsels/ktbs4la2-trace-obsels.js";
+import "../ktbs4la2-trace-table/ktbs4la2-trace-table.js";
 import "../ktbs4la2-trace-timeline/ktbs4la2-trace-timeline.js";
 
 /**
@@ -94,20 +88,20 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 this.resourceTypeLabel.innerText = this._translateString(KTBS4LA2MainResource._getResourceTypeLabel(resourceType));
 
                 if((resourceType == "ComputedTrace") || (resourceType == "StoredTrace")) {
-                    let statsElement = document.createElement("ktbs4la2-trace-stats");
-                    statsElement.setAttribute("uri", this.getAttribute("uri"));
-                    statsElement.setAttribute("slot", "stats");
-                    this.appendChild(statsElement);
-
                     let obselsTimelineElement = document.createElement("ktbs4la2-trace-timeline");
                     obselsTimelineElement.setAttribute("uri", this.getAttribute("uri"));
                     obselsTimelineElement.setAttribute("slot", "obsels-timeline");
                     this.appendChild(obselsTimelineElement);
 
-                    let obselsTableElement = document.createElement("ktbs4la2-trace-obsels");
-                    obselsTableElement.setAttribute("uri", this.getAttribute("uri") + "@obsels");
+                    let obselsTableElement = document.createElement("ktbs4la2-trace-table");
+                    obselsTableElement.setAttribute("uri", this.getAttribute("uri"));
                     obselsTableElement.setAttribute("slot", "obsels-table");
                     this.appendChild(obselsTableElement);
+
+                    let statsElement = document.createElement("ktbs4la2-trace-stats");
+                    statsElement.setAttribute("uri", this.getAttribute("uri"));
+                    statsElement.setAttribute("slot", "stats");
+                    this.appendChild(statsElement);
                 }
             });
             

@@ -77,17 +77,27 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 			});
 		else if(attributeName == "color")
 			this._componentReady.then(() => {
-				if(this.hasAttribute("symbol")) {
-					this._marker.style.color = newValue;
-					this._marker.style.backgroundColor = "transparent";
-				}
-				else
-					this._marker.style.backgroundColor = newValue;
+				if(newValue != null) {
+					if(this.hasAttribute("symbol")) {
+						this._marker.style.color = newValue;
+						this._marker.style.backgroundColor = "transparent";
+					}
+					else
+						this._marker.style.backgroundColor = newValue;
 
-				this._popupHeader.style.backgroundColor = newValue;
-				this._popupBody.style.borderColor = newValue;
-				this._popupArrow.style.borderColor = newValue;
-				this._popup.className = lightOrDark(newValue);
+					this._popupHeader.style.backgroundColor = newValue;
+					this._popupBody.style.borderColor = newValue;
+					this._popupArrow.style.borderColor = newValue;
+					this._popup.className = lightOrDark(newValue);
+				}
+				else {
+					this._marker.style.color = null;
+					this._marker.style.backgroundColor = null;
+					this._popupHeader.style.backgroundColor = null;
+					this._popupBody.style.borderColor = null;
+					this._popupArrow.style.borderColor = null;
+					this._popup.className = null;
+				}
 			});
 		else if(attributeName == "symbol")
 			this._componentReady.then(() => {

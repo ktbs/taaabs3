@@ -39,8 +39,12 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 			this._rejectStatsLoaded = reject;
 		});
 
-		this._statsLoaded.then(() => {
+		this._statsLoaded
+		.then(() => {
 			this._onStatsLoaded();
+		})
+		.catch((error) => {
+			this._setError(error);
 		});
 	}
 
@@ -228,6 +232,8 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 	 * 
 	 */
 	_setError(error) {
+		this.emitErrorEvent(error);
+		
 		this._componentReady.then(() => {
 			this._container.className = "error";
 			this._errorMessage.innerText = "Error : " + error;
