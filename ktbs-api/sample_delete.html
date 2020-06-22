@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+        <title>KTBS-API sample : delete</title>
+	</head>
+
+	<body>
+        <h1>KTBS-API sample : delete</h1>
+
+        <p>
+            This sample file demonstrates how to delete resources from a Ktbs service using the &quot;KTBS-API&quot; ES6 library.<br />
+            It attempts to recursively delete all the children of a given base and then delete the parent Base itself.
+        </p>
+
+        <p>
+            It also can be used as a &quot;cleanup&quot; tool, to undo what has been done by the <a href="sample_create.html">sample_create.html</a> script.
+        </p>
+
+        <p>
+            <strong style="color: red;">Open browser's console to see execution results.</strong>
+        </p>
+
+        <script type="module">
+            import {Base} from './Base.js'
+
+            function delete_base_recursive(base) {
+                let resolveBaseDeleted;
+                let rejectBaseDeleted;
+
+                const baseDeletedPromise = new Promise(function(resolve, reject) {
+                    resolveBaseDeleted = resolve;
+                    rejectBaseDeleted = reject;
+                }.bind(this));
+                
+                console.log("Getting Base " + base.uri + "...");
+                base.get().then(() => {
+                    console.log("Base responded successfully");
+
+                    // --- Delete Base's sub-Bases ---
+                    console.log("Deleting Base's sub-Bases ...");
+                    let subBasesDeletePromises = new Array();
+
+                    for(let i = 0; i < base.bases.length; i++) {
+                        const aSubBase = base.bases[i];
+                        console.log("Deleting sub base " + aSubBase.uri);
+                        const aSubBaseDeletePromise = delete_base_recursive(aSubBase);
+                        subBasesDeletePromises.push(aSubBaseDeletePromise);
+                    }
+
+                    const allSubBasesDeletedPromise = Promise.all(subBasesDeletePromises);
+
+                    allSubBasesDeletedPromise.then(() => {
+                        console.log("All sub bases deleted successfully");
+
+                        // --- Delete Base's computed traces ---
+                        console.log("Deleting Base's computed traces ...");
+                        let computedTracesDeletePromises = new Array();
+
+                        for(let i = 0; i < base.computed_traces.length; i++) {
+                            const aComputedTrace = base.computed_traces[i];
+                            console.log("Deleting computed trace " + aComputedTrace.uri);
+
+                            const aComputedTraceDeletePromise = aComputedTrace.delete();
+
+                            aComputedTraceDeletePromise.then(() => {
+                                console.log("Computed trace " + aComputedTrace.uri + " deleted successfully");
+                            });
+
+                            computedTracesDeletePromises.push(aComputedTraceDeletePromise);
+                        }
+
+                        const allComputedTracesDeletedPromise = Promise.all(computedTracesDeletePromises);
+
+                        allComputedTracesDeletedPromise.then(() => {
+                            console.log("All computed traces deleted successfully");
+
+                            // --- Delete Base's stored traces ---
+                            console.log("Deleting Base's stored traces ...");
+                            let storedTracesDeletePromises = new Array();
+
+                            for(let i = 0; i < base.stored_traces.length; i++) {
+                                const aStoredTrace = base.stored_traces[i];
+                                console.log("Deleting stored trace " + aStoredTrace.uri);
+
+                                const aStoredTraceDeletePromise = aStoredTrace.delete();
+
+                                aStoredTraceDeletePromise.then(() => {
+                                    console.log("Stored trace " + aStoredTrace.uri + " deleted successfully");
+                                });
+
+                                storedTracesDeletePromises.push(aStoredTraceDeletePromise);
+                            }
+
+                            const allStoredTracesDeletedPromise = Promise.all(storedTracesDeletePromises);
+
+                            allStoredTracesDeletedPromise.then(() => {
+                                console.log("All stored traces deleted successfully");
+
+                                // --- Delete Base's methods ---
+                                console.log("Deleting Base's methods ...");
+                                let methodsDeletePromises = new Array();
+
+                                for(let i = 0; i < base.methods.length; i++) {
+                                    const aMethod = base.methods[i];
+                                    console.log("Deleting method " + aMethod.uri);
+
+                                    const aMethodDeletePromise = aMethod.delete();
+
+                                    aMethodDeletePromise.then(() => {
+                                        console.log("Method " + aMethod.uri + " deleted successfully");
+                                    });
+
+                                    methodsDeletePromises.push(aMethodDeletePromise);
+                                }
+
+                                const allMethodsDeletedPromise = Promise.all(methodsDeletePromises);
+
+                                allMethodsDeletedPromise.then(() => {
+                                    console.log("All methods deleted successfully");
+
+                                    // --- Delete Base's models ---
+                                    console.log("Deleting Base's models ...");
+                                    let modelsDeletePromises = new Array();
+
+                                    for(let i = 0; i < base.models.length; i++) {
+                                        const aModel = base.models[i];
+                                        console.log("Deleting model " + aModel.uri);
+
+                                        const aModelDeletePromise = aModel.delete();
+
+                                        aModelDeletePromise.then(() => {
+                                            console.log("Model " + aModel.uri + " deleted successfully");
+                                        });
+
+                                        modelsDeletePromises.push(aModelDeletePromise);
+                                    }
+
+                                    const allModelsDeletedPromise = Promise.all(modelsDeletePromises);
+
+                                    allModelsDeletedPromise.then(() => {
+                                        console.log("All models deleted successfully");
+
+                                        // --- Deleting parent base ---
+                                        Promise.all([allComputedTracesDeletedPromise, allStoredTracesDeletedPromise, allMethodsDeletedPromise, allModelsDeletedPromise]).then(() => {
+                                            console.log("All Base's children deleted successfully");
+                                            console.log("Now deleting parent Base");
+
+                                            base.delete().then(() => {
+                                                console.log("Parent Base deleted successfully");
+                                                resolveBaseDeleted();
+                                            })
+                                            .catch((error) => {
+                                                rejectBaseDeleted(error);
+                                            });
+                                        })
+                                        .catch((error) => {
+                                            rejectBaseDeleted(error);
+                                        });
+                                    })
+                                    .catch((error) => {
+                                        rejectBaseDeleted(error);
+                                    });
+                                })
+                                .catch((error) => {
+                                    rejectBaseDeleted(error);
+                                });
+                            })
+                            .catch((error) => {
+                                rejectBaseDeleted(error);
+                            });
+                        })
+                        .catch((error) => {
+                            rejectBaseDeleted(error);
+                        });
+                    });
+                })
+                .catch((error) => {
+                    rejectBaseDeleted(error);
+                });
+
+                return baseDeletedPromise;
+            }
+
+            // To be able to run this sample, change the URL below for a Ktbs base of your choice
+            //const myKtbsBase_uri = new URL("http://mydomain.com/ktbs/test-base/");
+            const myKtbsBase_uri = new URL("https://liris-ktbs01.insa-lyon.fr:8000/public/test-base/");
+            const myKtbsBase = new Base(myKtbsBase_uri);
+            delete_base_recursive(myKtbsBase);
+        </script>
+	</body>
+</html>

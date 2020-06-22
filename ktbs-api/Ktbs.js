@@ -2,6 +2,7 @@ import {ResourceProxy} from "./ResourceProxy.js";
 import {Resource} from "./Resource.js";
 import {Base} from "./Base.js";
 import {Method} from "./Method.js";
+import {KtbsError} from "./Errors.js";
 
 /**
  * Class for the Ktbs root resource type
@@ -12,12 +13,15 @@ export class Ktbs extends Resource {
 	 * Constructor.
 	 * Since the Ktbs root is read-only through the REST service, it can not be created, updated or removed with the current API.
 	 * @param URL or string uri the uri of the KtbsRoot : REQUIRED !
+	 * @throws KtbsError throws a KtbsError when no uri is provided as an argument
 	 */
 	constructor(uri) {
-		if(uri)
+		if(uri) {
 			super(uri);
+			this._JSONData["@type"] = "Ktbs";
+		}
 		else
-			throw new Error("Missing required parameter \"uri\", or empty value");
+			throw new KtbsError("Missing required parameter \"uri\", or empty value");
 	}
 
 	/**
@@ -37,15 +41,6 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * Sets the parent resource of this resource. Always throws an Error for Ktbs Root instances.
-	 * @param Resource parent the new parent for the resource (must be an instance of either "Ktbs" or "Base").
-	 * @throws Error Always throws an Error for Ktbs Root instances.
-	 */
-	set parent(parent) {
-		throw new Error("Resource's parent can not be set for Ktbs Root instances");
-	}
-
-	/**
 	 * Gets the software version of the service hosting the Ktbs root
 	 * @return string
 	 */
@@ -62,49 +57,44 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * Remove this resource from the KTBS. If the resource can not be removed, an exception must be raised.
-	 */
-	remove() {
-		throw new Error("The Ktbs root can not be removed !");
-	}
-
-	/**
-	 * Gets the URIs of the builtin methods supported by the kTBS service
-	 * @return URL[]
-	 */
-	_get_builtin_methods_uris() {
-		if(!this._builtin_methods_uris) {
-			this._builtin_methods_uris = new Array();
-
-			if(this._JSONData.hasBuiltinMethod instanceof Array) {
-				for(let i = 0; i < this._JSONData.hasBuiltinMethod.length; i++) {
-					let method_uri_string = this._JSONData.hasBuiltinMethod[i];
-					let method_uri = this.resolve_link_uri(method_uri_string);
-					this._builtin_methods_uris.push(method_uri);
-				}
-			}
-		}
-		
-		return this._builtin_methods_uris;
-	}
-
-	/**
 	 * Gets the builtin methods supported by the kTBS service
 	 * @return Method[]
 	 */
 	get builtin_methods() {
 		if(!this._builtin_methods) {
 			this._builtin_methods = new Array();
-			let builtin_methods_uris = this._get_builtin_methods_uris();
 
-			for(let i = 0; i < builtin_methods_uris.length; i++) {
-				let builtin_method_uri = builtin_methods_uris[i];
-				let builtin_method = ResourceProxy.get_resource(Method, builtin_method_uri);
-				this._builtin_methods.push(builtin_method);
+			if(this._JSONData.hasBuiltinMethod instanceof Array) {
+				for(let i = 0; i < this._JSONData.hasBuiltinMethod.length; i++) {
+					const builtin_method_id = this._JSONData.hasBuiltinMethod[i];
+					const aBuiltinMethod = this.get_builtin_method_by_id(builtin_method_id);
+					this._builtin_methods.push(aBuiltinMethod);
+				}
 			}
 		}
 
 		return this._builtin_methods;
+	}
+
+	/**
+	 * 
+	 */
+	supports_builtin_method(builtin_method_id) {
+		return (
+				this._JSONData.hasBuiltinMethod
+			&&	(this._JSONData.hasBuiltinMethod instanceof Array)
+			&&	this._JSONData.hasBuiltinMethod.includes(builtin_method_id)
+		);
+	}
+
+	/**
+	 * 
+	 */
+	get_builtin_method_by_id(builtin_method_id) {
+		if(this.supports_builtin_method(builtin_method_id))
+			return Method.getBuiltinMethod(builtin_method_id);
+		else
+			throw new KtbsError("This Ktbs service does not support builtin method \"" + builtin_method_id + "\"");
 	}
 
 	/**
@@ -144,5 +134,21 @@ export class Ktbs extends Resource {
 		}
 
 		return this._bases;
+	}
+
+	/**
+	 * Gets the data needed to post the new resource to it's parent
+	 * @returns Object
+	 */
+	_getPostData() {
+		return null;
+	}
+
+	/**
+	 * Deletes the current resource
+	 * @throws KtbsError always throws a KtbsError when invoked for a Ktbs as Ktbs roots can not be deleted
+	 */
+	delete(abortSignal = null, credentials = null) {
+		throw new KtbsError("Ktbs roots can not be deleted");
 	}
 }

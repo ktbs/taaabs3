@@ -11,15 +11,24 @@ import {Method} from "./Method.js";
 export class Base extends Resource {
 
 	/**
+	 * Constructor
+	 * @param URL or string uri the resource's URI
+	 */
+	constructor(uri = null) {
+		super(uri);
+		this._JSONData["@type"] = "Base";
+	}
+
+	/**
 	 * Gets the parent resource of this resource.
 	 * @return Resource the resource's parent resource if any, or undefined if the resource's parent is unknown (i.e. the resource hasn't been read or recorded yet), or null if the resource doesn't have any parent (i.e. Ktbs Root).
 	 */
 	get parent() {
 		if(!this._parent) {
-			if(this._JSONData["inBase"])
-				this._parent = ResourceProxy.get_resource(Base, this.resolve_link_uri(this._JSONData["inBase"]));
-			else if(this._JSONData["inRoot"])
-				this._parent = ResourceProxy.get_resource(Ktbs, this.resolve_link_uri(this._JSONData["inRoot"]));
+			if(this._JSONData.inBase)
+				this._parent = ResourceProxy.get_resource(Base, this.resolve_link_uri(this._JSONData.inBase));
+			else if(this._JSONData.inRoot)
+				this._parent = ResourceProxy.get_resource(Ktbs, this.resolve_link_uri(this._JSONData.inRoot));
 		}
 
 		return this._parent;
@@ -97,7 +106,6 @@ export class Base extends Resource {
 						let model_uri_string = this._JSONData.contains[i]["@id"];
 						let model_uri = this.resolve_link_uri(model_uri_string);
 						let model = ResourceProxy.get_resource(Model, model_uri);
-
 						let model_label = this._JSONData.contains[i]["label"];
 
 						if(model_label && !model.label)
@@ -126,7 +134,6 @@ export class Base extends Resource {
 						let method_uri_string = this._JSONData.contains[i]["@id"];
 						let method_uri = this.resolve_link_uri(method_uri_string);
 						let method = ResourceProxy.get_resource(Method, method_uri);
-
 						let method_label = this._JSONData.contains[i]["label"];
 
 						if(method_label && !method.label)

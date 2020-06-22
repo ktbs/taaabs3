@@ -36,7 +36,7 @@ export class Attribute {
      */
     get type_id() {
         if(!this._type_id) {
-            let type_uri = this._parentObsel.resolve_link_uri(this._type_link);
+            let type_uri = this._parentObsel.uri?this._parentObsel.resolve_link_uri(this._type_link):this._type_link;
 
             if(type_uri.hash)
                 this._type_id = decodeURIComponent(type_uri.hash.substring(1));

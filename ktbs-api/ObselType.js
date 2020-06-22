@@ -1,3 +1,7 @@
+import {Model} from "./Model.js";
+import {AttributeType} from "./AttributeType.js";
+import {KtbsError} from "./Errors.js";
+
 /**
  * Class for Obsel types. Please note that this class is NOT a descendant from "Resource". Therefore, ObselType instances don't support get/put/post/delete as Obsel types data management is the responsibility of their respective parent Model instance.
  */
@@ -8,7 +12,7 @@ export class ObselType {
      * @param Model parentModel
      * @param Object JSONData 
      */
-    constructor(parentModel, JSONData) {
+    constructor(parentModel = null, JSONData = {"@type": "ObselType"}) {
 
         /**
          * 
@@ -63,6 +67,16 @@ export class ObselType {
     get parent_model() {
         return this._parentModel;
     }
+
+    /**
+	 * 
+	 */
+	set parent_model(new_parent_model) {
+		if(new_parent_model instanceof Model)
+			this._parentModel = new_parent_model;
+		else
+			throw new TypeError("New value for parent_model property must be of type Model.");
+	}
 
     /**
      * Gets the default color (if defined) to use for representing Obsels of the current type
@@ -175,5 +189,63 @@ export class ObselType {
 	 */
 	set comment(comment) {
 		this._JSONData["http://www.w3.org/2000/01/rdf-schema#comment"] = comment;
-	}
+    }
+
+    /**
+     * 
+     */
+    get attribute_types() {
+        if(!this._attribute_types) {
+            this._attribute_types = new Array();
+
+            if(this._parentModel) {
+                let model_attribute_types = this._parentModel.attribute_types;
+
+                for(let i = 0; i < model_attribute_types.length; i++) {
+                    let anAttributeType = model_attribute_types[i];
+
+                    if(anAttributeType.appliesToObselType(this))
+                        this._attribute_types.push(anAttributeType);
+                }
+            }
+        }
+
+        return this._attribute_types;
+    }
+
+    /**
+     * 
+     */
+    set attribute_types(new_attribute_types) {
+        if(new_attribute_types instanceof Array) {
+            for(let i = 0; i < new_attribute_types.length; i++)
+                if(!(new_attribute_types[i] instanceof AttributeType))
+                    throw new TypeError("New value for attribute_types property must be an array of AttributeType.");
+
+            for(let i = 0; i < new_attribute_types.length; i++)
+                if(this.parent_model && new_attribute_types[i].parent_model && (new_attribute_types[i].parent_model != this.parent_model))
+                    throw new KtbsError("Cannot associate an ObselType and an AttributeType from two different models");
+
+            for(let i = 0; i < new_attribute_types.length; i++)
+                if(!new_attribute_types[i].obsel_types.includes(this))
+                    new_attribute_types[i].obsel_types.push(this);
+
+            this._attribute_types = new_attribute_types;
+        }
+        else
+            throw new TypeError("New value for attribute_types property must be an array of AttributeType.");
+    }
+    
+    /**
+     * 
+     */
+    _getPostData() {
+        if(this._parentModel) {
+            let postData = this._JSONData;
+            postData["@id"] = this._parentModel.id + postData["@id"];
+            return postData;
+        }
+		else
+			throw new KtbsError("ObselType POST data cannot be built before the ObselType's parent model has been set");
+    }
 }

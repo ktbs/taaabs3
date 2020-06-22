@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+        <title>KTBS-API sample : create</title>
+	</head>
+
+	<body>
+        <h1>KTBS-API sample : create</h1>
+
+        <p>
+            This sample file demonstrates how to create resources on a Ktbs service using the &quot;KTBS-API&quot; ES6 library.<br />
+            It attempts to create :
+            <ul>
+                <li>a new base in a given Ktbs service</li>
+                <li>a new model in this base</li>
+                <li>a new stored trace complying to this model in the new base</li>
+                <li>some new obsels in this stored trace (created single or by collection)</li>
+            </ul>
+        </p>
+
+        <p>
+            To easily delete the resources created by this sample, you can run <a href="sample_delete.html">sample_delete.html</a>.
+        </p>
+
+        <p>
+            <strong style="color: red;">Open browser's console to see execution results.</strong>
+        </p>
+
+        <script type="module">
+            import {Ktbs} from './Ktbs.js';
+            import {Base} from './Base.js';
+            import {Model} from './Model.js';
+            import {ObselType} from './ObselType.js';
+            import {AttributeType} from './AttributeType.js';
+            import {StoredTrace} from './Trace.js';
+            import {Obsel} from './Obsel.js';
+            import {Attribute} from './Attribute.js';
+            import {Method} from './Method.js';
+            import {ComputedTrace} from './Trace.js';
+
+            // To be able to run this sample, change the URL below for a Ktbs service of your choice
+            //const myKtbsRoot_uri = new URL("http://mydomain.com/ktbs/");
+            const myKtbsRoot_uri = new URL("https://liris-ktbs01.insa-lyon.fr:8000/public/");
+            const myKtbsRoot = new Ktbs(myKtbsRoot_uri);
+
+            console.log("Getting Ktbs root ...");
+            myKtbsRoot.get().then(() => {
+                console.log("Ktbs root responded successfully.");
+                console.log("Creating a new base ...");
+                const newBase = new Base();
+                newBase.id = "test-base/";
+                newBase.label = "Tests Base";
+
+                myKtbsRoot.post(newBase).then(() => {
+                    console.log("New base posted successfully to Ktbs service root");
+
+                    // we have to perform a GET to the newly created resource in order to synchronize any data added/modified server-side and get an Etag for the resource
+                    newBase.get().then(() => {
+                        console.log("Creating a new model ...");
+
+                        const newAttributeType = new AttributeType();
+                        newAttributeType.id = "value";
+                        newAttributeType.label = "Value";
+                        newAttributeType.data_types.push("xsd:string");
+                        
+                        const newObselType = new ObselType();
+                        newObselType.id = "SimpleObsel";
+                        newObselType.label = "Simple obsel";
+                        newObselType.attribute_types.push(newAttributeType);
+
+                        const newModel = new Model();
+                        newModel.id = "test-model";
+                        newModel.label = "Test model";
+                        newModel.obsel_types.push(newObselType);
+
+                        newBase.post(newModel).then(() => {
+                            console.log("New model posted successfully to base");
+
+                            // we have to perform a GET to the newly created resource in order to synchronize any data added/modified server-side and get an Etag for the resource
+                            newModel.get().then(() => {
+                                console.log("Creating a new stored trace ...");
+                                const newStoredTrace = new StoredTrace();
+                                newStoredTrace.id = "test-stored-trace/";
+                                newStoredTrace.label = "Test stored trace";
+                                newStoredTrace.origin = "1970-01-01T00:00:00Z";
+                                newStoredTrace.model = newModel;
+
+                                const postNewStoredTracePromise = newBase.post(newStoredTrace);
+                                
+                                postNewStoredTracePromise.then(() => {
+                                    console.log("New stored trace posted successfully to base");
+
+                                    // we have to perform a GET to the newly created resource in order to synchronize any data added/modified server-side and get an Etag for the resource
+                                    newStoredTrace.get().then(() => {
+                                        console.log("Adding a single Obsel to the new stored trace");
+
+                                        const newSingleObsel = new Obsel();
+                                        newSingleObsel.type = newObselType;
+                                        newSingleObsel.add_attribute(newAttributeType, "test value");
+
+                                        newStoredTrace.post(newSingleObsel).then(() => {
+                                            console.log("New single Obsel successfully posted to the new stored trace");
+                                        });
+
+                                        console.log("Adding a collection of Obsels to the new stored trace");
+                                        let newObselsCollection = new Array();
+
+                                        for(let i = 0; i < 100; i++) {
+                                            const newObsel = new Obsel();
+                                            newObsel.type = newObselType;
+                                            newObsel.add_attribute(newAttributeType, i.toString());
+                                            newObselsCollection.push(newObsel);
+                                        }
+
+                                        newStoredTrace.post(newObselsCollection).then(() => {
+                                            console.log("Obsels collection successfully posted to the new stored trace");
+                                        });
+                                    });
+                                });
+
+                                console.log("Creating a new custom method in the new base");
+                                const newMethod = new Method();
+                                newMethod.id = "test-method";
+                                newMethod.label = "Test method";
+                                newMethod.parent_method = myKtbsRoot.get_builtin_method_by_id("hrules");
+                                newMethod.parameters["model"] = newModel.uri;
+                                
+                                newMethod.parameters["rules"] = [{
+                                    "id": newObselType.uri,
+                                    "rules": [{
+                                        "attributes": [{
+                                            "uri": newAttributeType.uri,
+                                            "operator": ">=",
+                                            "value": "50"
+                                        }]
+                                    }]
+                                }];
+
+                                const postNewMethodPromide = newBase.post(newMethod);
+                                
+                                postNewMethodPromide.then(() => {
+                                    console.log("New custom method posted successfully to base");
+                                });
+
+                                Promise.all([postNewStoredTracePromise, postNewMethodPromide]).then(() => {
+                                    console.log("Creating a new computed trace ...")
+                                    const newComputedTrace = new ComputedTrace();
+                                    newComputedTrace.id = "test-computed-trace/";
+                                    newComputedTrace.label = "Test computed trace";
+                                    newComputedTrace.method = newMethod;
+                                    newComputedTrace.source_traces.push(newStoredTrace);
+
+                                    newBase.post(newComputedTrace).then(() => {
+                                        console.log("New computed trace posted successfully to base");
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        </script>
+	</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+        <title>KTBS-API sample : read</title>
+	</head>
+
+	<body>
+        <h1>KTBS-API sample : read</h1>
+
+        <p>
+            This sample file demonstrates how to read resources from a Ktbs service using the &quot;KTBS-API&quot; ES6 library.<br />
+            It recursively gets all children element in a Ktbs Base (including sub-bases), then logs some read data in the console.
+        </p>
+
+        <p>
+            <strong style="color: red;">Open browser's console to see execution results.</strong>
+        </p>
+
+        <script type="module">
+            import {Base} from './Base.js';
+
+            function read_base_recursive(base) {
+                console.log("Getting Base at uri : " + base.uri + " ...");
+
+                base.get().then(() => {
+                    console.log("Base " + base.uri + " OK");
+
+                    if(base.label)
+                        console.log("label : " + base.label);
+
+                    console.log("Getting trace models of base " + base.uri);
+
+                    for(let i = 0; i < base.models.length; i++) {
+                        let aModel = base.models[i];
+                        
+                        aModel.get().then(() => {
+                            console.log("Model " + aModel.uri + " OK");
+
+                            if(aModel.label)
+                                console.log("label : " + aModel.label);
+                        });
+                    }
+
+                    console.log("Getting stored traces of base " + base.uri);
+
+                    for(let i = 0; i < base.stored_traces.length; i++) {
+                        let aStoredTrace = base.stored_traces[i];
+                        
+                        aStoredTrace.get().then(() => {
+                            console.log("Stored trace " + aStoredTrace.uri + " OK");
+
+                            if(aStoredTrace.label)
+                                console.log("label : " + aStoredTrace.label);
+                        });
+                    }
+                    
+                    console.log("Getting methods of base " + base.uri);
+
+                    for(let i = 0; i < base.methods.length; i++) {
+                        let aMethod = base.methods[i];
+                        
+                        aMethod.get().then(() => {
+                            console.log("Method " + aMethod.uri + " OK");
+
+                            if(aMethod.label)
+                                console.log("label : " + aMethod.label);
+                        });
+                    }
+
+                    console.log("Getting computed traces of base " + base.uri);
+
+                    for(let i = 0; i < base.computed_traces.length; i++) {
+                        let aComputedTrace = base.computed_traces[i];
+                        
+                        aComputedTrace.get().then(() => {
+                            console.log("Computed trace " + aComputedTrace.uri + " OK");
+
+                            if(aComputedTrace.label)
+                                console.log("label : " + aComputedTrace.label);
+                        });
+                    }
+
+                    console.log("Getting sub-bases of base " + base.uri);
+
+                    for(let i = 0; i < base.bases.length; i++) {
+                        let aSubBase = base.bases[i];
+                        read_base_recursive(aSubBase);
+                    }
+                });
+            }
+
+            // To be able to run this sample, change the URL below for a Base of your choice
+            //const myBase = new Base("http://mydomain.com/ktbs/test-base/");
+            const myBase = new Base("https://liris-ktbs01.insa-lyon.fr:8000/public/test-base/");
+            read_base_recursive(myBase);
+        </script>
+	</body>
+</html>

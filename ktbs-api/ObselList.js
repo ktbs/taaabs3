@@ -212,4 +212,12 @@ export class ObselList extends Resource {
 
         return obsels;
 	}
+
+	/**
+	 * Stores a new resource as a child of the current resource
+	 * @throws KtbsError always throws a KtbsError when invoked for a ObselList as it is not a container resource
+	 */
+	post(new_child_resource, abortSignal = null, credentials = null) {
+		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");
+	}
 }

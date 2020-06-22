@@ -4,6 +4,7 @@ import {ObselType} from "./ObselType.js";
 import {AttributeType} from "./AttributeType.js";
 import {ResourceProxy} from "./ResourceProxy.js";
 import {Stylesheet} from "./Stylesheet.js";
+import {KtbsError} from "./Errors.js";
 
 /**
  * Class for the "Model" resource type
@@ -16,6 +17,7 @@ export class Model extends Resource {
 	 */
 	constructor(uri) {
 		super(uri);
+		this._JSONData["@graph"] = [{"@type": "TraceModel"}];
 
 		/**
 		 * Obsel type instances of the the Model
@@ -54,7 +56,7 @@ export class Model extends Resource {
 				for(let i = 0; (i < graphs.length); i++) {
 					let aGraph = graphs[i];
 
-					if((aGraph["@type"] == "TraceModel") && (aGraph["@id"] == this._uri)) {
+					if(aGraph["@type"] == "TraceModel") {
 						this._model_own_graph_rank = i;
 						break;
 					}
@@ -81,6 +83,68 @@ export class Model extends Resource {
 	}
 
 	/**
+	 * Gets the data to be send in a POST query
+	 * @returns Object
+	 */
+	_getPostData() {
+		let postData = {"@graph" : [this._get_model_own_graph()]};
+
+		for(let i = 0; i <  this.obsel_types.length; i++) {
+			if(!(this.obsel_types[i].parent_model))
+				this.obsel_types[i].parent_model = this;
+
+			for(let j = 0; j < this.obsel_types[i].attribute_types.length; j++) {
+				if(!(this.obsel_types[i].attribute_types[j].parent_model))
+					this.obsel_types[i].attribute_types[j].parent_model = this;
+
+				if(!(this.obsel_types[i].attribute_types[j].obsel_types.includes(this.obsel_types[i])))
+					this.obsel_types[i].attribute_types[j].obsel_types.push(this.obsel_types[i]);
+
+				if(!(this.attribute_types.includes(this.obsel_types[i].attribute_types[j])))
+					this.attribute_types.push(this.obsel_types[i].attribute_types[j]);
+			}
+
+			postData["@graph"].push(this.obsel_types[i]._getPostData());
+		}
+	
+		for(let i = 0; i < this.attribute_types.length; i++) {
+			if(!(this.attribute_types[i].parent_model))
+				this.attribute_types[i].parent_model = this;
+
+			postData["@graph"].push(this.attribute_types[i]._getPostData());
+		}
+
+		return postData;
+	}
+
+	/**
+	 * Gets the ID of this resource, relative to its parent resource URI.
+	 * @return string
+	 */
+	get id() {
+		let ownGraph = this._get_model_own_graph();
+
+		if(ownGraph["@id"])
+			return ownGraph["@id"];
+		else if(this._uri)
+			return Resource.extract_relative_id(this._uri.toString());
+		else
+			return undefined;
+	}
+
+	/**
+	 * Sets the ID of this resource, relative to its parent resource URI.
+	 * @param string id the new ID for the resource.
+	 * @throws Error Throws an Error if we try to set the ID of a resource that already exists on a kTBS service.
+	 */
+	set id(id) {
+		if(this.syncStatus == "needs_sync")
+			this._JSONData["@graph"][this._get_model_own_graph_rank()]["@id"] = id;
+		else
+			throw new KtbsError("Resource's ID can not be changed anymore");
+	}
+
+	/**
 	 * Returns a user-friendly label
 	 * @return string
 	 */
@@ -101,23 +165,10 @@ export class Model extends Resource {
 
 	/**
 	 * Set a user-friendly label.
-	 * @param string label The new label for the Model
+	 * @param string new_label The new label for the Model
 	 */
 	set label(new_label) {
 		let modelOwnGraphRank = this._get_model_own_graph_rank();
-
-		if(modelOwnGraphRank == null) {
-			if(!this._JSONData["@graph"])
-				this._JSONData["@graph"] = new Array();
-
-			this._JSONData["@graph"][0] = {
-				"@type": "TraceModel",
-				"@id": this.uri
-			};
-
-			modelOwnGraphRank = 0;
-		}
-
 		this._JSONData["@graph"][modelOwnGraphRank]["label"] = new_label;
 		this._label = new_label;
 	}
@@ -135,6 +186,16 @@ export class Model extends Resource {
 		}
 
 		return this._comment;
+	}
+
+	/**
+	 * Set the "comment" for the resource
+	 * @param string new_comment The new comment for the Model
+	 */
+	set comment(new_comment) {
+		let modelOwnGraphRank = this._get_model_own_graph_rank();
+		this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#comment"] = new_comment;
+		this._label = new_comment;
 	}
 
 	/**
@@ -157,12 +218,11 @@ export class Model extends Resource {
 	 * @return ObselType[]
 	 */
 	get obsel_types() {
-		if(this._obsel_types == null) {
+		if(!this._obsel_types) {
+			this._obsel_types = new Array();
 			let graphs = this._JSONData["@graph"];
 
 			if(graphs instanceof Array) {
-				this._obsel_types = new Array();
-
 				for(let i = 0; i < graphs.length; i++) {
 					let aGraph = graphs[i];
 
@@ -172,11 +232,32 @@ export class Model extends Resource {
 					}
 				}
 			}
-			else
-				return new Array();
 		}
 
 		return this._obsel_types;
+	}
+
+	/**
+	 * 
+	 */
+	set obsel_types(new_obsel_types) {
+		if(new_obsel_types instanceof Array) {
+			for(let i = 0; i < new_obsel_types.length; i++)
+				if(!(new_obsel_types[i] instanceof ObselType))
+					throw new TypeError("New value for obsel_types property must be an array of ObselType");
+
+			for(let i = 0; i < new_obsel_types.length; i++)
+				if(new_obsel_types[i].parent_model && (new_obsel_types[i].parent_model != this))
+					throw new KtbsError("Cannot associate an ObselType to a different Model once it has been set");
+
+			for(let i = 0; i < new_obsel_types.length; i++)
+				if(!new_obsel_types[i].parent_model)
+					new_obsel_types[i].parent_model = this;
+
+			this._obsel_types = new_obsel_types;
+		}
+		else
+			throw new TypeError("New value for obsel_types property must be an array of ObselType");
 	}
 
 	/**
@@ -202,12 +283,11 @@ export class Model extends Resource {
 	 * @return AttributeType[]
 	 */
 	get attribute_types() {
-		if(this._attribute_types == null) {
+		if(!this._attribute_types) {
+			this._attribute_types = new Array();
 			let graphs = this._JSONData["@graph"];
 
 			if(graphs instanceof Array) {
-				this._attribute_types = new Array();
-
 				for(let i = 0; i < graphs.length; i++) {
 					let aGraph = graphs[i];
 
@@ -217,11 +297,32 @@ export class Model extends Resource {
 					}
 				}
 			}
-			else
-				return new Array();
 		}
 
 		return this._attribute_types;
+	}
+
+	/**
+	 * 
+	 */
+	set attribute_types(new_attribute_types) {
+		if(new_attribute_types instanceof Array){
+			for(let i = 0; i < new_attribute_types.length; i++)
+				if(!(new_attribute_types[i] instanceof AttributeType))
+					throw new TypeError("New value for attribute_types property must be an array of AttributeType");
+
+			for(let i = 0; i < new_attribute_types.length; i++)
+				if(new_attribute_types[i].parent_model && (new_attribute_types[i].parent_model != this))
+					throw new KtbsError("Cannot associate an AttributeType to a different Model once it has been set");
+
+			for(let i = 0; i < new_attribute_types.length; i++)
+				if(!new_attribute_types[i].parent_model)
+					new_attribute_types[i].parent_model = this;
+
+			this._attribute_types = new_attribute_types;
+		}
+		else
+			throw new TypeError("New value for attribute_types property must be an array of AttributeType");
 	}
 
 	/**
@@ -271,5 +372,13 @@ export class Model extends Resource {
 		}
 
 		return styleSheets;
+	}
+
+	/**
+	 * Stores a new resource as a child of the current resource
+	 * @throws KtbsError always throws a KtbsError when invoked for a Model as it is not a container resource
+	 */
+	post(new_child_resource, abortSignal = null, credentials = null) {
+		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");
 	}
 }

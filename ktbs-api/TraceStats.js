@@ -1,4 +1,5 @@
 import {Resource} from "./Resource.js";
+import {KtbsError} from "./Errors.js";
 
 /**
  * Class to help reading the statistics of a Trace
@@ -64,5 +65,13 @@ export class TraceStats extends Resource {
 		}
 		else
 			return new Array();
+	}
+
+	/**
+	 * Stores a new resource as a child of the current resource
+	 * @throws KtbsError always throws a KtbsError when invoked for a TraceStats as it is not a container resource
+	 */
+	post(new_child_resource, abortSignal = null, credentials = null) {
+		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");
 	}
 }

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+        <title>KTBS-API sample : update</title>
+	</head>
+
+	<body>
+        <h1>KTBS-API sample : update</h1>
+
+        <p>
+            @TODO ...
+        </p>
+
+        <p>
+            <strong style="color: red;">Open browser's console to see execution results.</strong>
+        </p>
+
+        <script type="module">
+            import {Base} from './Base.js';
+
+            function rename_base_recursive(base) {
+                console.log("Renaming base " + base.uri);
+
+                base.get().then(() => {
+                    base.label = base.label + " - renamed";
+
+                    base.put().then(() => {
+                        console.log("Base " + base.uri + " put successfully");
+
+                        for(let i = 0; i < base.models.length; i++) {
+                            let aModel = base.models[i];
+                            console.log("Renaming model " + aModel.uri);
+
+                            aModel.get().then(() => {
+                                aModel.label = aModel.label + " - renamed";
+
+                                aModel.put().then(() => {
+                                    console.log("Model " + aModel.uri + " put successfully");
+                                });
+                            });
+                        }
+
+                        for(let i = 0; i < base.stored_traces.length; i++) {
+                            let aStoredTrace = base.stored_traces[i];
+                            console.log("Renaming stored trace " + aStoredTrace.uri);
+
+                            aStoredTrace.get().then(() => {
+                                aStoredTrace.label = aStoredTrace.label + " - renamed";
+
+                                aStoredTrace.put().then(() => {
+                                    console.log("Stored trace " + aStoredTrace.uri + " put successfully");
+                                });
+                            });
+                        }
+
+                        for(let i = 0; i < base.methods.length; i++) {
+                            let aMethod = base.methods[i]; 
+                            console.log("Renaming method " + aMethod.uri);
+                            
+                            aMethod.get().then(() => {
+                                aMethod.label = aMethod.label + " - renamed";
+
+                                aMethod.put().then(() => {
+                                    console.log("Method " + aMethod.uri + " put successfully");
+                                });
+                            });
+                        }
+
+                        for(let i = 0; i < base.computed_traces.length; i++) {
+                            let aComputedTrace = base.computed_traces[i];
+                            console.log("Renaming computed trace " + aComputedTrace.uri);
+
+                            aComputedTrace.get().then(() => {
+                                aComputedTrace.label = aComputedTrace.label + " - renamed";
+
+                                aComputedTrace.put().then(() => {
+                                    console.log("Computed trace " + aComputedTrace.uri + " put successfully");
+                                });
+                            });
+                        }
+
+                        for(let i = 0; i < base.bases.length; i++) {
+                            let aSubBase = base.bases[i];
+                            rename_base_recursive(aSubBase);
+                        }
+                    });
+                });
+            }
+
+            // To be able to run this sample, change the URL below for a Base of your choice
+            //const myBase = new Base("http://mydomain.com/ktbs/test-base/");
+            const myBase = new Base("https://liris-ktbs01.insa-lyon.fr:8000/public/test-base/");
+            rename_base_recursive(myBase);
+        </script>
+	</body>
+</html>
