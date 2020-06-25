@@ -1,4 +1,4 @@
-import {ResourceProxy} from "./ResourceProxy.js";
+import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Resource} from "./Resource.js";
 import {AttributeType} from "./AttributeType.js";
 import {Attribute} from "./Attribute.js";
@@ -70,7 +70,7 @@ export class Obsel extends Resource {
 	 */
 	get parent() {
         if(!this._parent && this._JSONData.hasTrace)
-            this._parent = ResourceProxy.get_resource(Trace, this.resolve_link_uri(this._JSONData.hasTrace));
+            this._parent = ResourceMultiton.get_resource(Trace, this.resolve_link_uri(this._JSONData.hasTrace));
             
         return this._parent;
     }
@@ -151,7 +151,7 @@ export class Obsel extends Resource {
             
             for(let i = 0; i < source_obsels_links.length; i++) {
                 let a_source_obsel_link = source_obsels_links[i];
-                let aSourceObsel = ResourceProxy.get_resource(Obsel, this.resolve_link_uri(a_source_obsel_link));
+                let aSourceObsel = ResourceMultiton.get_resource(Obsel, this.resolve_link_uri(a_source_obsel_link));
                 this._sourceObsels.push(aSourceObsel);
             }
         }

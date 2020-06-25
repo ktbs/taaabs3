@@ -6,14 +6,19 @@ export class RestError extends Error {
     /**
      * Constructor
      */
-    constructor(statusCode, message) {
+    constructor(statusCode, statusText, message) {
         // call parent constructor (Error())
-        super(statusCode + " (" + message + ")");
+        super(message);
 
         /**
          * HTTP status code
          */
         this.statusCode = statusCode;
+
+        /**
+         * HTTP status text
+         */
+        this.statusText = statusText;
 
         this.name = "REST error";
     }

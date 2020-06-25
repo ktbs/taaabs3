@@ -9,7 +9,8 @@
         <h1>KTBS-API sample : update</h1>
 
         <p>
-            @TODO ...
+            This sample file demonstrates how to modify resources on a Ktbs service using the &quot;KTBS-API&quot; ES6 library.<br />
+            It recursively gets all children element in a Ktbs Base (including sub-bases), then renames them by adding " - renamed" at the end of their labels.
         </p>
 
         <p>
@@ -18,6 +19,10 @@
 
         <script type="module">
             import {Base} from './Base.js';
+
+            // To be able to run this sample, change the URL below for a Base of your choice
+            //const myBase = new Base("http://mydomain.com/ktbs/test-base/");
+            const myBase = new Base("https://liris-ktbs01.insa-lyon.fr:8000/public/test-base/");
 
             function rename_base_recursive(base) {
                 console.log("Renaming base " + base.uri);
@@ -88,9 +93,6 @@
                 });
             }
 
-            // To be able to run this sample, change the URL below for a Base of your choice
-            //const myBase = new Base("http://mydomain.com/ktbs/test-base/");
-            const myBase = new Base("https://liris-ktbs01.insa-lyon.fr:8000/public/test-base/");
             rename_base_recursive(myBase);
         </script>
 	</body>

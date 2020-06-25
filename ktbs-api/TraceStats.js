@@ -7,14 +7,6 @@ import {KtbsError} from "./Errors.js";
 export class TraceStats extends Resource {
 
 	/**
-	 * Always returns true for TraceStats instances since they are never modifiable.
-	 * @return bool
-	 */
-	get readonly() {
-		return true;
-	}
-
-	/**
 	 * Gets the minimum time (= begin) of the Trace
 	 * @return string
 	 */

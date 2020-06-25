@@ -171,7 +171,7 @@ export class Resource {
 	 */
 	resolve_link_uri(link, force_use_context = false) {
 		if(typeof link == "string") {
-			if(link.startsWith("http://"))
+			if(link.startsWith("http://") || link.startsWith("https://"))
 				// link is absolute
 				return new URL(link);
 			else {
@@ -382,14 +382,6 @@ export class Resource {
 	}
 
 	/**
-	 * Return true if this resource is not modifiable (descending resource types should override this method if necessary).
-	 * @return bool
-	 */
-	get readonly() {
-		return false;
-	}
-
-	/**
 	 * Remove the credentials stored in a given storage for the resource's URI
 	 * @param Storage storage The storage to remove the credentials from
 	 */
@@ -592,9 +584,18 @@ export class Resource {
 								this._etag = null;
 								this._authentified = false;
 								this._getPromise = null;
-								let error = new RestError(response.status, response.statusText);
-								reject(error);
-								this.notifyObservers(error);
+
+								let responseBody = null;
+
+								response.text()
+									.then((responseText) => {
+										responseBody = responseText;
+									})
+									.finally(() => {
+										let error = new RestError(response.status, response.statusText);
+										reject(error);
+										this.notifyObservers(error);
+									});
 							}
 						})
 						.catch((error) => {
@@ -788,20 +789,28 @@ export class Resource {
 								else if(response.status == 403)
 									this.syncStatus = "access_denied";
 
-								let error = new RestError(response.status, response.statusText);
+								let responseBody = null;
 
-								if(new_child_resource instanceof Resource) {
-									new_child_resource.syncStatus = "needs_sync";
-									new_child_resource.notifyObservers(error);
-								}
-								else if(new_child_resource instanceof Array) {
-									for(let i = 0; i < new_child_resource.length; i++) {
-										new_child_resource[i].syncStatus = "needs_sync";
-										new_child_resource[i].notifyObservers(error);
-									}
-								}
+								response.text()
+									.then((responseText) => {
+										responseBody = responseText;
+									})
+									.finally(() => {
+										let error = new RestError(response.status, response.statusText);
 
-								reject(error);
+										if(new_child_resource instanceof Resource) {
+											new_child_resource.syncStatus = "needs_sync";
+											new_child_resource.notifyObservers(error);
+										}
+										else if(new_child_resource instanceof Array) {
+											for(let i = 0; i < new_child_resource.length; i++) {
+												new_child_resource[i].syncStatus = "needs_sync";
+												new_child_resource[i].notifyObservers(error);
+											}
+										}
+
+										reject(error);
+									});
 							}
 						})
 						.catch((error) => {
@@ -824,12 +833,7 @@ export class Resource {
 	 * @returns Object
 	 */
 	_getPutData() {
-		let putData = this._JSONData;
-
-		/*if(putData["@context"])
-			delete putData["@context"];*/
-
-		return putData;
+		return this._JSONData;
 	}
 
 	/**
@@ -866,6 +870,9 @@ export class Resource {
 						.then((response) => {
 							if(response.ok) {
 								// when the response content from the HTTP request has been successfully read
+								if(response.headers.has("etag"))
+									this._etag = response.headers.get("etag");
+								
 								this._authentified = ((credentials != null) && credentials.id && credentials.password);
 								this.syncStatus = "in_sync";
 								resolve();
@@ -877,9 +884,17 @@ export class Resource {
 								else if(response.status == 403)
 									this.syncStatus = "access_denied";
 
-								let error = new RestError(response.status, response.statusText);
-								reject(error);
-								this.notifyObservers(error);
+								let responseBody = null;
+
+								response.text()
+									.then((responseText) => {
+										responseBody = responseText;
+									})
+									.finally(() => {
+										let error = new RestError(response.status, response.statusText, responseBody);
+										reject(error);
+										this.notifyObservers(error);
+									});
 							}
 						})
 						.catch((error) => {
@@ -940,9 +955,17 @@ export class Resource {
 							else if(response.status == 403)
 								this.syncStatus = "access_denied";
 
-							let error = new RestError(response.status, response.statusText);
-							reject(error);
-							new_child_resource.notifyObservers(error);
+							let responseBody = null;
+
+							response.text()
+								.then((responseText) => {
+									responseBody = responseText;
+								})
+								.finally(() => {
+									let error = new RestError(response.status, response.statusText);
+									reject(error);
+									new_child_resource.notifyObservers(error);
+								});
 						}
 					})
 					.catch((error) => {

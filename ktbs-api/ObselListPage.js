@@ -1,4 +1,4 @@
-import {ResourceProxy} from "./ResourceProxy.js";
+import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Resource} from "./Resource.js";
 import {Obsel} from "./Obsel.js";
 import {Trace} from "./Trace.js";
@@ -72,7 +72,7 @@ export class ObselListPage extends Resource {
      */
     get next_page() {
         if(!this._next_page && this.next_page_uri)
-            this._next_page = ResourceProxy.get_resource(ObselListPage, this.next_page_uri);
+            this._next_page = ResourceMultiton.get_resource(ObselListPage, this.next_page_uri);
         
         return this._next_page;
     }
@@ -84,7 +84,7 @@ export class ObselListPage extends Resource {
     get parent() {
         if(!this._parent) {
             let parent_trace_uri = this.resolve_link_uri("./");
-            this._parent = ResourceProxy.get_resource(Trace, parent_trace_uri);
+            this._parent = ResourceMultiton.get_resource(Trace, parent_trace_uri);
         }
 
         return this._parent;
@@ -102,8 +102,8 @@ export class ObselListPage extends Resource {
                 for(let i = 0; i < this._JSONData.obsels.length; i++) {
                     let obsel_data = this._JSONData.obsels[i];
                     let obsel_uri = this.resolve_link_uri(obsel_data["@id"]);
-                    let obsel_is_known = ResourceProxy.has_resource(Obsel, obsel_uri);
-                    let obsel = ResourceProxy.get_resource(Obsel, obsel_uri);
+                    let obsel_is_known = ResourceMultiton.has_resource(Obsel, obsel_uri);
+                    let obsel = ResourceMultiton.get_resource(Obsel, obsel_uri);
 
                     if(!obsel_is_known) {
                         obsel.JSONData = obsel_data;

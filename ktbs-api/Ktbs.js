@@ -1,4 +1,4 @@
-import {ResourceProxy} from "./ResourceProxy.js";
+import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Resource} from "./Resource.js";
 import {Base} from "./Base.js";
 import {Method} from "./Method.js";
@@ -22,14 +22,6 @@ export class Ktbs extends Resource {
 		}
 		else
 			throw new KtbsError("Missing required parameter \"uri\", or empty value");
-	}
-
-	/**
-	 * Always returns true for Ktbs instances since they are never modifiable.
-	 * @return bool
-	 */
-	get readonly() {
-		return true;
 	}
 
 	/**
@@ -128,7 +120,7 @@ export class Ktbs extends Resource {
 
 			for(let i = 0; i < bases_uris.length; i++) {
 				let base_uri = bases_uris[i];
-				let base = ResourceProxy.get_resource(Base, base_uri);
+				let base = ResourceMultiton.get_resource(Base, base_uri);
 				this._bases.push(base);
 			}
 		}

@@ -2,7 +2,7 @@
  * This static class allows to share ktbs Resource instances in order to avoid instanciating duplicates of the same resource.
  * @static
  */
-export class ResourceProxy {
+export class ResourceMultiton {
 
     /**
      * Checks if there is an already instanciated ktbs resource for a type and uri.
@@ -13,7 +13,7 @@ export class ResourceProxy {
      */
     static has_resource(uri) {
         let uri_string = (uri instanceof URL)?uri.toString():uri;
-        return (uri_string in ResourceProxy._resources);
+        return (uri_string in ResourceMultiton._resources);
     }
 
     /**
@@ -26,19 +26,19 @@ export class ResourceProxy {
     static get_resource(resource_type, uri) {
         let uri_string = (uri instanceof URL)?uri.toString():uri;
 
-        if(!ResourceProxy.has_resource(uri_string)) {
+        if(!ResourceMultiton.has_resource(uri_string)) {
             let type_class;
 
             if((typeof resource_type === 'function') && (/^\s*class\s+/.test(resource_type.toString()))) {
                 type_class = resource_type;
                 let newInstance = new (type_class)(uri);
-                ResourceProxy._resources[uri_string] = newInstance;
+                ResourceMultiton._resources[uri_string] = newInstance;
             }
             else
                 throw new TypeError(resource_type + " is not a valid type");
         }
 
-        return ResourceProxy._resources[uri_string];
+        return ResourceMultiton._resources[uri_string];
     }
 }
 
@@ -47,4 +47,4 @@ export class ResourceProxy {
  * @static
  * @type Object
  */
-ResourceProxy._resources = {};
+ResourceMultiton._resources = {};

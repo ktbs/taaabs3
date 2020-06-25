@@ -1,6 +1,7 @@
 # Javascript KTBS-API quick start guide
 
 ## Description
+
 The KTBS-API library is a client-side ES6 (Javascript) implementation for the KTBS REST API.
 
 If you are not already familiar with the concepts of KTBS, you should start by reading [KTBS's online documentation](https://ktbs.readthedocs.io/en/latest/).
@@ -8,58 +9,137 @@ If you are not already familiar with the concepts of KTBS, you should start by r
 The provided classes are designed to make it easier for Javascript developpers to interact with a KTBS service.
 
 ## Requirements
+
 KTBS-API library is a set of ES6 modules. Therefore, the Javascript interpreter you are using to run your code (in most cases, that would be the one embeded in your browser) must be ES6-compatible. Reasonably recent releases of Firefox, Chrome or Opera should work fine (not tested with Edge).
 
-If you are quering a remote KTBS service, make sure that you have network connectivity and that the remote server allows [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) by providing the adequate [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#The_HTTP_response_headers).
+If you are querying a remote KTBS service, make sure that you have network connectivity and that the remote server allows [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) by providing the adequate [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#The_HTTP_response_headers).
 
 Finally, keep in mind that most browser's security policies won't allow CORS when opening a document directly from the local filesystem (origin = file://...). So your HTML documents MUST be delivered to the browser through HTTP protocol by an HTTP server. Install a local one if needed.
+
+## Overview
+
+@TODO : insert class-diagram
 
 ## Usage
 
 ### Modules import
+
 In KTBS-API, each class is contained in it's own separate .js file, which is an ES6 module exporting that class.
 
 Before explicitly using a class provided by the library, you have to import it from the corresponding ES6 module.
 
 For instance, to be able to use the "Ktbs" class, you should do something like :
+
 ```Javascript
-import {Ktbs} from "/<path>/ktbs4la2/ktbs-api/Ktbs.js";
 // (replace "<path>" with the adequate path prefix)
+import {Ktbs} from "/<path>/ktbs4la2/ktbs-api/Ktbs.js";
 ```
 or for the "Obsel" class :
+
 ```Javascript
-import {Obsel} from "/<path>/ktbs4la2/ktbs-api/Obsel.js";
 // (replace "<path>" with the adequate path prefix)
+import {Obsel} from "/<path>/ktbs4la2/ktbs-api/Obsel.js";
 ```
 etc ...
 
 When a module depends on another one, it automatically imports it. So you don't have to worry about dependencies.
 
-### Reading an existing resource
+### Getting a resource instance
+
+#### Using the ResourceMultiton
+
+ResourceMultiton is an implementation of the [Multiton design pattern](https://en.wikipedia.org/wiki/Multiton_pattern).
+
+It is a static utility class that allows to share ktbs Resource instances in order to avoid duplicate instances of the same resource, avoiding conflicts, reducing memory usage and network brandwidth consumption.
+
+For these reasons, it is recommended to get instances of existing remote resources through the ResourceMultiton, and not directly instanciate Ktbs resources classes unless you are creating a new resource or if you don't care about duplicates.
+
+To get an instance for a resource out of the ResourceMultiton, use static method get_resource() :
+
+```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Base} from "/<path>/ktbs4la2/ktbs-api/Base.js";
+import {ResourceMultiton} from "/<path>/ktbs4la2/ktbs-api/ResourceMultiton.js";
+
+const myBase = ResourceMultiton.get_resource(Base, "http://mydomain.com/ktbs/my-base/");
+```
+
+or (with an URL object) :
+
+```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Base} from "/<path>/ktbs4la2/ktbs-api/Base.js";
+import {ResourceMultiton} from "/<path>/ktbs4la2/ktbs-api/ResourceMultiton.js";
+
+const myBase_url = new URL("http://mydomain.com/ktbs/my-base/");
+const myBase = ResourceMultiton.get_resource(Base, myBase_url);
+```
 
 #### Direct instanciation
 
-If wou want to read data from a resource already present on the network, you can instance it by calling the constructor of the class associated with that resource's type, providing the resource's uri as an argument (type : String or URL):
-```Javascript
-const myKtbsService = new Ktbs("http://mydomain.com/ktbs/");
+If you are creating a new resource or if you don't care about duplicates, you can also instanciate a resource by directly calling the constructor of the class associated with that resource's type, optionally providing the resource's uri as an argument (type : String or URL).
 
-// or :
+For instance, for a new resource :
+
+```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Base} from "/<path>/ktbs4la2/ktbs-api/Base.js";
+
+const myBase = new Base();
+```
+
+or for an existing one (the four following examples are equivalent) :
+
+```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Ktbs} from "/<path>/ktbs4la2/ktbs-api/Ktbs.js";
+
+const myKtbsService = new Ktbs("http://mydomain.com/ktbs/");
+```
+
+or, with an URL object :
+
+```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Ktbs} from "/<path>/ktbs4la2/ktbs-api/Ktbs.js";
 
 const myKtbs_URL = new URL("http://mydomain.com/ktbs/");
 const myKtbsService = new Ktbs(myKtbs_URL);
 ```
 
 or you can also call the constructor without argument and then later set the instance's uri property :
+
 ```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Ktbs} from "/<path>/ktbs4la2/ktbs-api/Ktbs.js";
+
 const myKtbsService = new Ktbs();
 myKtbsService.uri = "http://mydomain.com/ktbs/";
 ```
 
-**IMPORTANT** : at this point, remote data has not been fetched yet, so most of the instance's properties will still be undefined.
-
-In order to fetch the resource's data into the instance's properties, call method "get()" and use the returned promise :
+or, with an URL object :
 
 ```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Ktbs} from "/<path>/ktbs4la2/ktbs-api/Ktbs.js";
+
+const myKtbs_URL = new URL("http://mydomain.com/ktbs/");
+const myKtbsService = new Ktbs();
+myKtbsService.uri = myKtbs_URL;
+```
+
+**IMPORTANT** : even if you have specified the resource's URI, at this point remote data has not been fetched yet, so most of the instance's properties will still be undefined.
+
+### Reading a resource's data
+
+#### Fetching data from server (GET)
+
+In order to fetch the resource's data into the instance's properties, call method "get()" and use the returned promise (the resource's URI MUST have been set, either as an argument of the constructor, or by setting it's "uri" property):
+
+```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Ktbs} from "/<path>/ktbs4la2/ktbs-api/Ktbs.js";
+
 const myKtbsService = new Ktbs("http://mydomain.com/ktbs/");
 
 myKtbsService.get()
@@ -73,19 +153,32 @@ myKtbsService.get()
     })
 ```
 
-#### Using the ResourceProxy
+**IMPORTANT** : the Promise object returned by the first call to "get()" is kept in memory and then returned by every further call to "get()" as long as the resource is considered to be in sync with it's remote version.
 
-@TODO
+This allows that various pieces of code can work on shared resource instances (delivered by ResourceMultiton) and safely call "get()" without worrying about generating useless HTTP requests to the remote server.
 
-### Create a new resource and store it
+However, if you want to force refreshing the resource's data with a new HTTP request, you can call method "force_state_refresh()" before calling "get()".
+
+#### Using object properties
+
+Once data is fetched, you can read or write object properties.
+
+**IMPORTANT** : Javascript doesn't provide members visibility support, so by convention, all class members whose name is prefixed by character _ (underscore) should be considered private and client code should not attempt to read or write them. Instead, use public properties and method whose name is not prefixed with a _.
+
+### Creating a new resource
+
 In order to store a new resource on a remote Ktbs service, you have to :
-1. Have a parent resource instance
+1. Have an existing parent resource instance to post the new resource into
 2. Instanciate the new resource
 3. Set an identifier for the new resource (facultative for Obsels)
 4. Post the new resource to it's parent
 5. Use the Promise returned by the post() call
 
 ```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Ktbs} from "/<path>/ktbs4la2/ktbs-api/Ktbs.js";
+import {Base} from "/<path>/ktbs4la2/ktbs-api/Base.js";
+
 const myKtbsService = new Ktbs("http://mydomain.com/ktbs/"); // 1. Have a parent resource instance
 
 const myNewBase = new Base(); // 2. Instanciate the new resource
@@ -107,14 +200,18 @@ myKtbsService.post(myNewBase) // 4. Post the new resource to it's parent
     })
 ```
 
-(\*) **IMPORTANT** : just after POSTing a new resource, it is still not ready for use yet even if the POST has been successfull. 
+(*) **IMPORTANT** : just after POSTing a new resource, it is still not ready for use yet even if the POST has been successfull. 
 This is because the new resource's client-side representation is no more considered to be in sync with it's remote version (some modifications might have been made by the server during the resource creation). 
-So remember performing a get() on it, as shown in the example above.
+So remember performing a "get()" on it, as shown in the example above.
 
-### Modify an existing resource
- After modifying an existing resource, to store modifications on the remote server, just call put() on the modified instance, and use the returned Promise :
+### Modifying an existing resource
+
+ After modifying an existing resource, to store modifications on the remote server, just call method "put()" on the modified instance, and use the returned Promise :
 
  ```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Base} from "/<path>/ktbs4la2/ktbs-api/Base.js";
+
 const myBase = new Base("http://mydomain.com/ktbs/example_base/");
 myBase.label = "Example base (renamed)";
 
@@ -129,10 +226,14 @@ myBase.put()
     })
 ```
 
-## Delete an existing resource
+### Deleting an existing resource
+
 To delete an existing resource from the server, just call delete() on the instance to delete, and use the returned Promise :
 
  ```Javascript
+// (replace "<path>" with the adequate path prefix)
+import {Base} from "/<path>/ktbs4la2/ktbs-api/Base.js";
+
 const myBase = new Base("http://mydomain.com/ktbs/example_base/");
 
 myBase.delete()
@@ -146,10 +247,15 @@ myBase.delete()
     })
 ```
 
+### Observing a resource to be notified of changes
+
+@TODO
+
 ## Examples
+
 Four sample files are provided alongside this library :
-- [sample_read.html](./sample_read.html)
 - [sample_create.html](./sample_create.html)
+- [sample_read.html](./sample_read.html)
 - [sample_update.html](./sample_update.html)
 - [sample_delete.html](./sample_delete.html)
 
@@ -157,6 +263,7 @@ Open them in a browser and show the console to monitor their execution results.
 
 
 ## API reference
+
 In order to generate a full HTML API reference documentation for the library, you can use doxygen with the provided Doxyfile :
 ```shell
 ~/ktbs4la2/ktbs-api$ doxygen Doxyfile

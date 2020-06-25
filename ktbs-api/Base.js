@@ -1,7 +1,8 @@
-import {ResourceProxy} from "./ResourceProxy.js";
+import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Resource} from "./Resource.js";
 import {Ktbs} from "./Ktbs.js";
-import {StoredTrace, ComputedTrace} from "./Trace.js";
+import {StoredTrace} from "./StoredTrace.js";
+import {ComputedTrace} from "./ComputedTrace.js";
 import {Model} from "./Model.js";
 import {Method} from "./Method.js";
 
@@ -26,9 +27,9 @@ export class Base extends Resource {
 	get parent() {
 		if(!this._parent) {
 			if(this._JSONData.inBase)
-				this._parent = ResourceProxy.get_resource(Base, this.resolve_link_uri(this._JSONData.inBase));
+				this._parent = ResourceMultiton.get_resource(Base, this.resolve_link_uri(this._JSONData.inBase));
 			else if(this._JSONData.inRoot)
-				this._parent = ResourceProxy.get_resource(Ktbs, this.resolve_link_uri(this._JSONData.inRoot));
+				this._parent = ResourceMultiton.get_resource(Ktbs, this.resolve_link_uri(this._JSONData.inRoot));
 		}
 
 		return this._parent;
@@ -47,7 +48,7 @@ export class Base extends Resource {
 					if(this._JSONData.contains[i]["@type"] == "StoredTrace") {
 						let stored_trace_uri_string = this._JSONData.contains[i]["@id"];
 						let stored_trace_uri = this.resolve_link_uri(stored_trace_uri_string);
-						let stored_trace = ResourceProxy.get_resource(StoredTrace, stored_trace_uri);
+						let stored_trace = ResourceMultiton.get_resource(StoredTrace, stored_trace_uri);
 
 						let stored_trace_label = this._JSONData.contains[i]["label"];
 
@@ -76,7 +77,7 @@ export class Base extends Resource {
 					if(this._JSONData.contains[i]["@type"] == "ComputedTrace") {
 						let computed_trace_uri_string = this._JSONData.contains[i]["@id"];
 						let computed_trace_uri = this.resolve_link_uri(computed_trace_uri_string);
-						let computed_trace = ResourceProxy.get_resource(ComputedTrace, computed_trace_uri);
+						let computed_trace = ResourceMultiton.get_resource(ComputedTrace, computed_trace_uri);
 
 						let computed_trace_label = this._JSONData.contains[i]["label"];
 
@@ -105,7 +106,7 @@ export class Base extends Resource {
 					if(this._JSONData.contains[i]["@type"] == "TraceModel") {
 						let model_uri_string = this._JSONData.contains[i]["@id"];
 						let model_uri = this.resolve_link_uri(model_uri_string);
-						let model = ResourceProxy.get_resource(Model, model_uri);
+						let model = ResourceMultiton.get_resource(Model, model_uri);
 						let model_label = this._JSONData.contains[i]["label"];
 
 						if(model_label && !model.label)
@@ -133,7 +134,7 @@ export class Base extends Resource {
 					if(this._JSONData.contains[i]["@type"] == "Method") {
 						let method_uri_string = this._JSONData.contains[i]["@id"];
 						let method_uri = this.resolve_link_uri(method_uri_string);
-						let method = ResourceProxy.get_resource(Method, method_uri);
+						let method = ResourceMultiton.get_resource(Method, method_uri);
 						let method_label = this._JSONData.contains[i]["label"];
 
 						if(method_label && !method.label)
@@ -161,7 +162,7 @@ export class Base extends Resource {
 					if(this._JSONData.contains[i]["@type"] == "Base") {
 						let base_uri_string = this._JSONData.contains[i]["@id"];
 						let base_uri = this.resolve_link_uri(base_uri_string);
-						let base = ResourceProxy.get_resource(Base, base_uri);
+						let base = ResourceMultiton.get_resource(Base, base_uri);
 
 						let base_label = this._JSONData.contains[i]["label"];
 

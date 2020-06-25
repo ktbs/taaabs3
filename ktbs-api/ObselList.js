@@ -1,6 +1,6 @@
 import {Resource} from "./Resource.js";
 import {ObselListPage} from "./ObselListPage.js";
-import {ResourceProxy} from "./ResourceProxy.js";
+import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Trace} from "./Trace.js";
 import {Obsel} from "./Obsel.js";
 
@@ -77,19 +77,11 @@ export class ObselList extends Resource {
     get parent() {
 		if(!this._parent) {
 			let parent_trace_uri = this.resolve_link_uri("./");
-			this._parent = ResourceProxy.get_resource(Trace, parent_trace_uri);
+			this._parent = ResourceMultiton.get_resource(Trace, parent_trace_uri);
 		}
 
 		return this._parent;
     }
-
-	/**
-	 * Always returns true for ObselList instances since they are never modifiable.
-	 * @return bool
-	 */
-	get readonly() {
-		return true;
-	}
 
 	/**
 	 * Gets the uri to query in order to read resource's data (For some resource types, this might be different from the resource URI, for instance if we need to add some query parameters. In such case, descending resource types must override this method)
@@ -182,7 +174,7 @@ export class ObselList extends Resource {
 	 */
 	get_first_page(limit = 500) {
 		let firstPageURI = this._get_first_page_uri(limit);
-		return ResourceProxy.get_resource(ObselListPage, firstPageURI);
+		return ResourceMultiton.get_resource(ObselListPage, firstPageURI);
 	}
 
 	/**
@@ -196,8 +188,8 @@ export class ObselList extends Resource {
 			for(let i = 0; i < this._JSONData.obsels.length; i++) {
 				let obsel_data = this._JSONData.obsels[i];
 				let obsel_uri = this.resolve_link_uri(obsel_data["@id"]);
-				let obsel_is_known = ResourceProxy.has_resource(Obsel, obsel_uri);
-				let obsel = ResourceProxy.get_resource(Obsel, obsel_uri);
+				let obsel_is_known = ResourceMultiton.has_resource(Obsel, obsel_uri);
+				let obsel = ResourceMultiton.get_resource(Obsel, obsel_uri);
 
 				if(!obsel_is_known) {
 					obsel.JSONData = obsel_data;

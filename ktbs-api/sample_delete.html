@@ -24,6 +24,10 @@
         <script type="module">
             import {Base} from './Base.js'
 
+            // To be able to run this sample, change the URL below for a Ktbs base of your choice
+            //const myKtbsBase = new Base("http://mydomain.com/ktbs/test-base/");
+            const myKtbsBase = new Base("https://liris-ktbs01.insa-lyon.fr:8000/public/test-base/");
+
             function delete_base_recursive(base) {
                 let resolveBaseDeleted;
                 let rejectBaseDeleted;
@@ -182,10 +186,6 @@
                 return baseDeletedPromise;
             }
 
-            // To be able to run this sample, change the URL below for a Ktbs base of your choice
-            //const myKtbsBase_uri = new URL("http://mydomain.com/ktbs/test-base/");
-            const myKtbsBase_uri = new URL("https://liris-ktbs01.insa-lyon.fr:8000/public/test-base/");
-            const myKtbsBase = new Base(myKtbsBase_uri);
             delete_base_recursive(myKtbsBase);
         </script>
 	</body>

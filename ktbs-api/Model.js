@@ -2,7 +2,7 @@ import {Resource} from "./Resource.js";
 import {Base} from "./Base.js";
 import {ObselType} from "./ObselType.js";
 import {AttributeType} from "./AttributeType.js";
-import {ResourceProxy} from "./ResourceProxy.js";
+import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Stylesheet} from "./Stylesheet.js";
 import {KtbsError} from "./Errors.js";
 
@@ -207,7 +207,7 @@ export class Model extends Resource {
 			let modelOwnGraph = this._get_model_own_graph();
 
 			if(modelOwnGraph && modelOwnGraph.inBase)
-				this._parent = ResourceProxy.get_resource(Base, this.resolve_link_uri(modelOwnGraph.inBase));
+				this._parent = ResourceMultiton.get_resource(Base, this.resolve_link_uri(modelOwnGraph.inBase));
 		}
 
 		return this._parent;

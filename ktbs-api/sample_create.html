@@ -33,16 +33,15 @@
             import {Model} from './Model.js';
             import {ObselType} from './ObselType.js';
             import {AttributeType} from './AttributeType.js';
-            import {StoredTrace} from './Trace.js';
+            import {StoredTrace} from './StoredTrace.js';
             import {Obsel} from './Obsel.js';
             import {Attribute} from './Attribute.js';
             import {Method} from './Method.js';
-            import {ComputedTrace} from './Trace.js';
+            import {ComputedTrace} from './ComputedTrace.js';
 
             // To be able to run this sample, change the URL below for a Ktbs service of your choice
-            //const myKtbsRoot_uri = new URL("http://mydomain.com/ktbs/");
-            const myKtbsRoot_uri = new URL("https://liris-ktbs01.insa-lyon.fr:8000/public/");
-            const myKtbsRoot = new Ktbs(myKtbsRoot_uri);
+            //const myKtbsRoot = new Ktbs("http://mydomain.com/ktbs/");
+            const myKtbsRoot = new Ktbs("https://liris-ktbs01.insa-lyon.fr:8000/public/");
 
             console.log("Getting Ktbs root ...");
             myKtbsRoot.get().then(() => {
