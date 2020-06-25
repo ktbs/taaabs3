@@ -166,7 +166,11 @@ export class AttributeType {
 	appliesToObselType(obsel_type) {
 		return (
 				this._JSONData["hasAttributeObselType"] 
-			&& 	(this._JSONData["hasAttributeObselType"].includes(obsel_type.id))
+			&& 	(
+						(this._JSONData["hasAttributeObselType"].includes(obsel_type.id))
+					||	(this._JSONData["hasAttributeObselType"].includes("#" + obsel_type.id))
+					||	(this._JSONData["hasAttributeObselType"].includes(obsel_type.uri.toString()))
+			)
 		);
 	}
 
