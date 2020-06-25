@@ -58,6 +58,12 @@ export class Resource {
 		// if an uri has been specified at instanciation, set it
 		if(uri != null)
 			this.uri = uri;
+
+		/**
+		 * 
+		 * @type Promise
+		 */
+		this._ongoingRESTQueryPromise = null;
 	}
 
 	/**

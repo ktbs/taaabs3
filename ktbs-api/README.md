@@ -24,7 +24,7 @@ Finally, keep in mind that most browser's security policies won't allow CORS whe
 
 ### Modules import
 
-In KTBS-API, each class is contained in it's own separate .js file, which is an ES6 module exporting that class.
+In KTBS-API, each class is contained in it's own separate .js file, which is an ES6 module exporting that class (except for classes "StoredTrace" and "ComputedTrace" who are both contained in module "Trace.js").
 
 Before explicitly using a class provided by the library, you have to import it from the corresponding ES6 module.
 

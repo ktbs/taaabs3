@@ -1,8 +1,8 @@
 import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Resource} from "./Resource.js";
 import {Ktbs} from "./Ktbs.js";
-import {StoredTrace} from "./StoredTrace.js";
-import {ComputedTrace} from "./ComputedTrace.js";
+import {StoredTrace} from "./Trace.js";
+import {ComputedTrace} from "./Trace.js";
 import {Model} from "./Model.js";
 import {Method} from "./Method.js";
 

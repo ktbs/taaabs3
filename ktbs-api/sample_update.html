@@ -21,8 +21,7 @@
             import {Base} from './Base.js';
 
             // To be able to run this sample, change the URL below for a Base of your choice
-            //const myBase = new Base("http://mydomain.com/ktbs/test-base/");
-            const myBase = new Base("https://liris-ktbs01.insa-lyon.fr:8000/public/test-base/");
+            const myBase = new Base("http://mydomain.com/ktbs/test-base/");
 
             function rename_base_recursive(base) {
                 console.log("Renaming base " + base.uri);
@@ -32,58 +31,110 @@
 
                     base.put().then(() => {
                         console.log("Base " + base.uri + " put successfully");
+                        let allModelsUpdatedPromises = new Array();
 
                         for(let i = 0; i < base.models.length; i++) {
-                            let aModel = base.models[i];
+                            const aModel = base.models[i];
                             console.log("Renaming model " + aModel.uri);
+                            let resolveAModelUpdatePromise;
+
+                            const aModelUpdatedPromise = new Promise((resolve, reject) => {
+                                resolveAModelUpdatePromise = resolve;
+                            });
 
                             aModel.get().then(() => {
                                 aModel.label = aModel.label + " - renamed";
 
                                 aModel.put().then(() => {
                                     console.log("Model " + aModel.uri + " put successfully");
+                                    resolveAModelUpdatePromise();
                                 });
                             });
+
+                            allModelsUpdatedPromises.push(aModelUpdatedPromise);
                         }
 
-                        for(let i = 0; i < base.stored_traces.length; i++) {
-                            let aStoredTrace = base.stored_traces[i];
-                            console.log("Renaming stored trace " + aStoredTrace.uri);
+                        Promise.all(allModelsUpdatedPromises).then(() => {
+                            console.log("All models updated successfully");
+                            let allMethodsUpdatedPromises = new Array();
 
-                            aStoredTrace.get().then(() => {
-                                aStoredTrace.label = aStoredTrace.label + " - renamed";
+                            for(let i = 0; i < base.methods.length; i++) {
+                                const aMethod = base.methods[i]; 
+                                console.log("Renaming method " + aMethod.uri);
+                                let resolveAMethodUpdatedPromise;
 
-                                aStoredTrace.put().then(() => {
-                                    console.log("Stored trace " + aStoredTrace.uri + " put successfully");
+                                const aMethodUpdatedPromise = new Promise((resolve, reject) => {
+                                    resolveAMethodUpdatedPromise = resolve;
+                                });
+
+                                aMethod.get().then(() => {
+                                    aMethod.label = aMethod.label + " - renamed";
+
+                                    aMethod.put().then(() => {
+                                        console.log("Method " + aMethod.uri + " put successfully");
+                                        resolveAMethodUpdatedPromise();
+                                    });
+                                });
+
+                                allMethodsUpdatedPromises.push(aMethodUpdatedPromise);
+                            }
+
+                            Promise.all(allMethodsUpdatedPromises).then(() => {
+                                console.log("All methods updated successfully");
+                                let allStoredTracesUpdatedPromises = new Array();
+
+                                for(let i = 0; i < base.stored_traces.length; i++) {
+                                    const aStoredTrace = base.stored_traces[i];
+                                    console.log("Renaming stored trace " + aStoredTrace.uri);
+                                    let resolveAStoredTraceUpdatedPromise;
+
+                                    const aStoredTraceUpdatedPromise = new Promise((resolve, reject) => {
+                                        resolveAStoredTraceUpdatedPromise = resolve;
+                                    });
+
+                                    aStoredTrace.get().then(() => {
+                                        aStoredTrace.label = aStoredTrace.label + " - renamed";
+
+                                        aStoredTrace.put().then(() => {
+                                            console.log("Stored trace " + aStoredTrace.uri + " put successfully");
+                                            resolveAStoredTraceUpdatedPromise();
+                                        });
+                                    });
+
+                                    allStoredTracesUpdatedPromises.push(aStoredTraceUpdatedPromise);
+                                }
+
+                                Promise.all(allStoredTracesUpdatedPromises).then(() => {
+                                    console.log("All stored traces updated successfully");
+                                    let allComputedTracesUpdatedPromises = new Array();
+
+                                    for(let i = 0; i < base.computed_traces.length; i++) {
+                                        const aComputedTrace = base.computed_traces[i];
+                                        console.log("Renaming computed trace " + aComputedTrace.uri);
+                                        let resolveAComputedTraceUpdatedPromise;
+
+                                        const aComputedTraceUpdatedPromise = new Promise((resolve, reject) => {
+                                            resolveAComputedTraceUpdatedPromise = resolve;
+                                        });
+
+                                        aComputedTrace.get().then(() => {
+                                            aComputedTrace.label = aComputedTrace.label + " - renamed";
+
+                                            aComputedTrace.put().then(() => {
+                                                console.log("Computed trace " + aComputedTrace.uri + " put successfully");
+                                                resolveAComputedTraceUpdatedPromise();
+                                            });
+                                        });
+
+                                        allComputedTracesUpdatedPromises.push(aComputedTraceUpdatedPromise);
+                                    }
+
+                                    Promise.all(allComputedTracesUpdatedPromises).then(() => {
+                                        console.log("All computed traces updated successfully");
+                                    });
                                 });
                             });
-                        }
-
-                        for(let i = 0; i < base.methods.length; i++) {
-                            let aMethod = base.methods[i]; 
-                            console.log("Renaming method " + aMethod.uri);
-                            
-                            aMethod.get().then(() => {
-                                aMethod.label = aMethod.label + " - renamed";
-
-                                aMethod.put().then(() => {
-                                    console.log("Method " + aMethod.uri + " put successfully");
-                                });
-                            });
-                        }
-
-                        for(let i = 0; i < base.computed_traces.length; i++) {
-                            let aComputedTrace = base.computed_traces[i];
-                            console.log("Renaming computed trace " + aComputedTrace.uri);
-
-                            aComputedTrace.get().then(() => {
-                                aComputedTrace.label = aComputedTrace.label + " - renamed";
-
-                                aComputedTrace.put().then(() => {
-                                    console.log("Computed trace " + aComputedTrace.uri + " put successfully");
-                                });
-                            });
-                        }
+                        });
 
                         for(let i = 0; i < base.bases.length; i++) {
                             let aSubBase = base.bases[i];
