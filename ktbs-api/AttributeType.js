@@ -44,7 +44,7 @@ export class AttributeType {
      */
     set id(new_id) {
 		this._JSONData["@id"] = '#' + encodeURIComponent(new_id);
-		this._id = '#' + new_id;
+		this._id = new_id;
     }
 
     /**
@@ -263,7 +263,7 @@ export class AttributeType {
 				postData["hasAttributeObselType"] = new Array();
 
 				for(let i = 0; i < this.obsel_types.length; i++)
-					postData["hasAttributeObselType"].push(this._parentModel.id + this.obsel_types[i].id);
+					postData["hasAttributeObselType"].push(this._parentModel.id + "#" + this.obsel_types[i].id);
 			}
 
 			return postData;
