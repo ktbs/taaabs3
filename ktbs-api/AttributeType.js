@@ -164,14 +164,13 @@ export class AttributeType {
 	 * @param ObselType obsel_type 
 	 */
 	appliesToObselType(obsel_type) {
-		return (
-				this._JSONData["hasAttributeObselType"] 
-			&& 	(
-						(this._JSONData["hasAttributeObselType"].includes(obsel_type.id))
-					||	(this._JSONData["hasAttributeObselType"].includes("#" + obsel_type.id))
-					||	(this._JSONData["hasAttributeObselType"].includes(obsel_type.uri.toString()))
-			)
-		);
+		let applies = false;
+
+		if(this.parent_model && (this.parent_model == obsel_type.parent_model))
+			for(let i = 0; !applies && (i < this.obsel_types.length); i++)
+				applies = (this.obsel_types[i].id == obsel_type.id);
+
+		return applies;
 	}
 
 	/**
@@ -179,14 +178,14 @@ export class AttributeType {
 	 */
 	get obsel_types() {
 		if(!this._obsel_types) {
-			let hasAttributeObselType = this._JSONData["hasAttributeObselType"];
-
 			if(this._parentModel) {
 				this._obsel_types = new Array();
 				
-				if(hasAttributeObselType instanceof Array) {
-					for(let i = 0; i < hasAttributeObselType.length; i++) {
-						let obselType_id = hasAttributeObselType[i];
+				if(this._JSONData["hasAttributeObselType"] instanceof Array) {
+					for(let i = 0; i < this._JSONData["hasAttributeObselType"].length; i++) {
+						let obselType_link = this._JSONData["hasAttributeObselType"][i];
+						let obselType_uri = this._parentModel.resolve_link_uri(obselType_link);
+						let obselType_id = decodeURIComponent(obselType_uri.hash.substring(1));
 						let obselType = this._parentModel.get_obsel_type(obselType_id);
 
 						if(obselType)
@@ -194,7 +193,7 @@ export class AttributeType {
 					}
 				}
 			}
-			else if(hasAttributeObselType instanceof Array)
+			else if(this._JSONData["hasAttributeObselType"] instanceof Array)
 				throw new KtbsError("Obsel types linked to the AttributeType cannot be retrieved before the AttributeType's parent Model has been set.");
 			else
 				this._obsel_types = new Array();

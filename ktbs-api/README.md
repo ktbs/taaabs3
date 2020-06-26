@@ -161,7 +161,7 @@ However, if you want to force refreshing the resource's data with a new HTTP req
 
 #### Using object properties
 
-Once data is fetched, you can read or write object properties.
+Once data is fetched, you can read objects properties listed in the API reference.
 
 **IMPORTANT** : Javascript doesn't provide members visibility support, so by convention, all class members whose name is prefixed by character _ (underscore) should be considered private and client code should not attempt to read or write them. Instead, use public properties and method whose name is not prefixed with a _.
 
@@ -246,6 +246,10 @@ myBase.delete()
         console.error(error);
     })
 ```
+
+### Authentication
+
+@TODO
 
 ### Observing a resource to be notified of changes
 

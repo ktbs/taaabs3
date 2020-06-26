@@ -44,7 +44,7 @@ export class ObselType {
      */
     set id(new_id) {
         this._JSONData["@id"] = '#' + encodeURIComponent(new_id);
-        this._id = '#' + new_id;
+        this._id = new_id;
     }
 
     /**
