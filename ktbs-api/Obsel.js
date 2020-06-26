@@ -233,7 +233,7 @@ export class Obsel extends Resource {
             if(!AttributeType.system_types_ids.includes(attribute_type_link)) {
                 let attribute_value = postData[attribute_type_link];
                 delete postData[attribute_type_link];
-                let attribute_post_key = this.parent.model.uri.toString() + attribute_type_link;
+                let attribute_post_key = this.parent.model.uri.toString() + "#" + attribute_type_link;
                 postData[attribute_post_key] = attribute_value;
             }
         }
