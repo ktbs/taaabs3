@@ -192,7 +192,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 			this._childrenInstanciated = false;
 		});
 
-		if((error instanceof KTBSErrors.HttpError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
+		if((error instanceof KTBSErrors.RestError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
 			if(error.statusCode == 401)
 				this._setAuthRequired();
 			else if(error.statusCode == 403)

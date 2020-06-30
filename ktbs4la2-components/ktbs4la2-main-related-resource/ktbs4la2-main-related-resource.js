@@ -68,7 +68,7 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	 * 
 	 */
 	onktbsResourceLoadFailed(error) {
-		if((error instanceof KTBSErrors.HttpError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
+		if((error instanceof KTBSErrors.RestError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
 			this._componentReady.then(() => {
 				if(error.statusCode == 401) {
 					if(!this._containerDiv.classList.contains("authentication-required"))

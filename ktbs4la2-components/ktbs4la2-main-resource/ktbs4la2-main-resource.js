@@ -550,7 +550,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 	 * 
 	 */
 	onktbsResourceLoadFailed(error) {
-        if((error instanceof KTBSErrors.HttpError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
+        if((error instanceof KTBSErrors.RestError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
 			this._componentReady.then(() => {
                 if(error.statusCode == 401) {
                     this._resourceStatusString = "Authentication required";
@@ -660,7 +660,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     // --- done
                 })
                 .catch((error) => {
-                    if((error instanceof KTBSErrors.HttpError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
+                    if((error instanceof KTBSErrors.RestError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
                         this._authErrorMessage.innerText = this._translateString("Access denied");
                         this._authErrorMessage.style.display = "block";
                     }

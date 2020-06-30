@@ -1,10 +1,15 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
-import {ResourceProxy} from "../../ktbs-api/ResourceProxy.js";
+import {ResourceMultiton} from "../../ktbs-api/ResourceMultiton.js";
+
+// @TODO : check if the following imports are really necessary
 import {Ktbs} from "../../ktbs-api/Ktbs.js";
 import {Base} from "../../ktbs-api/Base.js";
 import {Model} from "../../ktbs-api/Model.js";
 import {Method} from "../../ktbs-api/Method.js";
-import {StoredTrace, ComputedTrace} from "../../ktbs-api/Trace.js";
+import {StoredTrace} from "../../ktbs-api/Trace.js";
+import {ComputedTrace} from "../../ktbs-api/Trace.js";
+// ---
+
 import "../ktbs4la2-overlay/ktbs4la2-overlay.js";
 import "../ktbs4la2-root-form/ktbs4la2-root-form.js";
 import "../ktbs4la2-nav-resource/ktbs4la2-nav-resource.js";
@@ -460,7 +465,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					this._selectedNavElement = newSelectedNavElement;
 				}
 
-				let ktbsResource = ResourceProxy.get_resource(this._get_resource_class(ktbs_type), main_id);
+				let ktbsResource = ResourceMultiton.get_resource(this._get_resource_class(ktbs_type), main_id);
 				this._selectedResourceHierarchy.unshift(ktbsResource);
 				this._highlightNavParent(ktbsResource);
 

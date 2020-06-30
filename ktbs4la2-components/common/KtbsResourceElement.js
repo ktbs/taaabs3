@@ -1,10 +1,13 @@
 import {TemplatedHTMLElement} from "./TemplatedHTMLElement.js";
-import {ResourceProxy} from "../../ktbs-api/ResourceProxy.js";
+import {ResourceMultiton} from "../../ktbs-api/ResourceMultiton.js";
+
+// @TODO : check if the following imports are really necessary
 import {Ktbs} from "../../ktbs-api/Ktbs.js";
 import {Base} from "../../ktbs-api/Base.js";
 import {Model} from "../../ktbs-api/Model.js";
 import {Method} from "../../ktbs-api/Method.js";
-import {StoredTrace, ComputedTrace} from "../../ktbs-api/Trace.js";
+import {StoredTrace} from "../../ktbs-api/Trace.js";
+import {ComputedTrace} from "../../ktbs-api/Trace.js";
 
 /**
  * 
@@ -93,7 +96,7 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 		let type = this._getKtbsResourceClass();
 		
 		try {
-			this._ktbsResource = ResourceProxy.get_resource(type, uri);
+			this._ktbsResource = ResourceMultiton.get_resource(type, uri);
 
 			if(this._bindedOnKtbsResourceChangeMethod)
 				this._ktbsResource.addObserver(this._bindedOnKtbsResourceChangeMethod);
