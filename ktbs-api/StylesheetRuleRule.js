@@ -1,33 +1,37 @@
 import {StylesheetRuleRuleAttributeConstraint} from "./StylesheetRuleRuleAttributeConstraint.js";
 
 /**
- * 
+ * Class for style sheet rule rule
  */
 export class StylesheetRuleRule {
 
     /**
      * Constructor for class StylesheetRuleRule
-     * @param Model parentModel the Model the style sheet rule rule is described in
-     * @param Object JSONData the data describing the style sheet rule
+     * \param Model parentModel - the Model the style sheet rule rule is described in
+     * \param Object JSONData - the data describing the style sheet rule
+     * \public
      */
     constructor(parentModel, JSONData = {}) {
 
         /**
          * The Model the style sheet rule rule is described in
-         * @type Model
+         * \var Model
+         * \protected
          */
         this._parentModel = parentModel;
 
         /**
          * The data describing the style sheet rule rule
-         * @type Object
+         * \var Object
+         * \protected
          */
         this._JSONData = JSONData;
     }
 
     /**
      * Gets the ObselType pattern that an Obsel must match to match the style sheet rule rule
-     * @return ObselType
+     * \return string
+     * \public
      */
     get type() {
         return this._JSONData.type;
@@ -35,15 +39,17 @@ export class StylesheetRuleRule {
 
     /**
      * Sets the ObselType pattern that an Obsel must match to match the style sheet rule rule
-     * @param string new_type the new ObselType pattern that an Obsel must match to match the style sheet rule rule
+     * \param string new_type - the new ObselType pattern that an Obsel must match to match the style sheet rule rule
+     * \public
      */
     set type(new_type) {
         this._JSONData.type = new_type;
     }
 
     /**
-     * 
-     * @return StylesheetRuleRuleAttributeConstraint
+     * Gets the attribute constraints of this rule
+     * \return StylesheetRuleRuleAttributeConstraint
+     * \public
      */
     get attributes() {
         if(!this._attributes) {
@@ -62,9 +68,10 @@ export class StylesheetRuleRule {
     }
 
     /**
-	 * 
-	 * @param obsel 
-	 * @returns boolean
+	 * Checks if an obsel matches the current rule's type
+	 * \param Obsel obsel - the obsel to check if it matches the current rule's type
+	 * \return boolean
+     * \public
 	 */
 	typeMatchedByObsel(obsel) {
 		return(
@@ -78,10 +85,11 @@ export class StylesheetRuleRule {
     }
     
     /**
-     * 
-     * @param Obsel obsel
-     * @return boolean 
-     */
+	 * Checks if an obsel matches the current rule
+	 * \param Obsel obsel - the obsel to check if it matches the current rule
+	 * \return boolean
+     * \public
+	 */
     matchedByObsel(obsel) {
 		let matches = new Array();
 		

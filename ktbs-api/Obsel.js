@@ -13,7 +13,8 @@ export class Obsel extends Resource {
 
     /**
      * Gets the relative ID of the Obsel's type (relative to the Model the ObselType is described in)
-     * @returns string
+     * \return string
+     * \public
      */
     get type_id() {
         if(!this._type_id) {
@@ -31,7 +32,9 @@ export class Obsel extends Resource {
     }
 
     /**
-     * 
+     * Sets the relative ID of the Obsel's type (relative to the Model the ObselType is described in)
+     * \param string newTypeId - the new relative ID for the Obsel's type
+     * \public
      */
     set type_id(newTypeId) {
         this._JSONData["@type"] = newTypeId;
@@ -41,7 +44,8 @@ export class Obsel extends Resource {
 
     /**
      * Gets the Obsel's type
-     * @returns ObselType
+     * \return ObselType
+     * \public
      */
     get type() {
         if(!this._type && this.parent && this.parent.model)
@@ -52,7 +56,9 @@ export class Obsel extends Resource {
 
     /**
      * Sets the Obsel's type
-     * @param ObselType newType the new type for the obsel
+     * \param ObselType newType - the new type for the obsel
+     * \throws TypeError throws a TypeError if the provided argument is not an ObselType
+     * \public
      */
     set type(newType) {
         if(newType instanceof ObselType) {
@@ -65,8 +71,9 @@ export class Obsel extends Resource {
     }
 
     /**
-	 * Gets the parent Trace of this Obsel
-	 * @return Trace the Obsel's parent Trace if any, or undefined if the Obsel's Trace is unknown (i.e. the Obsel hasn't been read or recorded yet).
+	 * Gets the parent Trace of this Obsel, or undefined if the Obsel's Trace is unknown (i.e. the Obsel hasn't been read or recorded yet).
+	 * \return Trace
+     * \public
 	 */
 	get parent() {
         if(!this._parent && this._JSONData.hasTrace)
@@ -77,7 +84,9 @@ export class Obsel extends Resource {
 
     /**
      * Sets the parent trace of the Obsel
-     * @param Trace new_parent the new parent Trace for the Obsel
+     * \param Trace new_parent - the new parent Trace for the Obsel
+     * \throws TypeError throws a TypeError if the provided argument is not a Trace
+     * \public
      */
     set parent(new_parent) {
         if(new_parent instanceof Trace) {
@@ -90,7 +99,8 @@ export class Obsel extends Resource {
     
     /**
      * Gets the begin timestamp of the obsel
-     * @returns int
+     * \return int
+     * \public
      */
     get begin() {
         if((this._begin == undefined) && (this._JSONData.begin != undefined))
@@ -101,7 +111,8 @@ export class Obsel extends Resource {
 
     /**
      * Gets the begin Date of the obsel
-     * @returns Date
+     * \return Date
+     * \public
      */
     get beginDT() {
         if(!this._beginDT && this._JSONData.beginDT)
@@ -112,7 +123,8 @@ export class Obsel extends Resource {
 
     /**
      * Gets the end timestamp of the obsel
-     * @returns int
+     * \return int
+     * \public
      */
     get end() {
         if((this._end == undefined) && (this._JSONData.end != undefined))
@@ -123,7 +135,8 @@ export class Obsel extends Resource {
 
     /**
      * Gets the end Date of the obsel
-     * @returns Date
+     * \return Date
+     * \public
      */
     get endDT() {
         if(!this._endDT && this._JSONData.endDT)
@@ -134,7 +147,8 @@ export class Obsel extends Resource {
 
     /**
      * Gets the subject of the obsel
-     * @returns string
+     * \return string
+     * \public
      */
     get subject() {
         return this._JSONData.subject;
@@ -142,7 +156,8 @@ export class Obsel extends Resource {
 
     /**
      * Gets the source obsels of the current obsel (when it belongs to a computed trace)
-     * @returns Obsel[]
+     * \return Array of Obsel
+     * \public
      */
     get sourceObsels() {
         if(!this._sourceObsels && this._JSONData.hasSourceObsel) {
@@ -161,7 +176,8 @@ export class Obsel extends Resource {
 
     /**
      * Gets the non-system attributes of the Obsel
-     * @returns Array
+     * \return Array of Attribute
+     * \public
      */
     get attributes() {
         if(!this._attributes) {
@@ -181,8 +197,9 @@ export class Obsel extends Resource {
 
     /**
      * Sets the non-system attributes of the Obsel
-     * @param Array of Attributes newAttribute
-     * @throws KtbsError throws a KtbsError if at least one of the new attributes is a reserved system attribute (ex: @id, @type, begin etc...)
+     * \param Array of Attributes - newAttribute the new non-system attributes for the Obsel
+     * \throws KtbsError throws a KtbsError if at least one of the new attributes is a reserved system attribute (ex: @id, @type, begin etc...)
+     * \public
      */
     set attributes(newAttributes) {
         // first, we check validity of new attributes
@@ -208,9 +225,11 @@ export class Obsel extends Resource {
     }
 
     /**
-     * 
-     * @param AttributeType attributeType 
-     * @param {*} value 
+     * Adds an attribute to the the Obsel
+     * \param AttributeType attributeType - the type for the new attribute
+     * \param * value - the value for the new attribute
+     * \throws TypeError throws a TypeError if the first provided argument is not an AttributeType
+     * \public
      */
     add_attribute(attributeType, value) {
         if(attributeType instanceof AttributeType) {
@@ -224,7 +243,8 @@ export class Obsel extends Resource {
 
     /**
 	 * Gets the data to be send in a POST query
-	 * @returns Object
+	 * \return Object
+     * \protected
 	 */
 	_getPostData() {
         let postData = this._JSONData;
@@ -243,7 +263,8 @@ export class Obsel extends Resource {
 
     /**
 	 * Stores a new resource as a child of the current resource
-	 * @throws KtbsError always throws a KtbsError when invoked for a Obsel as it is not a container resource
+	 * \throws KtbsError always throws a KtbsError when invoked for a Obsel as it is not a container resource
+     * \public
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");

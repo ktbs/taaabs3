@@ -9,27 +9,30 @@ export class ObselType {
 
     /**
      * Constructor for class ObselType
-     * @param Model parentModel
-     * @param Object JSONData 
+     * \param Model parentModel
+     * \param Object JSONData 
      */
     constructor(parentModel = null, JSONData = {"@type": "ObselType"}) {
 
         /**
-         * 
-         * @type Model
+         * The parent model in which this obsel type is described in
+         * \var Model
+         * \protected
          */
         this._parentModel = parentModel;
 
         /**
-         * 
-         * @type Object
-         */
+		 * The obvsel type's data
+		 * \var Object
+		 * \protected
+		 */
         this._JSONData = JSONData;
     }
 
     /**
      * Gets the relative ID of the obsel type (relative to the Model it is described in)
-     * @returns string
+     * \return string
+     * \public
      */
     get id() {
         if(!this._id)
@@ -40,7 +43,8 @@ export class ObselType {
 
     /**
      * Sets the relative ID of the obsel type (relative to the Model it is described in)
-     * @param string id the new relative ID for the obsel type
+     * \param string id - the new relative ID for the obsel type
+     * \public
      */
     set id(new_id) {
         this._JSONData["@id"] = '#' + encodeURIComponent(new_id);
@@ -49,7 +53,8 @@ export class ObselType {
 
     /**
      * Gets the uri of the obsel type
-     * @returns URL
+     * \return URL
+     * \public
      */
     get uri() {
         if(!this._uri) {
@@ -62,14 +67,18 @@ export class ObselType {
 
     /**
      * Gets the Model the obsel type is described in
-     * @return Model
+     * \return Model
+     * \public
      */
     get parent_model() {
         return this._parentModel;
     }
 
     /**
-	 * 
+	 * Sets the Model the obsel type is described in
+     * \param Model new_parent_model - the new Model the obsel type is described in
+     * \throws TypeError throws a TypeError if the provided argument is not a Model
+     * \public
 	 */
 	set parent_model(new_parent_model) {
 		if(new_parent_model instanceof Model)
@@ -80,7 +89,8 @@ export class ObselType {
 
     /**
      * Gets the default color (if defined) to use for representing Obsels of the current type
-     * @return string
+     * \return string
+     * \public
      */
     get suggestedColor() {
         return this._JSONData["suggestedColor"];
@@ -88,7 +98,8 @@ export class ObselType {
 
     /**
      * Sets the default color to use for representing Obsels of the current type
-     * @param string new_suggestedColor the new default color as a valid HTML/CSS color (hexadecimal, color name etc ...)
+     * \param string new_suggestedColor - the new default color as a valid HTML/CSS color (hexadecimal, color name etc ...)
+     * \public
      */
     set suggestedColor(new_suggestedColor) {
         this._JSONData["suggestedColor"] = new_suggestedColor;
@@ -96,7 +107,8 @@ export class ObselType {
 
     /**
      * Gets the default symbol tu use for representing Obsels of the current type
-     * @return string
+     * \return string
+     * \public
      */
     get suggestedSymbol() {
         return this._JSONData["suggestedSymbol"];
@@ -104,7 +116,8 @@ export class ObselType {
 
     /**
      * Sets the default symbol tu use for representing Obsels of the current type
-     * @param string suggestedSymbol the new default symbol as a character (Unicode supported)
+     * \param string suggestedSymbol the new default symbol as a character (Unicode supported)
+     * \public
      */
     set suggestedSymbol(new_suggestedSymbol) {
         this._JSONData["suggestedSymbol"] = new_suggestedSymbol;
@@ -112,7 +125,8 @@ export class ObselType {
 
     /**
 	 * Returns a user-friendly label
-	 * @return string
+	 * \return string
+     * \public
 	 */
 	get label() {
 		if(!this._label) {
@@ -126,9 +140,10 @@ export class ObselType {
 	}
 
 	/**
-	 * Gets the label for a given language
-	 * @param string lang a short code for the language we want the label translated into
-	 * @return string the translated label, or the default label if no translated label has been found, or undefined if no default label has been found
+	 * Gets the label for a given language, or the default label if no translated label has been found, or undefined if no default label has been found
+	 * \param string lang - a short code for the language we want the label translated into
+	 * \return string
+     * \public
 	 */
 	get_translated_label(lang) {
 		let label = this.label;
@@ -147,7 +162,8 @@ export class ObselType {
 
 	/**
 	 * Set a user-friendly label.
-	 * @param string label The new label for the resource
+	 * \param string label - The new label for the resource
+     * \public
 	 */
 	set label(new_label) {
         this._JSONData["label"] = new_label;
@@ -156,8 +172,9 @@ export class ObselType {
 
 	/**
 	 * Sets a translation for the label in a given language
-	 * @param string label the translated label
-	 * @param string lang a short code for the language the label is translated in
+	 * \param string label - the translated label
+	 * \param string lang - a short code for the language the label is translated in
+     * \public
 	 */
 	set_translated_label(label, lang) {
 		let currentLabel = this.label;
@@ -177,7 +194,8 @@ export class ObselType {
 
     /**
 	 * Gets the "comment" of the resource
-	 * @return string
+	 * \return string
+     * \public
 	 */
 	get comment() {
 		return this._JSONData["http://www.w3.org/2000/01/rdf-schema#comment"];
@@ -185,14 +203,17 @@ export class ObselType {
 
 	/**
 	 * Sets the "comment" of the resource
-	 * @param string comment the new comment for the resource
+	 * \param string comment - the new comment for the resource
+     * \public
 	 */
 	set comment(comment) {
 		this._JSONData["http://www.w3.org/2000/01/rdf-schema#comment"] = comment;
     }
 
     /**
-     * 
+     * Gets the attribute types associated with the current model
+     * \return Array of AttributeType
+     * \public
      */
     get attribute_types() {
         if(!this._attribute_types) {
@@ -214,7 +235,11 @@ export class ObselType {
     }
 
     /**
-     * 
+     * Sets the attribute types associated with the current model
+     * \param Array of AttributeType new_attribute_types - the new attribute types associated with the current model
+     * \throws TypeError throws a TypeError if the provided argument is not an Array of AttributeType
+     * \throws KtbsError throws a KtbsError if one of the AttributeType provided as an argument has a different parent model than the current obsel type
+     * \public
      */
     set attribute_types(new_attribute_types) {
         if(new_attribute_types instanceof Array) {
@@ -237,8 +262,10 @@ export class ObselType {
     }
     
     /**
-     * 
-     */
+	 * Gets the data to be send in a POST query
+	 * \return Object
+	 * \protected
+	 */
     _getPostData() {
         if(this._parentModel) {
             let postData = this._JSONData;

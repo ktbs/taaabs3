@@ -13,7 +13,8 @@ export class Model extends Resource {
 
 	/**
 	 * Constructor
-	 * @param URL or string uri the resource's URI
+	 * \param URL or string uri - the resource's URI
+	 * \public
 	 */
 	constructor(uri) {
 		super(uri);
@@ -21,32 +22,37 @@ export class Model extends Resource {
 
 		/**
 		 * Obsel type instances of the the Model
-		 * @type Array
+		 * \var Array
+		 * \protected
 		 */
 		this._obsel_types = null;
 
 		/**
 		 * Attribute type instances of the the Model
-		 * @type Array
+		 * \var Array
+		 * \protected
 		 */
 		this._attribute_types = null;
 
 		/**
-		 * 
-		 * @type int
+		 * The rank of the portion of the resource's JSON data that describes the model itself
+		 * \var int
+		 * \protected
 		 */
 		this._model_own_graph_rank = null;
 
 		/**
-		 * 
-		 * @type Object
+		 * The portion of the resource's JSON data that describes the model itself
+		 * \var Object
+		 * \protected
 		 */
 		this._model_own_graph = null;
 	}
 
 	/**
 	 * Gets the rank of the data graph in which are described general information for the Model itself (as the resource may contain other data graphes describing ObselTypes and AttributeTypes)
-	 * @return int
+	 * \return int
+	 * \protected
 	 */
 	_get_model_own_graph_rank() {
 		if(this._model_own_graph_rank == null) {
@@ -69,7 +75,8 @@ export class Model extends Resource {
 
 	/**
 	 * Gets the data graph in which are described general information for the Model itself (as the resource may contain other data graphes describing ObselTypes and AttributeTypes)
-	 * @return Object
+	 * \return Object
+	 * \protected
 	 */
 	_get_model_own_graph() {
 		if(this._model_own_graph == null) {
@@ -84,7 +91,8 @@ export class Model extends Resource {
 
 	/**
 	 * Gets the data to be send in a POST query
-	 * @returns Object
+	 * \return Object
+	 * \protected
 	 */
 	_getPostData() {
 		let postData = {"@graph" : [this._get_model_own_graph()]};
@@ -119,7 +127,8 @@ export class Model extends Resource {
 
 	/**
 	 * Gets the ID of this resource, relative to its parent resource URI.
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get id() {
 		let ownGraph = this._get_model_own_graph();
@@ -134,8 +143,9 @@ export class Model extends Resource {
 
 	/**
 	 * Sets the ID of this resource, relative to its parent resource URI.
-	 * @param string id the new ID for the resource.
-	 * @throws Error Throws an Error if we try to set the ID of a resource that already exists on a kTBS service.
+	 * \param string id - the new ID for the resource.
+	 * \throws Error Throws an Error if we try to set the ID of a resource that already exists on a kTBS service.
+	 * \public
 	 */
 	set id(id) {
 		if(this.syncStatus == "needs_sync")
@@ -146,7 +156,8 @@ export class Model extends Resource {
 
 	/**
 	 * Returns a user-friendly label
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get label() {
 		if(!this._label) {
@@ -165,7 +176,8 @@ export class Model extends Resource {
 
 	/**
 	 * Set a user-friendly label.
-	 * @param string new_label The new label for the Model
+	 * \param string new_label - the new label for the Model
+	 * \public
 	 */
 	set label(new_label) {
 		let modelOwnGraphRank = this._get_model_own_graph_rank();
@@ -175,7 +187,8 @@ export class Model extends Resource {
 
 	/**
 	 * Gets the "comment" of the resource
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get comment() {
 		if(!this._comment) {
@@ -190,7 +203,8 @@ export class Model extends Resource {
 
 	/**
 	 * Set the "comment" for the resource
-	 * @param string new_comment The new comment for the Model
+	 * \param string new_comment - the new comment for the Model
+	 * \public
 	 */
 	set comment(new_comment) {
 		let modelOwnGraphRank = this._get_model_own_graph_rank();
@@ -200,7 +214,8 @@ export class Model extends Resource {
 
 	/**
 	 * Gets the parent resource of this resource.
-	 * @return Resource the resource's parent resource if any, or undefined if the resource's parent is unknown (i.e. the resource hasn't been read or recorded yet), or null if the resource doesn't have any parent (i.e. Ktbs Root).
+	 * \return Resource
+	 * \public
 	 */
 	get parent() {
 		if(!this._parent) {
@@ -215,7 +230,8 @@ export class Model extends Resource {
 
 	/**
 	 * Gets the obsel types defined in the Model
-	 * @return ObselType[]
+	 * \return Array of ObselType
+	 * \public
 	 */
 	get obsel_types() {
 		if(!this._obsel_types) {
@@ -238,7 +254,11 @@ export class Model extends Resource {
 	}
 
 	/**
-	 * 
+	 * Sets the obsel types defined in the Model
+	 * \param Array of ObselType new_obsel_types - the new obsel types defined in the Model
+	 * \throws TypeError throws a TypeError if the provided argument is not an Array of ObselType
+	 * \throws KtbsError throws a KtbsError if one of the ObselType provided as an argument belongs to an other Model
+	 * \public
 	 */
 	set obsel_types(new_obsel_types) {
 		if(new_obsel_types instanceof Array) {
@@ -261,9 +281,10 @@ export class Model extends Resource {
 	}
 
 	/**
-	 * Gets the obsel type with the given id from the current Model
-	 * @param string obsel_type_id the id of the obsel type we are looking for
-	 * @return ObselType or null if no obsel type with the given obsel_type_id has been found in the model
+	 * Gets the obsel type with the given id from the current Model,  or null if no obsel type with the given obsel_type_id has been found in the model
+	 * \param string obsel_type_id - the id of the obsel type we are looking for
+	 * \return ObselType
+	 * \public
 	 */
 	get_obsel_type(obsel_type_id) {
 		let obsel_types = this.obsel_types;
@@ -280,7 +301,8 @@ export class Model extends Resource {
 
 	/**
 	 * Gets the attribute types defined in the Model
-	 * @return AttributeType[]
+	 * \return Array of AttributeType
+	 * \public
 	 */
 	get attribute_types() {
 		if(!this._attribute_types) {
@@ -303,7 +325,11 @@ export class Model extends Resource {
 	}
 
 	/**
-	 * 
+	 * Sets the attribute types defined in the Model
+	 * \param Array of AttributeType new_attribute_types - the new attribute types defined in the Model
+	 * \throws TypeError throws a TypeError if the provided argument is not an Array of AttributeType
+	 * \throws KtbsError throws a KtbsError if one of the AttributeType provided as an argument belongs to an other Model
+	 * \public
 	 */
 	set attribute_types(new_attribute_types) {
 		if(new_attribute_types instanceof Array){
@@ -326,9 +352,10 @@ export class Model extends Resource {
 	}
 
 	/**
-	 * Gets the attribute type with the given id from the current Model
-	 * @param string attribute_type_id the id of the attribute type we are looking for
-	 * @return AttributeType or null if no attribute type with the given attribute_type_id has been found in the model
+	 * Gets the attribute type with the given id from the current Model,  or null if no attribute type with the given attribute_type_id has been found in the model
+	 * \param string attribute_type_id the id of the attribute type we are looking for
+	 * \return AttributeType
+	 * \public
 	 */
 	get_attribute_type(attribute_type_id) {
 		let attribute_types = this.attribute_types;
@@ -345,7 +372,8 @@ export class Model extends Resource {
 
 	/**
 	 * Gets the user stylesheets defined in the Model
-	 * @return Array
+	 * \return Array of Stylesheet
+	 * \public
 	 */
 	get stylesheets() {
 		let styleSheets = new Array();
@@ -376,7 +404,8 @@ export class Model extends Resource {
 
 	/**
 	 * Stores a new resource as a child of the current resource
-	 * @throws KtbsError always throws a KtbsError when invoked for a Model as it is not a container resource
+	 * \throws KtbsError always throws a KtbsError when invoked for a Model as it is not a container resource
+	 * \public
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");

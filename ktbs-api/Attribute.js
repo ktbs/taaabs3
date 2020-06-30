@@ -5,34 +5,39 @@ export class Attribute {
 
     /**
      * Constructor
-     * @param Obsel parentObsel the obsel the attribute belongs to
-     * @param string type_link a link to the AttributeType (may be a relative link from the parent Obsel)
-     * @param string value the value for the attribute
+     * \param Obsel parentObsel - the obsel the attribute belongs to
+     * \param string type_link - a link to the AttributeType (may be a relative link from the parent Obsel)
+     * \param string value - the value for the attribute
+     * \public
      */
     constructor(parentObsel, type_link, value) {
 
         /**
          * The obsel the attribute belongs to
-         * @type Obsel
+         * \var Obsel
+         * \protected
          */
         this._parentObsel = parentObsel;
 
         /**
          * A link to the AttributeType (may be a relative link from the parent Obsel)
-         * @type string
+         * \var string
+         * \protected
          */
         this._type_link = type_link;
 
         /**
          * The value for the attribute
-         * @type string
+         * \var string
+         * \protected
          */
         this._value = value;
     }
 
     /**
      * Gets the AttributeType's ID
-     * @returns string
+     * \return string
+     * \public
      */
     get type_id() {
         if(!this._type_id) {
@@ -49,7 +54,8 @@ export class Attribute {
 
     /**
      * Gets the attribute's type
-     * @returns AttributeType
+     * \return AttributeType
+     * \public
      */
     get type() {
         if(!this._type && this._parentObsel.parent && this._parentObsel.parent.model)
@@ -60,7 +66,8 @@ export class Attribute {
 
     /**
      * Gets the attribute value
-     * @returns string
+     * \return string
+     * \public
      */
     get value() {
         return this._value;

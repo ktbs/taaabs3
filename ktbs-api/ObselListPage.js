@@ -10,23 +10,26 @@ export class ObselListPage extends Resource {
 
     /**
 	 * Constructor
-	 * @param URL or string uri the resource's URI
+	 * \param URL or string uri the resource's URI
+     * \public
 	 */
 	constructor(uri = null) {
         super(uri);
 
         /**
 		 * A Promise for the "GET" request allowing to read the resource's data
-		 * @type Promise
+		 * \var Promise
+         * \protected
 		 */
 		this._obselListPageGetPromise = null;
     }
 
     /**
      * Attemps to asynchronously read an ObselListPage's data from the REST service and returns a Promise.
-	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
-	 * @param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
-	 * @return Promise
+	 * \param AbortSignal abortSignal - an optional AbortSignal allowing to stop the HTTP request
+	 * \param Object credentials - an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
+	 * \return Promise
+     * \public
      */
     get(abortSignal = null, credentials = null) {
         if(this._obselListPageGetPromise == null) {
@@ -60,7 +63,8 @@ export class ObselListPage extends Resource {
 
     /**
      * Gets the uri of the obsel list page that comes next after the current one
-     * @return URL
+     * \return URL
+     * \public
      */
     get next_page_uri() {
         return this._nextPageURI;
@@ -68,7 +72,8 @@ export class ObselListPage extends Resource {
 
     /**
      * Gets the obsel list page that comes next after the current one
-     * @return ObselListPage
+     * \return ObselListPage
+     * \public
      */
     get next_page() {
         if(!this._next_page && this.next_page_uri)
@@ -79,7 +84,8 @@ export class ObselListPage extends Resource {
 
     /**
      * Gets the Trace the ObselListPage belongs to
-	 * @return Trace
+	 * \return Trace
+     * \public
      */
     get parent() {
         if(!this._parent) {
@@ -92,7 +98,8 @@ export class ObselListPage extends Resource {
 
     /**
      * Gets the obsels of the current page
-     * @return Array
+     * \return Array of Obsel
+     * \public
      */
     get obsels() {
         if(!this._obsels) {
@@ -122,7 +129,8 @@ export class ObselListPage extends Resource {
 
     /**
 	 * Stores a new resource as a child of the current resource
-	 * @throws KtbsError always throws a KtbsError when invoked for a ObselListPage as it is not a container resource
+	 * \throws KtbsError always throws a KtbsError when invoked for a ObselListPage as it is not a container resource
+     * \public
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");

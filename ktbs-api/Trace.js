@@ -13,8 +13,9 @@ import {KtbsError} from "./Errors.js";
 export class Trace extends Resource {
 
 	/**
-	 * Gets the parent Base of the trace
-	 * @return Base the trace's parent base if any, or undefined if the trace's parent Base is unknown (i.e. the resource hasn't been read or recorded yet).
+	 * Gets the parent Base of the trace, or undefined if the trace's parent Base is unknown (i.e. the resource hasn't been read or recorded yet).
+	 * \return Base
+	 * \public
 	 */
 	get parent() {
 		if(!this._parent && this._JSONData.inBase)
@@ -25,7 +26,8 @@ export class Trace extends Resource {
 
 	/**
 	 * Gets the model of the Trace
-	 * @return Model
+	 * \return Model
+	 * \public
 	 */
 	get model() {
 		if(!this._model && this._JSONData.hasModel)
@@ -36,8 +38,9 @@ export class Trace extends Resource {
 
 	/**
 	 * Sets the model of the Trace
-	 * @param Model newModel the new Model for the Trace
-	 * @throws TypeError throws a TypeError when provided argument is not an instance of Model
+	 * \param Model newModel - the new Model for the Trace
+	 * \throws TypeError throws a TypeError when provided argument is not an instance of Model
+	 * \public
 	 */
 	set model(newModel) {
 		if(newModel instanceof Model) {
@@ -50,7 +53,8 @@ export class Trace extends Resource {
 
 	/**
 	 * Gets the temporal origin of the Trace
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get origin() {
 		return this._JSONData.origin;
@@ -58,7 +62,8 @@ export class Trace extends Resource {
 
 	/**
 	 * Sets the temporal origin for the Trace
-	 * @param String newOrigin the new origin for the Trace
+	 * \param String newOrigin - the new origin for the Trace
+	 * \public
 	 */
 	set origin(newOrigin) {
 		this._JSONData.origin = newOrigin;
@@ -66,7 +71,8 @@ export class Trace extends Resource {
 
 	/**
 	 * Gets the obsel list of the trace
-	 * @return ObselList
+	 * \return ObselList
+	 * \public
 	 */
 	get obsel_list() {
 		if(!this._obsels && this._JSONData.hasObselList)
@@ -83,7 +89,8 @@ export class StoredTrace extends Trace {
 
 	/**
 	 * Constructor
-	 * @param URL or string uri the resource's URI
+	 * \param URL or string uri - the resource's URI
+	 * \public
 	 */
 	constructor(uri = null) {
 		super(uri);
@@ -92,11 +99,12 @@ export class StoredTrace extends Trace {
 
 	/**
 	 * Stores an Obsel or an Array of Obsel as child(s) of the current StoredTrace
-	 * @param {Obsel, Array} new_child_resource the new child resource
-	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
-	 * @param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
-	 * @throws TypeError throws a TypeError if the provided new_child_resource argument is not an Obsel
-	 * @returns Promise
+	 * \param Obsel or Array of Obsel new_child_resource - the new child resource
+	 * \param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
+	 * \param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
+	 * \throws TypeError throws a TypeError if the provided new_child_resource argument is not an Obsel
+	 * \return Promise
+	 * \public
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		if((new_child_resource instanceof Obsel) || (new_child_resource instanceof Array)) {
@@ -130,7 +138,8 @@ export class ComputedTrace extends Trace {
 
 	/**
 	 * Constructor
-	 * @param URL or string uri the resource's URI
+	 * \param URL or string uri - the resource's URI
+	 * \public
 	 */
 	constructor(uri = null) {
 		super(uri);
@@ -138,8 +147,9 @@ export class ComputedTrace extends Trace {
 	}
 
 	/**
-	 * Gets the trace's Method
-	 * @return Method
+	 * Gets the computed trace's Method
+	 * \return Method
+	 * \public
 	 */
 	get method() {
 		if(!this._method) {
@@ -152,7 +162,10 @@ export class ComputedTrace extends Trace {
 	}
 
 	/**
-	 * 
+	 * Sets the trace's Method
+	 * \param Method new_method - the new method for the computed trace
+	 * \throws TypeError throws a TypeError if the provided argument is not a Method
+	 * \public
 	 */
 	set method(new_method) {
 		if(new_method instanceof Method) {
@@ -164,7 +177,9 @@ export class ComputedTrace extends Trace {
 	}
 
 	/**
-	 * 
+	 * Gets the source traces of the computed trace
+	 * \return Array of Trace
+	 * \public
 	 */
 	get source_traces() {
 		if(!this._source_traces) {
@@ -186,7 +201,10 @@ export class ComputedTrace extends Trace {
 	}
 
 	/**
-	 * 
+	 * Sets the source traces for the computed trace
+	 * \param Array of Trace new_source_traces - the new source traces for the computed trace
+	 * \throws TypeError throws a TypeError if the provided argument is not an Array of Trace
+	 * \public
 	 */
 	set source_traces(new_source_traces) {
 		if(new_source_traces instanceof Array) {
@@ -204,8 +222,10 @@ export class ComputedTrace extends Trace {
 	}
 
 	/**
-	 * 
-	 */
+     * Gets the data to be sent for this resource to be POSTed to a parent one
+	 * \return Object
+	 * \protected
+     */
 	_getPostData() {
 		let postData = this._JSONData;
 
@@ -223,7 +243,8 @@ export class ComputedTrace extends Trace {
 
 	/**
 	 * Stores a new Obsel as a child of the current Trace
-	 * @throws KtbsError always throws a KtbsError when invoked for ComputedTrace instances, as computed trace do not store any obsel
+	 * \throws KtbsError always throws a KtbsError when invoked for ComputedTrace instances, as computed trace do not store any obsel
+	 * \public
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Computed traces cannot store children obsels");

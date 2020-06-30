@@ -12,14 +12,23 @@ export class RestError extends Error {
 
         /**
          * HTTP status code
+         * \var integer
+         * \public
          */
         this.statusCode = statusCode;
 
         /**
          * HTTP status text
+         * \var string
+         * \public
          */
         this.statusText = statusText;
 
+        /**
+         * Error name
+         * \var string
+         * \public
+         */
         this.name = "REST error";
     }
 };

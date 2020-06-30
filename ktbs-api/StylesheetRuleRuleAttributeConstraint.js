@@ -5,27 +5,31 @@ export class StylesheetRuleRuleAttributeConstraint {
 
     /**
      * Constructor for class StylesheetRuleRuleAttributeConstraint
-     * @param Model parentModel the Model the style sheet rule rule attribute constraint is described in
-     * @param Object JSONData the data describing the style sheet rule rule attribute constraint 
+     * \param Model parentModel - the Model the style sheet rule rule attribute constraint is described in
+     * \param Object JSONData - the data describing the style sheet rule rule attribute constraint 
+     * \public
      */
     constructor(parentModel, JSONData) {
 
         /**
          * The Model the style sheet rule rule attribute constraint is described in
-         * @type Model
+         * \var Model
+         * \protected
          */
         this._parentModel = parentModel;
 
         /**
          * The data describing the style sheet rule rule attribute constraint 
-         * @type Object
+         * \var Object
+         * \protected
          */
         this._JSONData = JSONData;
     }
 
     /**
      * Gets the uri of the AttributeType that is targeted by this constraint
-     * @return URL
+     * \return URL
+     * \public
      */
     get uri() {
         if(!this._uri)
@@ -35,8 +39,10 @@ export class StylesheetRuleRuleAttributeConstraint {
     }
 
     /**
-     * Sets the uri of the AttributeType that is targeted by this constraint
-     * @param URL new_uri
+     * Sets the the AttributeType that is targeted by this constraint, by it's uri
+     * \param URL new_uri - the uri of the new AttributeType that is targeted by this constraint
+     * \throws TypeError throws a TypeError if the provided argument is not an URL
+     * \public
      */
     set uri(new_uri) {
         if(new_uri instanceof URL) {
@@ -47,6 +53,11 @@ export class StylesheetRuleRuleAttributeConstraint {
             throw new TypeError("Value for \"uri\" property must be an instance of URL");
     }
 
+    /**
+     * Gets the ID of the AttributeType that is targeted by this constraint
+     * \return string
+     * \public
+     */
     get type_id() {
         if(!this._type_id && this.uri && this.uri.hash)
             this._type_id = decodeURIComponent(this.uri.hash.substring(1));
@@ -56,7 +67,8 @@ export class StylesheetRuleRuleAttributeConstraint {
 
     /**
      * Gets the AttributeType that is targeted by this constraint
-     * @return AttributeType
+     * \return AttributeType
+     * \public
      */
     get type() {
         if(!this._type && this.type_id)
@@ -67,8 +79,9 @@ export class StylesheetRuleRuleAttributeConstraint {
 
     /**
      * Sets the AttributeType that is targeted by this constraint
-     * @param AttributeType new_type the new AttributeType that is targeted by this constraint
-     * @throws TypeError throws a TypeError if provided value for parameter new_type is not an instance of AttributeType
+     * \param AttributeType new_type - the new AttributeType that is targeted by this constraint
+     * \throws TypeError throws a TypeError if provided value for parameter new_type is not an instance of AttributeType
+     * \public
      */
     set type(new_type) {
         if(new_type instanceof AttributeType) {
@@ -81,7 +94,8 @@ export class StylesheetRuleRuleAttributeConstraint {
 
     /**
      * Gets the operator used to check the if an Obsel Attribute matches this constraint
-     * @return string
+     * \return string
+     * \public
      */
     get operator() {
         return this._JSONData["operator"];
@@ -89,7 +103,8 @@ export class StylesheetRuleRuleAttributeConstraint {
 
     /**
      * Sets the operator used to check the if an Obsel Attribute matches this constraint
-     * @param string new_operator
+     * \param string new_operator - the new operator used to check the if an Obsel Attribute matches this constraint
+     * \public
      */
     set operator(new_operator) {
         this._JSONData["operator"] = new_operator;
@@ -97,7 +112,8 @@ export class StylesheetRuleRuleAttributeConstraint {
 
     /**
      * Gets the value used to check the if an Obsel Attribute matches this constraint
-     * @return string
+     * \return string
+     * \public
      */
     get value() {
         return this._JSONData["value"];
@@ -105,15 +121,18 @@ export class StylesheetRuleRuleAttributeConstraint {
 
     /**
      * Sets the value used to check the if an Obsel Attribute matches this constraint
-     * @param string new_value
+     * \param string new_value - the new value used to check the if an Obsel Attribute matches this constraint
+     * \public
      */
     set value(new_value) {
         this._JSONData["value"] = new_value;
     }
 
     /**
-     * Checks if an Obsel Attribute matches this constraint
-     * @param Attribute obselAttribute
+     * Checks if an obsel attribute matches this constraint
+     * \param Attribute obselAttribute - obsel attribute to check if it matches this constraint
+     * \return boolean
+     * \public
      */
     matchedByObselAttribute(obselAttribute) {
         try {
@@ -126,9 +145,10 @@ export class StylesheetRuleRuleAttributeConstraint {
     }
 
     /**
-	 * Checks if an Obsel matches this constraint, which is when at leasr one of the Obsel's Attributes matches this constraint
-	 * @param Obsel obsel
-	 * @returns boolean
+	 * Checks if an Obsel matches this constraint, which is when at least one of the Obsel's Attributes matches this constraint
+	 * \param Obsel obsel - the obsel to check if it matches this constraint
+	 * \return boolean
+     * \public
 	 */
 	matchedByObsel(obsel) {
 		let matched = false;

@@ -7,27 +7,31 @@ export class Stylesheet {
     
     /**
      * Constructor for class Stylesheet
-     * @param Model parentModel the Model the style sheet is described in
-     * @param Object JSONData the data describing the style sheet
+     * \param Model parentModel - the Model the style sheet is described in
+     * \param Object JSONData - the data describing the style sheet
+     * \public
      */
     constructor(parentModel, JSONData = {}) {
 
         /**
          * The Model the style sheet is described in
-         * @type Model
+         * \var Model
+         * \protected
          */
         this._parentModel = parentModel;
 
         /**
          * The data describing the style sheet
-         * @type Object
+         * \var Object
+         * \protected
          */
        this._JSONData = JSONData;
     }
 
     /**
      * Gets the name of the stylesheet
-     * @return string
+     * \return string
+     * \public
      */
     get name() {
         return this._JSONData["name"];
@@ -35,7 +39,8 @@ export class Stylesheet {
 
     /**
      * Sets the name of the style sheet
-     * @param string new_name the new name for the style sheet
+     * \param string new_name - the new name for the style sheet
+     * \public
      */
     set name(new_name) {
         this._JSONData["name"] = new_name;
@@ -43,7 +48,8 @@ export class Stylesheet {
 
     /**
      * Gets the description of the stylesheet
-     * @return string
+     * \return string
+     * \public
      */
     get description() {
         return this._JSONData["description"];
@@ -51,7 +57,8 @@ export class Stylesheet {
 
     /**
      * Sets the description of the style sheet
-     * @param string new_description the new description for the style sheet
+     * \param string new_description - the new description for the style sheet
+     * \public
      */
     set description(new_description) {
         this._JSONData["description"] = new_description;
@@ -59,7 +66,8 @@ export class Stylesheet {
 
     /**
      * Gets the rules of the stylesheet
-     * @return Array
+     * \return Array of StylesheetRule
+     * \public
      */
     get rules() {
         if(!this._rules) {
@@ -79,16 +87,18 @@ export class Stylesheet {
 
     /**
      * Sets the rules of the style sheet
-     * @param Array new_rules the new rules for the style sheet
+     * \param Array of StylesheetRule new_rules - the new rules for the style sheet
+     * \public
      */
     set rules(new_rules) {
         this._rules = new_rules;
     }
 
     /**
-     * 
-     * @param Obsel obsel 
-     * @return StylesheetRule
+     * Gets the first rule of the current stylesheet that matches an obsel provided as an argument, or null if none of them matches it
+     * \param Obsel obsel - the obsel we want the first matching rule for
+     * \return StylesheetRule
+     * \public
      */
     getFirstRuleMatchedByObsel(obsel) {
 		let firstMatchedRule = null;

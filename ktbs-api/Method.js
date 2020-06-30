@@ -1,6 +1,5 @@
 import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Resource} from "./Resource.js";
-import {Model} from "./Model.js";
 import {Base} from "./Base.js";
 
 /**
@@ -10,7 +9,8 @@ export class Method extends Resource {
 
 	/**
 	 * Constructor
-	 * @param URL or string uri the resource's URI
+	 * \param URL or string uri - the resource's URI
+	 * \public
 	 */
 	constructor(uri = null) {
 		super(uri);
@@ -19,7 +19,8 @@ export class Method extends Resource {
 
 	/**
 	 * Gets the parent Base of this method
-	 * @return Base the method's parent base if any, or undefined if the base's parent is unknown (i.e. the resource hasn't been read or recorded yet)
+	 * \return Base
+	 * \public
 	 */
 	get parent() {
 		if(!this._parent) {
@@ -32,7 +33,8 @@ export class Method extends Resource {
 
 	/**
 	 * Gets the URI of the Method's parent Method
-	 * @return URL
+	 * \return URL
+	 * \protected
 	 */
 	_get_parent_method_uri() {
 		if(!this._parent_method_uri && this._JSONData.hasParentMethod)
@@ -43,7 +45,8 @@ export class Method extends Resource {
 
 	/**
 	 * Gets the Method's parent Method
-	 * @return Method
+	 * \return Method
+	 * \public
 	 */
 	get parent_method() {
 		if(!this._parent_method) {
@@ -57,7 +60,10 @@ export class Method extends Resource {
 	}
 
 	/**
-	 * 
+	 * Sets the Method's parent Method
+	 * \param Method new_parent_method - the new parent Method for the current Method
+	 * \throws TypeError throws a TypeError if the provided argument is not a Method
+	 * \public
 	 */
 	set parent_method(new_parent_method) {
 		if(new_parent_method instanceof Method) {
@@ -73,7 +79,9 @@ export class Method extends Resource {
 	}
 	
 	/**
-	 * 
+	 * Gets the Method's parameters
+	 * \return Array
+	 * \public
 	 */
 	get parameters() {
 		if(!this._parameters) {
@@ -97,7 +105,10 @@ export class Method extends Resource {
 	}
 
 	/**
-	 * 
+	 * Sets the Method's parameters
+	 * \param Array new_parameters - the new parameters for the Method
+	 * \throws TypeError throws a TypeError if the provided argument is not an Array
+	 * \public
 	 */
 	set parameters(new_parameters) {
 		if(new_parameters instanceof Array)
@@ -108,7 +119,8 @@ export class Method extends Resource {
 
 	/**
 	 * Gets the data to be send in a POST query
-	 * @returns Object
+	 * \return Object
+	 * \protected
 	 */
 	_getPostData() {
 		let postData = this._JSONData;
@@ -134,16 +146,19 @@ export class Method extends Resource {
 	
 	/**
 	 * Stores a new resource as a child of the current resource
-	 * @throws KtbsError always throws a KtbsError when invoked for a Method as it is not a container resource
+	 * \throws KtbsError always throws a KtbsError when invoked for a Method as it is not a container resource
+	 * \public
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");
 	}
 
 	/**
-	 * 
-	 * @param string builtin_method_id 
-	 * @static
+	 * Gets a builtin method from it's ID
+	 * \param string builtin_method_id - the ID of the builtin method we want
+	 * \return Method
+	 * \static
+	 * \public
 	 */
 	static getBuiltinMethod(builtin_method_id) {
 		const builtin_method_uri = new URL(Method._builtin_methods_prefix + builtin_method_id);
@@ -152,8 +167,9 @@ export class Method extends Resource {
 }
 
 /**
- * 
- * @type string
- * @static
+ * The prefix for builtin methods URIs
+ * \var string
+ * \static
+ * \protected
  */
 Method._builtin_methods_prefix = "http://liris.cnrs.fr/silex/2009/ktbs#";

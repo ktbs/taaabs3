@@ -11,68 +11,80 @@ export class ObselList extends Resource {
 	
 	/**
 	 * Constructor
+	 * \param URL or string uri - the resource's URI
+	 * \public
 	 */
 	constructor(uri = null) {
 		super(uri);
 
 		/**
 		 * Only obsels after this one will be returned
-		 * @type uri
+		 * \var URL
+		 * \protected
 		 */
 		this._after = null;
 
 		/**
 		 * Only obsels before this one will be returned
-		 * @type uri
+		 * \var URL
+		 * \protected
 		 */
 		this._before = null;
 
 		/**
 		 * Only that many obsels (at most) will be returned
-		 * @type int
+		 * \var int
+		 * \protected
 		 */
 		this._limit = 5;
 
 		/**
 		 * The minimum begin value for returned obsels
-		 * @type int
+		 * \var int
+		 * \protected
 		 */
 		this._minb = null;
 
 		/**
 		 * The minimum end value for returned obsels
-		 * @type int
+		 * \var int
+		 * \protected
 		 */
 		this._mine = null;
 
 		/**
 		 * The maximum begin value for returned obsels
-		 * @type int
+		 * \var int
+		 * \protected
 		 */
 		this._maxb = null;
 
 		/**
 		 * The maximum end value for returned obsels
-		 * @type int
+		 * \var int
+		 * \protected
 		 */
 		this._maxe = null;
 
 		/**
 		 * Skip that many obsels
-		 * @type int
+		 * \var int
+		 * \protected
 		 */
 		this._offset = null;
 
 		/**
 		 * Reverse the order (see below)
-		 * @type boolean
+		 * \var boolean
+		 * \protected
 		 */
 		this._reverse = null;
 	}
 
 	/**
      * Gets the Trace the ObselList belongs to
-	 * @return Trace
+	 * \return Trace
+	 * \public
      */
     get parent() {
 		if(!this._parent) {
@@ -85,7 +97,8 @@ export class ObselList extends Resource {
 
 	/**
 	 * Gets the uri to query in order to read resource's data (For some resource types, this might be different from the resource URI, for instance if we need to add some query parameters. In such case, descending resource types must override this method)
-	 * @return URL
+	 * \return URL
+	 * \protected
 	 */
 	get _data_read_uri() {
 		let params = new Array();
@@ -127,8 +140,9 @@ export class ObselList extends Resource {
 
 	/**
 	 * Builds and returns an URI to fetch the first Obsel page from the Trace
-	 * @param int limit The maximum number of obsels to fetch for this page (default: 500)
-	 * @return URL
+	 * \param int limit - the maximum number of obsels to fetch for this page (default: 500)
+	 * \return URL
+	 * \protected
 	 */
 	_get_first_page_uri(limit = 500) {
 		let params = new Array();
@@ -169,8 +183,9 @@ export class ObselList extends Resource {
 
 	/**
 	 * Gets the data for the first page of the Obsel list and returns a Promise attached to the HTTP request
-	 * @param int limit The maximum number of obsels to fetch for this page (default: 500)
-	 * @return ObselListPage
+	 * \param int limit - the maximum number of obsels to fetch for this page (default: 500)
+	 * \return ObselListPage
+	 * \protected
 	 */
 	get_first_page(limit = 500) {
 		let firstPageURI = this._get_first_page_uri(limit);
@@ -179,7 +194,8 @@ export class ObselList extends Resource {
 
 	/**
 	 * Gets all the obsels of the obsel list
-	 * @return Obsel[]
+	 * \return Array of Obsel
+	 * \public
 	 */
 	get obsels() {
 		let obsels = new Array();
@@ -207,7 +223,8 @@ export class ObselList extends Resource {
 
 	/**
 	 * Stores a new resource as a child of the current resource
-	 * @throws KtbsError always throws a KtbsError when invoked for a ObselList as it is not a container resource
+	 * \throws KtbsError always throws a KtbsError when invoked for a ObselList as it is not a container resource
+	 * \public
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");

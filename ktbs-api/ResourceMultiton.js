@@ -1,15 +1,16 @@
 /**
  * This static class allows to share ktbs Resource instances in order to avoid instanciating duplicates of the same resource.
- * @static
+ * \static
  */
 export class ResourceMultiton {
 
     /**
      * Checks if there is an already instanciated ktbs resource for a type and uri.
-     * @param class or String resource_type the type for the desired ktbs resource instance
-     * @param URL or string uri The URI for the desired resource
-     * @static
-     * @return Boolean
+     * \param class or String resource_type - the type for the desired ktbs resource instance
+     * \param URL or string uri - The URI for the desired resource
+     * \static
+     * \return Boolean
+     * \public
      */
     static has_resource(uri) {
         let uri_string = (uri instanceof URL)?uri.toString():uri;
@@ -18,10 +19,11 @@ export class ResourceMultiton {
 
     /**
      * Gets a ktbs resource instance from it's type and uri.
-     * @param class or String resource_type the type for the desired ktbs resource instance
-     * @param URL or string uri The URI for the desired resource
-     * @static
-     * @return Resource
+     * \param class or String resource_type - the type for the desired ktbs resource instance
+     * \param URL or string uri - The URI for the desired resource
+     * \static
+     * \return Resource
+     * \public
      */
     static get_resource(resource_type, uri) {
         let uri_string = (uri instanceof URL)?uri.toString():uri;
@@ -44,7 +46,8 @@ export class ResourceMultiton {
 
 /**
  * Stores already instanciated resources for further use.
- * @static
- * @type Object
+ * \static
+ * \var Object
+ * \protected
  */
 ResourceMultiton._resources = {};

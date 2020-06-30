@@ -11,9 +11,9 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Constructor.
-	 * Since the Ktbs root is read-only through the REST service, it can not be created, updated or removed with the current API.
-	 * @param URL or string uri the uri of the KtbsRoot : REQUIRED !
-	 * @throws KtbsError throws a KtbsError when no uri is provided as an argument
+	 * \param URL or string uri - the uri of the KtbsRoot : REQUIRED !
+	 * \throws KtbsError throws a KtbsError when no uri is provided as an argument
+	 * \public
 	 */
 	constructor(uri) {
 		if(uri) {
@@ -26,7 +26,8 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Gets the parent resource of this resource (always null for Ktbs Root instances)
-	 * @return null for Ktbs Root instances
+	 * \return null for Ktbs Root instances
+	 * \public
 	 */
 	get parent() {
 		return null;
@@ -34,7 +35,8 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Gets the software version of the service hosting the Ktbs root
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get version() {
 		return this._JSONData.version;
@@ -42,7 +44,8 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Returns a user-friendly label
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get label() {
 		return null;
@@ -50,7 +53,8 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Gets the builtin methods supported by the kTBS service
-	 * @return Method[]
+	 * \return Array of Method
+	 * \public
 	 */
 	get builtin_methods() {
 		if(!this._builtin_methods) {
@@ -69,7 +73,10 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * 
+	 * Checks if the Ktbs service supports a builtin method whose ID is provided as an argument
+	 * \param string builtin_method_id - the ID of the builtin method we want to check if it is supported
+	 * \return boolean
+	 * \public
 	 */
 	supports_builtin_method(builtin_method_id) {
 		return (
@@ -80,7 +87,11 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * 
+	 * Gets a builtin method from it's ID
+	 * \param string builtin_method_id - the ID of the builtin method we want.
+	 * \return Method
+	 * \throws KtbsError throws a KtbsError if the requested method is not supported by the service
+	 * \public
 	 */
 	get_builtin_method_by_id(builtin_method_id) {
 		if(this.supports_builtin_method(builtin_method_id))
@@ -91,7 +102,8 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Gets the URIs of the bases in the Ktbs root
-	 * @return URL[]
+	 * \return Array of URL
+	 * \protected
 	 */
 	_get_bases_uris() {
 		if(!this._bases_uris) {
@@ -111,7 +123,8 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Gets the bases in the Ktbs root
-	 * @return Base[]
+	 * \return Array of Base
+	 * \public
 	 */
 	get bases() {
 		if(!this._bases) {
@@ -130,7 +143,8 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Gets the data needed to post the new resource to it's parent
-	 * @returns Object
+	 * \return Object
+	 * \protected
 	 */
 	_getPostData() {
 		return null;
@@ -138,7 +152,7 @@ export class Ktbs extends Resource {
 
 	/**
 	 * Deletes the current resource
-	 * @throws KtbsError always throws a KtbsError when invoked for a Ktbs as Ktbs roots can not be deleted
+	 * \throws KtbsError always throws a KtbsError when invoked for a Ktbs as Ktbs roots can not be deleted
 	 */
 	delete(abortSignal = null, credentials = null) {
 		throw new KtbsError("Ktbs roots can not be deleted");

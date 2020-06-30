@@ -13,7 +13,8 @@ export class Base extends Resource {
 
 	/**
 	 * Constructor
-	 * @param URL or string uri the resource's URI
+	 * \param URL or string uri the resource's URI
+	 * \public
 	 */
 	constructor(uri = null) {
 		super(uri);
@@ -22,7 +23,8 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the parent resource of this resource.
-	 * @return Resource the resource's parent resource if any, or undefined if the resource's parent is unknown (i.e. the resource hasn't been read or recorded yet), or null if the resource doesn't have any parent (i.e. Ktbs Root).
+	 * \return Resource
+	 * \public
 	 */
 	get parent() {
 		if(!this._parent) {
@@ -37,7 +39,8 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the stored traces in the Base
-	 * @return StoredTrace[]
+	 * \return Array of StoredTrace
+	 * \public
 	 */
 	get stored_traces() {
 		if(!this._stored_traces) {
@@ -66,7 +69,8 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the computed traces in the Base
-	 * @return ComputedTrace[]
+	 * \return Array of ComputedTrace
+	 * \public
 	 */
 	get computed_traces() {
 		if(!this._computed_traces) {
@@ -95,7 +99,8 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the models in the Base
-	 * @return Model[]
+	 * \return Array of Model
+	 * \public
 	 */
 	get models() {
 		if(!this._models) {
@@ -123,7 +128,8 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the methods in the Base
-	 * @return Method[]
+	 * \return Array of Method
+	 * \public
 	 */
 	get methods() {
 		if(!this._methods) {
@@ -151,7 +157,8 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the sub-bases in the Base
-	 * @return Base[]
+	 * \return Array of Base
+	 * \public
 	 */
 	get bases() {
 		if(!this._bases) {
@@ -180,7 +187,8 @@ export class Base extends Resource {
 
 	/**
 	 * Gets the uri to query in order to read resource's data (For some resource types, this might be different from the resource URI, for instance if we need to add some query parameters. In such case, descending resource types must override this method)
-	 * @return string
+	 * \return URL
+	 * \protected
 	 */
 	get _data_read_uri() {
 		if(!this._dataReadUri) {

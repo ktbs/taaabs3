@@ -9,27 +9,31 @@ export class AttributeType {
 
     /**
      * Constructor for class AttributeType
-     * @param Model parentModel the model the AttributeType is described in
-     * @param Object JSONData
+     * \param Model parentModel - the model the AttributeType is described in
+     * \param Object JSONData - the JSON data describing the AttributeType
+	 * \public
      */
     constructor(parentModel = null, JSONData = {"@type": "AttributeType"}) {
 
         /**
          * The model the AttributeType is described in
-         * @type Model
+         * \var Model
+		 * \protected
          */
         this._parentModel = parentModel;
 
         /**
          * The JSON data object containing the AttributeType's description
-         * @type Object
+         * \var Object
+		 * \protected
          */
         this._JSONData = JSONData;
     }
 
     /**
      * Gets the relative id of the attribute type (relative to parent Model)
-	 * @return string
+	 * \return string
+	 * \public
      */
     get id() {
 		if(!this._id)
@@ -40,7 +44,8 @@ export class AttributeType {
 
     /**
      * Sets the relative id of the attribute type in it's parent Model
-     * @param string id
+     * \param string id - the new id for the attribute type
+	 * \public
      */
     set id(new_id) {
 		this._JSONData["@id"] = '#' + encodeURIComponent(new_id);
@@ -49,7 +54,8 @@ export class AttributeType {
 
     /**
      * Gets the uri of the attribute type
-     * @returns URL
+     * \return URL
+	 * \public
      */
     get uri() {
 		if(!this._uri) {
@@ -62,14 +68,17 @@ export class AttributeType {
 
     /**
      * Gets the model the AttributeType is described in
-     * @return Model
+     * \return Model
+	 * \public
      */
     get parent_model() {
         return this._parentModel;
 	}
 	
 	/**
-	 * 
+	 * Sets the parent model where the AttributeType is described
+	 * \param Model new_parent_model - the new parent model for the AttributeType
+	 * \public
 	 */
 	set parent_model(new_parent_model) {
 		if(new_parent_model instanceof Model)
@@ -80,7 +89,8 @@ export class AttributeType {
 
     /**
 	 * Returns a user-friendly label
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get label() {
 		if(!this._label) {
@@ -95,8 +105,9 @@ export class AttributeType {
 
 	/**
 	 * Gets the label for a given language
-	 * @param string lang a short code for the language we want the label translated into
-	 * @return string the translated label, or the default label if no translated label has been found, or undefined if no default label has been found
+	 * \param string lang - a short code for the language we want the label translated into
+	 * \return string the translated label, or the default label if no translated label has been found, or undefined if no default label has been found
+	 * \public
 	 */
 	get_translated_label(lang) {
 		let label = this.label;
@@ -115,7 +126,8 @@ export class AttributeType {
 
 	/**
 	 * Set a user-friendly label.
-	 * @param string label The new label for the resource
+	 * \param string new_label - the new label for the resource
+	 * \public
 	 */
 	set label(new_label) {
 		this._JSONData["label"] = new_label;
@@ -124,8 +136,9 @@ export class AttributeType {
 
 	/**
 	 * Sets a translation for the label in a given language
-	 * @param string label the translated label
-	 * @param string lang a short code for the language the label is translated in
+	 * \param string label - the translated label
+	 * \param string lang - a short code for the language the label is translated in
+	 * \public
 	 */
 	set_translated_label(label, lang) {
 		let currentLabel = this.label;
@@ -145,7 +158,8 @@ export class AttributeType {
 
     /**
 	 * Gets the "comment" of the resource
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get comment() {
 		return this._JSONData["http://www.w3.org/2000/01/rdf-schema#comment"];
@@ -153,15 +167,18 @@ export class AttributeType {
 
 	/**
 	 * Sets the "comment" of the resource
-	 * @param string comment the new comment for the resource
+	 * \param string comment - the new comment for the resource
+	 * \public
 	 */
 	set comment(comment) {
 		this._JSONData["http://www.w3.org/2000/01/rdf-schema#comment"] = comment;
 	}
 
 	/**
-	 * 
-	 * @param ObselType obsel_type 
+	 * Checks if the current AttributeType is assigned to an obsel type provided as an argument
+	 * \param ObselType - obsel_type the obsel type we want to check if the AttributeType is is assigned to
+	 * \return boolean
+	 * \public
 	 */
 	appliesToObselType(obsel_type) {
 		let applies = false;
@@ -174,7 +191,9 @@ export class AttributeType {
 	}
 
 	/**
-	 * 
+	 * Get the obsel types the AttributeType is assigned to
+	 * \return Array of ObselType
+	 * \public
 	 */
 	get obsel_types() {
 		if(!this._obsel_types) {
@@ -203,7 +222,10 @@ export class AttributeType {
 	}
 
 	/**
-	 * 
+	 * Sets the obsel types the AttributeType is assigned to
+	 * \param Array of ObselType new_obsel_types - the new obsel types the AttributeType is assigned to
+	 * \throws TypeError throws a TypeError if the provided argument is not an Array of ObselType
+	 * \public
 	 */
 	set obsel_types(new_obsel_types) {
 		if(new_obsel_types instanceof Array) {
@@ -223,7 +245,9 @@ export class AttributeType {
 	}
 
 	/**
-	 * 
+	 * Gets the data types allowed for this AttributeType
+	 * \return Array of string
+	 * \public
 	 */
 	get data_types() {
 		if(!this._data_types) {
@@ -237,7 +261,10 @@ export class AttributeType {
 	}
 
 	/**
-	 * 
+	 * Sets the data types allowed for this AttributeType
+	 * \param Array new_data_types - the new data types allowed for this AttributeType
+	 * \throws TypeError throws a TypeError if the provided argument is not an Array
+	 * \public
 	 */
 	set data_types(new_data_types) {
 		if(new_data_types instanceof Array) {
@@ -249,7 +276,9 @@ export class AttributeType {
 	}
 
 	/**
-     * 
+     * Gets the data to be sent for this resource to be POSTed to a parent one
+	 * \return Object
+	 * \protected
      */
     _getPostData() {
 		if(this._parentModel) {
@@ -275,7 +304,8 @@ export class AttributeType {
 
 /**
  * An array listing the attribute types IDs that are "system" attribute types
- * @static
- * @type Array
+ * \var Array
+ * \static
+ * \public
  */
 AttributeType.system_types_ids = ["@context", "@id", "@type", "begin", "beginDT", "end", "endDT", "hasSourceObsel", "hasTrace", "subject"];

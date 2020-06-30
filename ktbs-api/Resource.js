@@ -9,66 +9,69 @@ export class Resource {
 
 	/**
 	 * Constructor
-	 * @param URL or string uri the resource's URI
+	 * \param URL or string uri the resource's URI
+	 * \public
 	 */
 	constructor(uri = null) {
 
 		/**
 		 * The etag provided by the server at the resource latest HTTP query
-		 * @type string
+		 * \var string
+		 * \protected
 		 */
 		this._etag = null;
 
 		/**
 		 * The resource data that can be read from/written to the remote kTBS service
-		 * @type Object
+		 * \var Object
+		 * \protected
 		 */
 		this._JSONData = new Object();
 
 		/**
 		 * The resource synchronization status
-		 * @type string
+		 * \var string
+		 * \protected
 		 */
 		this._syncStatus = "needs_sync";
 
 		/**
 		 * A Promise for the "GET" request allowing to read the resource's data
-		 * @type Promise
+		 * \var Promise
+		 * \protected
 		 */
 		this._getPromise = null;
 
 		/**
 		 * A collection of observers callbacks to notify when the resource's state changes
-		 * @type Array
+		 * \var Array
+		 * \protected
 		 */
 		this._observers = new Array();
 
 		/**
 		 * Whether or not the resource was get using authentification credentials
-		 * @type boolean
+		 * \var boolean
+		 * \protected
 		 */
 		this._authentified = false;
 
 		/**
 		 * Whether or not we should try to use credentials previously stored in local/session storages for the resource's parent URIs 
-		 * @type boolean
+		 * \var boolean
+		 * \protected
 		 */
 		this._use_parent_credentials = true;
 
 		// if an uri has been specified at instanciation, set it
 		if(uri != null)
 			this.uri = uri;
-
-		/**
-		 * 
-		 * @type Promise
-		 */
-		this._ongoingRESTQueryPromise = null;
 	}
 
 	/**
 	 * Gets the resource's URI
-	 * @return URL
+	 * \return URL
+	 * \public
 	 */
 	get uri() {
 		return this._uri;
@@ -76,9 +79,10 @@ export class Resource {
 
 	/**
 	 * Sets the resource's URI
-	 * @param URL or String new_uri the new URI for the resource.
-	 * @throws TypeError Throws a TypeError if the uri parameter is not an instance of URL or String
-	 * @throws Error Throws an Error if we try to set the URI of a resource that already exists on a kTBS service.
+	 * \param URL or String new_uri the new URI for the resource.
+	 * \throws TypeError Throws a TypeError if the uri parameter is not an instance of URL or String
+	 * \throws KtbsError Throws an KtbsError if we try to change the URI of a resource that already exists on a remote kTBS service
+	 * \public
 	 */
 	set uri(new_uri) {
 		if((this.syncStatus == "needs_sync") || (this.syncStatus == "pending")) {
@@ -95,7 +99,8 @@ export class Resource {
 
 	/**
 	 * Gets the synchronization status of the resource
-	 * @return string the synchronisation status of the resource
+	 * \return string the synchronisation status of the resource
+	 * \public
 	 */
 	get syncStatus() {
 		return this._syncStatus;
@@ -103,8 +108,9 @@ export class Resource {
 
 	/**
 	 * Sets the synchronization status of the resource
-	 * @param string newStatus the new synchronisation status for the resource
-	 * @throws TypeError if newValue is not a valid status
+	 * \param string newStatus the new synchronisation status for the resource
+	 * \throws TypeError if newValue is not a valid status
+	 * \public
 	 */
 	set syncStatus(new_syncStatus) {
 		if(
@@ -123,7 +129,8 @@ export class Resource {
 
 	/**
 	 * Gets the JSON Data of the resource
-	 * @returns Object
+	 * \return Object
+	 * \public
 	 */
 	get JSONData() {
 		return this._JSONData;
@@ -131,8 +138,9 @@ export class Resource {
 
 	/**
 	 * Sets the JSON Data for the resource
-	 * @param Object newJSONData the new JSON Data for the resource
-	 * @throws TypeError if newJSONData is not an Object
+	 * \param Object newJSONData the new JSON Data for the resource
+	 * \throws TypeError if newJSONData is not an Object
+	 * \public
 	 */
 	set JSONData(new_JSONData) {
 		if(new_JSONData instanceof Object)
@@ -143,7 +151,8 @@ export class Resource {
 
 	/**
 	 * Gets whether or not the resource was read using authentication credentials.
-	 * @return boolean
+	 * \return boolean
+	 * \public
 	 */
 	get authentified() {
 		return this._authentified;
@@ -151,21 +160,26 @@ export class Resource {
 
 	/**
 	 * Gets the uri to query in order to read resource's data (For some resource types, this might be different from the resource URI, for instance if we need to add some query parameters. In such case, descending resource types must override this method)
-	 * @return string
+	 * \return URL
+	 * \protected
 	 */
 	get _data_read_uri() {
 		return this._uri;
 	}
 
 	/**
-	 * 
+	 * Gets the JSON-LD context of the resource
+	 * \return Object
+	 * \public
 	 */
 	get context() {
 		return this._JSONData["@context"];
 	}
 
 	/**
-	 * 
+	 * Sets the JSON-LD context of the resource
+	 * \param string new_context the JSON-LD context for the resource
+	 * \public
 	 */
 	set context(new_context) {
 		this._JSONData["@context"] = new_context;
@@ -173,7 +187,10 @@ export class Resource {
 
 	/**
 	 * Resolves a link from the current resource to another resource. Supports relative links and shortcut links referring to context.
-	 * @return URL
+	 * \param string link 
+	 * \param boolean force_use_context 
+	 * \return URL
+	 * \public
 	 */
 	resolve_link_uri(link, force_use_context = false) {
 		if(typeof link == "string") {
@@ -285,7 +302,8 @@ export class Resource {
 
 	/**
 	 * Returns a user-friendly label
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get label() {
 		if(!this._label) {
@@ -300,8 +318,9 @@ export class Resource {
 
 	/**
 	 * Gets the label for a given language
-	 * @param string lang a short code for the language we want the label translated into
-	 * @return string the translated label, or the default label if no translated label has been found, or undefined if no default label has been found
+	 * \param string lang a short code for the language we want the label translated into
+	 * \return string the translated label, or the default label if no translated label has been found, or undefined if no default label has been found
+	 * \public
 	 */
 	get_translated_label(lang) {
 		let label = this.label;
@@ -320,7 +339,8 @@ export class Resource {
 
 	/**
 	 * Set a user-friendly label.
-	 * @param string new_label The new label for the resource
+	 * \param string new_label The new label for the resource
+	 * \public
 	 */
 	set label(new_label) {
 		this._JSONData["label"] = new_label;
@@ -329,8 +349,9 @@ export class Resource {
 
 	/**
 	 * Sets a translation for the label in a given language
-	 * @param string label the translated label
-	 * @param string lang a short code for the language the label is translated in
+	 * \param string label the translated label
+	 * \param string lang a short code for the language the label is translated in
+	 * \public
 	 */
 	set_translated_label(label, lang) {
 		let newLabel;
@@ -348,7 +369,8 @@ export class Resource {
 
 	/**
 	 * Gets the "comment" of the resource
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get comment() {
 		return this._JSONData["http://www.w3.org/2000/01/rdf-schema#comment"];
@@ -356,7 +378,8 @@ export class Resource {
 
 	/**
 	 * Sets the "comment" of the resource
-	 * @param string comment the new comment for the resource
+	 * \param string comment the new comment for the resource
+	 * \public
 	 */
 	set comment(comment) {
 		this._JSONData["http://www.w3.org/2000/01/rdf-schema#comment"] = comment;
@@ -364,7 +387,8 @@ export class Resource {
 
 	/**
 	 * Gets the ID of this resource, relative to its parent resource URI.
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get id() {
 		if(this._JSONData["@id"])
@@ -377,8 +401,9 @@ export class Resource {
 
 	/**
 	 * Sets the ID of this resource, relative to its parent resource URI.
-	 * @param string id the new ID for the resource.
-	 * @throws Error Throws an Error if we try to set the ID of a resource that already exists on a kTBS service.
+	 * \param string id the new ID for the resource.
+	 * \throws KtbsError Throws a KtbsError if we try to change the ID of a resource that already exists on a kTBS service
+	 * \public
 	 */
 	set id(id) {
 		if(this.syncStatus == "needs_sync")
@@ -389,7 +414,8 @@ export class Resource {
 
 	/**
 	 * Remove the credentials stored in a given storage for the resource's URI
-	 * @param Storage storage The storage to remove the credentials from
+	 * \param Storage storage The storage to remove the credentials from
+	 * \protected
 	 */
 	_removeOwnCredentialsFromStorage(storage) {
 		let storageCredentialsString = storage.getItem("credentials");
@@ -413,6 +439,7 @@ export class Resource {
 
 	/**
 	 * Remove the credentials stored in local/session storages for the resource's URI
+	 * \protected
 	 */
 	_removeOwnCredentials() {
 		if(window.sessionStorage)
@@ -424,8 +451,9 @@ export class Resource {
 
 	/**
 	 * Gets the credentials stored in a storage specifically for this resource.
-	 * @param Storage the storage in where to look in the credentials.
-	 * @return Object an object containing the credential informations, or null if no appropriate credentials have been found.
+	 * \param Storage the storage in where to look in the credentials.
+	 * \return Object an object containing the credential informations, or null if no appropriate credentials have been found.
+	 * \protected
 	 */
 	_getOwnCredentialsFromStorage(storage) {
 		let storageCredentialsString = storage.getItem("credentials");
@@ -448,8 +476,9 @@ export class Resource {
 
 	/**
 	 * Gets the credentials stored in a storage for a resource having an uri who is the closest parent of this resource's uri.
-	 * @param Storage the storage in where to look in the credentials.
-	 * @return Object an object containing the credential informations, or null if no appropriate credentials have been found.
+	 * \param Storage the storage in where to look in the credentials.
+	 * \return Object an object containing the credential informations, or null if no appropriate credentials have been found.
+	 * \protected
 	 */
 	_getParentsCredentialsFromStorage(storage) {
 		let parentCredendials = new Array();
@@ -481,7 +510,8 @@ export class Resource {
 
 	/**
 	 * Tries to retrieve the most appropriate credentials for the resource from localStorage or sessionStorage.
-	 * @return Object an object containing the credential informations, or null if no appropriate credentials have been found.
+	 * \return Object an object containing the credential informations, or null if no appropriate credentials have been found.
+	 * \public
 	 */
 	get credentials() {
 		let credentials = null;
@@ -503,7 +533,8 @@ export class Resource {
 
 	/**
 	 * Gets if the resource has credentials of its own (as opposed to "inherited from it's parents") in localStorage or sessionStorage
-	 * @return boolean
+	 * \return boolean
+	 * \public
 	 */
 	get hasOwnCredendtials() {
 		let credentials = null;
@@ -519,6 +550,7 @@ export class Resource {
 
 	/**
 	 * Removes credentials information for the resource, stops using parent's credentials and resets the resource.
+	 * \public
 	 */
 	disconnect() {
 		this._removeOwnCredentials();
@@ -528,9 +560,10 @@ export class Resource {
 
 	/**
 	 * Attemps to asynchronously read an existing object's data from the REST service and returns a Promise.
-	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
-	 * @param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
-	 * @return Promise
+	 * \param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
+	 * \param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
+	 * \return Promise
+	 * \public
 	 */
 	get(abortSignal = null, credentials = null) {
 		if(this._uri) {
@@ -622,7 +655,8 @@ export class Resource {
 	}
 
     /**
-	 * Resets all the resource's data.
+	 * Resets all the resource's data
+	 * \public
 	 */
 	force_state_refresh() {
 		this._etag = null;
@@ -634,8 +668,9 @@ export class Resource {
 
 	/**
 	 * Registers an new observer to notify when the resource's state changes
-	 * @param function callback the function to add to the observers collection
-	 * @throws TypeError if the provided "callback" argument is not a function
+	 * \param function callback the function to add to the observers collection
+	 * \throws TypeError if the provided "callback" argument is not a function
+	 * \public
 	 */
 	addObserver(callback) {
 		if(typeof callback == 'function')
@@ -646,7 +681,8 @@ export class Resource {
 
 	/**
 	 * Unregisters an observer so it won't be notified anymore when the resource's state changes
-	 * @param function callback the function to remove from the observers collection
+	 * \param function callback the function to remove from the observers collection
+	 * \public
 	 */
 	removeObserver(callback) {
 		let callbackIndex = this._observers.findIndex(candidate => {
@@ -660,7 +696,8 @@ export class Resource {
 
 	/**
 	 * Notifies the registered observers of a state change of the current resource
-	 * @param Object data the data to send along with the notifications
+	 * \param Object data the data to send along with the notifications
+	 * \public
 	 */
 	notifyObservers(data) {
 		for(let i = 0; i < this._observers.length; i++) {
@@ -678,9 +715,10 @@ export class Resource {
 
 	/**
 	 * Extract a resource's relative ID from it's URI.
-	 * @param string uri The URI to extract the ID from.
-	 * @return string
-	 * @static
+	 * \param string uri The URI to extract the ID from.
+	 * \return string
+	 * \public
+	 * \static
 	 */
 	static extract_relative_id(uri_string) {
 		let uri_parts = uri_string.split('/');
@@ -703,7 +741,8 @@ export class Resource {
 
 	/**
 	 * Gets the data to be send in a POST query
-	 * @returns Object
+	 * \return Object
+	 * \protected
 	 */
 	_getPostData() {
 		return this._JSONData;
@@ -711,10 +750,11 @@ export class Resource {
 
 	/**
 	 * Stores a new resource as a child of the current resource
-	 * @param {Resource, Array} new_child_resource the new child resource
-	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
-	 * @param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
-	 * @returns Promise
+	 * \param Resource or Array of Resource new_child_resource - the new child resource
+	 * \param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
+	 * \param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
+	 * \return Promise
+	 * \public
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		if(this._uri) {
@@ -836,7 +876,8 @@ export class Resource {
 
 	/**
 	 * Gets the data to be send in a PUT query
-	 * @returns Object
+	 * \return Object
+	 * \protected
 	 */
 	_getPutData() {
 		return this._JSONData;
@@ -844,10 +885,11 @@ export class Resource {
 
 	/**
 	 * Stores the current existing Resource modifications
-	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
-	 * @param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
-	 * @throws KtbsError throws a KtbsError when invoked for a Resource which sync status is not either "in_sync" or "needs_sync"
-	 * @returns Promise
+	 * \param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
+	 * \param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
+	 * \throws KtbsError throws a KtbsError when invoked for a Resource which sync status is not either "in_sync" or "needs_sync"
+	 * \return Promise
+	 * \public
 	 */
 	put(abortSignal = null, credentials = null) {
 		if((this.syncStatus == "needs_sync") || (this.syncStatus == "in_sync")) {
@@ -919,9 +961,10 @@ export class Resource {
 
 	/**
 	 * Deletes the current resource
-	 * @param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
-	 * @param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
-	 * @returns Promise
+	 * \param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
+	 * \param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
+	 * \return Promise
+	 * \public
 	 */
 	delete(abortSignal = null, credentials = null) {
 		if(this._uri) {

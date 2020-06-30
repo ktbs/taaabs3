@@ -8,7 +8,8 @@ export class TraceStats extends Resource {
 
 	/**
 	 * Gets the minimum time (= begin) of the Trace
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get min_time() {
 		return this._JSONData['stats:minTime'];
@@ -16,7 +17,8 @@ export class TraceStats extends Resource {
 
 	/**
 	 * Gets the maximum time (= end) of the Trace
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get max_time() {
 		return this._JSONData['stats:maxTime'];
@@ -24,7 +26,8 @@ export class TraceStats extends Resource {
 
 	/**
 	 * Gets the total obsels count of the trace
-	 * @return int
+	 * \return int
+	 * \public
 	 */
 	get obsel_count() {
 		if(this._JSONData['stats:obselCount'] != undefined)
@@ -35,7 +38,8 @@ export class TraceStats extends Resource {
 
 	/**
 	 * Gets the duration of the Trace
-	 * @return string
+	 * \return string
+	 * \public
 	 */
 	get duration() {
 		if(this._JSONData['stats:duration'] != undefined)
@@ -46,7 +50,8 @@ export class TraceStats extends Resource {
 
 	/**
 	 * Gets the obsels count of the trace for each obsel type of the model
-	 * @return Array
+	 * \return Array
+	 * \public
 	 */
 	get obsel_count_per_type() {
 		if(this._JSONData['stats:obselCountPerType'] != undefined) {
@@ -61,7 +66,8 @@ export class TraceStats extends Resource {
 
 	/**
 	 * Stores a new resource as a child of the current resource
-	 * @throws KtbsError always throws a KtbsError when invoked for a TraceStats as it is not a container resource
+	 * \throws KtbsError always throws a KtbsError when invoked for a TraceStats as it is not a container resource
+	 * \public
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");

@@ -7,27 +7,31 @@ export class StylesheetRule {
 
     /**
      * Constructor for class StylesheetRule
-     * @param Model parentModel the Model the style sheet rule is described in
-     * @param Object JSONData the data describing the style sheet rule
+     * \param Model parentModel - the Model the style sheet rule is described in
+     * \param Object JSONData - the data describing the style sheet rule
+     * \public
      */
     constructor(parentModel, JSONData = {}) {
 
         /**
          * The Model the style sheet rule is described in
-         * @type Model
+         * \var Model
+         * \protected
          */
         this._parentModel = parentModel;
 
         /**
          * The data describing the style sheet rule
-         * @type Object
+         * \var Object
+         * \protected
          */
         this._JSONData = JSONData;
     }
 
     /**
      * Gets the ID of the style sheet rule
-     * @return string
+     * \return string
+     * \public
      */
     get id() {
         return this._JSONData["id"];
@@ -35,14 +39,17 @@ export class StylesheetRule {
 
     /**
      * Sets the ID of the style sheet rule
-     * @param string new_id the new ID for the style sheet rule
+     * \param string new_id - the new ID for the style sheet rule
+     * \public
      */
     set id(new_id) {
         this._JSONData["id"] = new_id;
     }
 
     /**
-     * 
+     * Gets the symbol associated with the rule
+     * \return char
+     * \public
      */
     get symbol() {
         if(this._JSONData["symbol"])
@@ -52,7 +59,9 @@ export class StylesheetRule {
     }
 
     /**
-     * 
+     * Sets the symbol associated with the rule
+     * \param char new_symbol - the new symbol associated with the rule
+     * \public
      */
     set symbol(new_symbol) {
         this._JSONData["symbol"] = new_symbol;
@@ -60,7 +69,8 @@ export class StylesheetRule {
 
     /**
      * Gets whether or not the Obsels matching the style sheet rule should be visibles
-     * @return boolean
+     * \return boolean
+     * \public
      */
     get visible() {
         return (this._JSONData["visible"] != false);
@@ -68,7 +78,8 @@ export class StylesheetRule {
 
     /**
      * Sets whether or not an Obsel matching the style sheet rule should be visible
-     * @param boolean new_visible the new visibility for Obsels matching the style sheet rule
+     * \param boolean new_visible - the new visibility for Obsels matching the style sheet rule
+     * \public
      */
     set visible(new_visible) {
         if(typeof new_visible === "boolean")
@@ -79,7 +90,8 @@ export class StylesheetRule {
 
     /**
      * Gets the style sheet rule rules as an Array of StylesheetRuleRule
-     * @return Array
+     * \return Arrayof StylesheetRuleRule
+     * \public
      */
     get rules() {
         if(!this._rules) {
@@ -99,16 +111,18 @@ export class StylesheetRule {
 
     /**
      * Sets the rules of the style sheet rule
-     * @param Array new_rules the new rules for the style sheet rule
+     * \param Array of StylesheetRuleRule - new_rules the new rules for the style sheet rule
+     * \public
      */
     set rules(new_rules) {
         this._rules = new_rules;
     }
 
     /**
-     * 
-     * @param Obsel obsel
-     * @return boolean
+     * Checks if the obsel provided as an argument matches the current rule
+     * \param Obsel obsel - the obsel to check if it matches the current rule
+     * \return boolean
+     * \public
      */
     matchedByObsel(obsel) {
 		let matches = false;
@@ -122,7 +136,10 @@ export class StylesheetRule {
     }
     
     /**
-     * 
+     * Gets a default "catch-all" rule that matches any obsel
+     * \return StylesheetRuleRule
+     * \static
+     * \public
      */
     static get catchAllRule() {
         if(!StylesheetRule._catchAllRule) {
