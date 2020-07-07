@@ -48,8 +48,8 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         this._foldHeaderButton = this.shadowRoot.querySelector("#fold-header-button");
         this._foldHeaderButton.addEventListener("click", this._onClickFoldHeaderButton.bind(this))
         this._rootBuiltinMethodList = this.shadowRoot.querySelector("#root-builin-methods");
-        this.editButton = this.shadowRoot.querySelector("#tool-edit");
-		this.editButton.addEventListener("click", this.onClickEditButton.bind(this));
+        /*his.editButton = this.shadowRoot.querySelector("#tool-edit");
+		this.editButton.addEventListener("click", this.onClickEditButton.bind(this));*/
 		this.removeButton = this.shadowRoot.querySelector("#tool-remove");
         this.removeButton.addEventListener("click", this.onClickRemoveButton.bind(this));
         this._disconnectButton = this.shadowRoot.querySelector("#disconnect-button");
@@ -579,9 +579,9 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
     /**
 	 * 
 	 */
-	onClickEditButton(event) {
+	/*onClickEditButton(event) {
 		this.requestEditResource();
-	}
+	}*/
 
 	/**
 	 * 

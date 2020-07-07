@@ -195,9 +195,9 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	requestEditResource() {
+	/*requestEditResource() {
 		this.dispatchEvent(new CustomEvent("request-edit-ktbs-resource", {bubbles: true}));
-	}
+	}*/
 
 	/**
 	 * 

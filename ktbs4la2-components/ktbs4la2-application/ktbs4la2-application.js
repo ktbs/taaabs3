@@ -56,7 +56,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.separatorDiv.addEventListener("mousedown", this.startResizing.bind(this), true);
 		this.addEventListener("selectelement", this.onSelectNavElement.bind(this));
 		this.addEventListener("error", this.onErrorEvent.bind(this));
-		this.addEventListener("request-edit-ktbs-resource", this.onRequestEditKtbsResource.bind(this));
+		//this.addEventListener("request-edit-ktbs-resource", this.onRequestEditKtbsResource.bind(this));
 		this.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
 		this.addEventListener("fold-header", this._onMainResourceFoldHeader.bind(this));
 		this.addEventListener("unfold-header", this._onMainResourceUnfoldHeader.bind(this));
@@ -212,7 +212,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	onRequestEditKtbsResource(event) {
+	/*onRequestEditKtbsResource(event) {
 		let target = event.target;
 		let resourceType = target.getAttribute("resource-type");
 		let uri = target.getAttribute("uri");
@@ -230,7 +230,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			default:
 				this.emitErrorEvent(new Error("Unsupported resource type : " + resourceType));
 		}
-	}
+	}*/
 
 	/**
 	 * 
@@ -257,6 +257,13 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					if(ktbsRootEntryFound) {
 						this.ktbsRoots.splice(i,1);
 						window.localStorage.setItem("ktbs-roots", JSON.stringify(this.ktbsRoots));
+						
+						const oldRootElement = this.querySelector("ktbs4la2-nav-resource[resource-type = Ktbs][uri = " + CSS.escape(uri) + "]");
+						
+						if(oldRootElement)
+							oldRootElement.remove();
+
+						this.setMainObject("documentation");
 					}
 					else
 						this.emitErrorEvent(new Error("Could not find Ktbs Root with uri " + oldRootUri + " in local cache"));

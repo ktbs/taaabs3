@@ -629,3 +629,41 @@
 	cursor: default;
 	background-color: #CCC;
 }
+
+#resource-tools {
+	position: absolute;
+	right: 10px;
+	top: 10px;
+}
+
+#header.condensed #resource-tools {
+	display: none;
+}
+
+.resource-tool {
+	background-repeat: no-repeat;
+	background-position: center;
+	width: 28px;
+	height: 28px;
+	opacity: .3;
+	cursor: pointer;
+	display: inline-block;
+	text-decoration: none;
+	outline: none;
+}
+
+.resource-tool:hover {
+	opacity: 1;
+}
+
+#tool-edit {
+	background-image: url('{my-component-folder}/edit.svg');
+}
+
+#tool-remove {
+	background-image: url('{my-component-folder}/trash.svg');
+}
+
+:host(:not([resource-type = Ktbs])) #tool-remove {
+	display: none;
+}
