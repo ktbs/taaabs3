@@ -11,6 +11,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	 */
 	constructor() {
 		super(import.meta.url);
+		this._childrenInstanciated = false;
 	}
 
 	/**
@@ -307,13 +308,13 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 					this._unfoldButton.title = this._translateString("Fold child list");
 
 					if(!this._childrenInstanciated)
-						setTimeout(() => {
+						this._ktbsResource.get(this._abortController.signal).then(() => {
 							this._instanciateChildren();
-						});
 
-					if(this.getAttribute("preload-children") == "true")
-						setTimeout(() => {
-							this._preLoadGrandChildren();
+							if(this.getAttribute("preload-children") == "true")
+								setTimeout(() => {
+									this._preLoadGrandChildren();
+								});
 						});
 				}
 				else {
@@ -434,6 +435,13 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 		}
 		else
 			this.emitErrorEvent(new Error("Nav element of resource type \"" + this.getAttribute("resource-type") + "\" cannot have children resources"));
+	}
+
+	/**
+	 * 
+	 */
+	get _auto_get_resource() {
+		return (this.getAttribute("resource-type") == "Ktbs");
 	}
 }
 

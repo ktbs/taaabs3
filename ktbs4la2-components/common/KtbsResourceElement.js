@@ -101,7 +101,7 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 			if(this._bindedOnKtbsResourceChangeMethod)
 				this._ktbsResource.addObserver(this._bindedOnKtbsResourceChangeMethod);
 		
-			if(this._ktbsResource.syncStatus == "in_sync")
+			if((this._ktbsResource.syncStatus == "in_sync") || !this._auto_get_resource)
 				this._resolveKtbsResourceLoaded();
 			else {
 				this._ktbsResource.get(this._abortController.signal)
@@ -204,6 +204,13 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	 */
 	requestDeleteResource() {
 		this.dispatchEvent(new CustomEvent("request-delete-ktbs-resource", {bubbles: true}));
+	}
+
+	/**
+	 * 
+	 */
+	get _auto_get_resource() {
+		return true;
 	}
 }
 

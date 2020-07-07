@@ -166,6 +166,13 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 			});
 		}
 	}
+
+	/**
+	 * 
+	 */
+	get _auto_get_resource() {
+		return false;
+	}
 }
 
 customElements.define('ktbs4la2-main-related-resource', KTBS4LA2MainRelatedResource);
