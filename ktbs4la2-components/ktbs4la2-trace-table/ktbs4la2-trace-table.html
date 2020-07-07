@@ -22,26 +22,52 @@
 			<col />
 			<col />
 			<col />
-
-			<colgroup span="2"></colgroup>
+			<col />
+			<col />
 
 			<thead id="table-header">
 				<tr id="table-header-main-cols">
-					<th rowspan="2" class="checkbox_cell">
+					<th class="checkbox_cell">
 						<input type="checkbox" id="select_all_obsels" title="Select/unselect all currently displayed obsels" />
 					</th>
 
-					<th id="table-header-id" scope="col" rowspan="2">{translate: '@id'}</th>
-					<th id="table-header-type" scope="col" rowspan="2">{translate: 'Obsel type'}</th>
-					<th id="table-header-subject" scope="col" rowspan="2">{translate: 'Subject'}</th>
-					<th id="table-header-begin" scope="col" rowspan="2">{translate: 'Begin'}</th>
-					<th id="table-header-end" scope="col" rowspan="2">{translate: 'End'}</th>
-					<th id="table-header-attributes" colspan="2" scope="colgroup">{translate: 'Attributes'}</th>
-				</tr>
+					<th id="table-header-id" scope="col">
+						<span id="table-header-id-label" class="header-label">{translate: '@id'}</span>
+						<button id="sort-id-asc" class="sort-button sort-button-asc" title="{translate: 'Sort ascending'}"></button>
+						<button id="sort-id-desc" class="sort-button sort-button-desc" title="{translate: 'Sort descending'}"></button>
+					</th>
 
-				<tr id="table-header-attributes-sub-cols">
-					<th id="table-header-attributes-type" scope="col">{translate: 'Attribute type'}</th>
-					<th id="table-header-attributes-value" scope="col">{translate: 'Value'}</th>
+					<th id="table-header-type" scope="col">
+						<span id="table-header-type-label" class="header-label">{translate: 'Obsel type'}</span>
+						<button id="sort-type-asc" class="sort-button sort-button-asc" title="{translate: 'Sort ascending'}"></button>
+						<button id="sort-type-desc" class="sort-button sort-button-desc" title="{translate: 'Sort descending'}"></button>
+					</th>
+
+					<th id="table-header-subject" scope="col">
+						<span id="table-header-subject-label" class="header-label">{translate: 'Subject'}</span>
+						<button id="sort-subject-asc" class="sort-button sort-button-asc" title="{translate: 'Sort ascending'}"></button>
+						<button id="sort-subject-desc" class="sort-button sort-button-desc" title="{translate: 'Sort descending'}"></button>
+					</th>
+
+					<th id="table-header-begin" scope="col">
+						<span id="table-header-begin-label" class="header-label">{translate: 'Begin'}</span>
+						<button id="sort-begin-asc" class="sort-button sort-button-asc" title="{translate: 'Sort ascending'}"></button>
+						<button id="sort-begin-desc" class="sort-button sort-button-desc" title="{translate: 'Sort descending'}"></button>
+					</th>
+
+					<th id="table-header-end" scope="col">
+						<span id="table-header-end-label" class="header-label">{translate: 'End'}</span>
+						<button id="sort-end-asc" class="sort-button sort-button-asc applied" title="{translate: 'Sort ascending'}"></button>
+						<button id="sort-end-desc" class="sort-button sort-button-desc" title="{translate: 'Sort descending'}"></button>
+					</th>
+
+					<th id="table-header-attributes-type" scope="col">
+						<span id="table-header-attributes-type-label" class="header-label">{translate: 'Attribute'}</span>
+					</th>
+
+					<th id="table-header-attributes-value" scope="col">
+						<span id="table-header-attributes-value-label" class="header-label">{translate: 'Value'}</span>
+					</th>
 				</tr>
 			</thead>
 
@@ -63,7 +89,7 @@
 		</div>
 	</div>
 
-	<div id="scroll-tools" disabled>
+	<div id="scroll-tools">
 		<button id="scroll-top-button"></button>
 
 		<div id="scroll-bar">

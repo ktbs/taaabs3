@@ -12,18 +12,19 @@
 	"Obsels / page": "Obsels / page",
 	"All": "Tous",
 	"Obsel type": "Type d'obsel",
-	"Attribute type": "Type d'attribut",
+	"Attribute": "Attribut",
 	"Value": "Valeur",
 	"Subject": "Sujet",
 	"@id": "@id",
 	"Begin": "Début",
 	"End": "Fin",
-	"Attributes": "Attributs",
 	"See this obsel in the REST console (opens in a new tab)": "Voir cet obsel dans la console REST (s'ouvre dans un nouvel onglet)",
 	"Error": "Erreur",
 	"Reverse obsel ordering": "Inverser l'ordre des obsels",
 	"Restore normal obsel ordering": "Rétablir l'ordre normal des obsels",
 	"Please wait...": "Veuillez patienter...",
 	"Select/Unselect this obsel": "Séléctionner/Désélectionner cet obsel",
-	"Toggle fullscreen": "Activer/désactiver le mode plein écran"
+	"Toggle fullscreen": "Activer/désactiver le mode plein écran",
+	"Sort ascending": "Trier dans le sens croissant",
+	"Sort descending": "Trier dans le sens décroissant"
 }

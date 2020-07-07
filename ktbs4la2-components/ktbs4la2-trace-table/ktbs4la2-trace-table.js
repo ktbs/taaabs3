@@ -25,7 +25,22 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 		this._allowFullScreen = true;
 		this._maxVisibleRows = 150;
 		this._updateOverflowRowsTaskID = null;
-		this._bindedOnDocumentMouseMoveFunction = this._onDocumentMouseMove.bind(this);
+		this._bindedOnDragScrollbarFunction = this._onDragScrollbar.bind(this);
+		this._bindedOnScrollBarMouseLeaveFunction = this._onScrollBarMouseLeave.bind(this);
+		this._bindedOnScrollBarMouseMoveFunction = this._onScrollBarMouseMove.bind(this);
+		this._resquestedScroll = 0;
+		this._latestTableViewData = null;
+		this._firstUnhiddenRowIndex = null;
+		this._lastUnhiddenRowIndex = null;
+		this._obselsData = new Array();
+
+		this._sortedObselsIds = {
+			"id": {"asc": null, "desc": null},
+			"type": {"asc": null, "desc": null},
+			"subject": {"asc": null, "desc": null},
+			"begin": {"asc": null, "desc": null},
+			"end": {"asc": null, "desc": null}
+		};
 	}
 
 	/**
@@ -38,24 +53,56 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 		this._tableHeader = this.shadowRoot.querySelector("#table-header");
 		this._tableBody = this.shadowRoot.querySelector("#table-body");
 		this._tableFooter = this.shadowRoot.querySelector("#table-footer");
-		this._tableHeaderId = this.shadowRoot.querySelector("#table-header-id");
-		this._tableHeaderType = this.shadowRoot.querySelector("#table-header-type");
-		this._tableHeaderSubject = this.shadowRoot.querySelector("#table-header-subject");
-		this._tableHeaderBegin = this.shadowRoot.querySelector("#table-header-begin");
-		this._tableHeaderEnd = this.shadowRoot.querySelector("#table-header-end");
-		this._tableHeaderAttributes = this.shadowRoot.querySelector("#table-header-attributes");
-		this._tableHeaderAttributesType = this.shadowRoot.querySelector("#table-header-attributes-type");
-		this._tableHeaderAttributesValue = this.shadowRoot.querySelector("#table-header-attributes-value");
+
+		this._tableHeaderIdLabel = this.shadowRoot.querySelector("#table-header-id-label");
+		this._tableHeaderTypeLabel = this.shadowRoot.querySelector("#table-header-type-label");
+		this._tableHeaderSubjectLabel = this.shadowRoot.querySelector("#table-header-subject-label");
+		this._tableHeaderBeginLabel = this.shadowRoot.querySelector("#table-header-begin-label");
+		this._tableHeaderEndLabel = this.shadowRoot.querySelector("#table-header-end-label");
+		this._tableHeaderAttributesTypeLabel = this.shadowRoot.querySelector("#table-header-attributes-type-label");
+		this._tableHeaderAttributesValueLabel = this.shadowRoot.querySelector("#table-header-attributes-value-label");
+
+		this._sortIdAscButton = this.shadowRoot.querySelector("#sort-id-asc");
+		this._sortIdAscButton.addEventListener("click", this._onClickSortIdAscButton.bind(this));
+
+		this._sortIdDescButton = this.shadowRoot.querySelector("#sort-id-desc");
+		this._sortIdDescButton.addEventListener("click", this._onClickSortIdDescButton.bind(this));
+
+		this._sortTypeAscButton = this.shadowRoot.querySelector("#sort-type-asc");
+		this._sortTypeAscButton.addEventListener("click", this._onClickSortTypeAscButton.bind(this));
+
+		this._sortTypeDescButton = this.shadowRoot.querySelector("#sort-type-desc");
+		this._sortTypeDescButton.addEventListener("click", this._onClickSortTypeDescButton.bind(this));
+
+		this._sortSubjectAscButton = this.shadowRoot.querySelector("#sort-subject-asc");
+		this._sortSubjectAscButton.addEventListener("click", this._onClickSortSubjectAscButton.bind(this));
+
+		this._sortSubjectDescButton = this.shadowRoot.querySelector("#sort-subject-desc");
+		this._sortSubjectDescButton.addEventListener("click", this._onClickSortSubjectDescButton.bind(this));
+
+		this._sortBeginAscButton = this.shadowRoot.querySelector("#sort-begin-asc");
+		this._sortBeginAscButton.addEventListener("click", this._onClickSortBeginAscButton.bind(this));
+
+		this._sortBeginDescButton = this.shadowRoot.querySelector("#sort-begin-desc");
+		this._sortBeginDescButton.addEventListener("click", this._onClickSortBeginDescButton.bind(this));
+
+		this._sortEndAscButton = this.shadowRoot.querySelector("#sort-end-asc");
+		this._sortEndAscButton.addEventListener("click", this._onClickSortEndAscButton.bind(this));
+
+		this._sortEndDescButton = this.shadowRoot.querySelector("#sort-end-desc");
+		this._sortEndDescButton.addEventListener("click", this._onClickSortEndDescButton.bind(this));
+
+
 		this._toggleFullscreenButton = this.shadowRoot.querySelector("#toggle-fullscreen-button");
 		this._toggleFullscreenButton.addEventListener("click", this._onClickToggleFullscreenButton.bind(this));
 		
-		this._scrollTools = this.shadowRoot.querySelector("#scroll-tools");
 
+
+		this._scrollTools = this.shadowRoot.querySelector("#scroll-tools");
 		this._scrollTopButton = this.shadowRoot.querySelector("#scroll-top-button");
 		this._scrollTopButton.addEventListener("mousedown", this._onScrollTopButtonMouseDown.bind(this));
 		this._scrollTopButton.addEventListener("mouseout", this._onScrollTopButtonMouseOut.bind(this));
-		this._scrollTopButton.addEventListener("mouseup", this._onScrollTopButtonMouseOut.bind(this));
-
+		
 		this._scrollBar = this.shadowRoot.querySelector("#scroll-bar");
 		this._scrollBar.addEventListener("wheel", this._onScrollBarMouseWheel.bind(this), { passive: false });
 		this._scrollBar.addEventListener("mousedown", this._onScrollBarMouseDown.bind(this));
@@ -66,13 +113,12 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 		this._scrollBottomButton = this.shadowRoot.querySelector("#scroll-bottom-button");
 		this._scrollBottomButton.addEventListener("mousedown", this._onScrollBottomButtonMouseDown.bind(this));
 		this._scrollBottomButton.addEventListener("mouseout", this._onScrollBottomButtonMouseOut.bind(this));
-		this._scrollBottomButton.addEventListener("mouseup", this._onScrollBottomButtonMouseOut.bind(this));
-
+		
 		// observe resize of tableHeader & tableFooter
 		this._tableSectionsResizeObserver = new ResizeObserver(this._onTableViewChanged.bind(this));
 		this._tableSectionsResizeObserver.observe(this._tableContainer);
 		
-		this._tableContainer.addEventListener("scroll", this._onTableViewChanged.bind(this));
+		this._tableContainer.addEventListener("scroll", this._onTableContainerScrolled.bind(this));
 
 		this._errorMessageDiv = this.shadowRoot.querySelector("#error-message");
 		this._waitMessageContent = this.shadowRoot.querySelector("#wait-message-content");
@@ -83,129 +129,584 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	_getTableViewData() {
-		let tableViewData = {};
-
-		// find number of obsel data rows (= without header and footer) in the table
-		let headerRowsCount = this._tableHeader.querySelectorAll("tr").length;
-		let footerRowsCount = this._tableFooter.querySelectorAll("tr").length;
-		tableViewData.totalObselRowsCount = this._table.rows.length - (headerRowsCount + footerRowsCount);
-
-		if(tableViewData.totalObselRowsCount > 0) {
-			tableViewData.firstObselDataRow = this._table.rows[headerRowsCount];
-			tableViewData.lastObselDataRow = this._table.rows[headerRowsCount + tableViewData.totalObselRowsCount - 1];
+	_onClickSortIdAscButton(event) {
+		if(!this._sortIdAscButton.classList.contains("applied")) {
+			this._sortTable("id", "asc");
+			this._sortIdAscButton.classList.add("applied");
 		}
+		else
+			event.preventDefault();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickSortIdDescButton(event) {
+		if(!this._sortIdDescButton.classList.contains("applied")) {
+			this._sortTable("id", "desc");
+			this._sortIdDescButton.classList.add("applied");
+		}
+		else
+			event.preventDefault();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickSortTypeAscButton(event) {
+		if(!this._sortTypeAscButton.classList.contains("applied")) {
+			this._sortTable("type", "asc");
+			this._sortTypeAscButton.classList.add("applied");
+		}
+		else
+			event.preventDefault();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickSortTypeDescButton(event) {
+		if(!this._sortTypeDescButton.classList.contains("applied")) {
+			this._sortTable("type", "desc");
+			this._sortTypeDescButton.classList.add("applied");
+		}
+		else
+			event.preventDefault();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickSortSubjectAscButton(event) {
+		if(!this._sortSubjectAscButton.classList.contains("applied")) {
+			this._sortTable("subject", "asc");
+			this._sortSubjectAscButton.classList.add("applied");
+		}
+		else
+			event.preventDefault();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickSortSubjectDescButton(event) {
+		if(!this._sortSubjectDescButton.classList.contains("applied")) {
+			this._sortTable("subject", "desc");
+			this._sortSubjectDescButton.classList.add("applied");
+		}
+		else
+			event.preventDefault();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickSortBeginAscButton(event) {
+		if(!this._sortBeginAscButton.classList.contains("applied")) {
+			this._sortTable("begin", "asc");
+			this._sortBeginAscButton.classList.add("applied");
+		}
+		else
+			event.preventDefault();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickSortBeginDescButton(event) {
+		if(!this._sortBeginDescButton.classList.contains("applied")) {
+			this._sortTable("begin", "desc");
+			this._sortBeginDescButton.classList.add("applied");
+		}
+		else
+			event.preventDefault();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickSortEndAscButton(event) {
+		if(!this._sortEndAscButton.classList.contains("applied")) {
+			this._sortTable("end", "asc");
+			this._sortEndAscButton.classList.add("applied");
+		}
+		else
+			event.preventDefault();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickSortEndDescButton(event) {
+		if(!this._sortEndDescButton.classList.contains("applied")) {
+			this._sortTable("end", "desc");
+			this._sortEndDescButton.classList.add("applied");
+		}
+		else
+			event.preventDefault();
+	}
+
+	/**
+	 * When obsels of a trace need to be ordered, kTBS uses a total ordering considering :
+				- their end timestamp, then
+				- their begin timestamp, then
+				- their identifier.
+	 *
+	 * @param {*} obselA 
+	 * @param {*} obselB 
+	 */
+	_compareDefault(obselA, obselB) {
+		if(obselA.end < obselB.end)
+			return -1;
+		else if(obselA.end > obselB.end)
+			return 1;
 		else {
-			tableViewData.firstObselDataRow = null;
-			tableViewData.lastObselDataRow = null;
+			if(obselA.begin < obselB.begin)
+				return -1;
+			else if(obselA.begin > obselB.begin)
+				return 1;
+			else {
+				if(obselA.id < obselB.id)
+					return -1;
+				else if(obselA.id > obselB.id)
+					return 1;
+				else
+					return 0; // should never happen, as Obsels IDs are supposed to be unique within a Trace
+			}
 		}
+	}
 
-		let tableContainerBoundingClientRect = this._tableContainer.getBoundingClientRect();
-		let tableContainerAbsoluteTop = tableContainerBoundingClientRect.top;
-		let tableContainerAbsoluteBottom = tableContainerBoundingClientRect.bottom;
+	/**
+	 * 
+	 */
+	_compareObselIdAsc(obselA, obselB) {
+		if(obselA.id < obselB.id)
+			return -1;
+		else if(obselA.id > obselB.id)
+			return 1;
+		else
+			return this._compareDefault(obselA, obselB);
+	}
 
-		let tableHeaderBoundingClientRect = this._tableHeader.getBoundingClientRect();
-		tableViewData.tableHeaderAbsoluteBottom = tableContainerAbsoluteTop + tableHeaderBoundingClientRect.height;
+	/**
+	 * 
+	 */
+	_compareObselIdDesc(obselA, obselB) {
+		if(obselA.id < obselB.id)
+			return 1;
+		else if(obselA.id > obselB.id)
+			return -1;
+		else
+			return this._compareDefault(obselA, obselB);
+	}
+
+	/**
+	 * 
+	 */
+	_compareObselTypeAsc(obselA, obselB) {
+		let obselATypeSortingValue = obselA.type.get_translated_label(this._lang);
+
+		if(!obselATypeSortingValue)
+			obselATypeSortingValue =  obselA.type.id;
+
+		let obselBTypeSortingValue = obselB.type.get_translated_label(this._lang);
+
+		if(!obselBTypeSortingValue)
+			obselBTypeSortingValue =  obselB.type.id;
 		
-		let tableFooterBoundingClientRect = this._tableFooter.getBoundingClientRect();
-		let tableFooterAbsoluteTop = tableContainerAbsoluteBottom - tableFooterBoundingClientRect.height;
+		if(obselATypeSortingValue < obselBTypeSortingValue)
+			return -1;
+		else if(obselATypeSortingValue > obselBTypeSortingValue)
+			return 1;
+		else
+			return this._compareDefault(obselA, obselB);
+	}
 
-		tableViewData.visibleBodyHeight = Math.max(tableFooterAbsoluteTop - tableViewData.tableHeaderAbsoluteBottom, 0);
+	/**
+	 * 
+	 */
+	_compareObselTypeDesc(obselA, obselB) {
+		let obselATypeSortingValue = obselA.type.get_translated_label(this._lang);
 
-		if(tableViewData.visibleBodyHeight > 0) {
-			let visibleRowsQueryString = "tr:not(.overflow)";
-			let visibleRows = this._tableBody.querySelectorAll(visibleRowsQueryString);
+		if(!obselATypeSortingValue)
+			obselATypeSortingValue =  obselA.type.id;
 
-			let firstVisibleRow;
+		let obselBTypeSortingValue = obselB.type.get_translated_label(this._lang);
 
-			for(let i = 0; i < visibleRows.length; i++) {
-				let aRow = visibleRows[i];
-				let aRowBoundingClientRect = aRow.getBoundingClientRect();
+		if(!obselBTypeSortingValue)
+			obselBTypeSortingValue =  obselB.type.id;
 
-				if(aRowBoundingClientRect.bottom  >= tableViewData.tableHeaderAbsoluteBottom) {
-					firstVisibleRow = aRow;
-					break;
+		if(obselATypeSortingValue < obselBTypeSortingValue)
+			return 1;
+		else if(obselATypeSortingValue > obselBTypeSortingValue)
+			return -1;
+		else
+			return this._compareDefault(obselA, obselB);
+	}
+
+	/**
+	 * 
+	 */
+	_compareObselSubjectAsc(obselA, obselB) {
+		if(obselA.subject < obselB.subject)
+			return -1;
+		else if(obselA.subject > obselB.subject)
+			return 1;
+		else
+			return this._compareDefault(obselA, obselB);
+	}
+
+	/**
+	 * 
+	 */
+	_compareObselSubjectDesc(obselA, obselB) {
+		if(obselA.subject < obselB.subject)
+			return 1;
+		else if(obselA.subject > obselB.subject)
+			return -1;
+		else
+			return this._compareDefault(obselA, obselB);
+	}
+
+	/**
+	 * 
+	 */
+	_compareObselBeginAsc(obselA, obselB) {
+		if(obselA.begin < obselB.begin)
+			return -1;
+		else if(obselA.begin > obselB.begin)
+			return 1;
+		else
+			return this._compareDefault(obselA, obselB);
+	}
+
+	/**
+	 * 
+	 */
+	_compareObselBeginDesc(obselA, obselB) {
+		if(obselA.begin < obselB.begin)
+			return 1;
+		else if(obselA.begin > obselB.begin)
+			return -1;
+		else
+			return this._compareDefault(obselA, obselB);
+	}
+
+	/**
+	 * 
+	 */
+	_compareObselEndDesc(obselA, obselB) {
+		if(obselA.end < obselB.end)
+			return 1;
+		else if(obselA.end > obselB.end)
+			return -1;
+		else
+			return this._compareDefault(obselA, obselB);
+	}
+
+	/**
+	 * 
+	 */
+	_getComparisonFunction(column, direction) {
+		switch(column) {
+			case "id" :
+				if(direction == "asc")
+					return this._compareObselIdAsc.bind(this);
+				else
+					return this._compareObselIdDesc.bind(this);
+			case "type" :
+				if(direction == "asc")
+					return this._compareObselTypeAsc.bind(this);
+				else
+					return this._compareObselTypeDesc.bind(this);
+			case "subject" :
+				if(direction == "asc")
+					return this._compareObselSubjectAsc.bind(this);
+				else
+					return this._compareObselSubjectDesc.bind(this);
+			case "begin" :
+				if(direction == "asc")
+					return this._compareObselBeginAsc.bind(this);
+				else
+					return this._compareObselBeginDesc.bind(this);
+			case "end" :
+				if(direction == "asc")
+					return this._compareDefault.bind(this);
+				else
+					return this._compareObselEndDesc.bind(this);
+			default: 
+				return undefined;
+		}
+	}
+
+	/**
+	 * 
+	 * @param {*} column 
+	 * @param {*} direction 
+	 */
+	_getSortedObselIds(column, direction) {
+		let comparisonFunction = this._getComparisonFunction(column, direction);
+
+		if(comparisonFunction != undefined)
+			return this._obselsData.slice(0).sort(comparisonFunction).map(obsel => obsel.id);
+		else
+			throw new Error("No comparison function found to sort Obsels by \"" + column + "\" in direction \"" + direction + "\"");
+	}
+
+	/**
+	 * 
+	 * @param {*} column 
+	 * @param {*} direction 
+	 */
+	_sortTable(column, direction) {
+		// hide table and show wait message
+		if(!this._tableContainer.classList.contains("pending"))
+			this._tableContainer.classList.add("pending");
+
+		// un-hilight previously applied sort button(s)
+		let appliedButtons = this._tableHeader.querySelectorAll("button.sort-button.applied");
+
+		for(let i = 0; i < appliedButtons.length; i++)
+			appliedButtons[i].classList.remove("applied");
+
+		if(this._sortTableTaskID)
+			clearTimeout(this._sortTableTaskID);
+
+		this._sortTableTaskID = setTimeout(() => {
+			// get sorted obsels IDs
+			if(!(this._sortedObselsIds[column][direction] instanceof Array))
+				this._sortedObselsIds[column][direction] = this._getSortedObselIds(column, direction);
+
+			let lastRow = null;
+
+			// apply order
+			for(let i = (this._sortedObselsIds[column][direction].length - 1); i >= 0 ; i--) {
+				let obselId = this._sortedObselsIds[column][direction][i];
+				let obselEntryRow = this._table.querySelector("tr.obsel-entry-row#" + CSS.escape(obselId));
+
+				if(obselEntryRow) {
+					let obselRows = [obselEntryRow];
+					let obselNextRow = obselEntryRow.nextSibling;
+
+					while(obselNextRow && (obselNextRow.tagName == "TR") && !obselNextRow.classList.contains("obsel-entry-row")) {
+						obselRows.push(obselNextRow);
+						obselNextRow = obselNextRow.nextSibling;
+					}
+
+					let nextObselEntryRow = null;
+
+					if(i < (this._sortedObselsIds[column][direction].length - 1)) {
+						let nextObselId = this._sortedObselsIds[column][direction][i + 1];
+						nextObselEntryRow = this._table.querySelector("tr.obsel-entry-row#" + CSS.escape(nextObselId));
+
+						if(!nextObselEntryRow)
+							throw new Error("Cannot find expected entry row for obsel #" + nextObselId);
+					}
+					
+					let rowToInsertBefore = nextObselEntryRow;
+					
+					for(let j = (obselRows.length - 1); j >= 0; j--) {
+						let movedRow = obselRows[j];
+
+						if(movedRow.classList.contains("overflow"))
+							movedRow.classList.remove("overflow");
+
+						this._tableBody.insertBefore(movedRow, rowToInsertBefore);
+
+						let attributeRowIsEven = ((i % 2) == 0)?((j % 2) == 0):((j % 2) == 1);
+						
+						if(attributeRowIsEven) {
+							if(movedRow.classList.contains("odd"))
+								movedRow.classList.remove("odd");
+
+							if(!movedRow.classList.contains("even"))
+								movedRow.classList.add("even");
+						}
+						else {
+							if(movedRow.classList.contains("even"))
+								movedRow.classList.remove("even");
+
+							if(!movedRow.classList.contains("odd"))
+								movedRow.classList.add("odd");
+						}
+
+						if(!lastRow)
+							lastRow = movedRow;
+
+						rowToInsertBefore = movedRow;
+					}
 				}
 			}
 
-			tableViewData.firstVisibleRow = firstVisibleRow;
-
-			if(firstVisibleRow) {
-				// find visible ratio of firstVisibleRow
-				let firstVisibleRowBoundingRect = firstVisibleRow.getBoundingClientRect();
-				let firstVisibleRowVisibleHeight = Math.min(firstVisibleRowBoundingRect.height, firstVisibleRowBoundingRect.bottom - tableViewData.tableHeaderAbsoluteBottom);
-				tableViewData.firstVisibleRowRatio = firstVisibleRowVisibleHeight / firstVisibleRowBoundingRect.height;
+			this._tableContainer.scrollTop = 0;
+			
+			if(lastRow) {
+				this._firstUnhiddenRowIndex = 1;
+				this._lastUnhiddenRowIndex = lastRow.rowIndex;
 			}
-			else
-				tableViewData.firstVisibleRowRatio = 0;
+			
+			this._onTableViewChanged();
 
-			let lastVisibleRow;
+			// hide wait message and show table
+			if(this._tableContainer.classList.contains("pending"))
+				this._tableContainer.classList.remove("pending");
 
-			for(let i = (visibleRows.length - 1); i >= 0; i--) {
-				let aRow = visibleRows[i];
-				let aRowBoundingClientRect = aRow.getBoundingClientRect();
+			this._sortTableTaskID = null;
+		});
+	}
 
-				if(aRowBoundingClientRect.top  <= tableFooterAbsoluteTop) {
-					lastVisibleRow = aRow;
-					break;
+	/**
+	 *  @TODO : benchmarker, compter les appels => optimiser si nécessaire (système de mise en cache/invalidation du cache)
+	 */
+	_getTableViewData() {
+		if(this._latestTableViewData == null) {
+			this._latestTableViewData = {};
+
+			// find number of obsel data rows (= without header and footer) in the table
+			let headerRowsCount = 1;
+			let footerRowsCount = 1;
+			this._latestTableViewData.totalObselRowsCount = this._table.rows.length - (headerRowsCount + footerRowsCount);
+
+			if(this._latestTableViewData.totalObselRowsCount > 0) {
+				this._latestTableViewData.firstObselDataRow = this._table.rows[headerRowsCount];
+				this._latestTableViewData.lastObselDataRow = this._table.rows[headerRowsCount + this._latestTableViewData.totalObselRowsCount - 1];
+				this._latestTableViewData.firstUnhiddenObselDataRow = this._table.rows[this._firstUnhiddenRowIndex];
+				this._latestTableViewData.lastUnhiddenObselDataRow = this._table.rows[this._lastUnhiddenRowIndex];
+			}
+			else {
+				this._latestTableViewData.firstObselDataRow = null;
+				this._latestTableViewData.lastObselDataRow = null;
+				this._latestTableViewData.firstUnhiddenObselDataRow = null;
+				this._latestTableViewData.lastUnhiddenObselDataRow = null;
+			}
+
+			let tableContainerBoundingClientRect = this._tableContainer.getBoundingClientRect();
+
+			this._latestTableViewData.tableBodyHeight = this._tableBody.clientHeight;
+
+			let tableContainerAbsoluteTop = tableContainerBoundingClientRect.top;
+			let tableContainerAbsoluteBottom = tableContainerBoundingClientRect.bottom;
+
+			let tableHeaderBoundingClientRect = this._tableHeader.getBoundingClientRect();
+			this._latestTableViewData.tableHeaderAbsoluteBottom = tableContainerAbsoluteTop + tableHeaderBoundingClientRect.height;
+			
+			let tableFooterBoundingClientRect = this._tableFooter.getBoundingClientRect();
+			let tableFooterAbsoluteTop = tableContainerAbsoluteBottom - tableFooterBoundingClientRect.height;
+
+			this._latestTableViewData.visibleBodyHeight = Math.max(tableFooterAbsoluteTop - this._latestTableViewData.tableHeaderAbsoluteBottom, 0);
+			this._latestTableViewData.scrollableHeight = Math.max((this._latestTableViewData.tableBodyHeight - this._latestTableViewData.visibleBodyHeight), 0);
+			this._latestTableViewData.topScrollableHeight = this._tableContainer.scrollTop;
+			this._latestTableViewData.bottomScrollableHeight =  Math.max((this._latestTableViewData.scrollableHeight - this._latestTableViewData.topScrollableHeight), 0);
+
+			if((this._latestTableViewData.visibleBodyHeight > 0) && (this._firstUnhiddenRowIndex != null) && (this._lastUnhiddenRowIndex != null)) {
+				let firstVisibleRow;
+
+				for(let i = this._firstUnhiddenRowIndex; i <= this._lastUnhiddenRowIndex; i++) {
+					let aRow = this._table.rows[i];
+					let aRowBoundingClientRect = aRow.getBoundingClientRect();
+
+					if(aRowBoundingClientRect.bottom  >= this._latestTableViewData.tableHeaderAbsoluteBottom) {
+						firstVisibleRow = aRow;
+						break;
+					}
 				}
+
+				this._latestTableViewData.firstVisibleRow = firstVisibleRow;
+
+				if(firstVisibleRow) {
+					// find visible ratio of firstVisibleRow
+					let firstVisibleRowBoundingRect = firstVisibleRow.getBoundingClientRect();
+					let firstVisibleRowVisibleHeight = Math.min(firstVisibleRowBoundingRect.height, firstVisibleRowBoundingRect.bottom - this._latestTableViewData.tableHeaderAbsoluteBottom);
+					this._latestTableViewData.firstVisibleRowRatio = firstVisibleRowVisibleHeight.toFixed(1) / firstVisibleRowBoundingRect.height.toFixed(1);
+				}
+				else
+					this._latestTableViewData.firstVisibleRowRatio = 0;
+
+				let lastVisibleRow;
+
+				//console.log("-----------------------------------");
+
+				for(let i = this._lastUnhiddenRowIndex; i >= this._firstUnhiddenRowIndex; i--) {
+					let aRow = this._table.rows[i];
+					//console.log("i=" + i + " => row.id=" + aRow.id);
+					let aRowBoundingClientRect = aRow.getBoundingClientRect();
+
+					if(aRowBoundingClientRect.top  <= tableFooterAbsoluteTop) {
+						lastVisibleRow = aRow;
+						break;
+					}
+				}
+
+				//console.log("-----------------------------------");
+
+				this._latestTableViewData.lastVisibleRow = lastVisibleRow;
+
+				if(lastVisibleRow) {
+					// find visible ratio of lastVisibleRow
+					let lastVisibleRowBoundingRect = lastVisibleRow.getBoundingClientRect();
+					let lastVisibleRowVisibleHeight = Math.min(lastVisibleRowBoundingRect.height, (tableFooterAbsoluteTop + 1) - lastVisibleRowBoundingRect.top);
+					this._latestTableViewData.lastVisibleRowRatio = lastVisibleRowVisibleHeight / lastVisibleRowBoundingRect.height;
+				}
+				else
+					this._latestTableViewData.lastVisibleRowRatio = 0;
 			}
-
-			tableViewData.lastVisibleRow = lastVisibleRow;
-
-			if(lastVisibleRow) {
-				// find visible ratio of lastVisibleRow
-				let lastVisibleRowBoundingRect = lastVisibleRow.getBoundingClientRect();
-				let lastVisibleRowVisibleHeight = Math.min(lastVisibleRowBoundingRect.height, (tableFooterAbsoluteTop + 1) - lastVisibleRowBoundingRect.top);
-				tableViewData.lastVisibleRowRatio = lastVisibleRowVisibleHeight / lastVisibleRowBoundingRect.height;
+			else {
+				this._latestTableViewData.firstVisibleRow = null;
+				this._latestTableViewData.firstVisibleRowRatio = 0;
+				this._latestTableViewData.lastVisibleRow = null;
+				this._latestTableViewData.lastVisibleRowRatio = 0;
 			}
-			else
-				tableViewData.lastVisibleRowRatio = 0;
-		}
-		else {
-			tableViewData.firstVisibleRow = null;
-			tableViewData.firstVisibleRowRatio = 0;
-			tableViewData.lastVisibleRow = null;
-			tableViewData.lastVisibleRowRatio = 0;
 		}
 
-		return tableViewData;
+		return this._latestTableViewData;
 	}
 
 	/**
 	 * 
 	 */
 	_onTableViewChanged() {
-		if(this._onTableViewChangedTaskID)
-			clearTimeout(this._onTableViewChangedTaskID);
+		this._invalidateLatestTableViewData();
 
 		if(this._updateOverflowRowsTaskID) {
-			cancelIdleCallback(this._updateOverflowRowsTaskID);
+			clearTimeout(this._updateOverflowRowsTaskID);
 			this._updateOverflowRowsTaskID = null;
 		}
 
-		if(!this._scrollBarHandle.classList.contains("dragged")) {
-			this._onTableViewChangedTaskID = setTimeout(() => {
+		let tableViewData = this._getTableViewData();
+
+		/*console.log("tableViewData = ");
+		console.log(tableViewData);*/
+
+		if(tableViewData.firstVisibleRow && tableViewData.lastVisibleRow) {
+			this._updateScrollBar(tableViewData);
+
+			this._updateOverflowRowsTaskID = setTimeout(() => {
 				let tableViewData = this._getTableViewData();
-
-				if(tableViewData.firstVisibleRow && tableViewData.lastVisibleRow) {
-					this._updateScrollBar(tableViewData);
-
-					this._updateOverflowRowsTaskID = requestIdleCallback((idleDeadline) => {
-						if(!idleDeadline.didTimeout && (idleDeadline.timeRemaining() > 0)) {
-							let firstVisibleRowTopBefore = tableViewData.firstVisibleRow.getBoundingClientRect().top;
-							this._updateOverflowRows(tableViewData.firstVisibleRow, firstVisibleRowTopBefore, tableViewData.lastVisibleRow);
-						}
-
-						this._updateOverflowRowsTaskID = null;
-					});
-				}
-
-				this._onTableViewChangedTaskID = null;
-			}, 50);
+				let firstVisibleRowTopBefore = tableViewData.firstVisibleRow.getBoundingClientRect().top;
+				this._updateOverflowRows(tableViewData.firstVisibleRow, firstVisibleRowTopBefore, tableViewData.lastVisibleRow);
+				this._updateOverflowRowsTaskID = null;
+			}, 100);
 		}
-		else
-			this._onTableViewChangedTaskID = null;
+	}
+
+	_invalidateLatestTableViewData() {
+		this._latestTableViewData = null;
+	}
+
+	/**
+	 * 
+	 */
+	_onTableContainerScrolled() {
+		if(
+				!this._scrollBarHandleIsDragged() 
+			&& 	!this._scrollTopButtonPressedIntervalID 
+			&& 	!this._scrollBottomButtonPressedIntervalID
+			&&	!this._scrollBarMouseDownIntervalID
+			&&	(this._resquestedScroll == 0)
+		) {
+			this._resetScrollControl();
+			this._onTableViewChanged();
+		}
 	}
 
 	/**
@@ -497,17 +998,32 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 					setTimeout(() => {
 						let obselRowsFragment = document.createDocumentFragment();
 						let obsels = obselsListPage.obsels;
+						this._obselsData = this._obselsData.concat(obsels);
 						let currentVisibleLinesCount = this._tableBody.querySelectorAll("tr:not(.overflow").length;
 						
 						for(let i = 0; i < obsels.length; i++) {
 							let anObsel = obsels[i];
-							let anObselFragment = this._getObselFragment(anObsel, ((i%2) == 0), (currentVisibleLinesCount > this._maxVisibleRows));
+							let obselEntryIsOverflow = (currentVisibleLinesCount > this._maxVisibleRows);
+							let anObselFragment = this._getObselFragment(anObsel, ((i%2) == 0), obselEntryIsOverflow);
+
+							if(!obselEntryIsOverflow) {
+								if(this._firstUnhiddenRowIndex == null)
+									this._firstUnhiddenRowIndex
+							}
+
 							currentVisibleLinesCount += anObselFragment.querySelectorAll("tr:not(.overflow").length;
 							obselRowsFragment.appendChild(anObselFragment);
-							this._onTableViewChanged();
 						}
 
 						this._tableBody.appendChild(obselRowsFragment);
+
+						if(this._firstUnhiddenRowIndex == null)
+							this._firstUnhiddenRowIndex = 1;
+
+						if(this._lastUnhiddenRowIndex == null)
+							this._lastUnhiddenRowIndex = currentVisibleLinesCount;
+
+						this._onTableViewChanged();
 					});
 				});
 			});
@@ -578,14 +1094,13 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	 * 
 	 */
 	_updateStringsTranslation() {
-		this._tableHeaderId.innerText = this._translateString("@id");
-		this._tableHeaderType.innerText = this._translateString("Obsel type");
-		this._tableHeaderSubject.innerText = this._translateString("Subject");
-		this._tableHeaderBegin.innerText = this._translateString("Begin");
-		this._tableHeaderEnd.innerText = this._translateString("End");
-		this._tableHeaderAttributes.innerText = this._translateString("Attributes");
-		this._tableHeaderAttributesType.innerText = this._translateString("Attribute type");
-		this._tableHeaderAttributesValue.innerText = this._translateString("Value");
+		this._tableHeaderIdLabel.innerText = this._translateString("@id");
+		this._tableHeaderTypeLabel.innerText = this._translateString("Obsel type");
+		this._tableHeaderSubjectLabel.innerText = this._translateString("Subject");
+		this._tableHeaderBeginLabel.innerText = this._translateString("Begin");
+		this._tableHeaderEndLabel.innerText = this._translateString("End");
+		this._tableHeaderAttributesTypeLabel.innerText = this._translateString("Attribute");
+		this._tableHeaderAttributesValueLabel.innerText = this._translateString("Value");
 		this._waitMessageContent.innerText = this._translateString("Please wait...");
 		let obselLinks = this._tableBody.querySelectorAll(".obsel-link");
 		this._toggleFullscreenButton.setAttribute("title", this._translateString("Toggle fullscreen"));
@@ -648,25 +1163,23 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	}
 
 	/**
-	 * 
+	 * @TODO : benchmarker, puis optimiser si nécessaire
 	 */
 	_updateOverflowRows(firstVisibleRow, firstVisibleRowTop, lastVisibleRow) {
 		// unhide rows in the visible range, if any is hidden
-		let aRow = firstVisibleRow;
+		for(let i = firstVisibleRow.rowIndex; i <= lastVisibleRow.rowIndex; i++) {
+			let aRow = this._table.rows[i];
 
-		do {
-			if(aRow.classList.contains("obsel-entry-row") && aRow.classList.contains("overflow"))
+			if(aRow.classList.contains("overflow") && aRow.classList.contains("obsel-entry-row"))
 				this._unsetObselRowOverflow(aRow);
-
-			aRow = aRow.nextSibling;
-		} while(aRow && (aRow != lastVisibleRow));
+		}
 
 		// unhide rows immediatly above minVisibleRank and below maxVisibleRank
 		let topRow = firstVisibleRow;
 		let bottomRow = lastVisibleRow;
-		let firstUnhiddenRowIndex = topRow.rowIndex;
-		let lastUnhiddenRowIndex = bottomRow.rowIndex;
-		let visibleRowsCount = lastUnhiddenRowIndex - firstUnhiddenRowIndex + 1;
+		this._firstUnhiddenRowIndex = topRow.rowIndex;
+		this._lastUnhiddenRowIndex = bottomRow.rowIndex;
+		let visibleRowsCount = this._lastUnhiddenRowIndex - this._firstUnhiddenRowIndex + 1;
 		
 		while((topRow || bottomRow) && (visibleRowsCount <= this._maxVisibleRows)) {
 			if(topRow) {
@@ -678,9 +1191,9 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 				if(topRow && topRow.classList) {
 					if(topRow.classList.contains("overflow"))
 						this._unsetObselRowOverflow(topRow);
-					
-					firstUnhiddenRowIndex = topRow.rowIndex;
-					visibleRowsCount = lastUnhiddenRowIndex - firstUnhiddenRowIndex + 1;
+
+					this._firstUnhiddenRowIndex = topRow.rowIndex;
+					visibleRowsCount = this._lastUnhiddenRowIndex - this._firstUnhiddenRowIndex + 1;
 				}
 			}
 
@@ -691,14 +1204,17 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 					bottomRow = bottomRow.nextSibling;
 
 				if(bottomRow && bottomRow.classList) {
-					if(bottomRow.classList.contains("overflow"))
+					if(bottomRow.classList.contains("overflow")) {
 						this._unsetObselRowOverflow(bottomRow);
+						this._lastUnhiddenRowIndex = bottomRow.rowIndex;
+					}
 
-					while(bottomRow.nextSibling && !bottomRow.nextSibling.classList.contains("obsel-entry-row"))
+					while(bottomRow.nextSibling && !bottomRow.nextSibling.classList.contains("obsel-entry-row")) {
 						bottomRow = bottomRow.nextSibling;
+						this._lastUnhiddenRowIndex = bottomRow.rowIndex;
+					}
 					
-					lastUnhiddenRowIndex = bottomRow.rowIndex;
-					visibleRowsCount = lastUnhiddenRowIndex - firstUnhiddenRowIndex + 1;
+					visibleRowsCount = this._lastUnhiddenRowIndex - this._firstUnhiddenRowIndex + 1;
 				}
 			}
 		}
@@ -710,7 +1226,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 		for(let i = 0; i < visibleObselEntryRows.length; i++) {
 			let aRow = visibleObselEntryRows[i];
 
-			if((aRow.rowIndex < firstUnhiddenRowIndex) || (aRow.rowIndex > lastUnhiddenRowIndex))
+			if((aRow.rowIndex < this._firstUnhiddenRowIndex) || (aRow.rowIndex > this._lastUnhiddenRowIndex))
 				this._setObselRowOverflow(aRow);
 		}
 
@@ -719,6 +1235,10 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 
 		if(firstVisibleRowTopAfter != firstVisibleRowTop)
 			this._tableContainer.scrollTop += (firstVisibleRowTopAfter - firstVisibleRowTop);
+
+		this._invalidateLatestTableViewData();
+
+		let topFin = performance.now();
 	}
 
 	/**
@@ -736,8 +1256,8 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 
 		// update whole scroll tools enabled state
 		if(((visiblePercentage >= 100) || (visiblePercentage <= 0))) {
-			if(!this._scrollTools.hasAttribute("disabled"))
-				this._scrollTools.setAttribute("disabled", true);
+			if(this._widgetContainer.classList.contains("scrollable"))
+				this._widgetContainer.classList.remove("scrollable");
 		}
 		else {
 			// set scrollbar handl's height
@@ -755,8 +1275,8 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 			this._scrollTopButton.disabled = (topLimitPercentage <= 0);
 			this._scrollBottomButton.disabled = (bottomLimitPercentage >= 100);
 
-			if(this._scrollTools.hasAttribute("disabled"))
-				this._scrollTools.removeAttribute("disabled");
+			if(!this._widgetContainer.classList.contains("scrollable"))
+				this._widgetContainer.classList.add("scrollable");
 		}
 	}
 
@@ -764,17 +1284,45 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	 * 
 	 */
 	_onScrollBarMouseWheel(event) {
-		if(!this._scrollTools.hasAttribute("disabled")) {
+		if(this._widgetContainer.classList.contains("scrollable")) {
 			let verticalMovement = event.deltaY;
-			let stepHeight = this._tableContainer.clientHeight / 15;
-					
-			if(verticalMovement && (verticalMovement != 0)) {
+			let tableViewData = this._getTableViewData();
+			
+			if(
+				(
+						(verticalMovement < 0)
+					&&	(
+							(this._tableContainer.scrollTop > 0)
+						||	(tableViewData.firstVisibleRow != tableViewData.firstObselDataRow)
+					)
+				)
+				||	(
+						(verticalMovement > 0)
+					&&	(
+							(this._tableContainer.scrollTop < Math.floor(this._tableBody.getBoundingClientRect().height - tableViewData.visibleBodyHeight))
+						||	(tableViewData.lastVisibleRow != tableViewData.lastObselDataRow)
+					)
+				)
+			) {
+				event.preventDefault();	
+				let tableViewData = this._getTableViewData();
+				let visibleTopLimit = tableViewData.firstVisibleRow.rowIndex + (1 - tableViewData.firstVisibleRowRatio);
+				let visibleBottomLimit = tableViewData.lastVisibleRow.rowIndex + tableViewData.lastVisibleRowRatio;
+				let visibleRowsCount = visibleBottomLimit - visibleTopLimit;
+				let averageRowHeight = tableViewData.visibleBodyHeight / visibleRowsCount;
+				let extrapolatedTotalTableHeight = tableViewData.totalObselRowsCount * averageRowHeight;
+				let extrapolatedScrollableHeight = extrapolatedTotalTableHeight - tableViewData.visibleBodyHeight;
+				let tableHeightScrollStepsCount = Math.ceil(extrapolatedScrollableHeight / 17.5);
+				let stepsPerInterval =  Math.max(Math.ceil(tableHeightScrollStepsCount / 20), 1);
+
 				let movementUnit = event.deltaMode;
 
 				if(movementUnit == 0)
-					verticalMovement = verticalMovement / 28;
+					verticalMovement = Math.round(verticalMovement / 69);
+				else
+					verticalMovement = verticalMovement / 3;
 
-				this._requestIncrementScroll(verticalMovement * stepHeight);
+				this._requestIncrementScroll(verticalMovement * stepsPerInterval);
 			}
 		}
 	}
@@ -782,18 +1330,51 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	/**
 	 * 
 	 */
+	_onScrollBarMouseMove(event) {
+		if(this._scrollBarMouseDownIntervalID) {
+			this._latestScrollBarMouseOffsetY = event.offsetY;
+			this._latestScrollBarMouseClientY = event.clientY;
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onScrollBarMouseLeave(event) {
+		if(this._scrollBarMouseDownIntervalID)
+			this._resetScrollControl();
+	}
+
+	/**
+	 * 
+	 */
 	_onScrollBarMouseDown(event) {
-		if(!this._scrollTools.hasAttribute("disabled")) {
-			let mouseRelativeY = event.offsetY;
+		if((event.target == this._scrollBar) && this._widgetContainer.classList.contains("scrollable")) {
+			event.preventDefault();
+			this._resetScrollControl();
+			this._latestScrollBarMouseOffsetY = event.offsetY;
+			this._latestScrollBarMouseClientY = event.clientY;
 			let scrollBarHandleRelativeTop = this._scrollBarHandle.getBoundingClientRect().top - this._scrollBar.getBoundingClientRect().top;
 			let scrollBarHandleRelativeBottom = this._scrollBarHandle.getBoundingClientRect().bottom - this._scrollBar.getBoundingClientRect().top;
-			let stepHeight = this._tableContainer.clientHeight / 5;
 
-			if(mouseRelativeY < scrollBarHandleRelativeTop)
-				this._requestIncrementScroll(-stepHeight);
-			else if(mouseRelativeY > scrollBarHandleRelativeBottom)
-				this._requestIncrementScroll(stepHeight);
+			let tableViewData = this._getTableViewData();
+			let visibleTopLimit = tableViewData.firstVisibleRow.rowIndex + (1 - tableViewData.firstVisibleRowRatio);
+			let visibleBottomLimit = tableViewData.lastVisibleRow.rowIndex + tableViewData.lastVisibleRowRatio;
+			let visibleRowsCount = visibleBottomLimit - visibleTopLimit;
+			let averageRowHeight = tableViewData.visibleBodyHeight / visibleRowsCount;
+			let extrapolatedTotalTableHeight = tableViewData.totalObselRowsCount * averageRowHeight;
+			let extrapolatedScrollableHeight = extrapolatedTotalTableHeight - tableViewData.visibleBodyHeight;
+			let tableHeightScrollStepsCount = Math.ceil(extrapolatedScrollableHeight / 17.5);
+			let stepsPerInterval =  Math.max(Math.ceil(tableHeightScrollStepsCount / 20), 1);
 			
+			if(this._latestScrollBarMouseOffsetY < scrollBarHandleRelativeTop)
+				this._requestIncrementScroll(-stepsPerInterval);
+			else if(this._latestScrollBarMouseOffsetY > scrollBarHandleRelativeBottom)
+				this._requestIncrementScroll(stepsPerInterval);
+
+			this._scrollBar.addEventListener("mouseleave", this._bindedOnScrollBarMouseLeaveFunction);
+			this._scrollBar.addEventListener("mousemove", this._bindedOnScrollBarMouseMoveFunction);
+
 			if(this._scrollBarMouseDownIntervalID)
 				clearInterval(this._scrollBarMouseDownIntervalID);
 		
@@ -801,27 +1382,98 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 				let scrollBarHandleRelativeTop = this._scrollBarHandle.getBoundingClientRect().top - this._scrollBar.getBoundingClientRect().top;
 				let scrollBarHandleRelativeBottom = this._scrollBarHandle.getBoundingClientRect().bottom - this._scrollBar.getBoundingClientRect().top;
 			
-				if(mouseRelativeY < scrollBarHandleRelativeTop)
-					this._requestIncrementScroll(-stepHeight);
-				else if(mouseRelativeY > scrollBarHandleRelativeBottom)
-					this._requestIncrementScroll(stepHeight);
+				if(this._latestScrollBarMouseOffsetY < scrollBarHandleRelativeTop)
+					this._requestIncrementScroll(-stepsPerInterval);
+				else if(this._latestScrollBarMouseOffsetY > scrollBarHandleRelativeBottom)
+					this._requestIncrementScroll(stepsPerInterval);
 				else {
-					clearInterval(this._scrollBarMouseDownIntervalID);
-					this._scrollBarMouseDownIntervalID  = null;
+					this._resetScrollControl();
+					this._scrollBarHandle.classList.add("dragged");
+					this._scrollBarHandleDragOrigin = this._latestScrollBarMouseClientY;
+					let scrollBarHandleTopValue = this._scrollBarHandle.style.top;
+					this._scrollBarHandleOrigin = parseFloat(scrollBarHandleTopValue.substring(0, scrollBarHandleTopValue.length - 2));
+					this._tableViewDataAtDragScrollbarBegin = this._getTableViewData();
+					window.document.addEventListener("mousemove", this._bindedOnDragScrollbarFunction, true);
 				}
-			}, 50);
+			}, 30);
 		}
 	}
 
 	/**
 	 * 
 	 */
-	_requestIncrementScroll(steps) {
+	_requestIncrementScroll(requestedSteps) {
+		if(
+				((requestedSteps > 0) && (this._resquestedScroll < 0))
+			||	((requestedSteps < 0) && (this._resquestedScroll > 0))
+		)
+			this._resquestedScroll = (17.5 * requestedSteps);
+		else
+			this._resquestedScroll += (17.5 * requestedSteps);
+
 		if(this._requestIncrementScrollTaskId)
 			clearTimeout(this._requestIncrementScrollTaskId);
 
 		this._requestIncrementScrollTaskId = setTimeout(() => {
-			this._tableContainer.scrollTop += steps * 17.5;
+			if(this._resquestedScroll != 0) {
+				let tableViewData = this._getTableViewData();
+
+				if(
+						(
+								(this._resquestedScroll < 0) 
+							&&	(
+										(tableViewData.topScrollableHeight >= Math.abs(this._resquestedScroll))
+									||	(tableViewData.firstUnhiddenObselDataRow == tableViewData.firstObselDataRow)
+								)
+						)
+					||	(
+								(this._resquestedScroll > 0)
+							&&	(
+										(tableViewData.bottomScrollableHeight >= this._resquestedScroll)
+									||	(tableViewData.lastUnhiddenObselDataRow == tableViewData.lastObselDataRow)
+								)
+						)
+				) {
+					this._tableContainer.scrollTop += this._resquestedScroll;
+					this._onTableViewChanged();
+				}
+				else {
+					let currentTopRowIndex = tableViewData.firstVisibleRow.rowIndex;
+					let currentTopRowRatio = tableViewData.firstVisibleRowRatio;
+					let currentBottomRowIndex = tableViewData.lastVisibleRow.rowIndex;
+					let currentBottomRowRatio = tableViewData.lastVisibleRowRatio;
+					let currentTopLimit = currentTopRowIndex + (1 - currentTopRowRatio);
+					let currentTopRowPosition = currentTopRowIndex + (1 - currentTopRowRatio);
+					let currentBottomRowPosition = currentBottomRowIndex + currentBottomRowRatio;
+					let currentlyVisibleDelta = currentBottomRowPosition - currentTopRowPosition;
+
+					let unhiddenRowsCount = tableViewData.lastUnhiddenObselDataRow.rowIndex - tableViewData.firstUnhiddenObselDataRow.rowIndex + 1;
+					let averageRowHeight = tableViewData.tableBodyHeight / unhiddenRowsCount;
+					let extrapolatedRowOffset = this._resquestedScroll / averageRowHeight;
+					let newTopLimit = currentTopLimit + extrapolatedRowOffset;
+
+					if(newTopLimit < tableViewData.firstObselDataRow.rowIndex)
+						newTopLimit = tableViewData.firstObselDataRow.rowIndex;
+
+					if(newTopLimit > (tableViewData.lastObselDataRow.rowIndex + 1 - currentlyVisibleDelta))
+						newTopLimit = (tableViewData.lastObselDataRow.rowIndex + 1 - currentlyVisibleDelta);
+
+					let newTopRowIndex = Math.floor(newTopLimit);
+					let newTopRowHiddenRatio = newTopLimit % 1;
+					let newTopRow = this._table.rows[newTopRowIndex];
+					let newTopRowTop = tableViewData.tableHeaderAbsoluteBottom - (newTopRowHiddenRatio * newTopRow.getBoundingClientRect().height);
+					let newBottomLimit = newTopLimit + currentlyVisibleDelta;
+					let newBottomRowIndex = Math.floor(newBottomLimit);
+					let newBottomRow = this._table.rows[newBottomRowIndex];
+					this._updateOverflowRows(newTopRow, newTopRowTop, newBottomRow);
+					let newTableViewData = this._getTableViewData();
+					this._updateScrollBar(newTableViewData);
+				}
+
+				this._resquestedScroll = 0;
+			}
+
+			this._requestIncrementScrollTaskId = null;
 		});
 	}
 
@@ -830,19 +1482,22 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	 */
 	_onScrollTopButtonMouseDown(event) {
 		event.preventDefault();
+		this._resetScrollControl();
 		this._requestIncrementScroll(-1);
 
 		if(this._scrollTopButtonPressedIntervalID)
 			clearInterval(this._scrollTopButtonPressedIntervalID);
 		
 		this._scrollTopButtonPressedIntervalID = setInterval(() => {
-			if(this._tableContainer.scrollTop >= 0)
+			if(this._tableContainer.scrollTop > 0)
 				this._requestIncrementScroll(-1);
 			else {
-				clearInterval(this._scrollTopButtonPressedIntervalID);
-				this._scrollTopButtonPressedIntervalID = null;
+				let tableViewData = this._getTableViewData();
+
+				if(tableViewData.firstVisibleRow == tableViewData.firstObselDataRow)
+					this._resetScrollControl();
 			}
-		}, 50);
+		}, 30);
 	}
 
 	/**
@@ -850,11 +1505,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	 */
 	_onScrollTopButtonMouseOut(event) {
 		event.preventDefault();
-		
-		if(this._scrollTopButtonPressedIntervalID) {
-			clearInterval(this._scrollTopButtonPressedIntervalID);
-			this._scrollTopButtonPressedIntervalID = null;
-		}
+		this._resetScrollControl();
 	}
 
 	/**
@@ -862,21 +1513,22 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	 */
 	_onScrollBottomButtonMouseDown(event) {
 		event.preventDefault();
+		this._resetScrollControl();
 		this._requestIncrementScroll(1);
 
 		if(this._scrollBottomButtonPressedIntervalID)
 			clearInterval(this._scrollBottomButtonPressedIntervalID);
 
-		let visibleBodyHeight = this._getTableViewData().visibleBodyHeight;
-		
 		this._scrollBottomButtonPressedIntervalID = setInterval(() => {
-			if(this._tableContainer.scrollTop <= (this._table.getBoundingClientRect().height - visibleBodyHeight))
+			let tableViewData = this._getTableViewData();
+
+			if(this._tableContainer.scrollTop < (this._table.getBoundingClientRect().height - tableViewData.visibleBodyHeight))
 				this._requestIncrementScroll(1);
 			else {
-				clearInterval(this._scrollBottomButtonPressedIntervalID);
-				this._scrollBottomButtonPressedIntervalID = null;
+				if(tableViewData.lastVisibleRow == tableViewData.lastObselDataRow)
+					this._resetScrollControl();
 			}
-		}, 50);
+		}, 30);
 	}
 
 	/**
@@ -884,11 +1536,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	 */
 	_onScrollBottomButtonMouseOut(event) {
 		event.preventDefault();
-		
-		if(this._scrollBottomButtonPressedIntervalID) {
-			clearInterval(this._scrollBottomButtonPressedIntervalID);
-			this._scrollBottomButtonPressedIntervalID = null;
-		}
+		this._resetScrollControl();
 	}
 
 	/**
@@ -896,23 +1544,22 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	 */
 	_onScrollBarHandleMouseDown(event) {
 		event.preventDefault();
+		this._resetScrollControl();
 		
-		if(!this._scrollTools.hasAttribute("disabled")) {
-			if(!this._scrollBarHandle.classList.contains("dragged"))
-				this._scrollBarHandle.classList.add("dragged");
-
+		if(this._widgetContainer.classList.contains("scrollable") && !this._scrollBarHandleIsDragged()) {
+			this._scrollBarHandle.classList.add("dragged");
 			this._scrollBarHandleDragOrigin = event.clientY;
 			let scrollBarHandleTopValue = this._scrollBarHandle.style.top;
 			this._scrollBarHandleOrigin = parseFloat(scrollBarHandleTopValue.substring(0, scrollBarHandleTopValue.length - 2));
 			this._tableViewDataAtDragScrollbarBegin = this._getTableViewData();
-			window.document.addEventListener("mousemove", this._bindedOnDocumentMouseMoveFunction, true);
+			window.document.addEventListener("mousemove", this._bindedOnDragScrollbarFunction, true);
 		}
 	}
 
 	/**
 	 * 
 	 */
-	_onDocumentMouseMove(event) {
+	_onDragScrollbar(event) {
 		event.preventDefault();
 
 		if(this._tableViewDataAtDragScrollbarBegin.firstVisibleRow && this._tableViewDataAtDragScrollbarBegin.lastVisibleRow) {
@@ -996,25 +1643,50 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	_onDocumentMouseUp(event) {
-		event.preventDefault();
-		
-		if(this._scrollBarHandle.classList.contains("dragged")) {
-			this._scrollBarHandle.classList.remove("dragged");
-			window.document.removeEventListener("mousemove", this._bindedOnDocumentMouseMoveFunction, true);
+	_scrollBarHandleIsDragged() {
+		return this._scrollBarHandle.classList.contains("dragged");
+	}
+
+	/**
+	 * 
+	 */
+	_resetScrollControl() {
+		this._resquestedScroll = 0;
+
+		if(this._requestIncrementScrollTaskId) {
+			clearInterval(this._requestIncrementScrollTaskId);
+			this._requestIncrementScrollTaskId = null;
 		}
-		else if(this._scrollTopButtonPressedIntervalID) {
+
+		if(this._scrollBarHandleIsDragged()) {
+			window.document.removeEventListener("mousemove", this._bindedOnDragScrollbarFunction, true);
+			this._scrollBarHandle.classList.remove("dragged");
+		}
+		
+		if(this._scrollTopButtonPressedIntervalID) {
 			clearInterval(this._scrollTopButtonPressedIntervalID);
 			this._scrollTopButtonPressedIntervalID = null;
 		}
-		else if(this._scrollBottomButtonPressedIntervalID) {
+
+		if(this._scrollBottomButtonPressedIntervalID) {
 			clearInterval(this._scrollBottomButtonPressedIntervalID);
 			this._scrollBottomButtonPressedIntervalID = null;
 		}
-		else if(this._scrollBarMouseDownIntervalID) {
+
+		if(this._scrollBarMouseDownIntervalID) {
 			clearInterval(this._scrollBarMouseDownIntervalID);
 			this._scrollBarMouseDownIntervalID  = null;
+			this._scrollBar.removeEventListener("mouseout", this._bindedOnScrollBarMouseLeaveFunction);
+			this._scrollBar.removeEventListener("mousemove", this._bindedOnScrollBarMouseMoveFunction);
 		}
+	}
+
+	/**
+	 * 
+	 */
+	_onDocumentMouseUp(event) {
+		event.preventDefault();
+		this._resetScrollControl();
 	}
 
 	/**
