@@ -101,27 +101,6 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * Gets the URIs of the bases in the Ktbs root
-	 * \return Array of URL
-	 * \protected
-	 */
-	_get_bases_uris() {
-		if(!this._bases_uris) {
-			this._bases_uris = new Array();
-
-			if(this._JSONData.hasBase instanceof Array) {
-				for(let i = 0; i < this._JSONData.hasBase.length; i++) {
-					let base_uri_string = this._JSONData.hasBase[i];
-					let base_uri = this.resolve_link_uri(base_uri_string);
-					this._bases_uris.push(base_uri);
-				}
-			}
-		}
-
-		return this._bases_uris;
-	}
-
-	/**
 	 * Gets the bases in the Ktbs root
 	 * \return Array of Base
 	 * \public
@@ -129,11 +108,24 @@ export class Ktbs extends Resource {
 	get bases() {
 		if(!this._bases) {
 			this._bases = new Array();
-			let bases_uris = this._get_bases_uris();
 
-			for(let i = 0; i < bases_uris.length; i++) {
-				let base_uri = bases_uris[i];
-				let base = ResourceMultiton.get_resource(Base, base_uri);
+			for(let i = 0; i < this._JSONData.hasBase.length; i++) {
+				const base_data = this._JSONData.hasBase[i];
+				let base;
+
+				if(base_data instanceof Object) {
+					const base_uri = this.resolve_link_uri(base_data["@id"]);
+					const base_label = base_data["label"];
+					base = ResourceMultiton.get_resource(Base, base_uri);
+
+					if(base_label && !base.label)
+						base.label = base_label;
+				}
+				else {
+					const base_uri = this.resolve_link_uri(base_data);
+					base = ResourceMultiton.get_resource(Base, base_uri);
+				}
+
 				this._bases.push(base);
 			}
 		}
@@ -156,5 +148,19 @@ export class Ktbs extends Resource {
 	 */
 	delete(abortSignal = null, credentials = null) {
 		throw new KtbsError("Ktbs roots can not be deleted");
+	}
+
+	/**
+	 * Gets the uri to query in order to read resource's data (For some resource types, this might be different from the resource URI, for instance if we need to add some query parameters. In such case, descending resource types must override this method)
+	 * \return URL
+	 * \protected
+	 */
+	get _data_read_uri() {
+		if(!this._dataReadUri) {
+			this._dataReadUri = new URL(this.uri);
+			this._dataReadUri.searchParams.append("prop", "label");
+		}
+
+		return this._dataReadUri;
 	}
 }

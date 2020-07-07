@@ -447,6 +447,8 @@ export class Resource {
 
 		if(window.localStorage)
 			this._removeOwnCredentialsFromStorage(localStorage);
+
+		this._credentials = null;
 	}
 
 	/**
@@ -514,21 +516,21 @@ export class Resource {
 	 * \public
 	 */
 	get credentials() {
-		let credentials = null;
+		if(!this._credentials) {
+			if(window.sessionStorage)
+				this._credentials = this._getOwnCredentialsFromStorage(window.sessionStorage);
 
-		if(window.sessionStorage)
-			credentials = this._getOwnCredentialsFromStorage(window.sessionStorage);
+			if(!this._credentials && (window.localStorage))
+				this._credentials = this._getOwnCredentialsFromStorage(window.localStorage);
+			
+			if(!this._credentials && (this._use_parent_credentials) && (window.sessionStorage))
+				this._credentials = this._getParentsCredentialsFromStorage(window.sessionStorage);
 
-		if((credentials == null) && (window.localStorage))
-			credentials = this._getOwnCredentialsFromStorage(window.localStorage);
-		
-		if((credentials == null) && (this._use_parent_credentials) && (window.sessionStorage))
-			credentials = this._getParentsCredentialsFromStorage(window.sessionStorage);
+			if(!this._credentials && (this._use_parent_credentials) && (window.localStorage))
+				this._credentials = this._getParentsCredentialsFromStorage(window.localStorage);
+		}
 
-		if((credentials == null) && (this._use_parent_credentials) && (window.localStorage))
-			credentials = this._getParentsCredentialsFromStorage(window.localStorage);
-
-		return credentials;
+		return this._credentials;
 	}
 
 	/**
@@ -574,17 +576,18 @@ export class Resource {
 					let fetchParameters = {
 						method: "GET",
 						headers: new Headers({
-							"Accept": "application/json"
+							"Accept": "application/json",
+							"X-Requested-With": "XMLHttpRequest"
 						}),
 						cache: "default"
 					};
 
-					if(credentials == null)
+					if(!credentials && this.credentials)
 						credentials = this.credentials;
 
-					if((credentials != null) && credentials.id && credentials.password)
+					if(credentials && credentials.id && credentials.password)
 						fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
-
+					
 					if(this._etag)
 						fetchParameters.headers.append("If-None-Match", this._etag);
 
@@ -780,15 +783,16 @@ export class Resource {
 					let fetchParameters = {
 						method: "POST",
 						headers: new Headers({
-							"content-type": "application/json"
+							"content-type": "application/json",
+							"X-Requested-With": "XMLHttpRequest"
 						}),
 						body: postBody
 					};
 
-					if(credentials == null)
+					if(!credentials && this.credentials)
 						credentials = this.credentials;
 
-					if((credentials != null) && credentials.id && credentials.password)
+					if(credentials && credentials.id && credentials.password)
 						fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
 
 					if(abortSignal)
@@ -900,15 +904,16 @@ export class Resource {
 						headers: new Headers({
 							"Accept": "application/json",
 							"content-type": "application/json",
-							"If-Match": this._etag
+							"If-Match": this._etag,
+							"X-Requested-With": "XMLHttpRequest"
 						}),
 						body: JSON.stringify(this._getPutData())
 					};
 
-					if(credentials == null)
+					if(!credentials && this.credentials)
 						credentials = this.credentials;
 
-					if((credentials != null) && credentials.id && credentials.password)
+					if(credentials && credentials.id && credentials.password)
 						fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
 
 					if(abortSignal)
@@ -974,17 +979,18 @@ export class Resource {
 				let fetchParameters = {
 					method: "DELETE",
 					headers: new Headers({
-						"Accept": "application/json"
+						"Accept": "application/json",
+						"X-Requested-With": "XMLHttpRequest"
 					}),
 				};
 
 				if(this._etag)
 					fetchParameters.headers.append("If-Match", this._etag);
 
-				if(credentials == null)
+				if(!credentials && this.credentials)
 					credentials = this.credentials;
 
-				if((credentials != null) && credentials.id && credentials.password)
+				if(credentials && credentials.id && credentials.password)
 					fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
 
 				if(abortSignal)
