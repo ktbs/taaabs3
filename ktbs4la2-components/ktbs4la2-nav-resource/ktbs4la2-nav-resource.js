@@ -66,7 +66,6 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 		this._unfoldButton.addEventListener("click", this._toggleFolded.bind(this));
 		this._childList = this.shadowRoot.querySelector("#child-list");
 		this._childListSpinner = this.shadowRoot.querySelector("#childlist-spinner");
-		this.addItemButton = this.shadowRoot.querySelector("#add-item-button");
 	}
 
 	/**
@@ -80,7 +79,6 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 
 		this._titleTag.setAttribute("title", this._getTitleHint());
 		this._childListSpinner.innerText = this._translateString("Pending...");
-		this.addItemButton.setAttribute("title", this._translateString("Add new child resource"));
 	}
 
 	/**	
