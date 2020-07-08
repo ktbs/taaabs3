@@ -4,6 +4,7 @@
 	width: 100vw;
 	height: 100vh;
 	max-height: 100vh;
+	z-index: 1;
 }
 
 #left-panel {
@@ -48,7 +49,6 @@
 	position: sticky;
 	top: 3px;
 	margin-right: 3px;
-	z-index: 3;
 }
 
 #nav-content header {
@@ -59,7 +59,6 @@
 	top: 0px;
 	background-color: var(--nav-background-color, var(--color-main, cornflowerblue));
 	padding-top: 20px;
-	z-index: 2;
 	box-shadow: 0 10px 8px -8px black;
 	margin-bottom: 10px;
 }
@@ -178,6 +177,6 @@
 	top: 0;
 	width: 100vw;
 	height: 100vh;
-	z-index: 4;
+	z-index: 2;
 	display: none;
 }

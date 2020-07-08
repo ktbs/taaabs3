@@ -106,8 +106,8 @@
 #popup {
 	display: none;
 	position: absolute;
-	z-index: 2;
 	border-radius: 5px 5px 5px 5px;
+	z-index: 1;
 }
 
 #popup-arrow {
