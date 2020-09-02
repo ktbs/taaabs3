@@ -11,17 +11,18 @@
 	background-color: white;
 	box-shadow: 3px 3px 20px black;
 	position: absolute;
-	top: 40%;
+	top: 50%;
 	left: 50%;
 	transform: translate(-50%,-50%);
+	max-height: calc(100vh - 5px);
+	overflow-y: hidden;
+	padding-bottom: 17px;
 }
 
 #top-bar {
 	display: block;
 	text-align: right;
 	background-color: var(--color-main, cornflowerblue);
-	border-top-left-radius: 16px;
-	border-top-right-radius: 16px;
 }
 
 #close {
@@ -36,5 +37,8 @@
 }
 
 #content {
-	padding: 10px 10px 10px 10px;
+	padding: 10px 10px 0 10px;
+	overflow-y: auto;
+	max-height: calc(100vh - 80px);
+	background-color: white;
 }
