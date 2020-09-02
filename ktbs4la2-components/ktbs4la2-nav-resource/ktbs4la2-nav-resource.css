@@ -41,7 +41,8 @@
 #title {
 	display: inline-block;
 	text-decoration-line: none;
-	color: white;
+	/*color: white;*/
+	color: var(--nav-resource-color, black);
 	padding-left: 25px;
 	padding-right: 3px;
 	background-repeat: no-repeat;
