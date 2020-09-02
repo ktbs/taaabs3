@@ -304,15 +304,21 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	 * 
 	 */
 	_compareObselTypeAsc(obselA, obselB) {
-		let obselATypeSortingValue = obselA.type.get_translated_label(this._lang);
+		let obselATypeSortingValue;
+		
+		if(obselA.type)
+			obselATypeSortingValue = obselA.type.get_translated_label(this._lang);
 
 		if(!obselATypeSortingValue)
-			obselATypeSortingValue =  obselA.type.id;
+			obselATypeSortingValue =  obselA.type_id;
 
-		let obselBTypeSortingValue = obselB.type.get_translated_label(this._lang);
+		let obselBTypeSortingValue;
+		
+		if(obselB.type)
+			obselBTypeSortingValue = obselB.type.get_translated_label(this._lang);
 
 		if(!obselBTypeSortingValue)
-			obselBTypeSortingValue =  obselB.type.id;
+			obselBTypeSortingValue =  obselB.type_id;
 		
 		if(obselATypeSortingValue < obselBTypeSortingValue)
 			return -1;
@@ -326,15 +332,21 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	 * 
 	 */
 	_compareObselTypeDesc(obselA, obselB) {
-		let obselATypeSortingValue = obselA.type.get_translated_label(this._lang);
+		let obselATypeSortingValue;
+
+		if(obselA.type)
+			obselATypeSortingValue = obselA.type.get_translated_label(this._lang);
 
 		if(!obselATypeSortingValue)
-			obselATypeSortingValue =  obselA.type.id;
+			obselATypeSortingValue =  obselA.type_id;
 
-		let obselBTypeSortingValue = obselB.type.get_translated_label(this._lang);
+		let obselBTypeSortingValue;
+		
+		if(obselB.type)
+			obselBTypeSortingValue = obselB.type.get_translated_label(this._lang);
 
 		if(!obselBTypeSortingValue)
-			obselBTypeSortingValue =  obselB.type.id;
+			obselBTypeSortingValue =  obselB.type_id;
 
 		if(obselATypeSortingValue < obselBTypeSortingValue)
 			return 1;
