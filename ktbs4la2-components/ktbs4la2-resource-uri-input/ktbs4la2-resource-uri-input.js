@@ -312,6 +312,7 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                             (this._container)
                         &&  (
                                     (this._container.className == "success")
+                                ||  (this._container.className == "warning")
                                 ||  (
                                             (this._uriInput)
                                         &&  (this._uriInput.value == "") 
