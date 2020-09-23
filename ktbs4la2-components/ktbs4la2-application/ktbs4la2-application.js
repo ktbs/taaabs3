@@ -840,8 +840,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._resizing_origin_x = event.clientX;
 		this._resizing_initial_width = this.leftPanel.offsetWidth;
 		this._nav_initial_scroll = this.shadowRoot.querySelector("#nav-content").scrollTop;
-		document.body.addEventListener("mousemove", this._bindedResizeFunction, true);
-		document.body.addEventListener("mouseup", this._bindedStopresizingFunction, true);
+		window.addEventListener("mousemove", this._bindedResizeFunction, true);
+		window.addEventListener("mouseup", this._bindedStopresizingFunction, true);
 		event.preventDefault();
 	}
 
@@ -872,8 +872,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 * 
 	 */
 	stopResizing(event) {
-		document.body.removeEventListener("mousemove", this._bindedResizeFunction, true);
-		document.body.removeEventListener("mouseup", this._bindedStopresizingFunction, true);
+		window.removeEventListener("mousemove", this._bindedResizeFunction, true);
+		window.removeEventListener("mouseup", this._bindedStopresizingFunction, true);
 		this._is_resizing = false;
 		event.preventDefault();
 	}
