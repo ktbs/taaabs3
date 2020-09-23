@@ -9,5 +9,7 @@
 	"Resize navigation panel": "Redimensionner le volet de navigation",
 	"You are about to remove ": "Vous êtes sur le point de retirer ",
 	"(uri : ": "(uri : ",
-	") from \"My kTBS roots\".\nPlease note this will only make KTBS4LA2 \"forget\" about this kTBS root, but will not affect the kTBS root itself or the data hosted on it.\nAre you sure ?": ") de \"Mes racines kTBS\".\nVeuillez noter que cela fera seulement \"oublier\" cette racine à KTBS4LA2, mais n'affectera pas la racine elle-même ni les données qu'elle héberge.\nÊtes-vous sûr(e) ?"
+	") from \"My kTBS roots\".\nPlease note this will only make KTBS4LA2 \"forget\" about this kTBS root, but will not affect the kTBS root itself or the data hosted on it.\nAre you sure ?": ") de \"Mes racines kTBS\".\nVeuillez noter que cela fera seulement \"oublier\" cette racine à KTBS4LA2, mais n'affectera pas la racine elle-même ni les données qu'elle héberge.\nÊtes-vous sûr(e) ?",
+	"You are about to delete resource ": "Vous êtes sur le point de supprimer la ressource ",
+	") and all it's children resources PERMANENTLY.\nData will be erased from remote server and there will be no undo possibility.\nAre you sure ?": ") et toutes ses ressources-filles de façon DEFINITIVE.\nLes données seront effacées du serveur distant et il n'y aura pas de retour en arrière possible.\nÊtes-vous sûr(e) ?"
 }

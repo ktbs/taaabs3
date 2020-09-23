@@ -37,7 +37,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	onktbsResourceLoaded() {
+	_onKtbsResourceSyncInSync() {
 		this._componentReady.then(() => {
 
 		});
@@ -46,8 +46,8 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	onktbsResourceLoadFailed(error) {
-		super.onktbsResourceLoadFailed(error);
+	_onKtbsResourceSyncError(old_syncStatus, error) {
+		super.onktbsResourceLoadFailed(old_syncStatus, error);
 
 		this._componentReady.then(() => {
 

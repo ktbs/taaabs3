@@ -8,10 +8,25 @@ label {
 	text-align: right;
 }
 
-input {
-	margin-left: 5px;
-	min-width: 350px;
+#label {
+	border: 1px solid lightgray;
+	height: 20px;
+	outline: none;
+	vertical-align: middle;
 }
+
+#label:focus {
+	background-color: rgb(230, 245, 255);
+}
+
+#uri {
+	vertical-align: middle;
+	margin-bottom: -14px;
+}
+
+#uri, #label {
+	width: 400px;
+} 
 
 #buttons {
 	text-align: center;
@@ -28,7 +43,7 @@ input {
 	border: none;
 }
 
-#buttons button:hover {
+#buttons button:hover, #buttons button:focus {
 	background-color: var(--color-highlight, royalblue);
 }
 

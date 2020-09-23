@@ -53,9 +53,9 @@ class KTBS4LA2ObselAttributes extends KtbsResourceElement {
     }
 
     /**
-	 * 
-	 */
-	onktbsResourceLoaded() {
+     * 
+     */
+    _onKtbsResourceSyncInSync() {
         this._componentReady.then(() => {
             this._rebuildContent();
         });

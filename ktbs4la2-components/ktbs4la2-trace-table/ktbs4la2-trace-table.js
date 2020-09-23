@@ -729,21 +729,21 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	}
 
 	/**
+     * 
+     */
+    _onKtbsResourceSyncPending() {
+        this._componentReady.then(() => {
+            if(!this._tableContainer.classList.contains("pending"))
+			this._tableContainer.classList.add("pending");
+        });
+    }
+
+	/**
 	 * 
 	 */
 	_reloadObsels() {
-		if(!this._tableContainer.classList.contains("pending"))
-			this._tableContainer.classList.add("pending");
-
 		this._ktbsResource.force_state_refresh();
-
-		this._ktbsResource.get()
-			.then(function() {
-				this.onktbsResourceLoaded();
-			}.bind(this))
-			.catch(function(error) {
-				this.onktbsResourceLoadFailed(error);
-			}.bind(this));
+		this._ktbsResource.get();
 	}
 
 	/**
@@ -959,7 +959,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	onktbsResourceLoaded() {
+	_onKtbsResourceSyncInSync() {
 		this._trace_model = this._ktbsResource.model;
 
 		this._componentReady.then(() => {
@@ -1080,9 +1080,10 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 
 	/**
 	 * 
+	 * \param Error error 
 	 */
-	onktbsResourceLoadFailed(error) {
-		super.onktbsResourceLoadFailed(error);
+	_onKtbsResourceSyncError(old_syncStatus, error) {
+		super._onKtbsResourceSyncError(old_syncStatus, error);
 
 		this._componentReady.then(() => {
 			this._errorMessageDiv.innerText = this._translateString("Error") + " (" + error.message + ")";;
@@ -1121,7 +1122,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 			obselLinks[i].setAttribute("title", this._translateString("See this obsel in the REST console (opens in a new tab)"));
 
 		if(this._ktbsResource.syncStatus == "in_sync")
-			this.onktbsResourceLoaded();
+			this._onKtbsResourceSyncInSync();
 	}
 
 	/**

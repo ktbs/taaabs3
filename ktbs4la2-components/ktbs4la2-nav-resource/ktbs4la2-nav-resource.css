@@ -41,7 +41,6 @@
 #title {
 	display: inline-block;
 	text-decoration-line: none;
-	/*color: white;*/
 	color: var(--nav-resource-color, black);
 	padding-left: 25px;
 	padding-right: 3px;
@@ -52,6 +51,7 @@
 	height: 23px;
 	padding-top: 5px;
 	flex: 100%;
+	white-space: nowrap;
 }
 
 :host([resource-type = "Ktbs"]) #title, :host([resource-type = "Base"]) #title {
@@ -119,6 +119,10 @@
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Ktbs.svg');
 }
 
+:host([resource-type = "Ktbs"].deleted) #title {
+	background-image: url('{my-component-folder}/Ktbs_red.svg');
+}
+
 :host([resource-type = "Base"]) #container.error #title {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Base.svg');
 }
@@ -133,6 +137,10 @@
 
 :host([resource-type = "Base"]) #container.access-granted #title {
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Base.svg');
+}
+
+:host([resource-type = "Base"].deleted) #title {
+	background-image: url('{my-component-folder}/Base_red.svg');
 }
 
 :host([resource-type = "Method"]) #container.error #title {
@@ -151,6 +159,10 @@
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Method.svg');
 }
 
+:host([resource-type = "Method"].deleted) #title {
+	background-image: url('{my-component-folder}/Method_red.svg');
+}
+
 :host([resource-type = "Model"]) #container.error #title {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/Model.svg');
 }
@@ -165,6 +177,10 @@
 
 :host([resource-type = "Model"]) #container.access-granted #title {
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/Model.svg');
+}
+
+:host([resource-type = "Model"].deleted) #title {
+	background-image: url('{my-component-folder}/Model_red.svg');
 }
 
 :host([resource-type = "StoredTrace"]) #container.error #title {
@@ -183,6 +199,10 @@
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/StoredTrace.svg');
 }
 
+:host([resource-type = "StoredTrace"].deleted) #title {
+	background-image: url('{my-component-folder}/StoredTrace_red.svg');
+}
+
 :host([resource-type = "ComputedTrace"]) #container.error #title {
 	background-image: url('{my-component-folder}/error.svg'), url('{my-component-folder}/ComputedTrace.svg');
 }
@@ -199,7 +219,11 @@
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/ComputedTrace.svg');
 }
 
-#title:hover, :host(.selected) #title {
+:host([resource-type = "ComputedTrace"].deleted) #title {
+	background-image: url('{my-component-folder}/ComputedTrace_red.svg');
+}
+
+#container:not(.non-selectable) #title:hover, :host(.selected) #title {
 	background-color: var(--color-highlight, royalblue);
 }
 
@@ -209,8 +233,21 @@
 	border-color: var(--color-highlight, royalblue);
 }
 
-:host(.selected) #title:hover {
+:host(.selected) #title, #container.non-selectable #title {
 	cursor: default;
+}
+
+#container.non-selectable #title {
+	font-style: italic;
+	opacity: .5;
+}
+
+#childlist-spinner, #childlist-empty {
+	padding-bottom: 3px;
+	font-style: italic;
+	font-size: 9pt;
+	opacity: 0.3;
+	padding-left: 20px;
 }
 
 #childlist-spinner {
@@ -218,11 +255,14 @@
 	background-repeat: no-repeat;
 	background-size: 16px 16px;
 	background-position: 3px calc(50% - 2px);
-	padding-left: 20px;
-	padding-bottom: 3px;
-	font-style: italic;
-	font-size: 9pt;
-	opacity: 0.3;
+}
+
+#child-list:not(.empty) #childlist-empty,
+#container.error #childlist-empty,
+#container.authentication-required  #childlist-empty,
+#container.access-denied  #childlist-empty,
+:host(.deleted) #childlist-empty {
+	display: none;
 }
 
 #child-list {
@@ -253,17 +293,70 @@
 	display: none !important;
 }
 
-/*
-#add-item-button {
-	cursor: pointer;
-	display: inline-block;
-	width: 100%;
-	padding-left: 5px;
-	font-size: 18pt;
-	border-radius: 5px;
-	margin-top: 2px;
-}*/
-
 #add-item-button:hover {
 	background-color: royalblue;
+}
+
+/* ------------------------ */
+
+:host(.deleted) {
+	--nav-resource-color: red !important;
+	--color-highlight: transparent !important;
+}
+
+:host(.deleted) #container {
+	animation: fadeout 0.5s linear 0.5s 1 normal forwards, shrink 0.5s linear 1s 1 normal forwards;
+}
+
+:host(.deleted) #container #title {
+	color: red !important;
+	border-style: solid;
+	border-width: 1px;
+	border-color: red;
+}
+
+:host(.deleted) #add-item-button, :host(.deleted) #unfold-button {
+	visibility: hidden;
+}
+
+@keyframes fadeout {
+	from {
+		opacity: 100%;
+	}
+
+	to {
+		opacity: 0%;
+	}
+}
+
+@keyframes shrink {
+	from {
+		max-height: 36px;
+		padding-top: 3px;
+		padding-bottom: 2px;
+	}
+
+	to {
+		max-height: 0px;
+		padding-top: 0px;
+		padding-bottom: 0px;
+		border-bottom: none;
+	}
+}
+
+/* ------------- */
+
+:host(.new) #title {
+	color: #00BF00;
+	border-color: #00BF00;
+	border-style: solid;
+	border-width: 1px;
+	animation: backtoblack 2s linear 2s 1 forwards;
+}
+
+@keyframes backtoblack {
+	to {
+		color: var(--nav-resource-color, black);
+		border: auto;
+	}
 }

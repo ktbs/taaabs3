@@ -1,0 +1,49 @@
+:host {
+    display: inline-block;
+    vertical-align: middle;
+    outline: none;
+}
+
+#container {
+    outline: none;
+    display: inline-block;
+    width: 100%;
+}
+
+#uri-input {
+    width: calc(100% - 105px);
+}
+
+#browse-button {
+    background-color: var(--color-main, cornflowerblue);
+    opacity: 0.5;
+    height: 24px;
+    cursor: pointer;
+    border: none;
+    text-align: center;
+    align-self: center;
+    display : inline-block;
+    vertical-align: top;
+    width: 100px;
+    margin-left: 5px;
+}
+
+#browse-button:hover, #browse-button:focus {
+    background-color: var(--color-highlight, royalblue);
+    opacity: 1;
+}
+
+#browse-button * {
+    font-size: 12pt;
+    color: white;
+    cursor: pointer;
+}
+
+#resources-explorer {
+    display: none;
+    border: 1px solid lightgray;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    --color-highlight: rgb(171, 192, 255);
+}

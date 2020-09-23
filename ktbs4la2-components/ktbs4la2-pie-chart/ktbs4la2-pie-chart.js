@@ -8,25 +8,18 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url, false, false);
 
-		this._GoogleApiReady = new Promise(function(resolve, reject) {
-			this.loadHeadScriptElement("https://www.gstatic.com/charts/loader.js").then(function() {
-
+		this._GoogleApiReady = new Promise((resolve, reject) => {
+			this.loadHeadScriptElement("https://www.gstatic.com/charts/loader.js").then(() => {
 				// Load the Visualization API and the corechart package.
 				google.charts.load('current', {'packages':['corechart']});
 
 				// Set a callback to run when the Google Visualization API is loaded.
-				google.charts.setOnLoadCallback(function() {
-					// Create the data table.
-					this._chartData = new google.visualization.DataTable();
-					this._chartData.addColumn("string");
-					this._chartData.addColumn("number");
-					resolve();
-				}.bind(this));
-			}.bind(this));
-		}.bind(this));
+				google.charts.setOnLoadCallback(resolve);
+			});
+		});
 
-		this._slicesNodesObserver = new MutationObserver(this.onSlicesNodesMutation.bind(this));
-		this._slicesNodesObserver.observe(this, { childList: true, subtree: false });
+		this._slicesNodesObserver = new MutationObserver(this._updatePie.bind(this));
+		this._slicesNodesObserver.observe(this, {childList: true, subtree: true, attributes: true, attributeFilter: ["string", "number"]});
 		
 		this._chartOptions = {'title': "",
 								'width': 400,
@@ -55,14 +48,14 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 
 		if(attributeName == "title")
 			this._chartOptions.title = newValue;
-		else if (attributeName == "width")
+		else if (attributeName == "width") {
 			this._chartOptions.width = parseInt(newValue);
-		else if (attributeName == "height")
+			this._updatePie();
+		}
+		else if (attributeName == "height") {
 			this._chartOptions.height = parseInt(newValue);
-
-		Promise.all([this._componentReady, this._GoogleApiReady]).then(function() {
-			this._chart.draw(this._chartData, this._chartOptions);
-		}.bind(this));
+			this._updatePie();
+		}
 	}
 
 	/**
@@ -80,10 +73,7 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 				let newScriptTag = document.createElement("script");
 				newScriptTag.src = src;
 				document.head.appendChild(newScriptTag);
-				
-				newScriptTag.addEventListener("load", function(event) {
-					resolve();
-				});
+				newScriptTag.addEventListener("load", resolve);
 			}
 		});
 	}
@@ -94,35 +84,34 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 	onComponentReady() {
 		this._chartDiv = this.shadowRoot.querySelector("#chart");
 
-		this._GoogleApiReady.then(function() {
-			// Instantiate our chart, passing in some options
-			this._chart = new google.visualization.PieChart(this._chartDiv);
-		}.bind(this));
+		this._GoogleApiReady.then(() => {
+			this._updatePie();
+		});
 	}
 
 	/**
 	 * 
 	 */
-	onSlicesNodesMutation(mutationRecord, observer) {
-		for(let i = 0; i < mutationRecord.length; i++) {
-			let addedNodes = mutationRecord[i].addedNodes;
-	
-			if(addedNodes.length > 0) {
-				for(let j = 0; j < addedNodes.length; j++) {
-					let addedNode = addedNodes[j];
+	_updatePie() {
+		this._GoogleApiReady.then(() => {
+			// Create the data table.
+			let chartData = new google.visualization.DataTable();
+			chartData.addColumn("string");
+			chartData.addColumn("number");
 
-					if((addedNode.localName == "ktbs4la2-pie-slice") && addedNode.getAttribute("string") && addedNode.getAttribute("number")) {
-						this._GoogleApiReady.then(() => {
-							this._chartData.addRow([addedNode.getAttribute("string"), parseFloat(addedNode.getAttribute("number"))]);
-						});
-					}
-				}
+			let pieSlices = this.querySelectorAll("ktbs4la2-pie-slice[string][number]");
 
-				Promise.all([this.templateReady, this._GoogleApiReady]).then(() => {
-					this._chart.draw(this._chartData, this._chartOptions);
-				});
+			for(let j = 0; j < pieSlices.length; j++) {
+				let aSlice = pieSlices[j];
+				chartData.addRow([aSlice.getAttribute("string"), parseFloat(aSlice.getAttribute("number"))]);
 			}
-		}
+
+			this._componentReady.then(() => {
+				const chart = new google.visualization.PieChart(this._chartDiv);
+				chart.draw(chartData, this._chartOptions);
+				//this._chart.draw(chartData, this._chartOptions);
+			});
+		});
 	}
 }
 

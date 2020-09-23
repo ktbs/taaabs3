@@ -1,0 +1,12 @@
+{
+    "Not a Ktbs resource": "N'est pas une ressource Ktbs",
+    "Authentication required": "Authentification requise",
+    "Access denied": "Accès refusé",
+    "Error : ": "Erreur : ",
+    "HTTP query failed": "Echec de la requête HTTP",
+    "Not a valid URL": "N'est pas une URL valide",
+    "Valid resource URL": "URL de ressource valide",
+    "Pending...": "En attente...",
+    "Resource doesn't match expected type(s)": "La ressource ne correspond pas au(x) type(s) attendu(s)",
+    "Known builtin method": "Méthode native connue"
+}

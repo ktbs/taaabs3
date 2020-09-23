@@ -2,9 +2,6 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 
 import {ResourceMultiton} from "../../ktbs-api/ResourceMultiton.js";
 import {Trace} from "../../ktbs-api/Trace.js";
-import {Model} from "../../ktbs-api/Model.js";
-import {TraceStats} from "../../ktbs-api/TraceStats.js";
-import {ObselList} from "../../ktbs-api/ObselList.js";
 import {Stylesheet} from "../../ktbs-api/Stylesheet.js";
 import {StylesheetRule} from "../../ktbs-api/StylesheetRule.js";
 import {StylesheetRuleRule} from "../../ktbs-api/StylesheetRuleRule.js";
@@ -33,7 +30,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url, true, true);
 		this._obsels = new Array();
-		this._resolveTraceLoaded;
+		/*this._resolveTraceLoaded;
 		this._rejectTraceLoaded;
 
 		this._traceLoaded =  new Promise((resolve, reject) => {
@@ -58,18 +55,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			});
 
 		this._resolveAllObselsLoaded;
-		this._rejectAllObselsLoaded;
+		this._rejectAllObselsLoaded;*/
 		this._resolveStylesheetsBuilded;
-		this._rejectStylesheetsBuilded;
 
 		this._stylesheetsBuilded =  new Promise((resolve, reject) => {
 			this._resolveStylesheetsBuilded = resolve;
-			this._rejectStylesheetsBuilded = reject;
 		});
 
 		this._styleSheets = new Array();
 		this._currentStylesheet = null;
-		this._traceUri = null;
+		//this._traceUri = null;
 		this._originTime = 0;
 		this._obselsLoadingAbortController = new AbortController();
 		this._allowFullScreen = true;
@@ -212,40 +207,25 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
 
 		if(attributeName == "uri") {
-			this._trace = ResourceMultiton.get_resource(Trace, newValue);
+			if(newValue) {
+				try {
+					const trace_uri = new URL(newValue);
 
-			this._trace.get(this._abortController.signal)
-				.then(() => {
-					this._resolveTraceLoaded();
-				})
-				.catch((error) => {
-					if((error.name != "AbortError") || !this._abortController.signal.aborted)
-						this._setError(error);
-				});
+					if(this._trace) {
+						this._trace.unregisterObserver(this._onTraceNotification.bind(this));
+						delete this._trace;
+					}
 
-			this._traceLoaded.then(() => {
-				this._onTraceLoaded();
-			});
-			// ---
-
-			// load stats, in order to get trace begin and trace end dates
-			let statsUri = newValue + "@stats";
-			this._stats = ResourceMultiton.get_resource(TraceStats, statsUri);
-
-			this._stats.get(this._abortController.signal)
-				.then(() => {
-					this._onStatsLoaded();
-				})
-				.catch((error) => {
-					if((error.name != "AbortError") || !this._abortController.signal.aborted)
-						this._setError(error);
-				});
-			// ---
-
-			// load obsels, in order to populate the timeline
-			this._traceUri = newValue;
-			this._initObselsLoading();
-			// ---
+					this._trace = ResourceMultiton.get_resource(Trace, trace_uri);
+					this._trace.registerObserver(this._onTraceNotification.bind(this), "sync-status-change");
+					this._onTraceNotification(this._trace, "sync-status-change");
+				}
+				catch(error) {
+					this._setError(error);
+				}
+			}
+			else
+				this._setError(new DOMException("Missing value for required attribute \"uri\""));
 		}
 		
 		if(attributeName == "allow-fullscreen") {
@@ -294,6 +274,36 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_onTraceNotification(sender, type, old_value) {
+		switch(sender.syncStatus) {
+			case "needs_sync":
+				this._onTraceOrStatsPending();
+				this._trace.get(this._abortController.signal);
+				break;
+			case "pending":
+				this._onTraceOrStatsPending();
+				break;
+			case "in_sync" :
+				this._onTraceReady();
+				break;
+			default:
+				this._setError(this._trace.error);
+				break;
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onTraceOrStatsPending() {
+		this._componentReady.then(() => {
+			this._container.className = "waiting";
+		});
+	}
+
+	/**
+	 * 
+	 */
 	hasStylesheet(stylesheet_id) {
 		let stylesheetFound = false;
 
@@ -313,8 +323,9 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_initObselsLoading() {
-		let obselsUri = this._traceUri + "@obsels";
-		this._obselList = ResourceMultiton.get_resource(ObselList, obselsUri);
+		//let obselsUri = this._traceUri + "@obsels";
+		//this._obselList = ResourceMultiton.get_resource(ObselList, obselsUri);
+		this._obselList = this._trace.obsel_list;
 
 		this._allObselsLoaded = new Promise(function(resolve, reject) {
 			this._resolveAllObselsLoaded = resolve;
@@ -340,10 +351,10 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					this._loadingStatusIcon.setAttribute("title", this._translateString("Loading complete"));
 					this._obselsLoadingIndications.className = "loaded";
 				});
-			})
+			})/*
 			.finally(() => {
 				this._onObselLoadEnded();
-			});
+			})*/;
 	}
 
 	/**
@@ -380,10 +391,12 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		return defaultStyleSheet;
 	}
 
+
+
 	/**
 	 * This callback function is triggered when the loading of obsels stops, wether it is successfull or not
 	 */
-	_onObselLoadEnded() {
+	/*_onObselLoadEnded() {
 		this._componentReady.then(() => {
 			this._modelLoaded.catch(() => {
 				let defaultStyleSheet = this._generateDefaultStylesheetFromObsels();
@@ -394,13 +407,14 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				this._resolveStylesheetsBuilded();
 			});
 		});
-	}
+	}*/
 
 	/**
 	 * 
 	 */
-	_onTraceLoaded() {
-		let traceOriginString = this._trace.origin;
+	//_onTraceLoaded() {
+	_onTraceReady() {
+		const traceOriginString = this._trace.origin;
 
 		if(traceOriginString != undefined) {
 			let parsedOrigin = Date.parse(traceOriginString);
@@ -409,32 +423,78 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				this._originTime = parsedOrigin;
 		}
 
-		this._model = this._trace.model;
-
 		if(this._model) {
-			this._model.get(this._abortController.signal)
-				.then(() => {
-					this._resolveModelLoaded();
-				})
-				.catch(() => {
-					this._rejectModelLoaded();
-				});
+			this._model.unregisterObserver(this._onModelNotification.bind(this));
+			delete this._model;
 		}
-		else
-			this._rejectModelLoaded();
+
+		this._model = this._trace.model;
+		this._model.registerObserver(this._onModelNotification.bind(this), "sync-status-change");
+		this._onModelNotification(this._model, "sync-status-change");
+
+		if(this._stats) {
+			this._stats.unregisterObserver(this._onStatsNotification.bind(this), "sync-status-change");
+			delete this._stats;
+		}
+
+		this._stats = this._trace.stats;
+		this._stats.registerObserver(this._onStatsNotification.bind(this));
+		this._onStatsNotification(this._stats, "sync-status-change");
+
+		this._initObselsLoading();
 	}
 
 	/**
 	 * 
 	 */
-	_onTraceLoadFailed(error) {
-		this._setError(error);
+	_onModelNotification() {
+		switch(this._model.syncStatus) {
+			case "needs_sync":
+				this._model.get(this._abortController.signal);
+				break;
+			case "in_sync" :
+				this._onModelReady();
+				break;
+			default:
+				this._onModelError();
+				break;
+		}
 	}
+
+	/**
+	 * 
+	 */
+	_onStatsNotification() {
+		switch(this._stats.syncStatus) {
+			case "needs_sync":
+				this._onTraceOrStatsPending();
+				this._stats.get(this._abortController.signal);
+				break;
+			case "pending":
+				this._onTraceOrStatsPending();
+				break;
+			case "in_sync" :
+				this._onStatsReady();
+				break;
+			default:
+				this._setError(this._stats.error);;
+				break;
+		}
+	}
+
+	/**
+	 * 
+	 */
+	/*_onTraceLoadFailed(error) {
+		this._setError(error);
+	}*/
 
 	/**
 	 * 
 	 */
 	_setError(error) {
+		this.emitErrorEvent(error);
+
 		this._componentReady.then(() => {
 			this._container.className = "error";
 			this._errorMessage.innerText = "Error : " + error;
@@ -489,7 +549,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onModelLoaded() {
+	//_onModelLoaded() {
+	_onModelReady() {
 		this._componentReady.then(() => {
 			let defaultStylesheetGeneratedFromModel = this._generateDefaultStylesheetFromModel();
 			
@@ -516,6 +577,20 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 			if((modelStyleSheets.length > 0) && (this._allowChangeStylesheet) && (this._styleSheetSelector.hasAttribute("disabled")))
 				this._styleSheetSelector.removeAttribute("disabled");
+
+			this._resolveStylesheetsBuilded();
+		});
+	}
+
+	/**
+	 * 
+	 */
+	_onModelError() {
+		this._componentReady.then(() => {
+			let defaultStyleSheet = this._generateDefaultStylesheetFromObsels();
+
+			if((defaultStyleSheet != null) && (!this.hasAttribute("stylesheet") || (this.getAttribute("stylesheet").toLowerCase() == "default")))
+				this._applyStyleSheet(defaultStyleSheet, false);
 
 			this._resolveStylesheetsBuilded();
 		});
@@ -647,27 +722,32 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onStatsLoaded() {
+	_updateBeginEnd() {
+		if((this._stats.min_time != undefined) && (this._stats.max_time != undefined)) {
+			let minTime = this._stats.min_time + this._originTime;
+			let maxTime = this._stats.max_time + this._originTime;
+			
+			this._componentReady.then(() => {
+				this._timeline.setAttribute("begin", minTime);
+				this._timeline.setAttribute("end", maxTime);
+
+				if(this._container.classList.contains("waiting"))
+					this._container.classList.remove("waiting");
+			});
+		}
+		else
+			this._setError("Cannot retrieve minTime and/or maxTime attributes froms stats");
+	}
+
+	/**
+	 * 
+	 */
+	//_onStatsLoaded() {
+	_onStatsReady() {
 		this._expectedObselCount = (this._stats.obsel_count != undefined)?this._stats.obsel_count:0;
 
 		if(this._expectedObselCount != 0) {
-			this._traceLoaded.then(() => {
-				if((this._stats.min_time != undefined) && (this._stats.max_time != undefined)) {
-					let minTime = this._stats.min_time + this._originTime;
-					let maxTime = this._stats.max_time + this._originTime;
-					
-					this._componentReady.then(() => {
-						this._timeline.setAttribute("begin", minTime);
-						this._timeline.setAttribute("end", maxTime);
-
-						if(this._container.classList.contains("waiting"))
-							this._container.classList.remove("waiting");
-					});
-				}
-				else {
-					this._setError("Cannot retrieve minTime and/or maxTime attributes froms stats");
-				}
-			});
+			this._updateBeginEnd();
 		}
 		else {
 			this._componentReady.then(() => {

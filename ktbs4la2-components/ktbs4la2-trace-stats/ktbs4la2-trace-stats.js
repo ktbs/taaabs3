@@ -16,36 +16,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 	 */
 	constructor() {
 		super(import.meta.url, true, true);
-
-		this._originTime = 0;
-
-		this._resolveTraceLoaded;
-		this._rejectTraceLoaded;
-
-		this._traceLoaded =  new Promise((resolve, reject) => {
-			this._resolveTraceLoaded = resolve;
-			this._rejectTraceLoaded = reject;
-		});
-
-		this._traceLoaded.then(() => {
-			this._onTraceLoaded();
-		})
-
-		this._resolveStatsLoaded;
-		this._rejectStatsLoaded;
-
-		this._statsLoaded =  new Promise((resolve, reject) => {
-			this._resolveStatsLoaded = resolve;
-			this._rejectStatsLoaded = reject;
-		});
-
-		this._statsLoaded
-		.then(() => {
-			this._onStatsLoaded();
-		})
-		.catch((error) => {
-			this._setError(error);
-		});
+		this._originTime = undefined;
 	}
 
 	/**
@@ -65,34 +36,8 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 
 		if(attributeName == "uri") {
 			this._trace = ResourceMultiton.get_resource(Trace, newValue);
-
-			this._trace.get(this._abortController.signal)
-				.then(() => {
-					this._resolveTraceLoaded();
-				})
-				.catch((error) => {
-					this._rejectTraceLoaded(error);
-
-					if((error.name != "AbortError") || !this._abortController.signal.aborted)
-						this._setError(error);
-				});
-
-			let statsUri = newValue + "@stats";
-			this._stats = ResourceMultiton.get_resource(TraceStats, statsUri);
-
-			if(this._stats.syncStatus == "in_sync")
-				this._resolveStatsLoaded();
-			else
-				this._stats.get(this._abortController.signal)
-					.then(() => {
-						this._resolveStatsLoaded();
-					})
-					.catch((error) => {
-						this._rejectStatsLoaded();
-
-						if((error.name != "AbortError") || !this._abortController.signal.aborted)
-							this._setError(error);
-					});
+			this._trace.registerObserver(this._onTraceNotification.bind(this));
+			this._onTraceNotification();
 		}
 	}
 
@@ -166,7 +111,49 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onTraceLoaded() {
+	_onTraceNotification() {
+		switch(this._trace.syncStatus) {
+			case "needs_sync":
+				this._onTraceOrStatsPending();
+				this._trace.get(this._abortController.signal);
+				break;
+			case "pending":
+				this._onTraceOrStatsPending();
+				break;
+			case "in_sync" :
+				this._onTraceReady();
+				break;
+			default:
+				this._onTraceError();
+				break;
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onStatsNotification() {
+		switch(this._stats.syncStatus) {
+			case "needs_sync":
+				this._onTraceOrStatsPending();
+				this._stats.get(this._abortController.signal);
+				break;
+			case "pending":
+				this._onTraceOrStatsPending();
+				break;
+			case "in_sync" :
+				this._onStatsReady();
+				break;
+			default:
+				this._onStatsError();
+				break;
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onTraceReady() {
 		let traceOriginString = this._trace.origin;
 
 		if(traceOriginString != undefined) {
@@ -175,29 +162,44 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 			if(!isNaN(parsedOrigin))
 				this._originTime = parsedOrigin;
 		}
+
+		if(this._stats)
+			this._stats.unregisterObserver(this._onStatsNotification.bind(this));
+
+		this._stats = this._trace.stats;
+		this._stats.registerObserver(this._onStatsNotification.bind(this));
+		this._onStatsNotification();
+		this._updateBeginEnd();
 	}
 
 	/**
 	 * 
 	 */
-	_onStatsLoaded() {
+	_updateBeginEnd() {
 		this._componentReady.then(() => {
-			this._traceLoaded.then(() => {
-				if(this._stats.min_time != undefined) {
-					let minTime = parseInt(this._stats.min_time, 10) + this._originTime;
-					this._beginTag.innerText = this.formatTimeStampToDate(minTime);
-				}
-				else
-					this._beginContainer.style.display = "none";
+			if(this.stats && (this._stats.min_time != undefined) && (this._originTime != undefined)){
+				let minTime = parseInt(this._stats.min_time, 10) + this._originTime;
+				this._beginTag.innerText = this.formatTimeStampToDate(minTime);
+			}
+			else
+				this._beginContainer.style.display = "none";
 
-				if(this._stats.max_time != undefined) {
-					let maxTime = parseInt(this._stats.max_time, 10) + this._originTime;
-					this._endTag.innerText = this.formatTimeStampToDate(maxTime);
-				}
-				else
-					this._endContainer.style.display = "none";
-			});
+			if(this.stats && (this._stats.max_time != undefined) && (this._originTime != undefined)) {
+				let maxTime = parseInt(this._stats.max_time, 10) + this._originTime;
+				this._endTag.innerText = this.formatTimeStampToDate(maxTime);
+			}
+			else
+				this._endContainer.style.display = "none";
+		});
+	}
 
+	/**
+	 * 
+	 */
+	_onStatsReady() {
+		this._updateBeginEnd();
+
+		this._componentReady.then(() => {
 			let duration = this._stats.duration;
 
 			if(duration != null)
@@ -207,6 +209,9 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 
 			let obselCount = this._stats.obsel_count;
 			this._countTag.innerText = obselCount;
+
+			while(this._pieChart.firstChild)
+				this._pieChart.removeChild(this._pieChart.firstChild);
 
 			if(obselCount > 0) {
 				let obselCountPerType = this._stats.obsel_count_per_type;
@@ -225,7 +230,24 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 
 			if(this._container.classList.contains("waiting"))
 				this._container.classList.remove("waiting");
+
+			if(this._container.classList.contains("error"))
+				this._container.classList.remove("error");
 		});
+	}
+
+	/**
+	 * 
+	 */
+	_onStatsError() {
+		this._setError(this._stats.error);
+	}
+
+	/**
+	 * 
+	 */
+	_onTraceError() {
+		this._setError(this._trace.error);
 	}
 
 	/**
@@ -237,6 +259,15 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 		this._componentReady.then(() => {
 			this._container.className = "error";
 			this._errorMessage.innerText = "Error : " + error;
+		});
+	}
+
+	/**
+	 * 
+	 */
+	_onTraceOrStatsPending() {
+		this._componentReady.then(() => {
+			this._container.className = "waiting";
 		});
 	}
 

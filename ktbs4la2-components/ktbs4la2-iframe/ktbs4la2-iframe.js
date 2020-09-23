@@ -32,6 +32,8 @@ class KTBS4LA2IFrame extends TemplatedHTMLElement {
 	 * 
 	 */
 	attributeChangedCallback(attributeName, oldValue, newValue) {
+		super.attributeChangedCallback(name, oldValue, newValue);
+		
 		if(attributeName == "src") {
 			this._componentReady.then(() => {
 				this._iframeElement.setAttribute("src", newValue);

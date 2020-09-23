@@ -39,7 +39,7 @@
 				</div>
 
 				<ul id="root-builin-methods">
-					<h2>{translate: 'Builtin methods'}:</h2>
+					<h2 id="root-builin-methods-header">{translate: 'Builtin methods'}:</h2>
 				</ul>
 			</div>
 		</div>
@@ -52,24 +52,29 @@
             <slot name="head-content"></slot>
         </section>
 
-		<ktbs4la2-main-subsection id="child-bases" title="{translate: 'Bases'} :" column-width="250px" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="child-bases" title="{translate: 'Bases'} :" foldable="true" expanded="true">
 			<slot name="bases"></slot>
+			<button class="add-resource-button" id="add-base-button" title="{translate: 'Create a new base'}">+</button>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="child-models" title="{translate: 'Models'} :" column-width="250px" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="child-models" title="{translate: 'Models'} :" foldable="true" expanded="true">
 			<slot name="models"></slot>
+			<button class="add-resource-button" id="add-model-button" title="{translate: 'Create a new model'}">+</button>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="child-stored-traces" title="{translate: 'Stored traces'} :" column-width="250px" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="child-stored-traces" title="{translate: 'Stored traces'} :" foldable="true" expanded="true">
 			<slot name="stored-traces"></slot>
+			<button class="add-resource-button" id="add-storedtrace-button" title="{translate: 'Create a new stored trace'}">+</button>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="child-methods" title="{translate: 'Methods'} :" column-width="250px" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="child-methods" title="{translate: 'Methods'} :" foldable="true" expanded="true">
 			<slot name="methods"></slot>
+			<button class="add-resource-button" id="add-method-button" title="{translate: 'Create a new method'}">+</button>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="child-computed-traces" title="{translate: 'Computed traces'} :" column-width="250px" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="child-computed-traces" title="{translate: 'Computed traces'} :" foldable="true" expanded="true">
 			<slot name="computed-traces"></slot>
+			<button class="add-resource-button" id="add-computedtrace-button" title="{translate: 'Create a new computed trace'}">+</button>
         </ktbs4la2-main-subsection>
         
         <ktbs4la2-main-subsection id="parent-method" title="{translate: 'Parent method'} :" foldable="true" expanded="false">
@@ -86,13 +91,13 @@
 
 		<ktbs4la2-main-subsection id="obsels" title="{translate: 'Obsels'} :" foldable="true" expanded="true">
 			<ktbs4la2-icon-tabs-group>
-				<ktbs4la2-icon-tab title="{translate: 'Timeline view'}" icon="{my-component-folder}/timeline.svg">
+				<ktbs4la2-icon-tab id="timeline-tab" title="{translate: 'Timeline view'}" icon="{my-component-folder}/timeline.svg">
 					<div style="height: 400px;">
 						<slot name="obsels-timeline"></slot>
 					</div>
 				</ktbs4la2-icon-tab>
 
-				<ktbs4la2-icon-tab title="{translate: 'Table view'}" icon="{my-component-folder}/table.svg">
+				<ktbs4la2-icon-tab id="table-tab" title="{translate: 'Table view'}" icon="{my-component-folder}/table.svg">
 					<div style="height: 400px;">
 						<slot name="obsels-table"></slot>
 					</div>

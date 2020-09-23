@@ -1,0 +1,76 @@
+:host, #container {
+    display: inline-block;
+    outline: none;
+    vertical-align: top;
+}
+
+#container {
+    width: 100%;
+}
+
+#input-container {
+    border: 1px solid lightgray;
+    display: inline-block;
+    outline: none;
+    padding-right: 20px;
+    padding-left: 1px;
+    background-repeat: no-repeat;
+    background-position-x: right;
+    background-position-y: center;
+    background-size: 20px 20px;
+    width: calc(100% - 16px);
+}
+
+#input-container.focused {
+    background-color: rgb(230, 245, 255);
+}
+
+#uri-input {
+    height: 20px;
+    font-size: 12pt;
+    border: none;
+    outline: none;
+    color: #555;
+    padding-bottom: 0;
+    padding-top: 2px;
+    width: calc(100% - 2px);
+}
+
+#uri-input:focus {
+    outline: none;
+    background-color: rgb(230, 245, 255);
+}
+
+#message-area {
+    font-size: 9pt;
+    margin-top: 3px;
+    height: 14px;
+}
+
+#container.success #message-area, #container.success #uri-input {
+    color: green;
+}
+
+#container.success #input-container {
+    background-image: url('{my-component-folder}/tick.svg');
+}
+
+#container.warning #message-area {
+    color: orange;
+}
+
+#container.warning #input-container {
+    background-image: url('{my-component-folder}/warning.svg');
+}
+
+#container.error #message-area {
+    color: red;
+}
+
+#container.error #input-container {
+    background-image: url('{my-component-folder}/error.svg');
+}
+
+#container.pending #input-container {
+    background-image: url('{my-component-folder}/blue-spinner.svg');
+}

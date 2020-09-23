@@ -122,6 +122,14 @@
 	display: none;
 }
 
+#container.error #header, #container.deleted #header {
+	background-color: rgb(255, 200, 200);
+}
+
+#container.authentication-required #header {
+	background-color: #f7dfc2;
+}
+
 #container.pending #resource-status {
 	background: url('{my-component-folder}/blue-spinner.svg') no-repeat;
 }
@@ -136,6 +144,11 @@
 	background-position: 5px 50%;
 }
 
+#container.deleted #resource-status {
+	background: url('{my-component-folder}/trash.svg') no-repeat;
+	background-size: contain;
+}
+
 #container.online #resource-status-label,
 #container.access-granted #resource-status-label,
 #container.access-inherited #resource-status-label {
@@ -146,7 +159,8 @@
 	background: url('{my-component-folder}/error.svg') no-repeat;
 }
 
-#container.error #resource-status-label, #container.error #error-message {
+#container.error #resource-status-label, #container.error #error-message,
+#container.deleted #resource-status-label {
 	color: red;
 }
 
@@ -156,7 +170,7 @@
 }
 
 #container.authentication-required #resource-status-label {
-	color: #FF8C00;
+	color: #fd8b00;
 }
 
 #container.access-denied #resource-status {
@@ -654,6 +668,10 @@
 	outline: none;
 }
 
+#container:not(.online):not(.access-granted):not(.access-inherited) .resource-tool {
+	display: none;
+}
+
 .resource-tool:hover {
 	opacity: 1;
 }
@@ -666,6 +684,39 @@
 	background-image: url('{my-component-folder}/trash.svg');
 }
 
-:host(:not([resource-type = Ktbs])) #tool-remove {
-	display: none;
+/* --------------- */
+
+.add-resource-button {
+	display: inline-block;
+	vertical-align: middle;
+	text-decoration-line: none;
+	padding-left: 16px;
+	padding-right: 16px;
+	max-width: 90%;
+	padding-top: 8px;
+	padding-bottom: 8px;
+	color: green;
+	font-size: 16pt;
+	margin-left: 10px;
+	margin-right: 10px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	border-radius: 10px;
+	cursor: pointer;
+	text-align: center;
+	background-color: none;
+	outline: none;
+	border: none;
+}
+
+.add-resource-button:hover {
+	background-color: green;
+	color: white;
+	box-shadow: 0px 0px 4px 2px #888;
+}
+
+/* --- */
+
+ktbs4la2-main-subsection {
+	--main-related-resource-width: 250px;
 }

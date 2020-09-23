@@ -1,0 +1,18 @@
+{
+    "ID": "Id",
+    "Label": "Etiquette",
+    "Model": "Modèle",
+    "Origin": "Origine",
+    "Parent method": "Méthode parente",
+    "Method": "Méthode",
+    "Source trace": "Trace-source",
+    "Create": "Créer",
+    "Cancel": "Annuler",
+    "Create a new base": "Créer une nouvelle base",
+    "Create a new stored trace": "Créer une nouvelle trace enregistrée",
+    "Create a new computed trace": "Créer une nouvelle trace calculée",
+    "Create a new model": "Créer un nouveau modèle",
+    "Create a new method": "Créer une nouvelle méthode",
+    "Parameters": "Paramètres",
+    "Create into": "Créer dans"
+}

@@ -8,5 +8,7 @@
 	"Authentication required": "Authentification requise",
 	"Access denied": "Accès refusé",
 	"Error": "Erreur",
-	"Unknown": "Inconnu"
+	"Unknown": "Inconnu",
+	"Empty": "Vide",
+	"Builtin method": "Méthode native"
 }

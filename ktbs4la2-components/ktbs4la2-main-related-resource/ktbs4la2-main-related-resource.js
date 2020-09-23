@@ -1,5 +1,6 @@
 import {KtbsResourceElement} from "../common/KtbsResourceElement.js";
-import * as KTBSErrors from "../../ktbs-api/Errors.js";
+import {Resource} from "../../ktbs-api/Resource.js";
+import {Method} from "../../ktbs-api/Method.js";
 
 /**
  * 
@@ -25,40 +26,24 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	connectedCallback() {
-		super.connectedCallback();
-
-		this._componentReady.then(() => {
-			this.linkTag.href = this.getAttribute("uri");
-
-			if(this._ktbsResource.label)
-				this.linkTag.innerText = this._ktbsResource.label;
-			else
-				this.linkTag.innerText = this._ktbsResource.id;
-
-			this.linkTag.title = this._getTitleHint();
-		});
-	}
-
-	/**
-	 * 
-	 */
 	_updateStringsTranslation() {
 		this.linkTag.title = this._getTitleHint();
 	}
 
-	/**	
+	/**
 	 * 
 	 */
-	onktbsResourceLoaded() {
+	_onKtbsResourceSyncInSync() {
 		this._componentReady.then(() => {
-			let label = this.hasAttribute("label")?this.getAttribute("label"):this._ktbsResource.label;
+			if((this._ktbsResource instanceof Method) && (this._ktbsResource.is_builtin))
+				this._containerDiv.classList.add("inactive");
+			else {
+				if((this._ktbsResource.authentified) && (this._ktbsResource.hasOwnCredendtials) && (!this._containerDiv.classList.contains("access-granted")))
+					this._containerDiv.classList.add("access-granted");
 
-			if((this._ktbsResource.authentified) && (this._ktbsResource.hasOwnCredendtials) && (!this._containerDiv.classList.contains("access-granted")))
-				this._containerDiv.classList.add("access-granted");
-
-			if(label)
-				this.linkTag.innerText = label;
+				if(!this.hasAttribute("label") && this._ktbsResource.label)
+					this.linkTag.innerText = this._ktbsResource.label;
+			}
 
 			this.linkTag.title = this._getTitleHint();
 		});
@@ -67,31 +52,39 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	onktbsResourceLoadFailed(error) {
-		if((error instanceof KTBSErrors.RestError) && ((error.statusCode == 401) || (error.statusCode == 403))) {
-			this._componentReady.then(() => {
-				if(error.statusCode == 401) {
-					if(!this._containerDiv.classList.contains("authentication-required"))
-						this._containerDiv.classList.add("authentication-required");
-				}
-				else if(error.statusCode == 403) {
-					if(!this._containerDiv.classList.contains("access-denied"))
-						this._containerDiv.classList.add("access-denied");
-				}
+	_onKtbsResourceSyncError(old_syncStatus, error) {
+		super._onKtbsResourceSyncError(old_syncStatus, error);
 
-				this.linkTag.title = this._getTitleHint();
-			});
-		}
-		else {
-			super.onktbsResourceLoadFailed(error);
+		this._componentReady.then(() => {
+			if(!this._containerDiv.classList.contains("error"))
+				this._containerDiv.classList.add("error");
 
-			this._componentReady.then(() => {
-				if(!this._containerDiv.classList.contains("error"))
-					this._containerDiv.classList.add("error");
+			this.linkTag.title = this._getTitleHint();
+		});
+	}
 
-				this.linkTag.title = this._getTitleHint();
-			});
-		}
+	/**
+	 * 
+	 */
+	_onKtbsResourceSyncNeedsAuth() {
+		this._componentReady.then(() => {
+			if(!this._containerDiv.classList.contains("authentication-required"))
+				this._containerDiv.classList.add("authentication-required");
+
+			this.linkTag.title = this._getTitleHint();
+		});
+	}
+
+	/**
+	 * 
+	 */
+	_onKtbsResourceSyncAccessDenied() {
+		this._componentReady.then(() => {
+			if(!this._containerDiv.classList.contains("access-denied"))
+				this._containerDiv.classList.add("access-denied");
+
+			this.linkTag.title = this._getTitleHint();
+		});
 	}
 
 	/**
@@ -99,42 +92,52 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	 */
 	onClickLink(event) {
 		event.preventDefault();
-		let select_event = new CustomEvent("selectelement", {bubbles: true});
-		this.dispatchEvent(select_event);
+
+		if(!this._containerDiv.classList.contains("inactive") && !((this.getAttribute("inactive") == "1") || (this.getAttribute("inactive") == "true"))) {
+			let select_event = new CustomEvent("selectelement", {bubbles: true});
+			this.dispatchEvent(select_event);
+		}
 	}
 
 	/**
 	 * 
 	 */
 	_getTitleHint() {
-		let hint = this._translateString("Type") + ": " + this.getAttribute("resource-type") + "\n" + 
+		let hint;
+
+		if((this._ktbsResource instanceof Method) && (this._ktbsResource.is_builtin)) {
+			hint = this._translateString("Type") + ": " + this._translateString("Builtin method");
+		}
+		else {
+			hint = this._translateString("Type") + ": " + this.getAttribute("resource-type") + "\n" + 
 					this._translateString("Status") + " : ";
 		
-		switch(this._ktbsResource.syncStatus) {
-			case "in_sync" :
-				if(this._ktbsResource.authentified)
-					hint += this._translateString("Access granted");
-				else
-					hint += this._translateString("Online");
+			switch(this._ktbsResource.syncStatus) {
+				case "in_sync" :
+					if(this._ktbsResource.authentified)
+						hint += this._translateString("Access granted");
+					else
+						hint += this._translateString("Online");
 
-				break;
-			case "needs_sync" :
-				hint += this._translateString("Pending...");
-				break;
-			case "pending" :
-				hint += this._translateString("Pending...");
-				break;
-			case "needs_auth" :
-				hint += this._translateString("Authentication required");
-				break;
-			case "access_denied" :
-				hint += this._translateString("Access denied");
-				break;
-			case "error" :
-				hint += this._translateString("Error");
-				break;
-			default : 
-				hint += this._translateString("Unknown") + " (" + this._ktbsResource.syncStatus + ")";
+					break;
+				case "needs_sync" :
+					hint += this._translateString("Pending...");
+					break;
+				case "pending" :
+					hint += this._translateString("Pending...");
+					break;
+				case "needs_auth" :
+					hint += this._translateString("Authentication required");
+					break;
+				case "access_denied" :
+					hint += this._translateString("Access denied");
+					break;
+				case "error" :
+					hint += this._translateString("Error");
+					break;
+				default : 
+					hint += this._translateString("Unknown") + " (" + this._ktbsResource.syncStatus + ")";
+			}
 		}
 
 		return hint;
@@ -155,7 +158,21 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	attributeChangedCallback(attributeName, oldValue, newValue) {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
 		
-		if(attributeName == "scale") {
+		if(attributeName == "uri") {
+			this._componentReady.then(() => {
+				this.linkTag.href = newValue;
+
+				if(!this.hasAttribute("label"))
+					this.linkTag.innerText = Resource.extract_relative_id(newValue);
+			});
+		}
+		else if(attributeName == "label") {
+			if(newValue)
+				this._componentReady.then(() => {
+					this.linkTag.innerText = newValue;
+				});
+		}
+		else if(attributeName == "scale") {
 			let ratio = parseFloat(newValue, 10);
 
 			if(isNaN(ratio))
@@ -165,13 +182,6 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 				this.linkTag.style.setProperty('--ratio', ratio);
 			});
 		}
-	}
-
-	/**
-	 * 
-	 */
-	get _auto_get_resource() {
-		return false;
 	}
 }
 

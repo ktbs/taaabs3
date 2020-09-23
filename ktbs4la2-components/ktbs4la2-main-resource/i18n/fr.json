@@ -19,6 +19,7 @@
     "Error": "Erreur",
     "Authentication required": "Authentification requise",
     "Access denied": "Accès refusé",
+    "Authentication failed": "Echec de l'authentification",
     "Disconnect": "Se déconnecter",
     "Show additional informations": "Montrer les informations complémentaires",
     "Hide additional informations": "Cacher les informations complémentaires",
@@ -27,7 +28,8 @@
 	"Timeline view" : "Vue chronologique",
     "Table view": "Vue tabulaire",
 	"Edit": "Modifier",
-	"Delete": "Supprimer",
+    "Delete": "Supprimer",
+    "Deleted": "Supprimé(e)",
 	"Version": "Version",
     "Parent method": "Méthode-mère",
     "Condense header": "Réduire l'entête",
@@ -38,5 +40,10 @@
     "Authentication": "Authentification",
     "Keep me signed in": "Rester connecté",
     "Just for this session": "Pour la durée de la session",
-    "Permanently": "Indéfiniment"
+    "Permanently": "Indéfiniment",
+    "Create a new base": "Créer une nouvelle base",
+    "Create a new model": "Créer un nouveau modèle",
+    "Create a new stored trace": "Créer une nouvelle trace enregistrée",
+    "Create a new method": "Créer une nouvelle méthode",
+    "Create a new computed trace": "Créer une nouvelle trace transformée"
 }

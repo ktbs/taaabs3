@@ -1,6 +1,8 @@
 #container {
-	display: block;
+	display: inline-block;
+	width: var(--main-related-resource-width, auto);
 	break-inside: avoid;
+	vertical-align: middle;
 }
 
 #link {
@@ -25,7 +27,11 @@
 	background-size: calc(var(--ratio) * 24px);
 }
 
-#link:hover {
+:host([inactive = "1"]) #link, :host([inactive = "true"]) #link, #container.inactive #link {
+	cursor: default;
+}
+
+:host(:not([inactive = "1"]):not([inactive = "true"])) #container:not(.inactive) #link:hover {
 	background-color: var(--color-main, cornflowerblue);
 	border-color: var(--color-main, cornflowerblue);
 	color: white;
@@ -195,4 +201,19 @@
 :host([resource-type = "ComputedTrace"]) #container.access-granted #link {
 	background-image: url('{my-component-folder}/lock_open.svg'), url('{my-component-folder}/ComputedTrace.svg');
 	background-size: calc(var(--ratio) * 12px), calc(var(--ratio) * 24px);
+}
+
+/* -------------- */
+
+:host(.new) #link {
+	color: #00BF00;
+	border-color: #00BF00;
+	animation: backtoblack 2s linear 2s 1 forwards;
+}
+
+@keyframes backtoblack {
+	to {
+		color: black;
+		border-color: #E8E8E8;
+	}
 }

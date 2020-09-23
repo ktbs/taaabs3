@@ -2,18 +2,27 @@
 
 <form id="root">
 	<p>
-		<label for="uri">{translate: 'URI'}<span class="required-field">*</span> : </label>
-		<input id="uri" type="url" placeHolder="http://example.com/ktbs/" required/>
+		<label for="uri" id="uri-label">{translate: 'URI'}<span class="required-field">*</span> : </label>
+
+		<ktbs4la2-resource-uri-input 
+			id="uri" 
+			name="uri" 
+			placeHolder="http://example.com/ktbs/" 
+			allowed-resource-types="KtbsRoot" 
+			tabIndex="1" 
+			required>
+		</ktbs4la2-resource-uri-input>
+
 		<input type="hidden" name="old_uri" id="old_uri" />
 	</p>
 
 	<p>
-		<label for="label">{translate: 'Label'} : </label>
-		<input id="label" type="text" placeHolder="{translate: 'Label'}" />
+		<label for="label" id="label-label">{translate: 'Label'} : </label>
+		<input id="label" type="text" placeHolder="{translate: 'Label'}" tabIndex="2" /><!--  size="69" -->
 	</p>
 
 	<p id="buttons">
-		<button type="submit" id="ok">{translate: 'Add'} !</button>
-		<button type="reset" id="cancel">{translate: 'Cancel'}</button>
+		<button type="submit" id="ok" tabIndex="3" disabled>{translate: 'Add'} !</button>
+		<button type="reset" id="cancel" tabIndex="4">{translate: 'Cancel'}</button>
 	</p>
 </form>

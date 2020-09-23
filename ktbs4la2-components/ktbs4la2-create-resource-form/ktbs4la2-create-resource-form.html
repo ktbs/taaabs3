@@ -1,0 +1,106 @@
+<h1 id="title"></h1>
+
+<form id="resource-form">
+    <header id="parent-reminder">
+        <span id="parent-reminder-label">{translate: 'Create into'}</span> : <span id="parent"></span>
+    </header>
+
+    <section class="all">
+        <p>
+            <label id="new-resource-id-label" for="new-resource-id">
+                <span id="new-resource-id-label-aligned">{translate: 'ID'}</span><span class="required-field">*</span> : 
+                <span id="parent-resource-path"></span>
+            </label>
+            
+            <input id="new-resource-id" name="new-resource-id" placeholder="&lt;id&gt;" tabIndex="1" required/>
+            <span id="id-trailing-slash">/</span>
+            <span id="hidden-span-for-id-width"></span>
+        </p>
+
+        <p>
+            <label for="label" id="label-label">{translate: 'Label'} : </label>
+
+            <ktbs4la2-multiple-translations-text-input 
+                id="label" 
+                name="label" 
+                placeholder="{translate: 'Label'}"
+                tabIndex="2">
+            </ktbs4la2-multiple-translations-text-input>
+        </p>
+    </section>
+
+    <section class="Method">
+        <p>
+            <label for="parent-method" id="parent-method-label"><span id="parent-method-label-span">{translate: 'Parent method'}</span><span class="required-field">*</span> : </label>
+
+            <ktbs4la2-resource-picker 
+                id="parent-method" 
+                name="parent-method" 
+                allowed-resource-types="Method"
+                tabIndex="3" 
+                required>
+            </ktbs4la2-resource-picker>
+        </p>
+    </section>
+
+    <section class="StoredTrace">
+        <p>
+            <label for="trace-model" id="trace-model-label"><span id="trace-model-label-span">{translate: 'Model'}</span><span class="required-field">*</span> : </label>
+
+            <ktbs4la2-resource-picker 
+                id="trace-model" 
+                name="trace-model" 
+                allowed-resource-types="Model" 
+                tabIndex="4" 
+                required>
+            </ktbs4la2-resource-picker>
+        </p>
+    </section>
+
+    <section class="StoredTrace ComputedTrace">
+        <p>
+            <label for="origin" id="origin-label">{translate: 'Origin'} : </label>
+            <input id="origin" name="origin" placeholder="{translate: 'Origin'}" tabIndex="5"/>
+        </p>
+    </section>
+
+    <section class="ComputedTrace">
+        <p>
+            <label for="source-trace" id="source-trace-label"><span id="source-trace-label-span">{translate: 'Source trace'}</span><span class="required-field">*</span> : </label>
+
+            <ktbs4la2-resource-picker 
+                id="source-trace" 
+                name="source-trace" 
+                allowed-resource-types="StoredTrace ComputedTrace" 
+                tabIndex="6" 
+                required>
+            </ktbs4la2-resource-picker>
+        </p>
+
+        <p>
+            <label for="method" id="method-label"><span id="method-label-span">{translate: 'Method'}</span><span class="required-field">*</span> : </label>
+
+            <ktbs4la2-resource-picker 
+                id="method" 
+                name="method" 
+                allowed-resource-types="Method" 
+                tabIndex="7" 
+                required>
+            </ktbs4la2-resource-picker>
+        </p>
+    </section>
+
+    <section class="Method ComputedTrace">
+        <p>
+            <label for="parameters" id="parameters-label">{translate: 'Parameters'} : </label>
+
+            <!-- TODO : create a "method parameters form input" component -->
+            <textarea id="parameters" name="parameters" tabIndex="8" rows="10"></textarea>
+        </p>
+    </section>
+
+    <p id="buttons">
+        <button type="submit" id="ok" tabIndex="9" disabled>{translate: 'Create'}</button>
+        <button type="reset" id="cancel" tabIndex="10">{translate: 'Cancel'}</button>
+    </p>
+</form>

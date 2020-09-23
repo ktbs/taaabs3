@@ -1,25 +1,49 @@
 import {TemplatedHTMLElement} from '../common/TemplatedHTMLElement.js';
 
+/**
+ * 
+ */
 class KTBS4LA2Overlay extends TemplatedHTMLElement {
+
+	/**
+	 * 
+	 */
 	constructor() {
 		super(import.meta.url, true);
 	}
 
+	/**
+	 * 
+	 */
 	onComponentReady() {
-		this.closeIcon = this.shadowRoot.querySelector("#close");
-		this.closeIcon.addEventListener("click", this.requestClose.bind(this));
-		document.addEventListener('keyup', this.onKeyUp.bind(this));
+		this._closeIcon = this.shadowRoot.querySelector("#close");
+		this._closeIcon.addEventListener("click", this._requestClose.bind(this));
+		document.addEventListener('keyup', this._onKeyUp.bind(this));
 	}
 
-	requestClose(event) {
+	/**
+	 * 
+	 */
+	_requestClose(event) {
 		this.dispatchEvent(new CustomEvent('closerequest'));
 	}
 
-	onKeyUp(event) {
+	/**
+	 * 
+	 */
+	_onKeyUp(event) {
 		let key = event.key || event.keyCode;
 
 		if((key === 'Escape') || (key === 'Esc') || (key === 27))
-			this.requestClose();
+			this._requestClose();
+	}
+
+	/**
+     * 
+     */
+    _updateStringsTranslation() {
+		this._closeIcon.setAttribute("title", this._translateString("Close"));
+		this._closeIcon.setAttribute("alt", this._translateString("Close icon"));
 	}
 }
 

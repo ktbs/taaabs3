@@ -74,9 +74,6 @@ class KTBS4LA2MainSubsection extends TemplatedHTMLElement {
 				this.setAttribute("expanded", "true");
 				this._chevronLink.title = this._translateString("Fold");
 			}
-
-			if(this.getAttribute("column-width"))
-				this._contentDiv.style.columnWidth = this.getAttribute("column-width");
 		});
 	}
 

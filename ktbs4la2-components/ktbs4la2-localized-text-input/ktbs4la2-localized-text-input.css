@@ -1,0 +1,84 @@
+:host {
+    display: inline-block;
+}
+
+#container {
+    display: inline-block;
+    border-radius: 0em;
+    border-style: solid;
+    border-width: 1px;
+    border-color: lightgray;
+    width: calc(100% - 2px);
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+option[disabled]:not([disabled = false]) {
+    display: none;
+}
+
+option[value = "*"] {
+    font-size: 16pt;
+}
+
+#text-input, #language-select {
+    background-color: white;
+}
+
+#text-input {
+    float: left;
+    height: 22px;
+    border: none;
+    padding-left: 3px;
+    width: calc(100% - 54px);
+}
+
+#text-input:focus {
+    outline: none;
+    background-color: rgb(230, 245, 255);
+}
+
+#language-select {
+    float: left;
+    margin-left: -1px;
+    font-size: 14pt;
+    height: 24px;
+    border-top: none;
+    border-bottom: none;
+    border-right: none;
+    border-left: 1px solid lightgrey;
+    appearance: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    padding-left: 3px;
+    padding-right: 20px;
+    background-image: url('{my-component-folder}/chevron-down.svg');
+    background-size: 16px;
+    background-position: calc(100% - 3px) 50%;
+    background-repeat: no-repeat;
+}
+
+#language-select:focus {
+    outline: none;
+    background-color: rgb(230, 245, 255);
+}
+
+#language-select option:focus {
+    outline: none;
+    border: none;
+}
+
+:host([lang-select-side = left]) #text-input {
+    float: right;
+    margin-left: -1px;
+}
+
+:host([lang-select-side = left]) #language-select {
+    float: right;
+    margin-left: 0px;
+    border-right: 1px solid lightgrey;
+    border-left: none;
+    background-position: 1px 50%;
+    padding-left: 22px;
+    padding-right: 3px;
+}

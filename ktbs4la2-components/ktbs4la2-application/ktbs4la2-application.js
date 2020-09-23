@@ -1,20 +1,22 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 import {ResourceMultiton} from "../../ktbs-api/ResourceMultiton.js";
 
-// @TODO : check if the following imports are really necessary
+import {Resource} from "../../ktbs-api/Resource.js";
 import {Ktbs} from "../../ktbs-api/Ktbs.js";
 import {Base} from "../../ktbs-api/Base.js";
 import {Model} from "../../ktbs-api/Model.js";
 import {Method} from "../../ktbs-api/Method.js";
+import {Trace} from "../../ktbs-api/Trace.js";
 import {StoredTrace} from "../../ktbs-api/Trace.js";
 import {ComputedTrace} from "../../ktbs-api/Trace.js";
-// ---
+
 
 import "../ktbs4la2-overlay/ktbs4la2-overlay.js";
 import "../ktbs4la2-root-form/ktbs4la2-root-form.js";
 import "../ktbs4la2-nav-resource/ktbs4la2-nav-resource.js";
 import "../ktbs4la2-main-documentation/ktbs4la2-main-documentation.js";
 import "../ktbs4la2-main-resource/ktbs4la2-main-resource.js";
+import "../ktbs4la2-create-resource-form/ktbs4la2-create-resource-form.js";
 
 
 /**
@@ -49,15 +51,16 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.myKtbsRootSubtitle = this.shadowRoot.querySelector("#my-ktbs-roots-subtitle");
 		this.addRootButton = this.shadowRoot.querySelector("#add-root-button");
 		this.addRootButton.addEventListener("click", this.onClickAddRootButton.bind(this));
-		this.myDashBoardsSubtitle = this.shadowRoot.querySelector("#my-dashboards-subtitle");
+		/*BoardsSubtitle = this.shadowRoot.querySelector("#my-dashboards-subtitle");
 		this.addDashboardButton = this.shadowRoot.querySelector("#add-dashboard-button");
-		this.addDashboardButton.addEventListener("click", this.onClickAddDashboardButton.bind(this));
+		this.addDashboardButton.addEventListener("click", this.onClickAddDashboardButton.bind(this));*/
 		this.separatorDiv = this.shadowRoot.querySelector("#separator");
 		this.separatorDiv.addEventListener("mousedown", this.startResizing.bind(this), true);
 		this.addEventListener("selectelement", this.onSelectNavElement.bind(this));
 		this.addEventListener("error", this.onErrorEvent.bind(this));
 		//this.addEventListener("request-edit-ktbs-resource", this.onRequestEditKtbsResource.bind(this));
 		this.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
+		this.addEventListener("request-create-ktbs-resource", this._onRequestCreateKtbsResource.bind(this));
 		this.addEventListener("fold-header", this._onMainResourceFoldHeader.bind(this));
 		this.addEventListener("unfold-header", this._onMainResourceUnfoldHeader.bind(this));
 		this._navNodesObserver = new MutationObserver(this.onNavNodesMutation.bind(this));
@@ -118,9 +121,18 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 		if(langButton.getAttribute("lang")) {
 			let newLang = langButton.getAttribute("lang");
-			window.localStorage.setItem("lang", newLang);
 			this.setAttribute("lang", newLang);
 		}
+	}
+
+	/**
+	 * 
+	 */
+	attributeChangedCallback(name, oldValue, newValue) {
+		if(name == "lang")
+			window.localStorage.setItem("lang", newValue);
+
+		super.attributeChangedCallback(name, oldValue, newValue);
 	}
 
 	/**
@@ -151,10 +163,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		if(!this.getAttribute("lang"))
 			this.setAttribute("lang", this._lang);
 
-		if(window.localStorage.getItem("lang") == null)
-			window.localStorage.setItem("lang", this._lang);
-
-		this._componentReady.then(function() {
+		this._componentReady.then(() => {
 			for(let i = 0; i < this._langButtons.length; i++) {
 				let aLangButton = this._langButtons[i];
 				
@@ -167,7 +176,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 						aLangButton.classList.remove("selected");
 				}
 			}
-		}.bind(this));
+		});
 	}
 
 	_updateStringsTranslation() {
@@ -179,8 +188,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.homeLink.setAttribute("title", this._translateString("Home"));
 		this.myKtbsRootSubtitle.innerText = this._translateString("My kTBS roots");
 		this.addRootButton.setAttribute("title", this._translateString("Add new kTBS root"));
-		this.myDashBoardsSubtitle.innerText = this._translateString("My dashboards");
-		this.addDashboardButton.setAttribute("title", this._translateString("Add new dashboard"));
+		/*this.myDashBoardsSubtitle.innerText = this._translateString("My dashboards");
+		this.addDashboardButton.setAttribute("title", this._translateString("Add new dashboard"));*/
 		this.separatorDiv.setAttribute("title", this._translateString("Resize navigation panel"));
 	}
 
@@ -236,42 +245,237 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 * 
 	 */
 	onRequestDeleteKtbsResource(event) {
-		let target = event.target;
-		let resourceType = target.getAttribute("resource-type");
-		let uri = target.getAttribute("uri");
+		const target = event.target;
+		const resourceTypeString = target.getAttribute("resource-type");
+		const uri = target.getAttribute("uri");
 		let label = target.getAttribute("label");
 
-		switch(resourceType) {
-			case "Ktbs":
-				if(confirm(this._translateString("You are about to remove ") + "\"" + label + "\" "+ this._translateString("(uri : ") + uri + this._translateString(") from \"My kTBS roots\".\nPlease note this will only make KTBS4LA2 \"forget\" about this kTBS root, but will not affect the kTBS root itself or the data hosted on it.\nAre you sure ?"))) {
-					let ktbsRootEntryFound = false;
-					let i;
+		if(resourceTypeString == "Ktbs") {
+			if(!label)
+				label = uri;
 
-					for(i = 0; !ktbsRootEntryFound && (i < this.ktbsRoots.length); i++) {
-						if(this.ktbsRoots[i].uri == uri) {
-							ktbsRootEntryFound = true;
-							break;
+			if(confirm(this._translateString("You are about to remove ") + "\"" + label + "\" "+ this._translateString("(uri : ") + uri + this._translateString(") from \"My kTBS roots\".\nPlease note this will only make KTBS4LA2 \"forget\" about this kTBS root, but will not affect the kTBS root itself or the data hosted on it.\nAre you sure ?"))) {
+				let ktbsRootEntryFound = false;
+				let i;
+
+				for(i = 0; !ktbsRootEntryFound && (i < this.ktbsRoots.length); i++) {
+					if(this.ktbsRoots[i].uri == uri) {
+						ktbsRootEntryFound = true;
+						break;
+					}
+				}
+
+				if(ktbsRootEntryFound) {
+					this.ktbsRoots.splice(i,1);
+					window.localStorage.setItem("ktbs-roots", JSON.stringify(this.ktbsRoots));
+					
+					const oldRootElement = this.querySelector("ktbs4la2-nav-resource[resource-type = Ktbs][uri = " + CSS.escape(uri) + "]");
+					
+					if(oldRootElement)
+						oldRootElement.remove();
+
+					this.setMainObject("documentation");
+				}
+				else
+					this.emitErrorEvent(new Error("Could not find Ktbs Root with uri " + oldRootUri + " in local cache"));
+			}
+		}
+		else {
+			if(!label)
+				label = Resource.extract_relative_id(uri);
+
+			if(confirm(this._translateString("You are about to delete resource ") + "\"" + label + "\" "+ this._translateString("(uri : ") + uri + this._translateString(") and all it's children resources PERMANENTLY.\nData will be erased from remote server and there will be no undo possibility.\nAre you sure ?"))) {
+				const resourceToDelete = ResourceMultiton.get_resource(this._get_resource_class(resourceTypeString), uri);
+
+				resourceToDelete.get()
+					.then(() => {
+						this._delete_resource_recursive(resourceToDelete)
+							.catch((error) => {
+								alert(error.name + " : " + error.statusText);
+							});
+					})
+					.catch((error) => {
+						alert(error.name + " : " + error.statusText);
+					});
+			}
+		}
+	}
+
+	/**
+	 * Recursively deletes a resource, starting by all of it's children resource, then the resource itself
+	 * \param Resource parent_resource
+	 * \return Promise
+	 */
+	_delete_resource_recursive(resource) {
+		let resolveReturnPromise, rejectReturnPromise;
+
+		const returnPromise = new Promise((resolve, reject) => {
+			resolveReturnPromise = resolve;
+			rejectReturnPromise = reject;
+		});
+
+		let childrenDeletePromises = new Array();
+
+		if((resource instanceof Ktbs) || (resource instanceof Base)) {
+			let childrenResources = resource.children;
+
+			for(let i = 0; i < childrenResources.length; i++) {
+				const aChild = childrenResources[i];
+				childrenDeletePromises.push(this._delete_resource_recursive(aChild));
+			}
+		}
+
+		Promise.all(childrenDeletePromises)
+			.then(() => {
+				resource.delete()
+					.then(() => {
+						resolveReturnPromise();
+					})
+					.catch((error) => {
+						rejectReturnPromise(error);
+					});
+			})
+			.catch((error) => {
+				rejectReturnPromise(error);
+			});
+		
+		return returnPromise;
+	}
+
+	/**
+	 * 
+	 */
+	_onRequestCreateKtbsResource(event) {
+		const parentType = event.detail["parent-type"];
+		const parentUri = event.detail["parent-uri"];
+
+		if(parentType && parentUri) {
+			const createType = event.detail["create-type"];
+
+			let formElement = document.createElement("ktbs4la2-create-resource-form");
+			formElement.setAttribute("parent-type", parentType);
+			formElement.setAttribute("parent-uri", parentUri);
+			formElement.setAttribute("create-type", createType);
+			formElement.addEventListener("submit", this._onSubmitFormCreateResource.bind(this));
+			formElement.addEventListener("cancel", this.removeOverlay.bind(this));
+			this.setOverlay(formElement);
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onSubmitFormCreateResource(event) {
+		const formData = event.detail;
+		const createType = formData["create-type"];
+		let newResource;
+
+		try {
+			switch(createType) {
+				case "Base": 
+					newResource = new Base();
+					break;
+				case "StoredTrace": 
+					newResource = new StoredTrace();
+					newResource.model = ResourceMultiton.get_resource(Model, formData["trace-model"]);
+
+					if(formData["origin"])
+						newResource.origin = formData["origin"];
+
+					break;
+				case "ComputedTrace": 
+					newResource = new ComputedTrace();
+
+					if(formData["origin"])
+						newResource.origin = formData["origin"];
+
+					let method;
+
+					if(Method.builtin_methods_ids.includes(formData["method"]))
+						method = Method.getBuiltinMethod(formData["method"]);
+					else
+						method = ResourceMultiton.get_resource(Method, formData["method"]);
+
+					newResource.method = method;
+
+					if((formData["source-trace"] instanceof Array) && (formData["source-trace"].length > 0)){
+						let source_traces = new Array();
+
+						for(let i = 0; i < formData["source-trace"].length; i++) {
+							const aSourceTraceUri = formData["source-trace"][i];
+							const aSourceTrace = ResourceMultiton.get_resource(Trace, aSourceTraceUri);
+							source_traces.push(aSourceTrace);
+						}
+
+						newResource.source_traces = source_traces;
+					}
+					else if(formData["source-trace"]) {
+						const aSourceTrace = ResourceMultiton.get_resource(Trace, formData["source-trace"]);
+						newResource.source_traces.push(aSourceTrace);
+					}
+
+					if(formData["parameters"])
+						newResource.parameters = formData["parameters"];
+
+					break;
+				case "Model": 
+					newResource = new Model();
+					break;
+				case "Method": 
+					newResource = new Method();
+					let parentMethod;
+
+					if(Method.builtin_methods_ids.includes(formData["parent-method"]))
+						parentMethod = Method.getBuiltinMethod(formData["parent-method"]);
+					else
+						parentMethod = ResourceMultiton.get_resource(Method, formData["parent-method"]);
+
+					newResource.parent_method = parentMethod;
+
+					if(formData["parameters"])
+						newResource.parameters = formData["parameters"];
+
+					break;
+			}
+
+			if(newResource) {
+				newResource.id = formData["new-resource-id"];
+
+				if(formData["label"]) {
+					if(formData["label"] instanceof Array) {
+						for(let i = 0; i < formData["label"].length; i++) {
+							const value = formData["label"][i].value;
+							const lang = formData["label"][i].lang;
+
+							if(value && (lang != "*"))
+								newResource.set_translated_label(value, lang);
+							else if(value)
+								newResource.label = value;
 						}
 					}
-
-					if(ktbsRootEntryFound) {
-						this.ktbsRoots.splice(i,1);
-						window.localStorage.setItem("ktbs-roots", JSON.stringify(this.ktbsRoots));
-						
-						const oldRootElement = this.querySelector("ktbs4la2-nav-resource[resource-type = Ktbs][uri = " + CSS.escape(uri) + "]");
-						
-						if(oldRootElement)
-							oldRootElement.remove();
-
-						this.setMainObject("documentation");
-					}
 					else
-						this.emitErrorEvent(new Error("Could not find Ktbs Root with uri " + oldRootUri + " in local cache"));
+						newResource.label = formData["label"];
 				}
-	
-				break;
-			default:
-				this.emitErrorEvent(new Error("Unsupported resource type : " + resourceType));
+
+				const parentType = formData["parent-type"];
+				const parentUri = formData["parent-uri"];
+				const parentResource = ResourceMultiton.get_resource(parentType, parentUri);
+
+				parentResource.post(newResource)
+					.then(() => {
+						this.removeOverlay();
+					})
+					.catch((error) => {
+						alert(error.name + " : " + error.message);
+					});
+			}
+			else
+				alert("An unexpected error has occured, resource creation failed");
+		}
+		catch(error) {
+			this.emitErrorEvent(error);
+			console.error(error);
+			alert(error.name + " : " + error.message);
 		}
 	}
 
@@ -690,9 +894,15 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	onSubmitAddRootForm(event) {
 		let newRootUri = event.detail.uri;
 		let newRootLabel = event.detail.label;
-		this.storeNewRoot(newRootUri, newRootLabel);
-		this.addRootItem(newRootUri, newRootLabel);
-		this.removeOverlay();
+
+		try {
+			this.storeNewRoot(newRootUri, newRootLabel);
+			this.addRootItem(newRootUri, newRootLabel, true);
+			this.removeOverlay();
+		}
+		catch(error) {
+			alert(error.name + " " + error.message);
+		}
 	}
 
 	/**
@@ -736,13 +946,27 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	addRootItem(newRootUri, newRootLabel) {
-		let newRootElement = document.createElement("ktbs4la2-nav-resource");
-		newRootElement.setAttribute("uri", newRootUri);
-		newRootElement.setAttribute("label", newRootLabel);
-		newRootElement.setAttribute("resource-type", "Ktbs");
-		newRootElement.setAttribute("slot", "nav-ktbs-roots");
-		this.appendChild(newRootElement);
+	addRootItem(newRootUri, newRootLabel, mark_as_new = false) {
+		if(newRootUri) {
+			let newRootElement = document.createElement("ktbs4la2-nav-resource");
+			newRootElement.setAttribute("uri", newRootUri);
+			newRootElement.setAttribute("label", newRootLabel);
+			newRootElement.setAttribute("resource-type", "Ktbs");
+			newRootElement.setAttribute("slot", "nav-ktbs-roots");
+
+			if(mark_as_new)
+				newRootElement.classList.add("new");
+
+			this.appendChild(newRootElement);
+
+			if(mark_as_new)
+				setTimeout(() => {
+					if(newRootElement.classList.contains("new"))
+						newRootElement.classList.remove("new");
+				}, 4000);
+		}
+		else
+			throw new Error("Cannot instanciate root item with empty URI");
 	}
 
 	/**
@@ -776,16 +1000,20 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	onClickAddDashboardButton(event) {
+	/*onClickAddDashboardButton(event) {
 		console.log("KTBS4LA2Ui::onClickAddDashboardButton()");
-	}
+	}*/
 
 	/**
 	 * 
 	 */
 	storeNewRoot(newRootUri, newRootLabel) {
-		this.ktbsRoots.push({uri: newRootUri, label: newRootLabel});
-		window.localStorage.setItem("ktbs-roots", JSON.stringify(this.ktbsRoots));
+		if(newRootUri) {
+			this.ktbsRoots.push({uri: newRootUri, label: newRootLabel});
+			window.localStorage.setItem("ktbs-roots", JSON.stringify(this.ktbsRoots));
+		}
+		else
+			throw new Error("Cannot store new root with empty URI");
 	}
 
 	/**
@@ -797,8 +1025,16 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 				this.ktbsRoots = JSON.parse(window.localStorage.getItem("ktbs-roots"));
 
 				for(let i = 0; i < this.ktbsRoots.length; i++) {
-					let aRoot = this.ktbsRoots[i];
-					this.addRootItem(aRoot.uri, aRoot.label);
+					let aRootData = this.ktbsRoots[i];
+
+					if(!ResourceMultiton.has_resource(aRootData.uri)) {
+						const rootResource = ResourceMultiton.get_resource(Ktbs, aRootData.uri);
+
+						if(!rootResource.label)
+							rootResource.label = aRootData.label
+					}
+
+					this.addRootItem(aRootData.uri, aRootData.label);
 				}
 			}
 			catch(error) {
