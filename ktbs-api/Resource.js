@@ -875,8 +875,8 @@ export class Resource {
 					let fetchParameters = {
 						method: "GET",
 						headers: new Headers({
-							"Accept": "application/json",
-							"X-Requested-With": "XMLHttpRequest"
+							"Accept": "application/json"/*,
+							"X-Requested-With": "XMLHttpRequest"*/
 						}),
 						cache: "default",
 						signal: this._currentGetRequestAbortController.signal
@@ -1125,8 +1125,8 @@ export class Resource {
 					let fetchParameters = {
 						method: "POST",
 						headers: new Headers({
-							"content-type": "application/json",
-							"X-Requested-With": "XMLHttpRequest"
+							"content-type": "application/json"/*,
+							"X-Requested-With": "XMLHttpRequest"*/
 						}),
 						body: postBody
 					};
@@ -1252,8 +1252,8 @@ export class Resource {
 					headers: new Headers({
 						"Accept": "application/json",
 						"content-type": "application/json",
-						"If-Match": this._etag,
-						"X-Requested-With": "XMLHttpRequest"
+						"If-Match": this._etag/*,
+						"X-Requested-With": "XMLHttpRequest"*/
 					}),
 					body: JSON.stringify(this._getPutData())
 				};
@@ -1332,8 +1332,8 @@ export class Resource {
 				let fetchParameters = {
 					method: "DELETE",
 					headers: new Headers({
-						"Accept": "application/json",
-						"X-Requested-With": "XMLHttpRequest"
+						"Accept": "application/json"/*,
+						"X-Requested-With": "XMLHttpRequest"*/
 					}),
 				};
 
