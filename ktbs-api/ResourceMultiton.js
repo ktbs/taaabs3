@@ -1,3 +1,5 @@
+import {Resource} from "./Resource.js";
+
 /**
  * This static class allows to share ktbs Resource instances in order to avoid instanciating duplicates of the same resource.
  * \static
@@ -18,6 +20,20 @@ export class ResourceMultiton {
     }
 
     /**
+     * 
+     * \param Resource resource
+     * \public
+     */
+    static register_resource(resource) {
+        if(resource instanceof Resource) {
+            ResourceMultiton._resources[resource.uri.toString()] = resource;
+            resource.registerObserver(ResourceMultiton.onDeleteResource, "lifecycle-status-change", "deleted");
+        }
+        else
+            throw new TypeError("Not a Ktbs Resource instance");
+    }
+
+    /**
      * Gets a ktbs resource instance from it's type and uri.
      * \param class or String resource_type - the type for the desired ktbs resource instance
      * \param URL or string uri - The URI for the desired resource
@@ -34,13 +50,27 @@ export class ResourceMultiton {
             if((typeof resource_type === 'function') && (/^\s*class\s+/.test(resource_type.toString()))) {
                 type_class = resource_type;
                 let newInstance = new (type_class)(uri);
-                ResourceMultiton._resources[uri_string] = newInstance;
+                ResourceMultiton.register_resource(newInstance);
             }
             else
                 throw new TypeError(resource_type + " is not a valid type");
         }
 
         return ResourceMultiton._resources[uri_string];
+    }
+
+    /**
+     * Callback function triggered when a resource from the Multiton is deleted
+     * \static
+     * \public
+     */
+    static onDeleteResource(sender_resource) {
+        // we stop observing it
+        sender_resource.unregisterObserver(ResourceMultiton.onDeleteResource, "lifecycle-status-change", "deleted");
+        
+        // then we update the resource store
+        if(ResourceMultiton._resources[sender_resource.uri.toString()])
+            delete ResourceMultiton._resources[sender_resource.uri.toString()];
     }
 }
 

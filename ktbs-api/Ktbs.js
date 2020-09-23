@@ -18,7 +18,7 @@ export class Ktbs extends Resource {
 	constructor(uri) {
 		if(uri) {
 			super(uri);
-			this._JSONData["@type"] = "Ktbs";
+			this._JSONData["@type"] = "KtbsRoot";
 		}
 		else
 			throw new KtbsError("Missing required parameter \"uri\", or empty value");
@@ -48,7 +48,20 @@ export class Ktbs extends Resource {
 	 * \public
 	 */
 	get label() {
-		return null;
+		return this._label;
+	}
+
+	set label(new_label) {
+		this._label = new_label;
+	}
+
+	/**
+	 * 
+	 * \return string
+	 * \public
+	 */
+	get type() {
+		return "Ktbs";
 	}
 
 	/**
@@ -109,24 +122,27 @@ export class Ktbs extends Resource {
 		if(!this._bases) {
 			this._bases = new Array();
 
-			for(let i = 0; i < this._JSONData.hasBase.length; i++) {
-				const base_data = this._JSONData.hasBase[i];
-				let base;
+			if(this._JSONData.hasBase) {
+				for(let i = 0; i < this._JSONData.hasBase.length; i++) {
+					const base_data = this._JSONData.hasBase[i];
+					let base;
 
-				if(base_data instanceof Object) {
-					const base_uri = this.resolve_link_uri(base_data["@id"]);
-					const base_label = base_data["label"];
-					base = ResourceMultiton.get_resource(Base, base_uri);
+					if(base_data instanceof Object) {
+						const base_uri = this.resolve_link_uri(base_data["@id"]);
+						const base_label = base_data["label"];
+						base = ResourceMultiton.get_resource(Base, base_uri);
 
-					if(base_label && !base.label)
-						base.label = base_label;
+						if(base_label && !base.label)
+							base.label = base_label;
+					}
+					else {
+						const base_uri = this.resolve_link_uri(base_data);
+						base = ResourceMultiton.get_resource(Base, base_uri);
+					}
+
+					base.registerObserver(this._onChildResourceDeleted.bind(this), "lifecycle-status-change", "deleted");
+					this._bases.push(base);
 				}
-				else {
-					const base_uri = this.resolve_link_uri(base_data);
-					base = ResourceMultiton.get_resource(Base, base_uri);
-				}
-
-				this._bases.push(base);
 			}
 		}
 
@@ -162,5 +178,106 @@ export class Ktbs extends Resource {
 		}
 
 		return this._dataReadUri;
+	}
+
+	/**
+	 * 
+	 * \param Base new_child 
+	 */
+	_registerNewChild(new_child) {
+		let newChildrenJSONDataChunk = {"@id": new_child.id};
+
+		if(new_child.label)
+			newChildrenJSONDataChunk.label = new_child.label;
+		
+		if(this._JSONData.hasBase == undefined)
+			this._JSONData.hasBase = new Array();
+
+		this._JSONData.hasBase.push(newChildrenJSONDataChunk);
+
+		if(this._bases)
+			delete this._bases;
+	}
+
+	/**
+	 * 
+	 */
+	_onChildResourceDeleted(deleted_child) {
+		deleted_child.unregisterObserver(this._onChildResourceDeleted.bind(this), "lifecycle-status-change", "deleted");
+
+		if(this._JSONData.hasBase instanceof Array) {
+			for(let i = (this._JSONData.hasBase.length - 1); i >= 0; i--) {
+				if(this._JSONData.hasBase[i]) {
+					const aBaseDataChunk = this._JSONData.hasBase[i];
+					let aBaseLink;
+
+					if(aBaseDataChunk instanceof Object)
+						aBaseLink = aBaseDataChunk["@id"];
+					else
+						aBaseLink = aBaseDataChunk;
+
+					if(this.resolve_link_uri(aBaseLink).toString() == deleted_child.uri.toString())
+						this._JSONData.hasBase.splice(i, 1);
+				}
+			}
+		}
+
+		if(this._bases)
+			delete this._bases;
+	}
+
+	/**
+	 * 
+	 * \param Resource modified_child 
+	 */
+	_onChildResourceModified(modified_child) {
+		if(this._JSONData.hasBase instanceof Array) {
+			for(let i = (this._JSONData.hasBase.length - 1); i >= 0; i--) {
+				if(this._JSONData.hasBase[i]) {
+					const aBaseDataChunk = this._JSONData.hasBase[i];
+					let aBaseLink;
+
+					if(aBaseDataChunk instanceof Object)
+						aBaseLink = aBaseDataChunk["@id"];
+					else
+						aBaseLink = aBaseDataChunk;
+
+					if(this.resolve_link_uri(aBaseLink).toString() == modified_child.uri.toString()) {
+						let newDataChunk;
+
+						if(modified_child.label)
+							newDataChunk = {"@id": modified_child.id, "label": modified_child.label}
+						else
+							newDataChunk = modified_child.id;
+
+						this._JSONData.hasBase[i] = newDataChunk;
+					}
+				}
+			}
+		}
+
+		if(this._bases)
+			delete this._bases;
+	}
+
+	/**
+	 * Get all the children of the current resource
+	 * \return Array of Resource
+	 * \public
+	 */
+	get children() {
+		return this.bases;
+	}
+
+	/**
+	 * Resets all the resource cached data
+	 * \public
+	 */
+	_resetCachedData() {
+		if(this._builtin_methods)
+			delete this._builtin_methods;
+
+		if(this._bases)
+			delete this._bases;
 	}
 }

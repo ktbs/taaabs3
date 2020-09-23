@@ -1,6 +1,7 @@
 import {RestError} from "./Errors.js";
 import {KtbsError} from "./Errors.js";
 import {JSONLDError} from "./Errors.js";
+import { ResourceMultiton } from "./ResourceMultiton.js";
 
 /**
  * Abstract class intended to be inherited by KTBS resource types
@@ -36,6 +37,20 @@ export class Resource {
 		this._syncStatus = "needs_sync";
 
 		/**
+		 * The resource lifecycle status
+		 * \var string
+		 * \protected
+		 */
+		this._lifecycleStatus = "new";
+
+		/**
+		 * The error that occured during the latest REST operation attempt for this resource, if any (null if no REST operation was attempted since instanciation, or if the latest one was successfull)
+		 * \var Error
+		 * \protected
+		 */
+		this._error = null;
+
+		/**
 		 * A Promise for the "GET" request allowing to read the resource's data
 		 * \var Promise
 		 * \protected
@@ -43,11 +58,25 @@ export class Resource {
 		this._getPromise = null;
 
 		/**
-		 * A collection of observers callbacks to notify when the resource's state changes
+		 * An array registering all clients abort signals that accessed the current GET request
 		 * \var Array
 		 * \protected
 		 */
-		this._observers = new Array();
+		this._clientGetAbortSignals = new Array();
+
+		/**
+		 * Stores the registered observers
+		 * \var Object
+		 * \protected
+		 */
+		this._observers = {};
+
+		/**
+		 * Stores the notifications that are queued before being sent
+		 * \var Object
+		 * \protected
+		 */
+		this._queuedNotifications = {"sync-status-change" : "needs_sync", "lifecycle-status-change": "new"};
 
 		/**
 		 * Whether or not the resource was get using authentification credentials
@@ -85,13 +114,16 @@ export class Resource {
 	 * \public
 	 */
 	set uri(new_uri) {
-		if((this.syncStatus == "needs_sync") || (this.syncStatus == "pending")) {
+		if(this._lifecycleStatus == "new") {
 			if(new_uri instanceof URL)
 				this._uri = new_uri;
 			else if(typeof new_uri == "string")
 				this._uri = new URL(new_uri);
 			else
 				throw new TypeError("uri must be of either type \"URL\" or \"String\"");
+
+			this._lifecycleStatus = "exists";
+			this._queuedNotifications["lifecycle-status-change"] = "exists";
 		}
 		else
 			throw new KtbsError("Resource's URI can not be changed anymore");
@@ -108,8 +140,8 @@ export class Resource {
 
 	/**
 	 * Sets the synchronization status of the resource
-	 * \param string newStatus the new synchronisation status for the resource
-	 * \throws TypeError if newValue is not a valid status
+	 * \param string new_syncStatus the new synchronisation status for the resource
+	 * \throws TypeError if new_syncStatus is not a valid synchronization status
 	 * \public
 	 */
 	set syncStatus(new_syncStatus) {
@@ -120,11 +152,217 @@ export class Resource {
 			||	(new_syncStatus == "error")
 			||	(new_syncStatus == "needs_auth")
 			||	(new_syncStatus == "access_denied")
-			||	(new_syncStatus == "deleted")
-		)
-			this._syncStatus = new_syncStatus;
+		) {
+			const oldStatus = this._syncStatus;
+
+			if(new_syncStatus != oldStatus) {
+				this._syncStatus = new_syncStatus;
+				this._queueNotification("sync-status-change", oldStatus);
+			}
+		}
 		else
-			throw new TypeError(new_syncStatus + " is not a valid resource status");
+			throw new TypeError(new_syncStatus + " is not a valid synchronization status");
+	}
+
+	/**
+	 * Gets the lifecycle status of the resource
+	 * \return string the lifecycle status of the resource
+	 * \public
+	 */
+	get lifecycleStatus() {
+		return this._lifecycleStatus;
+	}
+
+	/**
+	 * Sets the lifecycle status for the resource
+	 * \param string new_lifecycleStatus the new lifecycle status for the resource
+	 * \throws TypeError if new_lifecycleStatus is not a valid lifecycle status
+	 * \throws TypeError if the new lifecycle status can not be switched to from the current one (allowed transitions are : new > exists, exists > modified, exists > deleted, modified > exists, modified > deleted)
+	 * \public
+	 */
+	set lifecycleStatus(new_lifecycleStatus) {
+		if(
+				(new_lifecycleStatus == "new")
+			||	(new_lifecycleStatus == "exists")
+			||	(new_lifecycleStatus == "modified")
+			||	(new_lifecycleStatus == "deleted")
+		) {
+			if(
+					((this._lifecycleStatus == "new") && (new_lifecycleStatus == "modified"))
+				||	((this._lifecycleStatus == "new") && (new_lifecycleStatus == "deleted"))
+				||	((this._lifecycleStatus == "exists") && (new_lifecycleStatus == "new"))
+				||	((this._lifecycleStatus == "modified") && (new_lifecycleStatus == "new"))
+				||	((this._lifecycleStatus == "deleted") && (new_lifecycleStatus != "deleted"))
+			)
+				throw new TypeError("Transition from lifecycle status \"" + this._lifecycleStatus + "\" to \"" + new_lifecycleStatus + "\" forbidden");
+			else {
+				const oldStatus = this._lifecycleStatus;
+				
+				if(new_lifecycleStatus != oldStatus) {
+					this._lifecycleStatus = new_lifecycleStatus;
+					this._queueNotification("lifecycle-status-change", oldStatus);
+				}
+			}
+		}
+		else
+			throw new TypeError(new_lifecycleStatus + " is not a valid lifecycle status");
+	}
+
+	/**
+	 * Registers a new observer to notify when the resource's state changes
+	 * \param function callback the callback function to add to the observers collection
+	 * \param notification_types
+	 * \param values
+	 * \throws TypeError if the provided "observer_callback" argument is not a function
+	 * \public
+	 */
+	registerObserver(callback, notification_types = "*", values = "*") {
+		if(typeof callback == 'function') {
+			const notification_types_array = (notification_types instanceof Array)?notification_types:[notification_types];
+			const values_array = (values instanceof Array)?values:[values];
+
+			for(let i = 0; i < notification_types_array.length; i++) {
+				const aNotificationType = notification_types_array[i];
+
+				if(this._observers[aNotificationType] == undefined) {
+					if(aNotificationType == "*")
+						this._observers["*"] = new Array();
+					else
+						this._observers[aNotificationType] = {};
+				}
+
+				if(aNotificationType == "*") {
+					if(!this._observers["*"].includes(callback))
+						this._observers["*"].push(callback);
+				}
+				else {
+					for(let j = 0; j < values_array.length; j++) {
+						const aValue = values_array[j];
+
+						if(this._observers[aNotificationType][aValue] == undefined)
+							this._observers[aNotificationType][aValue] = new Array();
+
+						if(!this._observers[aNotificationType][aValue].includes(callback))
+							this._observers[aNotificationType][aValue].push(callback);
+					}
+				}
+			}
+		}
+		else
+			throw new TypeError("The provided argument is not a function");
+	}
+
+	/**
+	 * Unregisters an observer so it won't be notified anymore when the resource's state changes
+	 * \param function callback the callback function to remove from the observers collection
+	 * \param notification_types
+	 * \param values
+	 * \public
+	 */
+	unregisterObserver(callback, notification_types = "*", values = "*") {
+		const notification_types_array = (notification_types instanceof Array)?notification_types:[notification_types];
+		const values_array = (values instanceof Array)?values:[values];
+
+		for(let i = 0; i < notification_types_array.length; i++) {
+			const aNotificationType = notification_types_array[i];
+
+			if(aNotificationType == "*") {
+				if(this._observers["*"] instanceof Array) {
+					const callback_index = this._observers["*"].findIndex(callback);
+
+					if(callback_index != -1)
+						this._observers["*"].splice(callback_index, 1);
+				}
+			}
+			else if(this._observers[aNotificationType] instanceof Array) {
+				for(let j = 0; j < values_array.length; j++) {
+					const aValue = values_array[j];
+
+					if(this._observers[aNotificationType][aValue] instanceof Array) {
+						const callback_index = this._observers[aNotificationType][aValue].findIndex(callback);
+
+						if(callback_index != -1)
+							this._observers[aNotificationType][aValue].splice(callback_index, 1);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * 
+	 * \param string type 
+	 * \param string old_value 
+	 * \protected
+	 */
+	_queueNotification(type, old_value) {
+		if((type == "sync-status-change") || (type == "lifecycle-status-change") || (type == "children-add")) {
+			if(this._queuedNotifications[type] == undefined)
+				this._queuedNotifications[type] = old_value;
+		}
+		else
+			throw new KtbsError("Cannot queue notification of unknown type \"" + type + "\"");
+	}
+
+	/**
+	 * Notifies the registered observers of a state change of the current resource
+	 * \param string notification_type
+	 * \param string new_value
+	 * \public
+	 */
+	_notifyObservers(notification_type, old_value, new_value) {
+		let notified_observers = new Array();
+
+		if(this._observers["*"] instanceof Array)
+			notified_observers = notified_observers.concat(this._observers["*"]);
+
+		if(this._observers[notification_type]) {
+			if(this._observers[notification_type]["*"] instanceof Array)
+				notified_observers = notified_observers.concat(this._observers[notification_type]["*"]);
+
+			if(this._observers[notification_type][new_value] instanceof Array)
+				notified_observers = notified_observers.concat(this._observers[notification_type][new_value]);
+		}
+
+		// filter duplicates to ensure we have only unique values
+		notified_observers = notified_observers.filter((v, i, a) => a.indexOf(v) === i);
+
+		for(let i = 0; i < notified_observers.length; i++) {
+			const aCallback = notified_observers[i];
+
+			if(aCallback && (typeof aCallback == 'function'))
+				(aCallback)(this, notification_type, old_value);
+		}
+	}
+
+	/**
+	 * 
+	 * \public
+	 */
+	sendQueuedNotifications() {
+		if(this._queuedNotifications["sync-status-change"] != undefined) {
+			this._notifyObservers("sync-status-change", this._queuedNotifications["sync-status-change"], this.syncStatus);
+			delete this._queuedNotifications["sync-status-change"];
+		}
+
+		if(this._queuedNotifications["lifecycle-status-change"] != undefined) {
+			this._notifyObservers("lifecycle-status-change", this._queuedNotifications["lifecycle-status-change"], this.lifecycleStatus);
+			delete this._queuedNotifications["lifecycle-status-change"];
+		}
+
+		if(this._queuedNotifications["children-add"] != undefined) {
+			this._notifyObservers("children-add", this._queuedNotifications["children-add"]);
+			delete this._queuedNotifications["children-add"];
+		}
+	}
+
+	/**
+	 * Gets the error that occured during the latest REST operation attempt for this resource, if any
+	 * \return Error or null if no REST operation was attempted since instanciation, or if the latest one was successfull
+	 * \public
+	 */
+	get error() {
+		return this._error;
 	}
 
 	/**
@@ -137,14 +375,34 @@ export class Resource {
 	}
 
 	/**
+	 * Gets the eTag identifying the resource's version returned by the remote server at latest successfull query
+	 * \return string
+	 * \public
+	 */
+	get etag() {
+		return this._etag;
+	}
+
+	/**
+	 * 
+	 * \return string
+	 * \public
+	 */
+	get type() {
+		return this._JSONData["@type"];
+	}
+
+	/**
 	 * Sets the JSON Data for the resource
 	 * \param Object newJSONData the new JSON Data for the resource
 	 * \throws TypeError if newJSONData is not an Object
 	 * \public
 	 */
 	set JSONData(new_JSONData) {
-		if(new_JSONData instanceof Object)
+		if(new_JSONData instanceof Object) {
 			this._JSONData = new_JSONData;
+			this._resetCachedData();
+		}
 		else
 			throw new TypeError("new JSONData must be an Object");
 	}
@@ -289,10 +547,8 @@ export class Resource {
 						else
 							throw new JSONLDError("Could not resolve link \"" + link + "\" from resource's context data");
 					}
-					else {
-						// default : link is relative to the current resource's uri
+					else // default : link is relative to the current resource's uri
 						return new URL(link, this.uri);
-					}
 				}
 			}
 		}
@@ -356,15 +612,19 @@ export class Resource {
 	set_translated_label(label, lang) {
 		let newLabel;
 
-		if(!(currentLabel instanceof Array)) {
+		if(this._JSONData["label"] && !this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"]) {
 			newLabel = new Array();
-			newLabel.push({"@language": "en", "@value": this.label});
+			newLabel.push({"@value": this._JSONData["label"], "@language": "en"});
+			this._label = null;
+			delete this._JSONData["label"];
 		}
+		else if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"])
+			newLabel = this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
 		else
-			newLabel = this.label;
+			newLabel = new Array();
 
-		newLabel.push({"@language": lang, "@value": label})
-		this.label = newLabel;
+		newLabel.push({"@value": label, "@language": lang})
+		this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] = newLabel;
 	}
 
 	/**
@@ -561,17 +821,56 @@ export class Resource {
 	}
 
 	/**
+	 * 
+	 * 
+	 * \return Promise
+	 * \public
+	 */
+	get_root(abortSignal = null, credentials = null) {
+		let resolveRootPromise, rejectRootPromise;
+
+		const rootPromise = new Promise((resolve, reject) => {
+			resolveRootPromise = resolve;
+			rejectRootPromise = reject;
+		});
+
+		if(this.type == "Ktbs")
+			resolveRootPromise(this);
+		else {
+			this.parent.get(abortSignal, credentials)
+				.then(() => {
+					this.parent.get_root(abortSignal, credentials)
+						.then((root) => {
+							resolveRootPromise(root);
+						})
+						.catch((error) => {
+							rejectRootPromise(error);
+						});
+				})
+				.catch((error) => {
+					rejectRootPromise(error);
+				});
+		}
+
+		return rootPromise;
+	}
+
+	/**
 	 * Attemps to asynchronously read an existing object's data from the REST service and returns a Promise.
 	 * \param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
 	 * \param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
+	 * \throws KtbsError throws a KtbsError if the resource has lifecycle status "new" or "deleted"
 	 * \return Promise
 	 * \public
 	 */
 	get(abortSignal = null, credentials = null) {
-		if(this._uri) {
-			if(this._getPromise == null) {
+		if((this.lifecycleStatus == "exists") || (this.lifecycleStatus == "modified")) {
+			if((this.syncStatus != "in_sync") && (this.syncStatus != "pending")) {
 				this._getPromise = new Promise((resolve, reject) => {
-					this._syncStatus = "pending";
+					this.syncStatus = "pending";
+					this.sendQueuedNotifications();
+					this._currentGetRequestAbortController = new AbortController();
+					this._purgeClientGetAbortSignals();
 
 					let fetchParameters = {
 						method: "GET",
@@ -579,7 +878,8 @@ export class Resource {
 							"Accept": "application/json",
 							"X-Requested-With": "XMLHttpRequest"
 						}),
-						cache: "default"
+						cache: "default",
+						signal: this._currentGetRequestAbortController.signal
 					};
 
 					if(!credentials && this.credentials)
@@ -591,42 +891,39 @@ export class Resource {
 					if(this._etag)
 						fetchParameters.headers.append("If-None-Match", this._etag);
 
-					if(abortSignal)
-						fetchParameters.signal = abortSignal;
-					
+					this._registerClientGetAbortSignal(abortSignal);
+
 					fetch(this._data_read_uri, fetchParameters)
 						.then((response) => {
 							// if the HTTP request responded successfully
 							if(response.ok) {
 								if(response.headers.has("etag"))
 									this._etag = response.headers.get("etag");
+								else
+									this._etag = null;
 
 								// when the response content from the HTTP request has been successfully read
 								response.json()
 									.then((parsedJson) => {
-										this._authentified = ((credentials != null) && credentials.id && credentials.password);
-										this._JSONData = parsedJson;
-										this._syncStatus = "in_sync";
+										this._authentified = ((credentials != null) && ((credentials.id != null) && (credentials.id != undefined)) && ((credentials.password != null) && (credentials.password != undefined)));
+										this.JSONData = parsedJson;
+										this._error = null;
+										this.lifecycleStatus = "exists";
+										this.syncStatus = "in_sync";
 										resolve(response);
-										this.notifyObservers();
+										this.sendQueuedNotifications();
 									})
 									.catch((error) => {
 										this._authentified = false;
-										this._syncStatus = "error";
+										this._error = error;
+										this.syncStatus = "error";
 										reject(error);
-										this.notifyObservers(error);
+										this.sendQueuedNotifications();
 									});
 							}
 							else {
-								if(response.status == 401)
-									this._syncStatus = "needs_auth";
-								else if(response.status == 403)
-									this._syncStatus = "access_denied";
-
 								this._etag = null;
 								this._authentified = false;
-								this._getPromise = null;
-
 								let responseBody = null;
 
 								response.text()
@@ -634,86 +931,116 @@ export class Resource {
 										responseBody = responseText;
 									})
 									.finally(() => {
-										let error = new RestError(response.status, response.statusText);
+										const error = new RestError(response.status, response.statusText, responseBody);
+										this._error = error;
+
+										if(response.status == 401)
+											this.syncStatus = "needs_auth";
+										else if(response.status == 403)
+											this.syncStatus = "access_denied";
+										else
+											this.syncStatus = "error";
+
 										reject(error);
-										this.notifyObservers(error);
+										this.sendQueuedNotifications();
 									});
 							}
 						})
 						.catch((error) => {
-							this._syncStatus = "error";
 							this._etag = null;
 							this._authentified = false;
-							this._getPromise = null;
+
+							if((error.name == "AbortError") && (this._currentGetRequestAbortController.signal.aborted)) {
+								this._error = null;
+								this.syncStatus = "needs_sync";
+							}
+							else {
+								this._error = error;
+								this.syncStatus = "error";
+							}
+
 							reject(error);
-							this.notifyObservers(error);
+							this.sendQueuedNotifications();
 						});
 				});
 			}
+			else
+				this._registerClientGetAbortSignal(abortSignal);
 
 			return this._getPromise;
 		}
 		else
-			throw new KtbsError("Cannot get data from a resource without uri");
+			throw new KtbsError("Cannot get data from a resource with lifecycle status \"" + this.lifecycleStatus + "\"");
+	}
+
+	/**
+	 * Callback function triggered when a client aborts the GET he attempted
+	 * \param Event event
+	 * \public
+	 */
+	_onClientAbortsGetRequest(event) {
+		if(this._currentGetRequestAbortController) {
+			let atLeastOneClientDidntAbort = false;
+
+			for(let i = 0; (i < this._clientGetAbortSignals.length) && !atLeastOneClientDidntAbort; i++)
+				atLeastOneClientDidntAbort = ((this._clientGetAbortSignals[i] != null) && !this._clientGetAbortSignals[i].aborted);
+
+			if(!atLeastOneClientDidntAbort)
+				this._currentGetRequestAbortController.abort();
+		}
+	}
+
+	/**
+	 * Clears all the previous GET request's registered client abort signals
+	 * \public
+	 */
+	_purgeClientGetAbortSignals() {
+		while(this._clientGetAbortSignals.length > 0) {
+			const aClientGetAbortSignal = this._clientGetAbortSignals.pop();
+
+			if(aClientGetAbortSignal != null)
+				aClientGetAbortSignal.removeEventListener("abort", this._onClientAbortsGetRequest.bind(this));
+		}
+	}
+
+	/**
+	 * Registers a client abort signal
+	 * \param AbortSignal or null abort_signal. If null, then the resource's current GET request becomes non-abortable
+	 * \public
+	 */
+	_registerClientGetAbortSignal(abort_signal) {
+		if(abort_signal != null)
+			abort_signal.addEventListener("abort", this._onClientAbortsGetRequest.bind(this));
+
+		this._clientGetAbortSignals.push(abort_signal);
 	}
 
     /**
-	 * Resets all the resource's data
+	 * Resets all the resource's source data
 	 * \public
 	 */
 	force_state_refresh() {
 		this._etag = null;
 		this._label = null;
-		this._JSONData = new Object();
+		this.JSONData = new Object();
 		this._getPromise = null;
-		this._syncStatus = "needs_sync";
-	}
 
-	/**
-	 * Registers an new observer to notify when the resource's state changes
-	 * \param function callback the function to add to the observers collection
-	 * \throws TypeError if the provided "callback" argument is not a function
-	 * \public
-	 */
-	addObserver(callback) {
-		if(typeof callback == 'function')
-			this._observers.push(callback);
+		if(this.uri)
+			this._lifecycleStatus = "exists";
 		else
-			throw new TypeError("The provided argument is not a function");
+			this._lifecycleStatus = "new";
+
+		this.syncStatus = "needs_sync";
+		this.sendQueuedNotifications();
 	}
 
 	/**
-	 * Unregisters an observer so it won't be notified anymore when the resource's state changes
-	 * \param function callback the function to remove from the observers collection
+	 * Resets all the resource cached data
 	 * \public
 	 */
-	removeObserver(callback) {
-		let callbackIndex = this._observers.findIndex(candidate => {
-			return (candidate === callback);
-		});
-	  
-		if(callbackIndex !== -1) {
-			this._observers = this._observers.slice(callbackIndex, 1);
-	  }
-	}
-
-	/**
-	 * Notifies the registered observers of a state change of the current resource
-	 * \param Object data the data to send along with the notifications
-	 * \public
-	 */
-	notifyObservers(data) {
-		for(let i = 0; i < this._observers.length; i++) {
-			let aCallback = this._observers[i];
-
-			// @TODO check if "aCallback" is still a valid reference to a binded function before call, instead of try/catching it
-			try {
-				(aCallback)(data);
-			}
-			catch(error) {
-				console.log(error);
-			}
-		}
+	_resetCachedData() {
+		if(this._label)
+			delete this._label;
 	}
 
 	/**
@@ -752,28 +1079,43 @@ export class Resource {
 	}
 
 	/**
-	 * Stores a new resource as a child of the current resource
-	 * \param Resource or Array of Resource new_child_resource - the new child resource
+	 * Stores one or several new resource(s) as (a) child(ren) of the current resource
+	 * \param Resource or Array of Resource new_child_resource - the new child resource(s)
 	 * \param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
 	 * \param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
+	 * \throws TypeError if parameter new_child_resource is neither an instance of Resource or an Array containing only instances of Resource
+	 * \throws KtbsError throws a KtbsError if the current resource has lifecycle status "new" or "deleted"
+	 * \throws KtbsError throws a KtbsError if (one of) the child resource(s) has a lifecycle status different from "new"
 	 * \return Promise
 	 * \public
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
-		if(this._uri) {
+		if((this.lifecycleStatus == "exists") || (this.lifecycleStatus == "modified")) {
 			if((new_child_resource instanceof Resource) || (new_child_resource instanceof Array)) {
 				let postBody;
 
 				if(new_child_resource instanceof Resource) {
-					new_child_resource.syncStatus = "pending";
-					postBody = JSON.stringify(new_child_resource._getPostData());
+					if(new_child_resource.lifecycleStatus != "new")
+						throw new KtbsError("Can not post a new child resource with a lifecycle status different from \"new\"");
+					else {
+						new_child_resource.syncStatus = "pending";
+						new_child_resource.sendQueuedNotifications();
+						postBody = JSON.stringify(new_child_resource._getPostData());
+					}
 				}
 				else if(new_child_resource instanceof Array) {
 					let postBodyArray = new Array();
 
 					for(let i = 0; i < new_child_resource.length; i++) {
-						new_child_resource[i].syncStatus = "pending";
-						postBodyArray.push(new_child_resource[i]._getPostData());
+						if(!(new_child_resource[i] instanceof Resource))
+							throw new TypeError("Argument new_child_resource must be a Resource or an Array of Resource");
+						if(new_child_resource[i].lifecycleStatus != "new")
+							throw new KtbsError("Can not post a new child resource with a lifecycle status different from \"new\"");
+						else {
+							new_child_resource[i].syncStatus = "pending";
+							new_child_resource[i]._sendQueuedNotifications();
+							postBodyArray.push(new_child_resource[i]._getPostData());
+						}
 					}
 
 					postBody = JSON.stringify(postBodyArray);
@@ -802,43 +1144,46 @@ export class Resource {
 						.then((response) => {
 							if(response.ok) {
 								response.text()
-								.then((responseText) => {
-									// when the response content from the HTTP request has been successfully read
-									this.syncStatus = "needs_sync";
-									this._getPromise = null;
-
-									if(new_child_resource instanceof Resource) {
-										new_child_resource.uri = new URL(responseText);
-										new_child_resource.syncStatus = "needs_sync";
-										new_child_resource.notifyObservers();
-									}
-									else if(new_child_resource instanceof Array) {
-										for(let i = 0; i < new_child_resource.length; i++) {
-											new_child_resource[i].uri = new URL(responseText);
-											new_child_resource[i].syncStatus = "needs_sync";
-											new_child_resource[i].notifyObservers();
+									.then((responseText) => { // the response content from the HTTP request has been successfully read
+										if(new_child_resource instanceof Resource) {
+											new_child_resource.uri = new URL(responseText);
+											new_child_resource.lifecycleStatus = "exists";
+											new_child_resource.syncStatus = "needs_sync";
+											ResourceMultiton.register_resource(new_child_resource);
+											new_child_resource.sendQueuedNotifications();
 										}
-									}
-									
-									resolve();
-								})
-								.catch((error) => {
-									if(new_child_resource instanceof Resource)
-										new_child_resource._syncStatus = "error";
-									else if(new_child_resource instanceof Array) {
-										for(let i = 0; i < new_child_resource.length; i++)
-											new_child_resource[i]._syncStatus = "error";
-									}
+										else if(new_child_resource instanceof Array) {
+											for(let i = 0; i < new_child_resource.length; i++) {
+												new_child_resource[i].uri = new URL(responseText);
+												new_child_resource[i].lifecycleStatus = "exists";
+												new_child_resource[i].syncStatus = "needs_sync";
+												ResourceMultiton.register_resource(new_child_resource[i]);
+												new_child_resource[i]._sendQueuedNotifications();
+											}
+										}
 
-									reject(error);
-								});
+										this._error = null;
+										this._registerNewChildren(new_child_resource);
+										resolve();
+										this.sendQueuedNotifications();
+									})
+									.catch((error) => {
+										if(new_child_resource instanceof Resource) {
+											new_child_resource.syncStatus = "error";
+											new_child_resource.sendQueuedNotifications();
+										}
+										else if(new_child_resource instanceof Array) {
+											for(let i = 0; i < new_child_resource.length; i++) {
+												new_child_resource[i].syncStatus = "error";
+												new_child_resource[i]._sendQueuedNotifications();
+											}
+										}
+
+										this._error = error;
+										reject(error);
+									});
 							}
 							else {
-								if(response.status == 401)
-									this.syncStatus = "needs_auth";
-								else if(response.status == 403)
-									this.syncStatus = "access_denied";
-
 								let responseBody = null;
 
 								response.text()
@@ -846,25 +1191,26 @@ export class Resource {
 										responseBody = responseText;
 									})
 									.finally(() => {
-										let error = new RestError(response.status, response.statusText);
+										let error = new RestError(response.status, response.statusText, responseBody);
 
 										if(new_child_resource instanceof Resource) {
 											new_child_resource.syncStatus = "needs_sync";
-											new_child_resource.notifyObservers(error);
+											new_child_resource.sendQueuedNotifications();
 										}
 										else if(new_child_resource instanceof Array) {
 											for(let i = 0; i < new_child_resource.length; i++) {
 												new_child_resource[i].syncStatus = "needs_sync";
-												new_child_resource[i].notifyObservers(error);
+												new_child_resource[i]._sendQueuedNotifications();
 											}
 										}
 
+										this._error = error;
 										reject(error);
 									});
 							}
 						})
 						.catch((error) => {
-							this._syncStatus = "error";
+							this._error = error;
 							reject(error);
 						});
 				});
@@ -872,10 +1218,10 @@ export class Resource {
 				return postPromise;
 			}
 			else
-				throw new TypeError("Argument must be a Resource or an Array of Resource");
+				throw new TypeError("Argument new_child_resource must be a Resource or an Array of Resource");
 		}
 		else
-			throw new KtbsError("Cannot post data to a resource without uri");
+			throw new KtbsError("Cannot post data to a resource with lifecycle status \"" + this.lifecycleStatus + "\"");
 	}
 
 	/**
@@ -891,77 +1237,83 @@ export class Resource {
 	 * Stores the current existing Resource modifications
 	 * \param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
 	 * \param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
-	 * \throws KtbsError throws a KtbsError when invoked for a Resource which sync status is not either "in_sync" or "needs_sync"
+	 * \throws KtbsError throws a KtbsError when invoked for a Resource whose lifecycle status is not "exists" or "modified", and/or sync status is not "in_sync"
 	 * \return Promise
 	 * \public
 	 */
 	put(abortSignal = null, credentials = null) {
-		if((this.syncStatus == "needs_sync") || (this.syncStatus == "in_sync")) {
-			if(this._etag) {
-				const putPromise = new Promise((resolve, reject) => {
-					let fetchParameters = {
-						method: "PUT",
-						headers: new Headers({
-							"Accept": "application/json",
-							"content-type": "application/json",
-							"If-Match": this._etag,
-							"X-Requested-With": "XMLHttpRequest"
-						}),
-						body: JSON.stringify(this._getPutData())
-					};
+		if(((this.lifecycleStatus == "exists") || (this.lifecycleStatus == "modified")) && (this.syncStatus == "in_sync")) {
+			this.syncStatus = "pending";
+			this.sendQueuedNotifications();
 
-					if(!credentials && this.credentials)
-						credentials = this.credentials;
+			const putPromise = new Promise((resolve, reject) => {
+				let fetchParameters = {
+					method: "PUT",
+					headers: new Headers({
+						"Accept": "application/json",
+						"content-type": "application/json",
+						"If-Match": this._etag,
+						"X-Requested-With": "XMLHttpRequest"
+					}),
+					body: JSON.stringify(this._getPutData())
+				};
 
-					if(credentials && credentials.id && credentials.password)
-						fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
+				if(!credentials && this.credentials)
+					credentials = this.credentials;
 
-					if(abortSignal)
-						fetchParameters.signal = abortSignal;
-					
-					fetch(this._uri, fetchParameters)
-						.then((response) => {
-							if(response.ok) {
-								// when the response content from the HTTP request has been successfully read
-								if(response.headers.has("etag"))
-									this._etag = response.headers.get("etag");
-								
-								this._authentified = ((credentials != null) && credentials.id && credentials.password);
-								this.syncStatus = "in_sync";
-								resolve();
-								this.notifyObservers();
-							}
-							else {
-								if(response.status == 401)
-									this.syncStatus = "needs_auth";
-								else if(response.status == 403)
-									this.syncStatus = "access_denied";
+				if(credentials && credentials.id && credentials.password)
+					fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
 
-								let responseBody = null;
+				if(abortSignal)
+					fetchParameters.signal = abortSignal;
+				
+				fetch(this._uri, fetchParameters)
+					.then((response) => {
+						if(response.ok) {
+							// when the response content from the HTTP request has been successfully read
+							if(response.headers.has("etag"))
+								this._etag = response.headers.get("etag");
+							
+							this._authentified = ((credentials != null) && credentials.id && credentials.password);
+							this._error = null;
+							this.lifecycleStatus = "exists";
+							this.syncStatus = "in_sync";
+							resolve();
+							this.sendQueuedNotifications();
+						}
+						else {
+							let responseBody = null;
 
-								response.text()
-									.then((responseText) => {
-										responseBody = responseText;
-									})
-									.finally(() => {
-										let error = new RestError(response.status, response.statusText, responseBody);
-										reject(error);
-										this.notifyObservers(error);
-									});
-							}
-						})
-						.catch((error) => {
-							this._syncStatus = "error";
-							reject(error);
-						});
-				});
+							response.text()
+								.then((responseText) => {
+									responseBody = responseText;
+								})
+								.finally(() => {
+									let error = new RestError(response.status, response.statusText, responseBody);
+									this._error = error;
 
-				return putPromise;
-			}
-			throw new KtbsError("Resource without an Etag cannot be put, you should probably invoke get() first");
+									if(response.status == 401)
+										this.syncStatus = "needs_auth";
+									else if(response.status == 403)
+										this.syncStatus = "access_denied";
+
+									reject(error);
+									this.sendQueuedNotifications();
+								});
+						}
+					})
+					.catch((error) => {
+						this._error = error;
+						this.syncStatus = "error";
+						reject(error);
+						this.sendQueuedNotifications();
+					});
+			});
+
+			return putPromise;
 		}
 		else
-			throw new KtbsError("Resource synchronization status \"" + this.syncStatus + "\" is not suitable for PUT operation")
+			throw new KtbsError("Resource lifecycle status \"" + this.lifecycleStatus + "\" and/or sync status \"" + this.syncStatus + "\" not suitable for PUT operation")
 	}
 
 	/**
@@ -972,8 +1324,9 @@ export class Resource {
 	 * \public
 	 */
 	delete(abortSignal = null, credentials = null) {
-		if(this._uri) {
+		if(((this.lifecycleStatus == "exists") || (this.lifecycleStatus == "modified")) && (this.syncStatus == "in_sync")) {
 			this.syncStatus = "pending";
+			this.sendQueuedNotifications();
 
 			const deletePromise = new Promise((resolve, reject) => {
 				let fetchParameters = {
@@ -999,17 +1352,13 @@ export class Resource {
 				fetch(this._uri, fetchParameters)
 					.then((response) => {
 						if(response.ok) {
-							this.syncStatus = "deleted";
-							this._getPromise = null;
+							this._error = null;
+							this.syncStatus = "in_sync";
+							this.lifecycleStatus = "deleted";
 							resolve();
-							this.notifyObservers();
+							this.sendQueuedNotifications();
 						}
 						else {
-							if(response.status == 401)
-								this.syncStatus = "needs_auth";
-							else if(response.status == 403)
-								this.syncStatus = "access_denied";
-
 							let responseBody = null;
 
 							response.text()
@@ -1017,21 +1366,54 @@ export class Resource {
 									responseBody = responseText;
 								})
 								.finally(() => {
-									let error = new RestError(response.status, response.statusText);
+									let error = new RestError(response.status, response.statusText, responseBody);
+									this._error = error;
+
+									if(response.status == 401)
+										this.syncStatus = "needs_auth";
+									else if(response.status == 403)
+										this.syncStatus = "access_denied";
+
 									reject(error);
-									new_child_resource.notifyObservers(error);
+									this.sendQueuedNotifications();
 								});
 						}
 					})
 					.catch((error) => {
+						this._error = error;
 						this.syncStatus = "error";
 						reject(error);
+						this.sendQueuedNotifications();
 					});
 			});
 
 			return deletePromise;
 		}
 		else
-			throw new KtbsError("Cannot post data to a resource without uri");
+		throw new KtbsError("Resource lifecycle status \"" + this.lifecycleStatus + "\" and/or sync status \"" + this.syncStatus + "\" not suitable for DELETE operation");
+	}
+
+	/**
+	 * 
+	 * \param Resource or Array of Resource new_children
+	 */
+	_registerNewChildren(new_children) {
+		if(new_children instanceof Array) {
+			for(let i = 0; i < new_children.length; i++)
+				this._registerNewChild(new_children[i]);
+		}
+		else
+			this._registerNewChild(new_children);
+
+		this._queueNotification("children-add", this.children);
+	}
+
+	/**
+	 * Get all the children of the current resource
+	 * \return Array of Resource, or undefined if a resource of this type can't have children
+	 * \public
+	 */
+	get children() {
+		return undefined;
 	}
 }

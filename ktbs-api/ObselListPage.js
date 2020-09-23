@@ -134,5 +134,22 @@ export class ObselListPage extends Resource {
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");
-	}
+    }
+    
+    /**
+	 * Resets all the resource cached data
+	 * \public
+	 */
+	_resetCachedData() {
+		super._resetCachedData();
+
+        if(this._next_page)
+            this._next_page = undefined;
+
+        if(this._parent)
+            this._parent = undefined;
+
+        if(this._obsels)
+            delete this._obsels;
+    }
 }

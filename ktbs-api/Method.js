@@ -32,13 +32,37 @@ export class Method extends Resource {
 	}
 
 	/**
+	 * Checks if the method is a builtin method
+	 * \return boolean
+	 * \public
+	 */
+	get is_builtin() {
+		if(this._is_builtin == undefined)
+			this._is_builtin = this.uri.toString().startsWith(Method.builtin_methods_prefix);
+
+		return this._is_builtin;
+	}
+
+	/**
+	 * Sets if the method is as a builtin method or not
+	 * \param boolean new_is_builtin the new
+	 * \public
+	 */
+	set is_builtin(new_is_builtin) {
+		this._is_builtin = new_is_builtin;
+	}
+
+	/**
 	 * Gets the URI of the Method's parent Method
 	 * \return URL
 	 * \protected
 	 */
 	_get_parent_method_uri() {
 		if(!this._parent_method_uri && this._JSONData.hasParentMethod)
-			this._parent_method_uri = this.resolve_link_uri(this._JSONData.hasParentMethod);
+			if(Method.builtin_methods_ids.includes(this._JSONData.hasParentMethod))
+				this._parent_method_uri = Method.getBuiltinMethodUri(this._JSONData.hasParentMethod);
+			else
+				this._parent_method_uri = this.resolve_link_uri(this._JSONData.hasParentMethod);
 		
 		return this._parent_method_uri;
 	}
@@ -154,6 +178,17 @@ export class Method extends Resource {
 	}
 
 	/**
+	 * Gets a builtin method's uri from it's ID
+	 * \param string builtin_method_id - the ID of the builtin method we want the uri of
+	 * \return URL
+	 * \static
+	 * \public
+	 */
+	static getBuiltinMethodUri(builtin_method_id) {
+		return new URL(Method.builtin_methods_prefix + builtin_method_id);
+	}
+
+	/**
 	 * Gets a builtin method from it's ID
 	 * \param string builtin_method_id - the ID of the builtin method we want
 	 * \return Method
@@ -161,8 +196,28 @@ export class Method extends Resource {
 	 * \public
 	 */
 	static getBuiltinMethod(builtin_method_id) {
-		const builtin_method_uri = new URL(Method._builtin_methods_prefix + builtin_method_id);
+		const builtin_method_uri = Method.getBuiltinMethodUri(builtin_method_id);
 		return ResourceMultiton.get_resource(Method, builtin_method_uri);
+	}
+
+	/**
+	 * Resets all the resource cached data
+	 * \public
+	 */
+	_resetCachedData() {
+		super._resetCachedData();
+
+		if(this._parent)
+			this._parent = undefined;
+
+		if(this._parent_method_uri)
+			delete this._parent_method_uri;
+
+		if(this._parent_method)
+			this._parent_method = undefined;
+
+		if(this._parameters)
+			delete this._parameters;
 	}
 }
 
@@ -172,4 +227,12 @@ export class Method extends Resource {
  * \static
  * \protected
  */
-Method._builtin_methods_prefix = "http://liris.cnrs.fr/silex/2009/ktbs#";
+Method.builtin_methods_prefix = "http://liris.cnrs.fr/silex/2009/ktbs#";
+
+/**
+ * Ids of builtin methods supported by default
+ * \var Array
+ * \static
+ * \public
+ */
+Method.builtin_methods_ids = ["sparql", "fsa", "fusion", "filter", "hrules", "pipe", "parallel", "isparql"];

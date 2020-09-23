@@ -268,5 +268,34 @@ export class Obsel extends Resource {
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");
-	}
+    }
+    
+    /**
+	 * Resets all the resource cached data
+	 * \public
+	 */
+	_resetCachedData() {
+		super._resetCachedData();
+
+		if(this._type_id)
+			delete this._type_id;
+
+		if(this._type)
+            this._type = undefined;
+
+		if(this._parent)
+            this._parent = undefined;
+
+		if(this._beginDT)
+            delete this._beginDT;
+            
+        if(this._endDT)
+            delete this._endDT;
+
+        if(this._sourceObsels)
+            delete this._sourceObsels;
+
+        if(this._attributes)
+            delete this._attributes;
+    }
 }

@@ -213,6 +213,13 @@ export class Model extends Resource {
 	}
 
 	/**
+	 * 
+	 */
+	get type() {
+		return "Model";
+	}
+
+	/**
 	 * Gets the parent resource of this resource.
 	 * \return Resource
 	 * \public
@@ -376,30 +383,31 @@ export class Model extends Resource {
 	 * \public
 	 */
 	get stylesheets() {
-		let styleSheets = new Array();
-		let graphs = this._JSONData["@graph"];
+		if(!this._styleSheets) {
+			this._styleSheets = new Array();
+			let graphs = this._JSONData["@graph"];
 
-		if(graphs instanceof Object) {
-			for(let i = 0; (i < graphs.length); i++) {
-				let graph = graphs[i];
+			if(graphs instanceof Object) {
+				for(let i = 0; (i < graphs.length); i++) {
+					let graph = graphs[i];
 
-				if((graph["@type"]) && (graph["@type"] == "TraceModel") && (graph["http://www.example.com/TODO#ModelStylesheets"])) {
-					let styleSheetsData = graph["http://www.example.com/TODO#ModelStylesheets"];
-					
-					if(styleSheetsData instanceof Array) {
-						for(let i = 0; i < styleSheetsData.length; i++) {
-							let aStyleSheetData = styleSheetsData[i];
-							styleSheets.push(new Stylesheet(this, JSON.parse(aStyleSheetData)));
+					if((graph["@type"]) && (graph["@type"] == "TraceModel") && (graph["http://www.example.com/TODO#ModelStylesheets"])) {
+						let styleSheetsData = graph["http://www.example.com/TODO#ModelStylesheets"];
+						
+						if(styleSheetsData instanceof Array) {
+							for(let i = 0; i < styleSheetsData.length; i++) {
+								let aStyleSheetData = styleSheetsData[i];
+								this._styleSheets.push(new Stylesheet(this, JSON.parse(aStyleSheetData)));
+							}
 						}
-					}
-					else {
-						styleSheets.push(new Stylesheet(this, JSON.parse(styleSheetsData)));
+						else
+							this._styleSheets.push(new Stylesheet(this, JSON.parse(styleSheetsData)));
 					}
 				}
 			}
 		}
 
-		return styleSheets;
+		return this._styleSheets;
 	}
 
 	/**
@@ -409,5 +417,37 @@ export class Model extends Resource {
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");
+	}
+
+	/**
+	 * Resets all the resource cached data
+	 * \public
+	 */
+	_resetCachedData() {
+		super._resetCachedData();
+
+		if(this._model_own_graph_rank)
+			this._model_own_graph_rank = null;
+
+		if(this._model_own_graph)
+			this._model_own_graph = null;
+
+		if(this._label)
+			delete this._label;
+
+		if(this._comment)
+			delete this._comment;
+
+		if(this._parent)
+			this._parent = undefined;
+
+		if(this._obsel_types)
+			delete this._obsel_types;
+
+		if(this._attribute_types)
+			delete this._attribute_types;
+
+		if(this._styleSheets)
+			delete this._styleSheets;
 	}
 }

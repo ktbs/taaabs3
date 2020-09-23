@@ -198,27 +198,28 @@ export class ObselList extends Resource {
 	 * \public
 	 */
 	get obsels() {
-		let obsels = new Array();
+		if(!this._obsels) {
+			this._obsels = new Array();
 
-		if(this._JSONData.obsels instanceof Array) {
-			for(let i = 0; i < this._JSONData.obsels.length; i++) {
-				let obsel_data = this._JSONData.obsels[i];
-				let obsel_uri = this.resolve_link_uri(obsel_data["@id"]);
-				let obsel_is_known = ResourceMultiton.has_resource(Obsel, obsel_uri);
-				let obsel = ResourceMultiton.get_resource(Obsel, obsel_uri);
+			if(this._JSONData.obsels instanceof Array) {
+				for(let i = 0; i < this._JSONData.obsels.length; i++) {
+					let obsel_data = this._JSONData.obsels[i];
+					let obsel_uri = this.resolve_link_uri(obsel_data["@id"]);
+					let obsel_is_known = ResourceMultiton.has_resource(Obsel, obsel_uri);
+					let obsel = ResourceMultiton.get_resource(Obsel, obsel_uri);
 
-				if(!obsel_is_known) {
-					obsel.JSONData = obsel_data;
-					obsel.context = this.context;
-					obsel.parent = this.parent;
-					obsel.syncStatus = "in_sync";
+					if(!obsel_is_known) {
+						obsel.JSONData = obsel_data;
+						obsel.context = this.context;
+						obsel.parent = this.parent;
+						obsel.syncStatus = "in_sync";
+					}
+
+					this._obsels.push(obsel);
 				}
-
-				obsels.push(obsel);
 			}
 		}
-
-        return obsels;
+        return this._obsels;
 	}
 
 	/**
@@ -228,5 +229,19 @@ export class ObselList extends Resource {
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");
+	}
+
+	/**
+	 * Resets all the resource cached data
+	 * \public
+	 */
+	_resetCachedData() {
+		super._resetCachedData();
+
+		if(this._parent)
+			this._parent = undefined;
+
+		if(this._obsels)
+			delete this._obsels;
 	}
 }

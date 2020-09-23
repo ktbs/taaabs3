@@ -5,6 +5,7 @@ import {Model} from "./Model.js";
 import {Method} from "./Method.js";
 import {Base} from "./Base.js";
 import {ObselList} from "./ObselList.js";
+import {TraceStats} from "./TraceStats.js";
 import {KtbsError} from "./Errors.js";
 
 /**
@@ -32,24 +33,11 @@ export class Trace extends Resource {
 	get model() {
 		if(!this._model && this._JSONData.hasModel)
 			this._model = ResourceMultiton.get_resource(Model, this.resolve_link_uri(this._JSONData.hasModel));
-		
+
 		return this._model;
 	}
 
-	/**
-	 * Sets the model of the Trace
-	 * \param Model newModel - the new Model for the Trace
-	 * \throws TypeError throws a TypeError when provided argument is not an instance of Model
-	 * \public
-	 */
-	set model(newModel) {
-		if(newModel instanceof Model) {
-			this._JSONData.hasModel = newModel.uri.toString();
-			this._model = null;
-		}
-		else
-			throw new TypeError("New value for property \"model\" must be an instance of Model");
-	}
+	
 
 	/**
 	 * Gets the temporal origin of the Trace
@@ -75,10 +63,42 @@ export class Trace extends Resource {
 	 * \public
 	 */
 	get obsel_list() {
-		if(!this._obsels && this._JSONData.hasObselList)
-			this._obsels = ResourceMultiton.get_resource(ObselList, this.resolve_link_uri(this._JSONData.hasObselList));
-		
-		return this._obsels;
+		if(!this._obsel_list && this._JSONData.hasObselList)
+			this._obsel_list = ResourceMultiton.get_resource(ObselList, this.resolve_link_uri(this._JSONData.hasObselList));
+
+		return this._obsel_list;
+	}
+
+	/**
+	 * Gets the TraceStats aspect resource for the current trace
+	 * \return TraceStats
+	 * \public
+	 */
+	get stats() {
+		if(!this._stats && this._JSONData.hasTraceStatistics)
+			this._stats = ResourceMultiton.get_resource(TraceStats, this.resolve_link_uri(this._JSONData.hasTraceStatistics));
+
+		return this._stats;
+	}
+
+	/**
+	 * Resets all the resource cached data
+	 * \public
+	 */
+	_resetCachedData() {
+		super._resetCachedData();
+
+		if(this._parent)
+			this._parent = undefined;
+
+		if(this._model)
+			this._model = undefined;
+
+		if(this._obsel_list)
+			delete this._obsel_list;
+
+		if(this._stats)
+			delete this._stats;
 	}
 }
 
@@ -95,6 +115,30 @@ export class StoredTrace extends Trace {
 	constructor(uri = null) {
 		super(uri);
 		this._JSONData["@type"] = "StoredTrace";
+	}
+
+	/**
+	 * Gets the model of the Trace
+	 * \return Model
+	 * \public
+	 */
+	get model() {
+		return super.model;
+	}
+
+	/**
+	 * Sets the model of the StoredTrace
+	 * \param Model newModel - the new Model for the StoredTrace
+	 * \throws TypeError throws a TypeError when provided argument is not an instance of Model
+	 * \public
+	 */
+	set model(newModel) {
+		if(newModel instanceof Model) {
+			this._JSONData.hasModel = newModel.uri.toString();
+			this._model = null;
+		}
+		else
+			throw new TypeError("New value for property \"model\" must be an instance of Model");
 	}
 
 	/**
@@ -154,7 +198,13 @@ export class ComputedTrace extends Trace {
 	get method() {
 		if(!this._method) {
 			const method_id = this._JSONData.hasMethod;
-			const method_uri = this.resolve_link_uri(method_id);
+			let method_uri;
+
+			if(Method.builtin_methods_ids.includes(method_id))
+				method_uri = Method.getBuiltinMethodUri(method_id);
+			else
+				method_uri = this.resolve_link_uri(method_id);
+			
 			this._method = ResourceMultiton.get_resource(Method, method_uri);
 		}
 
@@ -248,5 +298,19 @@ export class ComputedTrace extends Trace {
 	 */
 	post(new_child_resource, abortSignal = null, credentials = null) {
 		throw new KtbsError("Computed traces cannot store children obsels");
+	}
+
+	/**
+	 * Resets all the resource cached data
+	 * \public
+	 */
+	_resetCachedData() {
+		super._resetCachedData();
+
+		if(this._method)
+			this._method = undefined;
+
+		if(this._source_traces)
+			delete this._source_traces;
 	}
 }
