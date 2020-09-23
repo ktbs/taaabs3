@@ -10,6 +10,7 @@ class TemplatedHTMLElement extends HTMLElement {
 	 */
 	constructor(componentJSPath, fetchStylesheet = true, fetchTranslation = true, listenAncestorLangChange = true) {
 		super();
+		this._connected = false;
 		this._componentJSPath = componentJSPath;
 		this._fetchTranslation = fetchTranslation;
 		this._listenAncestorLangChange = listenAncestorLangChange;
@@ -18,21 +19,26 @@ class TemplatedHTMLElement extends HTMLElement {
 		this._langInheritedFromAncestor = null;
 		this._lang = 'en';
 		this._abortController = new AbortController();
-		this._templateFetched = TemplatedHTMLElement.getComponentTemplate(this._componentJSPath, fetchStylesheet, this._abortController.signal);
+		this._templateFetched = TemplatedHTMLElement._getComponentTemplate(this._componentJSPath, fetchStylesheet, this._abortController.signal);
 
 		// pre-create a promise that will be resolved when the template has been succesfully fetched
 		this._resolveComponentReady;
 		this._rejectComponentReady;
 
-		this._componentReady = new Promise(function(resolve, reject) {
+		this._componentReady = new Promise((resolve, reject) => {
 			this._resolveComponentReady = resolve;
 			this._rejectComponentReady = reject;
-		}.bind(this));
+		});
 
-		this._componentReady.then(function() {
-			if(this.onComponentReady)
-				this.onComponentReady();
-		}.bind(this));
+		this._componentReady
+			.then(() => {
+				if(this.onComponentReady)
+					this.onComponentReady();
+			})
+			.catch((error) => {
+				if((this._connected) && !this._abortController.signal.aborted)
+					this.emitErrorEvent(error);
+			});
 		// --- done
 
 
@@ -44,38 +50,38 @@ class TemplatedHTMLElement extends HTMLElement {
 	 * 
 	 */
 	_initTranslationPromise() {
-		this._translationFetched = new Promise(function(resolve, reject) {
+		this._translationFetched = new Promise((resolve, reject) => {
 			this._resolveTranslationFetched = resolve;
 			this._rejectTranslationFetched = reject;
-		}.bind(this));
+		});
 
 		this._translationFetched
-			.then(function(translationStrings) {
+			.then((translationStrings) => {
 				this._translatableStrings[this._lang] = translationStrings;
-			}.bind(this))
-
-			.catch(function(error) {
+			})
+			.catch((error) => {
 				// the component doesn't own the requested translation file, engish will be used as default language
 				this._lang = 'en';
-			}.bind(this))
-
-			.finally(function() {
+			})
+			.finally(() => {
 				this._templateFetched
-					.then(function(rawTemplateContent) {
-						let translatedTemplate = this._translateTemplate(rawTemplateContent);
-						let templateNode = document.createElement("template");
-			
-						// @TODO process string substitutions and affect processed template instead of raw
-						templateNode.innerHTML = translatedTemplate;
+					.then((rawTemplateContent) => {
+						if(this._connected) {
+							let translatedTemplate = this._translateTemplate(rawTemplateContent);
+							let templateNode = document.createElement("template");
+				
+							// @TODO process string substitutions and affect processed template instead of raw
+							templateNode.innerHTML = translatedTemplate;
 
-						let clone = templateNode.content.cloneNode(true);
-						this.attachShadow({mode: "open"}).appendChild(clone);
-						this._resolveComponentReady();
-					}.bind(this))
-					.catch(function(error) {
+							let clone = templateNode.content.cloneNode(true);
+							this.attachShadow({mode: "open"}).appendChild(clone);
+							this._resolveComponentReady();
+						}
+					})
+					.catch((error) => {
 						this._rejectComponentReady(error);
-					}.bind(this));
-			}.bind(this));
+					});
+			});
 	}
 
 	/**
@@ -93,9 +99,9 @@ class TemplatedHTMLElement extends HTMLElement {
 			this._initTranslationPromise();
 
 			if(this._updateStringsTranslation)
-				Promise.all([this._componentReady, this._translationFetched]).then(function() {
+				Promise.all([this._componentReady, this._translationFetched]).then(() => {
 					this._updateStringsTranslation();
-				}.bind(this));
+				});
 
 			this._initLang();
 			this.dispatchEvent(new CustomEvent("langchange"));
@@ -106,6 +112,8 @@ class TemplatedHTMLElement extends HTMLElement {
 	 * 
 	 */
 	connectedCallback() {
+		this._connected = true;
+
 		if(!this.getAttribute("lang"))
 			this._initLang();
 	}
@@ -114,6 +122,7 @@ class TemplatedHTMLElement extends HTMLElement {
 	 * 
 	 */
 	disconnectedCallback() {
+		this._connected = false;
 		this._abortController.abort();
 	}
 
@@ -124,9 +133,9 @@ class TemplatedHTMLElement extends HTMLElement {
 		this._initTranslationPromise();
 		
 		if(this._updateStringsTranslation)
-			this._translationFetched.then(function() {
+			Promise.all([this._translationFetched, this._componentReady]).then(() => {
 				this._updateStringsTranslation();
-			}.bind(this));
+			});
 
 		this._initLang();
 	}
@@ -174,29 +183,94 @@ class TemplatedHTMLElement extends HTMLElement {
 		}
 		else {
 			TemplatedHTMLElement._getComponentTranslation(this._componentJSPath, this._lang, this._abortController.signal)
-				.then(function(translationArray) {
+				.then((translationArray) => {
 					this._resolveTranslationFetched(translationArray);
-				}.bind(this))
-				.catch(function(error) {
+				})
+				.catch((error) => {
 					this._rejectTranslationFetched(error);
-				}.bind(this));
+				});
 		}
 	}
 
 	/**
 	 * 
+	 * \protected
+	 * \static
 	 */
 	static _getComponentTranslation(componentJSPath, lang, abortSignal) {
-		if(this.translationPromises[componentJSPath] && this.translationPromises[componentJSPath][lang])
-			return this.translationPromises[componentJSPath][lang];
+		if(TemplatedHTMLElement._translationsPromises[componentJSPath] && TemplatedHTMLElement._translationsPromises[componentJSPath][lang]) {
+			TemplatedHTMLElement._translationsAbortControllers[componentJSPath][lang].clients.push(abortSignal);
+			abortSignal.addEventListener("abort", TemplatedHTMLElement._onClientAbortsGetTranslation);
+			return TemplatedHTMLElement._translationsPromises[componentJSPath][lang];
+		}
 		else {
-			let translationPromise = this._fetchComponentTranslation(componentJSPath, lang, abortSignal);
+			const masterAbortController = new AbortController();
 
-			if(!this.translationPromises[componentJSPath])
-				this.translationPromises[componentJSPath] = new Array();
+			if(!TemplatedHTMLElement._translationsAbortControllers[componentJSPath])
+				TemplatedHTMLElement._translationsAbortControllers[componentJSPath] = {};
 
-			this.translationPromises[componentJSPath][lang] = translationPromise;
+			TemplatedHTMLElement._translationsAbortControllers[componentJSPath][lang] = {
+				clients: [abortSignal],
+				master: masterAbortController
+			};
+
+			abortSignal.addEventListener("abort", TemplatedHTMLElement._onClientAbortsGetTranslation);
+
+			const translationPromise = TemplatedHTMLElement._fetchComponentTranslation(componentJSPath, lang, masterAbortController.signal);
+
+			if(!TemplatedHTMLElement._translationsPromises[componentJSPath])
+				TemplatedHTMLElement._translationsPromises[componentJSPath] = {};
+
+			TemplatedHTMLElement._translationsPromises[componentJSPath][lang] = translationPromise;
+			
+			translationPromise.catch((error) => {
+				delete TemplatedHTMLElement._translationsPromises[componentJSPath][lang];
+				delete TemplatedHTMLElement._templatesAbortControllers[componentJSPath][lang];
+			});
+			
 			return translationPromise;
+		}
+	}
+
+	/**
+	 * 
+	 * \param Event event 
+	 * \static
+	 * \protected
+	 */
+	_onClientAbortsGetTranslation(event) {
+		const abortedSignal = event.target;
+		const templatesPaths = Object.keys(TemplatedHTMLElement._translationsAbortControllers);
+		let eventTemplatePathAndLangFound = false;
+
+		for(let i = 0; (i < templatesPaths.length) && !eventTemplatePathAndLangFound; i++) {
+			const aTemplatePath = templatesPaths[i];
+			const translationsLangs = Object.keys(TemplatedHTMLElement._templatesAbortControllers[aTemplatePath]);
+
+			for(let j = 0; (j < translationsLangs.length) && !eventTemplatePathAndLangFound; j++) {
+				const aLang = translationsLangs[j];
+			
+				for(let k = 0; (TemplatedHTMLElement._templatesAbortControllers[aTemplatePath][aLang]) && (k < TemplatedHTMLElement._templatesAbortControllers[aTemplatePath][aLang].clients.length) && !eventTemplatePathAndLangFound; k++) {
+					const aClientAbortSignal = TemplatedHTMLElement._templatesAbortControllers[aTemplatePath][aLang].clients[k];
+
+					if(aClientAbortSignal == abortedSignal) {
+						eventTemplatePathAndLangFound = true;
+						TemplatedHTMLElement._templatesAbortControllers[aTemplatePath][aLang].clients.splice(k, 1);
+						let atLeastOneClientDidntAbort = false;
+
+						for(let l = 0; (l < TemplatedHTMLElement._templatesAbortControllers[aTemplatePath][aLang].clients.length) && !atLeastOneClientDidntAbort; l++) {
+							const aClient = TemplatedHTMLElement._templatesAbortControllers[aTemplatePath][aLang].clients[l];
+							atLeastOneClientDidntAbort = !aClient.aborted;
+						}
+
+						if(!atLeastOneClientDidntAbort) {
+							TemplatedHTMLElement._templatesAbortControllers[aTemplatePath][aLang].master.abort();
+							delete TemplatedHTMLElement._templatesAbortControllers[aTemplatePath][aLang];
+							delete TemplatedHTMLElement._translationsPromises[aTemplatePath][aLang];
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -295,24 +369,83 @@ class TemplatedHTMLElement extends HTMLElement {
 
 	/**
 	 * 
+	 * \protected
+	 * \static
 	 */
-	static getComponentTemplate(componentJSPath, fetchStylesheet = true, abortSignal) {
-		if(this.templatePromises[componentJSPath])
-			return this.templatePromises[componentJSPath];
+	static _getComponentTemplate(componentJSPath, fetchStylesheet = true, abortSignal) {
+		if(TemplatedHTMLElement._templatesPromises[componentJSPath]) {
+			TemplatedHTMLElement._templatesAbortControllers[componentJSPath].clients.push(abortSignal);
+			abortSignal.addEventListener("abort", TemplatedHTMLElement._onClientAbortsGetTemplate);
+			return TemplatedHTMLElement._templatesPromises[componentJSPath];
+		}
 		else {
-			let templatePromise = this.fetchComponentTemplate(componentJSPath, fetchStylesheet, abortSignal);
-			this.templatePromises[componentJSPath] = templatePromise;
+			const masterAbortController = new AbortController();
+
+			TemplatedHTMLElement._templatesAbortControllers[componentJSPath] = {
+				clients: [abortSignal],
+				master: masterAbortController
+			};
+			
+			abortSignal.addEventListener("abort", TemplatedHTMLElement._onClientAbortsGetTemplate);
+
+			const templatePromise = TemplatedHTMLElement._fetchComponentTemplate(componentJSPath, fetchStylesheet, masterAbortController.signal);
+			TemplatedHTMLElement._templatesPromises[componentJSPath] = templatePromise;
+
+			templatePromise.catch((error) => {
+				delete TemplatedHTMLElement._templatesPromises[componentJSPath];
+				delete TemplatedHTMLElement._templatesAbortControllers[componentJSPath];
+			});
+			
 			return templatePromise;
 		}
 	}
 
 	/**
-	 * Fetches the HTML template of a component, optionally fetches a CSS stylesheet too and add it to the template.
-	 * @param componentJSPath the full URL of the JS file (must end with ".js") that holds the component. Caller components should refer to their own JS file using "import.meta.url".
-	 * @param fetchStylesheet whether or not we sould also fetch a CSS stylesheet and add it to the template content (default : true)
-	 * @return Promise
+	 * 
+	 * \param Event event 
+	 * \static
+	 * \protected
 	 */
-	static fetchComponentTemplate(componentJSPath, fetchStylesheet = true, abortSignal) {
+	static _onClientAbortsGetTemplate(event) {
+		const abortedSignal = event.target;
+		const templatesPaths = Object.keys(TemplatedHTMLElement._templatesAbortControllers);
+		let eventTemplatePathFound = false;
+
+		for(let i = 0; (i < templatesPaths.length) && !eventTemplatePathFound; i++) {
+			const aTemplatePath = templatesPaths[i];
+			
+			for(let j = 0; (TemplatedHTMLElement._templatesAbortControllers[aTemplatePath]) && (j < TemplatedHTMLElement._templatesAbortControllers[aTemplatePath].clients.length) && !eventTemplatePathFound; j++) {
+				const aClientAbortSignal = TemplatedHTMLElement._templatesAbortControllers[aTemplatePath].clients[j];
+
+				if(aClientAbortSignal == abortedSignal) {
+					eventTemplatePathFound = true;
+					TemplatedHTMLElement._templatesAbortControllers[aTemplatePath].clients.splice(j, 1);
+					let atLeastOneClientDidntAbort = false;
+
+					for(let k = 0; (k < TemplatedHTMLElement._templatesAbortControllers[aTemplatePath].clients.length) && !atLeastOneClientDidntAbort; k++) {
+						const aClient = TemplatedHTMLElement._templatesAbortControllers[aTemplatePath].clients[k];
+						atLeastOneClientDidntAbort = !aClient.aborted;
+					}
+
+					if(!atLeastOneClientDidntAbort) {
+						TemplatedHTMLElement._templatesAbortControllers[aTemplatePath].master.abort();
+						delete TemplatedHTMLElement._templatesPromises[aTemplatePath];
+						delete TemplatedHTMLElement._templatesAbortControllers[aTemplatePath];
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Fetches the HTML template of a component, optionally fetches a CSS stylesheet too and add it to the template.
+	 * \param componentJSPath the full URL of the JS file (must end with ".js") that holds the component. Caller components should refer to their own JS file using "import.meta.url".
+	 * \param fetchStylesheet whether or not we sould also fetch a CSS stylesheet and add it to the template content (default : true)
+	 * \return Promise
+	 * \protected
+	 * \static
+	 */
+	static _fetchComponentTemplate(componentJSPath, fetchStylesheet = true, abortSignal) {
 		return new Promise(function(resolve, reject) {
 			// we check if the given URL of the JS file ends with ".js". If it doesn't, we won't know how to build the template and stylesheet URLs
 			if(componentJSPath.substring(componentJSPath.length - 3) == ".js") {
@@ -391,7 +524,7 @@ class TemplatedHTMLElement extends HTMLElement {
 					})
 					// if the fetching of the HTML template failed
 					.catch(function (error) {
-						// we log and display the error
+						// we reject the returned Promise
 						reject(error);
 					});
 			}
@@ -404,12 +537,34 @@ class TemplatedHTMLElement extends HTMLElement {
 
 /**
  * 
+ * \var Object
+ * \protected
+ * \static
  */
-TemplatedHTMLElement.templatePromises = new Array();
+TemplatedHTMLElement._templatesPromises = {};
 
 /**
  * 
+ * \var Object
+ * \protected
+ * \static
  */
-TemplatedHTMLElement.translationPromises = new Array();
+TemplatedHTMLElement._templatesAbortControllers = {};
+
+/**
+ * 
+ * \var Object
+ * \protected
+ * \static
+ */
+TemplatedHTMLElement._translationsPromises = {};
+
+/**
+ * 
+ * \var Object
+ * \protected
+ * \static
+ */
+TemplatedHTMLElement._translationsAbortControllers = {};
 
 export {TemplatedHTMLElement};

@@ -20,7 +20,6 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	constructor(componentJSPath, fetchStylesheet = true, fetchTranslation = true) {
 		super(componentJSPath, fetchStylesheet, fetchTranslation);
 		this._ktbsResource = null;
-		this._initktbsResourceLoadedPromise();
 
 		// 
 			this._resolveUriSet;
@@ -52,29 +51,6 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 					this._onMissingResourceAttributes(error);
 				});
 		// ---
-
-		if(this.onKtbsResourceChange)
-			this._bindedOnKtbsResourceChangeMethod = this.onKtbsResourceChange.bind(this);
-	}
-
-	/**
-	 * Creates a promise that will be resolved when the ktbs resource has been succesfully loaded
-	 */
-	_initktbsResourceLoadedPromise() {
-		this._ktbsResourceLoaded = new Promise((resolve, reject) => {
-			this._resolveKtbsResourceLoaded = resolve;
-			this._rejectKtbsResourceLoaded = reject;
-		});
-
-		this._ktbsResourceLoaded
-			.then(() => {
-				if(this.onktbsResourceLoaded)
-					this.onktbsResourceLoaded();
-			})
-			.catch((error) => {
-				if(this.onktbsResourceLoadFailed)
-					this.onktbsResourceLoadFailed(error);
-			});
 	}
 
 	/**
@@ -94,27 +70,105 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	_onResourceAttributesSet() {
 		let uri = new URL(this.getAttribute("uri"));
 		let type = this._getKtbsResourceClass();
-		
-		try {
-			this._ktbsResource = ResourceMultiton.get_resource(type, uri);
+		this._ktbsResource = ResourceMultiton.get_resource(type, uri);
+		this._bindedOnKtbsResourceNotificationMethod = this._onKtbsResourceNotification.bind(this);
+		this._ktbsResource.registerObserver(this._bindedOnKtbsResourceNotificationMethod);
+		this._onKtbsResourceNotification(this._ktbsResource, "sync-status-change");
+	}
 
-			if(this._bindedOnKtbsResourceChangeMethod)
-				this._ktbsResource.addObserver(this._bindedOnKtbsResourceChangeMethod);
-		
-			if((this._ktbsResource.syncStatus == "in_sync") || !this._auto_get_resource)
-				this._resolveKtbsResourceLoaded();
-			else {
-				this._ktbsResource.get(this._abortController.signal)
-					.then(() => {
-						this._resolveKtbsResourceLoaded();
-					})
-					.catch((error) => {
-						this._rejectKtbsResourceLoaded(error);
-					});
+	/**
+	 * 
+	 * @param {*} notification_data 
+	 */
+	_onKtbsResourceNotification(sender, type, old_value) {
+		if(sender == this._ktbsResource) {
+			if((this._ktbsResource instanceof Method) && (this._ktbsResource.is_builtin))
+				this._onKtbsResourceSyncInSync();
+			else if(type == "sync-status-change") {
+				switch(sender.syncStatus) {
+					case "needs_sync":
+						setTimeout(() => {
+							if(this._onKtbsResourceSyncPending)
+								this._onKtbsResourceSyncPending(old_value);
+						});
+
+						if(!(this._ktbsResource instanceof Method) || !(this._ktbsResource.is_builtin))
+							this._ktbsResource.get(this._abortController.signal).catch(() => {});
+						break;
+					case "pending":
+						setTimeout(() => {
+							if(this._onKtbsResourceSyncPending)
+								this._onKtbsResourceSyncPending(old_value);
+						});
+
+						break;
+					case "needs_auth":
+						setTimeout(() => {
+							if(this._onKtbsResourceSyncNeedsAuth)
+								this._onKtbsResourceSyncNeedsAuth(old_value);
+						});
+
+						break;
+					case "access_denied":
+						setTimeout(() => {
+							if(this._onKtbsResourceSyncAccessDenied)
+								this._onKtbsResourceSyncAccessDenied(old_value);
+						});
+
+						break;
+					case "in_sync" :
+						setTimeout(() => {
+							if(this._onKtbsResourceSyncInSync)
+								this._onKtbsResourceSyncInSync(old_value);
+						});
+
+						break;
+					case "error":
+						setTimeout(() => {
+							this._onKtbsResourceSyncError(old_value, sender.error);
+						});
+
+						break;
+				}
 			}
-		}
-		catch(error) {
-			this.emitErrorEvent(error);
+			else if(type == "lifecycle-status-change") {
+				switch(sender.lifecycleStatus) {
+					case "new":
+						setTimeout(() => {
+							if(this._onKtbsResourceLifecycleNew)
+								this._onKtbsResourceLifecycleNew(old_value);
+						});
+
+						break;
+					case "exists":
+						setTimeout(() => {
+							if(this._onKtbsResourceLifecycleExists)
+								this._onKtbsResourceLifecycleExists(old_value);
+						});
+
+						break;
+					case "modified":
+						setTimeout(() => {
+							if(this._onKtbsResourceLifecycleModified)
+								this._onKtbsResourceLifecycleModified(old_value);
+						});
+
+						break;
+					case "deleted":
+						setTimeout(() => {
+							if(this._onKtbsResourceLifecycleDeleted)
+								this._onKtbsResourceLifecycleDeleted(old_value);
+						});
+
+						break;
+				}
+			}
+			else if(type == "children-add") {
+				setTimeout(() => {
+					if(this._onKtbsResourceChildrenAdd)
+						this._onKtbsResourceChildrenAdd(old_value);
+				});
+			}
 		}
 	}
 
@@ -153,14 +207,14 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	disconnectedCallback() {
 		super.disconnectedCallback();
 
-		if(this._bindedOnKtbsResourceChangeMethod)
-			this._ktbsResource.removeObserver(this._bindedOnKtbsResourceChangeMethod);
+		if(this._ktbsResource && this._bindedOnKtbsResourceNotificationMethod)
+			this._ktbsResource.unregisterObserver(this._bindedOnKtbsResourceNotificationMethod);
 	}
 
 	/**
 	 * 
 	 */
-	onktbsResourceLoadFailed(error) {
+	_onKtbsResourceSyncError(old_syncStatus, error) {
 		if((error.name != "AbortError") || !this._abortController.signal.aborted)
 			this.emitErrorEvent(error);
 	}
@@ -191,32 +245,6 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 		else
 			throw new Error("Missing required attribute \"resource-type\"");
 	}
-
-	/**
-	 * 
-	 */
-	/*requestEditResource() {
-		this.dispatchEvent(new CustomEvent("request-edit-ktbs-resource", {bubbles: true}));
-	}*/
-
-	/**
-	 * 
-	 */
-	requestDeleteResource() {
-		this.dispatchEvent(new CustomEvent("request-delete-ktbs-resource", {bubbles: true}));
-	}
-
-	/**
-	 * 
-	 */
-	get _auto_get_resource() {
-		return true;
-	}
 }
-
-/**
- * 
- */
-KtbsResourceElement.resourceInstances = new Array();
 
 export {KtbsResourceElement};
