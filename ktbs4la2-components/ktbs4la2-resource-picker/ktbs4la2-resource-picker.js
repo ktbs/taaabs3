@@ -61,16 +61,15 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         this._uriInput = this.shadowRoot.querySelector("#uri-input");
         this._uriInput.setAttribute("lang", this._lang);
         this._uriInput.addEventListener("input", this._onChangeURIInputValue.bind(this));
-        this._uriInput.addEventListener("focusin", this._onChildElementFocusIn.bind(this));
+        this._uriInput.addEventListener("focus", this._onChildElementFocus.bind(this));
 
         if(!this.getAttribute("browse-scope-uris"))
             this.emitErrorEvent("Required attribute \"browse-scope-uris\" is missing");
 
         this.addEventListener("selectelement", this._onSelectExplorerElement.bind(this));
-
         this._browseButton.addEventListener("click", this._onClickBrowseButton.bind(this));
-        this._browseButton.addEventListener("focusin", this._onChildElementFocusIn.bind(this));
-        this.addEventListener("focusin", this._onFocusIn.bind(this));
+        this._browseButton.addEventListener("focus", this._onChildElementFocus.bind(this));
+        this.addEventListener("focus", this._onFocus.bind(this));
     }
 
     /**
@@ -89,9 +88,10 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
 
     /**
      * 
-     * @param {*} name 
-     * @param {*} oldValue 
-     * @param {*} newValue 
+     * \param {*} name 
+     * \param {*} oldValue 
+     * \param {*} newValue 
+     * \public
      */
     attributeChangedCallback(name, oldValue, newValue) {
         super.attributeChangedCallback(name, oldValue, newValue);
@@ -113,9 +113,9 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
     /**
      * 
      */
-    _onFocusIn(event) {
-       this._uriInput.focus();
-    }
+    _onFocus(event) {
+        this._uriInput.focus();
+     }
 
     /**
      * 
@@ -211,8 +211,6 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
 
         if(selectedElement)
             this._selectElement(selectedElement);
-
-        this.dispatchEvent(new InputEvent("input"));
     }
 
     /**
@@ -275,13 +273,13 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
             this._uriInput.value = element.getAttribute("uri");
 
         element.classList.add("selected");
-        element.focus();
+        this._resourcesExplorer.focus();
     }
 
     /**
      * 
      */
-    _onChildElementFocusIn(event) {
+    _onChildElementFocus(event) {
         event.stopPropagation();
     }
 
@@ -292,9 +290,7 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         event.stopPropagation();
         const selectedElement = this.querySelector(".selected");
 
-        if(selectedElement)
-            selectedElement.focus();
-        else {
+        if(!selectedElement) {
             let firstSelectableElement;
 
             if(this.getAttribute("allowed-resource-types")) {
