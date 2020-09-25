@@ -15,6 +15,8 @@ export class Resource {
 	 */
 	constructor(uri = null) {
 
+		this._bindedOnClientAbortsGetRequestMethod = this._onClientAbortsGetRequest.bind(this)
+
 		/**
 		 * The etag provided by the server at the resource latest HTTP query
 		 * \var string
@@ -999,7 +1001,7 @@ export class Resource {
 			const aClientGetAbortSignal = this._clientGetAbortSignals.pop();
 
 			if(aClientGetAbortSignal != null)
-				aClientGetAbortSignal.removeEventListener("abort", this._onClientAbortsGetRequest.bind(this));
+				aClientGetAbortSignal.removeEventListener("abort", this._bindedOnClientAbortsGetRequestMethod);
 		}
 	}
 
@@ -1010,7 +1012,7 @@ export class Resource {
 	 */
 	_registerClientGetAbortSignal(abort_signal) {
 		if(abort_signal != null)
-			abort_signal.addEventListener("abort", this._onClientAbortsGetRequest.bind(this));
+			abort_signal.addEventListener("abort", this._bindedOnClientAbortsGetRequestMethod);
 
 		this._clientGetAbortSignals.push(abort_signal);
 	}
