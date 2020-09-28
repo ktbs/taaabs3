@@ -1,0 +1,57 @@
+:host {
+    display: inline-block;
+    vertical-align: middle;
+    outline: none;
+}
+
+#container {
+    border: 1px solid lightgray;
+    display: inline-block;
+    padding: 10px 10px;
+    border-radius: 5px;
+    width: calc(100% - 22px);
+}
+
+.resource-picker-container {
+    clear: both;
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+ktbs4la2-resource-picker {
+    width: calc(100% - 32px);
+}
+
+.remove-resource-button {
+    border: none;
+    outline: none;
+    background: none;
+    cursor: pointer;
+    opacity: 0.2;
+    display: inline-block;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.remove-resource-button:hover, .remove-resource-button:focus {
+    opacity: 1;
+}
+
+#add-resource {
+    background-color: var(--color-main, cornflowerblue);
+    opacity: 0.5;
+    width: calc(100% - 32px);
+    height: 22px;
+    cursor: pointer;
+    color: white;
+    border: none;
+    text-align: center;
+    align-self: center;
+    font-size: 14pt;
+}
+
+#add-resource:hover, #add-resource:focus {
+    background-color: var(--color-highlight, royalblue);
+    opacity: 1;
+}
