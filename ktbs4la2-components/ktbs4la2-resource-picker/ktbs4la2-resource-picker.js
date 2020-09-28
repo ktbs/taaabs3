@@ -83,6 +83,7 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         _observedAttributes.push("browse-start-uri");
         _observedAttributes.push("allowed-resource-types");
         _observedAttributes.push("required");
+        _observedAttributes.push("value");
         return _observedAttributes;
     }
 
@@ -108,6 +109,9 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
             this._componentReady.then(() => {
                 this._uriInput.setAttribute("required", newValue);
             }).catch(() => {});
+
+        if(name == "value")
+            this.value = newValue;
     }
 
     /**
