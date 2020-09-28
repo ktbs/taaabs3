@@ -17,7 +17,7 @@
 #browse-button {
     background-color: var(--color-main, cornflowerblue);
     opacity: 0.5;
-    height: 24px;
+    height: 26px;
     cursor: pointer;
     border: none;
     text-align: center;
