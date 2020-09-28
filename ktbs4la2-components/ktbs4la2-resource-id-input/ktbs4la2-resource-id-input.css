@@ -1,0 +1,40 @@
+:host {
+    display: inline-block;
+    outline: none;
+}
+
+#parent-resource-path {
+    font-size: 11pt;
+    color: gray;
+    font-style: italic;
+}
+
+#id-input {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid lightgray;
+    outline: none;
+    font-size: 12pt;
+    color: black;
+}
+
+#id-input:focus {
+    background-color: rgb(230, 245, 255);
+}
+
+#trailing-slash {
+    display: none;
+    color: gray;
+}
+
+:host([force-trailing-slash = ""]) #trailing-slash, 
+:host([force-trailing-slash = "true"]) #trailing-slash,
+:host([force-trailing-slash = "1"]) #trailing-slash {
+    display: inline;
+}
+
+#hidden-span-for-id-width {
+    visibility: hidden;
+    font-size: 12pt;
+}
