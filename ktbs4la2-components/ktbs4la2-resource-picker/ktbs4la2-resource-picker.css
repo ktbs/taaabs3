@@ -25,7 +25,6 @@
     display : inline-block;
     vertical-align: top;
     width: 100px;
-    margin-left: 5px;
 }
 
 #browse-button:hover, #browse-button:focus {
