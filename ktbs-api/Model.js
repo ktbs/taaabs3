@@ -134,7 +134,7 @@ export class Model extends Resource {
 		let ownGraph = this._get_model_own_graph();
 
 		if(ownGraph["@id"])
-			return ownGraph["@id"];
+			return Resource.extract_relative_id(ownGraph["@id"]);
 		else if(this._uri)
 			return Resource.extract_relative_id(this._uri.toString());
 		else
