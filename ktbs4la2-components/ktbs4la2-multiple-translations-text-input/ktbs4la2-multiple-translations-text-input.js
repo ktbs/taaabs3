@@ -63,9 +63,6 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 			if(localizedInputs.length <= 0)
 				this._addLocalizedInput(null, null, false);
 		});
-
-		if(!this.getAttribute("tabIndex"))
-			this.tabIndex = -1;
 			
 		this.addEventListener("focus", this._onFocus.bind(this));
 	}
