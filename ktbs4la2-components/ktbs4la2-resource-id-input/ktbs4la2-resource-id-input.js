@@ -10,6 +10,38 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
      */
     constructor() {
         super(import.meta.url, true);
+
+        if(this.attachInternals)
+            this._internals = this.attachInternals();
+    }
+
+    /**
+     * 
+     */
+    static formAssociated = true;
+
+    /**
+     * 
+     */
+    get form() {
+        if(this._internals)
+            return this._internals.form;
+        else
+            return undefined;
+    }
+    
+    /**
+     * 
+     */
+    get name() {
+        return this.getAttribute('name');
+    }
+    
+    /**
+     * 
+     */
+    get type() {
+        return this.localName;
     }
 
     /**
