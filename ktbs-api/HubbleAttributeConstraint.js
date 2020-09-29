@@ -1,25 +1,25 @@
 /**
- * Class for style sheet rule rule attribute constraint
+ * Class for Hubble attribute constraint
  */
-export class StylesheetRuleRuleAttributeConstraint {
+export class HubbleAttributeConstraint {
 
     /**
-     * Constructor for class StylesheetRuleRuleAttributeConstraint
-     * \param Model parentModel - the Model the style sheet rule rule attribute constraint is described in
-     * \param Object JSONData - the data describing the style sheet rule rule attribute constraint 
+     * Constructor for class HubbleAttributeConstraint
+     * \param Model parentModel - the Model the Hubble attribute constraint is described in
+     * \param Object JSONData - the data describing the Hubble attribute constraint 
      * \public
      */
     constructor(parentModel, JSONData) {
 
         /**
-         * The Model the style sheet rule rule attribute constraint is described in
+         * The Model the Hubble attribute constraint is described in
          * \var Model
          * \protected
          */
         this._parentModel = parentModel;
 
         /**
-         * The data describing the style sheet rule rule attribute constraint 
+         * The data describing the Hubble attribute constraint 
          * \var Object
          * \protected
          */

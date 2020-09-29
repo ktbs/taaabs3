@@ -1,27 +1,27 @@
-import {StylesheetRuleRule} from "./StylesheetRuleRule.js";
+import {HubbleSubRule} from "./HubbleSubRule.js";
 
 /**
- * Class for style sheets rules. Please note that this class is NOT a descendant from "Resource". Therefore, StylesheetRule instances don't support get/put/post/delete as style sheets rules data management is the responsibility of their respective parent Model instance.
+ * Class for Hubble rules. Please note that this class is NOT a descendant from "Resource". Therefore, HubbleRule instances don't support get/put/post/delete as Hubble rules data management is the responsibility of their respective parent Model instance.
  */
-export class StylesheetRule {
+export class HubbleRule {
 
     /**
-     * Constructor for class StylesheetRule
-     * \param Model parentModel - the Model the style sheet rule is described in
-     * \param Object JSONData - the data describing the style sheet rule
+     * Constructor for class HubbleRule
+     * \param Model parentModel - the Model the Hubble rule is described in
+     * \param Object JSONData - the data describing the Hubble rule
      * \public
      */
     constructor(parentModel, JSONData = {}) {
 
         /**
-         * The Model the style sheet rule is described in
+         * The Model the Hubble rule is described in
          * \var Model
          * \protected
          */
         this._parentModel = parentModel;
 
         /**
-         * The data describing the style sheet rule
+         * The data describing the Hubble rule
          * \var Object
          * \protected
          */
@@ -29,7 +29,7 @@ export class StylesheetRule {
     }
 
     /**
-     * Gets the ID of the style sheet rule
+     * Gets the ID of the Hubble rule
      * \return string
      * \public
      */
@@ -38,8 +38,8 @@ export class StylesheetRule {
     }
 
     /**
-     * Sets the ID of the style sheet rule
-     * \param string new_id - the new ID for the style sheet rule
+     * Sets the ID of the Hubble rule
+     * \param string new_id - the new ID for the Hubble rule
      * \public
      */
     set id(new_id) {
@@ -68,7 +68,7 @@ export class StylesheetRule {
     }
 
     /**
-     * Gets whether or not the Obsels matching the style sheet rule should be visibles
+     * Gets whether or not the Obsels matching the Hubble rule should be visibles
      * \return boolean
      * \public
      */
@@ -77,8 +77,8 @@ export class StylesheetRule {
     }
 
     /**
-     * Sets whether or not an Obsel matching the style sheet rule should be visible
-     * \param boolean new_visible - the new visibility for Obsels matching the style sheet rule
+     * Sets whether or not an Obsel matching the Hubble rule should be visible
+     * \param boolean new_visible - the new visibility for Obsels matching the Hubble rule
      * \public
      */
     set visible(new_visible) {
@@ -89,8 +89,8 @@ export class StylesheetRule {
     }
 
     /**
-     * Gets the style sheet rule rules as an Array of StylesheetRuleRule
-     * \return Arrayof StylesheetRuleRule
+     * Gets the Hubble rule rules as an Array of HubbleSubRule
+     * \return Arrayof HubbleSubRule
      * \public
      */
     get rules() {
@@ -100,7 +100,7 @@ export class StylesheetRule {
             if(this._JSONData["rules"] instanceof Array) {
                 for(let i = 0; i < this._JSONData["rules"].length; i++) {
                     let aRuleRuleData = this._JSONData["rules"][i];
-                    let aRuleRule = new StylesheetRuleRule(this._parentModel, aRuleRuleData);
+                    let aRuleRule = new HubbleSubRule(this._parentModel, aRuleRuleData);
                     this._rules.push(aRuleRule);
                 }
             }
@@ -110,8 +110,8 @@ export class StylesheetRule {
     }
 
     /**
-     * Sets the rules of the style sheet rule
-     * \param Array of StylesheetRuleRule - new_rules the new rules for the style sheet rule
+     * Sets the rules of the Hubble rule
+     * \param Array of HubbleSubRule - new_rules the new rules for the Hubble rule
      * \public
      */
     set rules(new_rules) {
@@ -136,19 +136,19 @@ export class StylesheetRule {
     }
     
     /**
-     * Gets a default "catch-all" rule that matches any obsel
-     * \return StylesheetRuleRule
+     * Gets a default "catch-all" sub-rule that matches any obsel
+     * \return HubbleSubRule
      * \static
      * \public
      */
     static get catchAllRule() {
-        if(!StylesheetRule._catchAllRule) {
-            StylesheetRule._catchAllRule = new StylesheetRule();
-            let aRuleRule = new StylesheetRuleRule();
+        if(!HubbleRule._catchAllRule) {
+            HubbleRule._catchAllRule = new HubbleRule();
+            let aRuleRule = new HubbleSubRule();
             aRuleRule.type = "*";
-            StylesheetRule._catchAllRule.rules.push(aRuleRule);
+            HubbleRule._catchAllRule.rules.push(aRuleRule);
         }
 
-		return StylesheetRule._catchAllRule;
+		return HubbleRule._catchAllRule;
 	}
 }

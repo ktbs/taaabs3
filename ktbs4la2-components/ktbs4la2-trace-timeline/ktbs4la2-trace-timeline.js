@@ -3,8 +3,8 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 import {ResourceMultiton} from "../../ktbs-api/ResourceMultiton.js";
 import {Trace} from "../../ktbs-api/Trace.js";
 import {Stylesheet} from "../../ktbs-api/Stylesheet.js";
-import {StylesheetRule} from "../../ktbs-api/StylesheetRule.js";
-import {StylesheetRuleRule} from "../../ktbs-api/StylesheetRuleRule.js";
+import {HubbleRule} from "../../ktbs-api/HubbleRule.js";
+import {HubbleSubRule} from "../../ktbs-api/HubbleSubRule.js";
 
 import "./ktbs4la2-trace-timeline-style-legend.js";
 import "../ktbs4la2-timeline/ktbs4la2-timeline.js";
@@ -377,14 +377,14 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 		for(let i = 0; i < knownObselTypes.length; i++) {
 			let obselTypeID = knownObselTypes[i];
-			let aRule = new StylesheetRule();
+			let aRule = new HubbleRule();
 			aRule.id = obselTypeID;
 			aRule.symbol = new Object();
 			aRule.symbol.color = getDistinctColor(i, knownObselTypes.length);
 			aRule.symbol.shape = "duration-bar";
-			let aRuleRule = new StylesheetRuleRule();
-			aRuleRule.type = obselTypeID;
-			aRule.rules.push(aRuleRule);
+			let aSubRule = new HubbleSubRule();
+			aSubRule.type = obselTypeID;
+			aRule.rules.push(aSubRule);
 			defaultStyleSheet.rules.push(aRule);
 		}
 		
@@ -513,7 +513,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 		for(let i = 0; i < obselTypes.length; i++) {
 			let obselType = obselTypes[i];
-			let aRule = new StylesheetRule();
+			let aRule = new HubbleRule();
 			let obselTypeLabel = obselType.get_translated_label(this._lang);
 
 			if(obselTypeLabel)
@@ -533,14 +533,14 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			else
 				aRule.symbol.shape = "duration-bar";
 
-			let aRuleRule = new StylesheetRuleRule();
-			aRuleRule.type = obselType.uri;
-			aRule.rules.push(aRuleRule);
+			let aSubRule = new HubbleSubRule();
+			aSubRule.type = obselType.uri;
+			aRule.rules.push(aSubRule);
 			defaultStyleSheet.rules.push(aRule);
 		}
 		
 		// add a default "catch-all" rule
-		let catchAllRule = StylesheetRule.catchAllRule;
+		let catchAllRule = HubbleRule.catchAllRule;
 		catchAllRule.id = this._translateString("Unknown obsel type");
 		defaultStyleSheet.rules.push(catchAllRule);
 		return defaultStyleSheet;

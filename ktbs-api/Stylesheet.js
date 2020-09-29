@@ -1,4 +1,4 @@
-import {StylesheetRule} from "./StylesheetRule.js";
+import {HubbleRule} from "./HubbleRule.js";
 
 /**
  * Class for style sheets. Please note that this class is NOT a descendant from "Resource". Therefore, Stylesheet instances don't support get/put/post/delete as style sheets data management is the responsibility of their respective parent Model instance.
@@ -66,7 +66,7 @@ export class Stylesheet {
 
     /**
      * Gets the rules of the stylesheet
-     * \return Array of StylesheetRule
+     * \return Array of HubbleRule
      * \public
      */
     get rules() {
@@ -76,7 +76,7 @@ export class Stylesheet {
             if(this._JSONData["rules"] instanceof Array) {
                 for(let i = 0; i < this._JSONData["rules"].length; i++) {
                     let aRuleJSONData = this._JSONData["rules"][i];
-                    let aRule = new StylesheetRule(this._parentModel, aRuleJSONData);
+                    let aRule = new HubbleRule(this._parentModel, aRuleJSONData);
                     this._rules.push(aRule);
                 }
             }
@@ -87,7 +87,7 @@ export class Stylesheet {
 
     /**
      * Sets the rules of the style sheet
-     * \param Array of StylesheetRule new_rules - the new rules for the style sheet
+     * \param Array of HubbleRule new_rules - the new rules for the style sheet
      * \public
      */
     set rules(new_rules) {
@@ -97,7 +97,7 @@ export class Stylesheet {
     /**
      * Gets the first rule of the current stylesheet that matches an obsel provided as an argument, or null if none of them matches it
      * \param Obsel obsel - the obsel we want the first matching rule for
-     * \return StylesheetRule
+     * \return HubbleRule
      * \public
      */
     getFirstRuleMatchedByObsel(obsel) {

@@ -1,27 +1,27 @@
-import {StylesheetRuleRuleAttributeConstraint} from "./StylesheetRuleRuleAttributeConstraint.js";
+import {HubbleAttributeConstraint} from "./HubbleAttributeConstraint.js";
 
 /**
- * Class for style sheet rule rule
+ * Class for Hubble sub-rules
  */
-export class StylesheetRuleRule {
+export class HubbleSubRule {
 
     /**
-     * Constructor for class StylesheetRuleRule
-     * \param Model parentModel - the Model the style sheet rule rule is described in
-     * \param Object JSONData - the data describing the style sheet rule
+     * Constructor for class HubbleSubRule
+     * \param Model parentModel - the Model the Hubble sub-rule is described in
+     * \param Object JSONData - the data describing the Hubble sub-rule
      * \public
      */
     constructor(parentModel, JSONData = {}) {
 
         /**
-         * The Model the style sheet rule rule is described in
+         * The Model the Hubble sub-rule is described in
          * \var Model
          * \protected
          */
         this._parentModel = parentModel;
 
         /**
-         * The data describing the style sheet rule rule
+         * The data describing the Hubble sub-rule
          * \var Object
          * \protected
          */
@@ -29,7 +29,7 @@ export class StylesheetRuleRule {
     }
 
     /**
-     * Gets the ObselType pattern that an Obsel must match to match the style sheet rule rule
+     * Gets the ObselType pattern that an Obsel must match to match the Hubble sub-rule
      * \return string
      * \public
      */
@@ -38,8 +38,8 @@ export class StylesheetRuleRule {
     }
 
     /**
-     * Sets the ObselType pattern that an Obsel must match to match the style sheet rule rule
-     * \param string new_type - the new ObselType pattern that an Obsel must match to match the style sheet rule rule
+     * Sets the ObselType pattern that an Obsel must match to match the Hubble sub-rule
+     * \param string new_type - the new ObselType pattern that an Obsel must match to match the Hubble sub-rule
      * \public
      */
     set type(new_type) {
@@ -48,7 +48,7 @@ export class StylesheetRuleRule {
 
     /**
      * Gets the attribute constraints of this rule
-     * \return StylesheetRuleRuleAttributeConstraint
+     * \return HubbleAttributeConstraint
      * \public
      */
     get attributes() {
@@ -58,7 +58,7 @@ export class StylesheetRuleRule {
             if(this._JSONData.attributes instanceof Array) {
                 for(let i = 0; i < this._JSONData.attributes.length; i++) {
                     let anAttributeData = this._JSONData.attributes[i];
-                    let anAttribute = new StylesheetRuleRuleAttributeConstraint(this._parentModel, anAttributeData);
+                    let anAttribute = new HubbleAttributeConstraint(this._parentModel, anAttributeData);
                     this._attributes.push(anAttribute);
                 }
             }

@@ -842,7 +842,7 @@
       <g class="com.sun.star.drawing.CustomShape">
        <g id="id118">
         <path fill="none" stroke="rgb(0,0,0)" d="M 31049,25059 L 28449,25059 28449,24459 33649,24459 33649,25059 31049,25059 Z"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="423px" font-weight="700"><tspan class="TextPosition" x="29527" y="24905"><tspan fill="rgb(0,0,0)" stroke="none">StylesheetRule</tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="423px" font-weight="700"><tspan class="TextPosition" x="29527" y="24905"><tspan fill="rgb(0,0,0)" stroke="none">HubbleRule</tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.CustomShape">
@@ -862,7 +862,7 @@
       <g class="com.sun.star.drawing.CustomShape">
        <g id="id121">
         <path fill="none" stroke="rgb(0,0,0)" d="M 20499,28459 L 17549,28459 17549,27859 23449,27859 23449,28459 20499,28459 Z"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="423px" font-weight="700"><tspan class="TextPosition" x="18518" y="28305"><tspan fill="rgb(0,0,0)" stroke="none">StylesheetRuleRule</tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="423px" font-weight="700"><tspan class="TextPosition" x="18518" y="28305"><tspan fill="rgb(0,0,0)" stroke="none">HubbleSubRule</tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.CustomShape">
@@ -950,7 +950,7 @@
       <g class="com.sun.star.drawing.CustomShape">
        <g id="id136">
         <path fill="none" stroke="rgb(0,0,0)" d="M 10749,24759 L 6449,24759 6449,24159 15049,24159 15049,24759 10749,24759 Z"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="423px" font-weight="700"><tspan class="TextPosition" x="6829" y="24605"><tspan fill="rgb(0,0,0)" stroke="none">StylesheetRuleRuleAttributeConstraint</tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="423px" font-weight="700"><tspan class="TextPosition" x="6829" y="24605"><tspan fill="rgb(0,0,0)" stroke="none">HubbleAttributeConstraint</tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.CustomShape">
