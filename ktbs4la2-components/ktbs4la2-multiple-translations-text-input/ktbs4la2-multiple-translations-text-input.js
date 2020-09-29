@@ -137,8 +137,10 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 							input.setAttribute("required", true);
 						}
 					} 
-					else if((!input.value) && (this._required_langs.length > 0))
+					else if((!input.value) && (this._required_langs.length > 0)) {
 						input.parentNode.remove();
+						this._reIndexTabNavigation();
+					}
 				}
 
 				for(let i = 0; i < this._required_langs.length; i++) {
@@ -196,8 +198,9 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 		if(this.getAttribute("spellcheck"))
 			newLocalizedInput.setAttribute("spellcheck", this.getAttribute("spellcheck"));
 
-		const inputTabIndex = 2 * this._getLocalizedInputs().length + 1;
-		newLocalizedInput.setAttribute("tabIndex", inputTabIndex);
+		const currentLocalizedInputsCount = this._getLocalizedInputs().length;
+		const newLocalizedInputTabIndex = (currentLocalizedInputsCount > 0)?(2 * currentLocalizedInputsCount):1;
+		newLocalizedInput.setAttribute("tabIndex", newLocalizedInputTabIndex);
 
 		inputContainer.appendChild(newLocalizedInput);
 		newLocalizedInput.addEventListener("focus", this._onLocalizedInputFocus.bind(this));
@@ -209,7 +212,7 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 			removeTranslationButton.setAttribute("title", this._translateString("Remove this translation"));
 			removeTranslationButton.addEventListener("click", this._onClickRemoveTranslationButton.bind(this));
 			removeTranslationButton.innerText = "❌";
-			removeTranslationButton.setAttribute("tabIndex", inputTabIndex + 1);
+			removeTranslationButton.setAttribute("tabIndex", newLocalizedInputTabIndex + 1);
 			inputContainer.appendChild(removeTranslationButton);
 		}
 
@@ -239,8 +242,10 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 		if(clickedButton.classList.contains("remove-translation-button")) {
 			const parentContainer = clickedButton.parentNode;
 
-			if(parentContainer.classList.contains("localized-input-container"))
+			if(parentContainer.classList.contains("localized-input-container")) {
 				parentContainer.remove();
+				this._reIndexTabNavigation();
+			}
 		}
 	}
 
@@ -326,6 +331,16 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 		for(let i = 0; i < removeTranslationButtons.length; i++)
 			removeTranslationButtons[i].setAttribute("title", this._translateString("Remove this translation"));
 	}
+
+	/**
+     * 
+     */
+    _reIndexTabNavigation() {
+        const localizedInputsAndRemoveButtons = this.shadowRoot.querySelectorAll("ktbs4la2-localized-text-input, button.remove-translation-button");
+
+        for(let i = 0; i < localizedInputsAndRemoveButtons.length; i++)
+            localizedInputsAndRemoveButtons[i].setAttribute("tabIndex", (i + 1));
+    }
 }
 
 customElements.define('ktbs4la2-multiple-translations-text-input', KTBS4LA2MultipleTranslationsTextInput);
