@@ -56,6 +56,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
         _observedAttributes.push("allowed-resource-types");
         _observedAttributes.push("required");
         _observedAttributes.push("value");
+        _observedAttributes.push("allowed-resource-count");
 		return _observedAttributes;
     }
     
@@ -69,7 +70,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
         for(let i = 0; i < pickers.length; i++)
             pickers_values.push(pickers[i].value);
 
-        return pickers_values.join(" ");
+        return pickers_values.filter(Boolean).join(" ");
     }
 
     /**
@@ -80,15 +81,23 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 
         this._componentReady.then(() => {    
             const pickers = this._getResourcePickers();
-            const maxI = Math.max(new_values.length, pickers.length);
+            if(this.getAttribute("allowed-resource-count") != "1") {
+                const maxI = Math.max(new_values.length, pickers.length);
 
-            for(let i = 0; i < maxI; i++) {
-                if((i < new_values.length) && (i < pickers.length))
-                    pickers[i].value = new_values[i];
-                else if((i < pickers.length) && (i >= new_values.length))
-                    pickers[i].value = "";
-                else if((i < new_values.length) && (i >= pickers.length))
-                    this._addResourcePicker(new_values[i], (i > 0));
+                for(let i = 0; i < maxI; i++) {
+                    if((i < new_values.length) && (i < pickers.length))
+                        pickers[i].value = new_values[i];
+                    else if((i < pickers.length) && (i >= new_values.length))
+                        pickers[i].value = "";
+                    else if((i < new_values.length) && (i >= pickers.length))
+                        this._addResourcePicker(new_values[i], (i > 0));
+                }
+            }
+            else {
+                if(new_values.length >= 1)
+                    pickers[1].value = new_values[1];
+                else
+                    pickers[1].value = "";
             }
         }).catch(() => {});
     }
@@ -101,18 +110,27 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 		super.attributeChangedCallback(name, oldValue, newValue);
         
         if(name == "required") {
-            const currentPickers = this._getResourcePickers();
-            
-            if(currentPickers.length > 0)
-                currentPickers[0].setAttribute("required", ((this.getAttribute("required") == "") || (this.getAttribute("required") == "true") || (this.getAttribute("required") == "1")));
+            this._componentReady.then(() => {
+                const currentPickers = this._getResourcePickers();
+                
+                if(currentPickers.length > 0)
+                    currentPickers[0].setAttribute("required", ((this.getAttribute("required") == "") || (this.getAttribute("required") == "true") || (this.getAttribute("required") == "1")));
+            }).catch(() => {});
         }
         if(name == "allowed-resource-count") {
-            if(newValue == "*") {
-                this._allowMultipleResources = true;
-            }
             if(newValue == "1") {
-                this._allowMultipleResources = false;
-                // @TODO : supprimer les resource pickers en trop (= après le 1er)
+                this._componentReady.then(() => {
+                    const currentPickers = this._getResourcePickers();
+
+                    for(let i = 1; i < currentPickers.length; i++) {
+                        const parentContainer = currentPickers[i].parentNode;
+
+                        if(parentContainer.classList.contains("resource-picker-container"))
+                            parentContainer.remove();
+                    }
+
+                    this._reIndexTabNavigation();
+                }).catch(() => {});
             }
             else
                 this.emitErrorEvent(new RangeError("Only values \"1\" or \"*\" are allowed for attribute \"allowed-resource-count\""));
@@ -151,7 +169,11 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
      * 
      */
     _updateStringsTranslation() {
-        // ...
+        this._addResourceButton.setAttribute("title", this._translateString("Add a resource"));
+        const removeButtons = this.shadowRoot.querySelectorAll("button.remove-resource-button");
+
+        for(let i = 0; i < removeButtons.length; i++)
+            removeButtons[i].setAttribute("title", this._translateString("Remove this resource"));
     }
 
     /**
@@ -188,8 +210,9 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 		if(this.getAttribute("placeholder"))
 			newResourcePicker.setAttribute("placeholder", this.getAttribute("placeholder"));
 
-		const pickerTabIndex = 2 * this._getResourcePickers().length + 1;
-		newResourcePicker.setAttribute("tabIndex", pickerTabIndex);
+        const currentPickersCount = this._getResourcePickers().length;
+		const newPickerTabIndex = (currentPickersCount > 0)?(2 * currentPickersCount):1;
+		newResourcePicker.setAttribute("tabIndex", newPickerTabIndex);
 
 		pickerContainer.appendChild(newResourcePicker);
 		newResourcePicker.addEventListener("focus", this._onResourcePickerFocus.bind(this));
@@ -201,7 +224,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 			removeResourceButton.setAttribute("title", this._translateString("Remove this resource"));
 			removeResourceButton.addEventListener("click", this._onClickRemoveResourceButton.bind(this));
 			removeResourceButton.innerText = "❌";
-			removeResourceButton.setAttribute("tabIndex", pickerTabIndex + 1);
+			removeResourceButton.setAttribute("tabIndex", newPickerTabIndex + 1);
 			pickerContainer.appendChild(removeResourceButton);
         }
         
@@ -223,13 +246,15 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onClickAddResourceButton(event) {
-		this._addResourcePicker();
-		const resourcePickers = this._getResourcePickers();
+        if(this.getAttribute("allowed-resource-count") != "1") {
+            this._addResourcePicker();
+            const resourcePickers = this._getResourcePickers();
 
-		if(resourcePickers.length > 0)
-			resourcePickers[resourcePickers.length - 1]._componentReady.then(() => {
-				resourcePickers[resourcePickers.length - 1].focus();
-			});
+            if(resourcePickers.length > 0)
+                resourcePickers[resourcePickers.length - 1]._componentReady.then(() => {
+                    resourcePickers[resourcePickers.length - 1].focus();
+                });
+        }
 	}
 
     /**
@@ -237,6 +262,18 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 	 */
 	_onResourcePickerFocus(event) {
 		event.stopPropagation();
+    }
+
+    /**
+     * 
+     */
+    _onFocus(event) {
+        this._componentReady.then(() => {
+            const pickers = this._getResourcePickers();
+
+            if(pickers.length > 0)
+                pickers[0].focus();
+        }).catch(() => {});
     }
     
     /**
@@ -248,10 +285,22 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 		if(clickedButton.classList.contains("remove-resource-button")) {
 			const parentContainer = clickedButton.parentNode;
 
-			if(parentContainer.classList.contains("resource-picker-container"))
-				parentContainer.remove();
+			if(parentContainer.classList.contains("resource-picker-container")) {
+                parentContainer.remove();
+                this._reIndexTabNavigation();
+            }
 		}
-	}
+    }
+
+    /**
+     * 
+     */
+    _reIndexTabNavigation() {
+        const pickersAndRemoveButtons = this.shadowRoot.querySelectorAll("ktbs4la2-resource-picker, button.remove-resource-button");
+
+        for(let i = 0; i < pickersAndRemoveButtons.length; i++)
+            pickersAndRemoveButtons[i].setAttribute("tabIndex", (i + 1));
+    }
 
     /**
      * 

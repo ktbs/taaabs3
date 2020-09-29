@@ -55,3 +55,7 @@ ktbs4la2-resource-picker {
     background-color: var(--color-highlight, royalblue);
     opacity: 1;
 }
+
+:host([allowed-resource-count = "1"]) #add-resource {
+    display: none;
+}
