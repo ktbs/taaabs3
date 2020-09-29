@@ -101,7 +101,7 @@ class TemplatedHTMLElement extends HTMLElement {
 			if(this._updateStringsTranslation)
 				Promise.all([this._componentReady, this._translationFetched]).then(() => {
 					this._updateStringsTranslation();
-				});
+				}).catch(() => {});
 
 			this._initLang();
 			this.dispatchEvent(new CustomEvent("langchange"));
@@ -135,7 +135,7 @@ class TemplatedHTMLElement extends HTMLElement {
 		if(this._updateStringsTranslation)
 			Promise.all([this._translationFetched, this._componentReady]).then(() => {
 				this._updateStringsTranslation();
-			});
+			}).catch(() => {});
 
 		this._initLang();
 	}
