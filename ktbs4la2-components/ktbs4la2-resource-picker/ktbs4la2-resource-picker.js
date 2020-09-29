@@ -118,7 +118,11 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
      * 
      */
     _onFocus(event) {
-        this._uriInput.focus();
+        this._componentReady.then(() => {
+            this._uriInput._componentReady.then(() => {
+                this._uriInput.focus();
+            }).catch(() => {});
+        }).catch(() => {});
      }
 
     /**
