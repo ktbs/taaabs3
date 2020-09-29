@@ -30,32 +30,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url, true, true);
 		this._obsels = new Array();
-		/*this._resolveTraceLoaded;
-		this._rejectTraceLoaded;
-
-		this._traceLoaded =  new Promise((resolve, reject) => {
-			this._resolveTraceLoaded = resolve;
-			this._rejectTraceLoaded = reject;
-		});
-
-		this._resolveModelLoaded;
-		this._rejectModelLoaded;
-
-		this._modelLoaded =  new Promise((resolve, reject) => {
-			this._resolveModelLoaded = resolve;
-			this._rejectModelLoaded = reject;
-		});
-
-		this._modelLoaded
-			.then(() => {
-				this._onModelLoaded();
-			})
-			.catch((error) => {
-				this.emitErrorEvent(error);
-			});
-
-		this._resolveAllObselsLoaded;
-		this._rejectAllObselsLoaded;*/
 		this._resolveStylesheetsBuilded;
 
 		this._stylesheetsBuilded =  new Promise((resolve, reject) => {
@@ -64,7 +38,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 		this._styleSheets = new Array();
 		this._currentStylesheet = null;
-		//this._traceUri = null;
 		this._originTime = 0;
 		this._obselsLoadingAbortController = new AbortController();
 		this._allowFullScreen = true;
@@ -323,8 +296,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_initObselsLoading() {
-		//let obselsUri = this._traceUri + "@obsels";
-		//this._obselList = ResourceMultiton.get_resource(ObselList, obselsUri);
 		this._obselList = this._trace.obsel_list;
 
 		this._allObselsLoaded = new Promise(function(resolve, reject) {
@@ -351,10 +322,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					this._loadingStatusIcon.setAttribute("title", this._translateString("Loading complete"));
 					this._obselsLoadingIndications.className = "loaded";
 				});
-			})/*
-			.finally(() => {
-				this._onObselLoadEnded();
-			})*/;
+			});
 	}
 
 	/**
@@ -391,28 +359,9 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		return defaultStyleSheet;
 	}
 
-
-
-	/**
-	 * This callback function is triggered when the loading of obsels stops, wether it is successfull or not
-	 */
-	/*_onObselLoadEnded() {
-		this._componentReady.then(() => {
-			this._modelLoaded.catch(() => {
-				let defaultStyleSheet = this._generateDefaultStylesheetFromObsels();
-
-				if((defaultStyleSheet != null) && (!this.hasAttribute("stylesheet") || (this.getAttribute("stylesheet").toLowerCase() == "default")))
-					this._applyStyleSheet(defaultStyleSheet, false);
-
-				this._resolveStylesheetsBuilded();
-			});
-		});
-	}*/
-
 	/**
 	 * 
 	 */
-	//_onTraceLoaded() {
 	_onTraceReady() {
 		const traceOriginString = this._trace.origin;
 
@@ -440,7 +389,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._stats = this._trace.stats;
 		this._stats.registerObserver(this._onStatsNotification.bind(this));
 		this._onStatsNotification(this._stats, "sync-status-change");
-
 		this._initObselsLoading();
 	}
 
@@ -481,13 +429,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				break;
 		}
 	}
-
-	/**
-	 * 
-	 */
-	/*_onTraceLoadFailed(error) {
-		this._setError(error);
-	}*/
 
 	/**
 	 * 
@@ -549,7 +490,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	//_onModelLoaded() {
 	_onModelReady() {
 		this._componentReady.then(() => {
 			let defaultStylesheetGeneratedFromModel = this._generateDefaultStylesheetFromModel();
@@ -667,9 +607,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			}
 		}
 
-
-
-
 		// --- apply rules to obsels ---
 		for(let i = 0; i < this._obsels.length; i++) {
 			let anObsel = this._obsels[i];
@@ -742,7 +679,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	//_onStatsLoaded() {
 	_onStatsReady() {
 		this._expectedObselCount = (this._stats.obsel_count != undefined)?this._stats.obsel_count:0;
 
