@@ -7,18 +7,10 @@ export class Stylesheet {
     
     /**
      * Constructor for class Stylesheet
-     * \param Model parentModel - the Model the style sheet is described in
      * \param Object JSONData - the data describing the style sheet
      * \public
      */
-    constructor(parentModel, JSONData = {}) {
-
-        /**
-         * The Model the style sheet is described in
-         * \var Model
-         * \protected
-         */
-        this._parentModel = parentModel;
+    constructor(JSONData = {}) {
 
         /**
          * The data describing the style sheet
@@ -76,7 +68,7 @@ export class Stylesheet {
             if(this._JSONData["rules"] instanceof Array) {
                 for(let i = 0; i < this._JSONData["rules"].length; i++) {
                     let aRuleJSONData = this._JSONData["rules"][i];
-                    let aRule = new HubbleRule(this._parentModel, aRuleJSONData);
+                    let aRule = new HubbleRule(aRuleJSONData);
                     this._rules.push(aRule);
                 }
             }

@@ -7,18 +7,10 @@ export class HubbleRule {
 
     /**
      * Constructor for class HubbleRule
-     * \param Model parentModel - the Model the Hubble rule is described in
      * \param Object JSONData - the data describing the Hubble rule
      * \public
      */
-    constructor(parentModel, JSONData = {}) {
-
-        /**
-         * The Model the Hubble rule is described in
-         * \var Model
-         * \protected
-         */
-        this._parentModel = parentModel;
+    constructor(JSONData = {}) {
 
         /**
          * The data describing the Hubble rule
@@ -100,7 +92,7 @@ export class HubbleRule {
             if(this._JSONData["rules"] instanceof Array) {
                 for(let i = 0; i < this._JSONData["rules"].length; i++) {
                     let aRuleRuleData = this._JSONData["rules"][i];
-                    let aRuleRule = new HubbleSubRule(this._parentModel, aRuleRuleData);
+                    let aRuleRule = new HubbleSubRule(aRuleRuleData);
                     this._rules.push(aRuleRule);
                 }
             }

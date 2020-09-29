@@ -1,3 +1,5 @@
+import {KtbsError} from "./Errors.js";
+
 /**
  * Class for Hubble attribute constraint
  */
@@ -5,18 +7,10 @@ export class HubbleAttributeConstraint {
 
     /**
      * Constructor for class HubbleAttributeConstraint
-     * \param Model parentModel - the Model the Hubble attribute constraint is described in
      * \param Object JSONData - the data describing the Hubble attribute constraint 
      * \public
      */
-    constructor(parentModel, JSONData) {
-
-        /**
-         * The Model the Hubble attribute constraint is described in
-         * \var Model
-         * \protected
-         */
-        this._parentModel = parentModel;
+    constructor(JSONData) {
 
         /**
          * The data describing the Hubble attribute constraint 
@@ -54,45 +48,6 @@ export class HubbleAttributeConstraint {
     }
 
     /**
-     * Gets the ID of the AttributeType that is targeted by this constraint
-     * \return string
-     * \public
-     */
-    get type_id() {
-        if(!this._type_id && this.uri && this.uri.hash)
-            this._type_id = decodeURIComponent(this.uri.hash.substring(1));
-
-        return this._type_id;
-    }
-
-    /**
-     * Gets the AttributeType that is targeted by this constraint
-     * \return AttributeType
-     * \public
-     */
-    get type() {
-        if(!this._type && this.type_id)
-            this._type = this._parentModel.get_attribute_type(this.type_id);
-
-        return this._type;
-    }
-
-    /**
-     * Sets the AttributeType that is targeted by this constraint
-     * \param AttributeType new_type - the new AttributeType that is targeted by this constraint
-     * \throws TypeError throws a TypeError if provided value for parameter new_type is not an instance of AttributeType
-     * \public
-     */
-    set type(new_type) {
-        if(new_type instanceof AttributeType) {
-            this._uri = new_type.uri;
-            this._type = new_type;
-        }
-        else
-            throw new TypeError("Value for \"type\" property must be an instance of AttributeType");
-    }
-
-    /**
      * Gets the operator used to check the if an Obsel Attribute matches this constraint
      * \return string
      * \public
@@ -107,7 +62,10 @@ export class HubbleAttributeConstraint {
      * \public
      */
     set operator(new_operator) {
-        this._JSONData["operator"] = new_operator;
+        if(["==", "<", ">", "<=", ">="].includes(new_operator))
+            this._JSONData["operator"] = new_operator;
+        else
+            throw new KtbsError("Invalid operator \"" + new_operator + "\". Valid operators are : \"==\", \"<\", \">\", \"<=\", or \">=\"");
     }
 
     /**
@@ -135,12 +93,24 @@ export class HubbleAttributeConstraint {
      * \public
      */
     matchedByObselAttribute(obselAttribute) {
-        try {
-            let testString = '"' + obselAttribute.value + '"' + this.operator + '"' + this.value + '"';
-            return (eval(testString) === true);
-        }
-        catch(error) {
-            return false;
+        switch(this.operator) {
+            case "==": 
+                return (obselAttribute.value == this.value);
+                break;
+            case "<":
+                return (obselAttribute.value < this.value);
+                break;
+            case ">":
+                return (obselAttribute.value > this.value);
+                break;
+            case "<=":
+                return (obselAttribute.value <= this.value);
+                break;
+            case ">=":
+                return (obselAttribute.value >= this.value);
+                break;
+            default:
+                return false;
         }
     }
 
@@ -157,7 +127,7 @@ export class HubbleAttributeConstraint {
 		for(let i = 0; i < obsel_attributes.length; i++) {
 			let obselAttribute = obsel_attributes[i];
 
-			if(obselAttribute.type && this.type && (obselAttribute.type.uri.toString() == this.type.uri.toString())) {
+            if(obselAttribute.type.uri.toString() == this.uri.toString()) {
 				matched = this.matchedByObselAttribute(obselAttribute);
 
 				if(matched)

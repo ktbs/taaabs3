@@ -397,11 +397,11 @@ export class Model extends Resource {
 						if(styleSheetsData instanceof Array) {
 							for(let i = 0; i < styleSheetsData.length; i++) {
 								let aStyleSheetData = styleSheetsData[i];
-								this._styleSheets.push(new Stylesheet(this, JSON.parse(aStyleSheetData)));
+								this._styleSheets.push(new Stylesheet(JSON.parse(aStyleSheetData)));
 							}
 						}
 						else
-							this._styleSheets.push(new Stylesheet(this, JSON.parse(styleSheetsData)));
+							this._styleSheets.push(new Stylesheet(JSON.parse(styleSheetsData)));
 					}
 				}
 			}
