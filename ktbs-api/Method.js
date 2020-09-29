@@ -556,8 +556,8 @@ Method._builtin_methods_data = [
 			},
 			{
 				id: "inherit",
-				type: "Inherit properties",
-				label: "Inherit",
+				type: Boolean,
+				label: "Inherit properties",
 				description: "Inherit properties from source obsel"
 			}
 		]
