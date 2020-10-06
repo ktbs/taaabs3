@@ -581,6 +581,13 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
             }
         }
 
+        if(!this.multiple) {
+            const selectedOption = this._options.querySelector(".option.selected");
+
+            if(selectedOption)
+                this._selectedItemDisplay.innerHTML = selectedOption.innerHTML;
+        }
+
         this._adjustWidth();
     }
 
