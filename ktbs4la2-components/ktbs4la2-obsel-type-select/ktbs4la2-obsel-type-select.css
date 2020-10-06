@@ -1,0 +1,84 @@
+:host {
+    display: inline-block;
+    position: relative;
+    user-select: none;
+}
+
+#select {
+    cursor: default;
+}
+
+:host(:focus-within) {
+    outline: 1px solid black;
+}
+
+:host(:not([multiple])) #select.open {
+    outline: none;
+}
+
+#selected-item-display {
+    border: 1px solid lightgray;
+    background-image: url('{my-component-folder}/chevron-down.svg');
+    background-repeat: no-repeat;
+    background-position: center right 2px;
+    background-size: 15px 15px;
+}
+
+#selected-item-display * {
+    vertical-align: middle;
+}
+
+:host([multiple]) #selected-item-display {
+    display: none;
+}
+
+#options {
+    border: 1px solid lightgray;
+}
+
+:host(:not([multiple])) #options {
+    position: absolute;
+    top: calc(100% - 1px);
+    background: #fff;
+    visibility: hidden;
+    left: 0px;
+}
+
+#select.open #options, :host([multiple]) #options {
+    visibility: visible;
+}
+
+#selected-item-display, .option {
+    padding: 2px 20px 1px 3px;
+}
+
+:host([multiple]) #selected-item-display {
+    display: none;
+}
+
+.option {
+    width: calc(100% - 23px);
+    white-space: nowrap;
+}
+
+:host([multiple]) .option:focus {
+    outline: 1px dotted gray;
+}
+
+:host(:not([multiple])) .option:hover, :host([multiple]) .option.selected , #options:not(:hover) .option.selected {
+    background-color: rgb(230, 245, 255);
+}
+
+:host([required = ""]) #default, :host([required = "true"]) #default, :host([required = "1"]) #default,
+:host([multiple]) #default {
+    display: none;
+}
+
+.default-label {
+    font-style: italic;
+    color: gray;
+}
+
+.obsel-type-symbol {
+    font-family: "unifont", "unifont-upper";
+}
