@@ -1,12 +1,19 @@
 import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Resource} from "./Resource.js";
 import {Base} from "./Base.js";
-import {Model} from "./Model.js";
 
 /**
  * Class for the "Method" resource type
  */
 export class Method extends Resource {
+
+	/**
+	 * The prefix for builtin methods URIs
+	 * \var string
+	 * \static
+	 * \protected
+	 */
+	static builtin_methods_prefix = "http://liris.cnrs.fr/silex/2009/ktbs#";
 
 	/**
 	 * Constructor
@@ -313,334 +320,326 @@ export class Method extends Resource {
 
 		return Method._builtin_methods_ids;
 	}
+
+	/**
+	 * Data describing builtin methods supported by default and their respective parameters
+	 * \var Array
+	 * \static
+	 * \protected
+	 */
+	static _builtin_methods_data = [
+		{
+			id: "filter",
+			label: "Filter",
+			description: "This method copies the obsels of the source trace if they pass the filter",
+			source_traces_cardinality: 1,
+			extensible: false,
+			available_parameters: [
+				{
+					id: "model",
+					type: "Model",
+					label: "Model",
+					description: "The model of the computed trace. If not provided, the model (resp. origin) of the source trace will be used instead"
+				},
+				{
+					id: "origin",
+					type: "String",
+					label: "Origin",
+					description: "The origin of the computed trace"
+				},
+				{
+					id: "after",
+					type: "Number",
+					label: "After (timestamp)",
+					description: "The integer timestamp below which obsels are filtered out"
+				},
+				{
+					id: "before",
+					type: "Number",
+					label: "Before (timestamp)",
+					description: "The integer timestamp above which obsels are filtered out"
+				},
+				{
+					id: "afterDT",
+					type: "Date",
+					label: "After (date/time)",
+					description: "The datetime timestamp below which obsels are filtered out"
+				},
+				{
+					id: "beforeDT",
+					type: "Date",
+					label: "Before (date/time)",
+					description: "The datetime timestamp above which obsels are filtered out"
+				},
+				{
+					id: "otypes",
+					type: "Array",
+					label: "Obsel types",
+					description: "Only obsels of these types (or their subtypes) will be kept"
+				},
+				{
+					id: "bgp",
+					type: "String",
+					label: "Basic graph pattern",
+					description: "A SPARQL Basic Graph Pattern used to express additional criteria"
+				},
+			]
+		},
+		{
+			id: "fusion",
+			label: "Fusion",
+			description: "This method merges the content of all its sources",
+			source_traces_cardinality: '*',
+			extensible: false,
+			available_parameters: [
+				{
+					id: "model",
+					type: "Model",
+					label: "Model",
+					description: "The model of the computed trace"
+				},
+				{
+					id: "origin",
+					type: "String",
+					label: "Origin",
+					description: "The origin of the computed trace"
+				}
+			]
+		},
+		{
+			id: "fsa",
+			label: "Finite State Automaton (FSA)",
+			description: "This method applies a Finite State Automaton to detect patterns of obsels in the source trace, and produce an obsel in the transformed trace for each pattern occurence",
+			source_traces_cardinality: 1,
+			extensible: false,
+			available_parameters: [
+				{
+					id: "model",
+					type: "Model",
+					label: "Model",
+					description: "The model of the computed trace"
+				},
+				{
+					id: "origin",
+					type: "String",
+					label: "Origin",
+					description: "The origin of the computed trace"
+				},
+				{
+					id: "fsa",
+					type: "String",
+					label: "FSA",
+					description: "The description of the FSA"
+				}
+			]
+		},
+		{
+			id: "hrules",
+			label: "Hubble Rules (HRules)",
+			description: "This method is named after the Hubble project, in which they have been proposed. Those rules can be used both as a stylesheet in the Taaabs timeline component, and as a transformation, thanks to this method. A benefit is that such a transformation can be built interactively in the timeline, with a direct visual feedback of its effect, then “materialized” as a user-defined method and applied to other traces",
+			source_traces_cardinality: 1,
+			extensible: false,
+			available_parameters: [
+				{
+					id: "model",
+					type: "Model",
+					label: "Model",
+					description: "The model of the computed trace"
+				},
+				{
+					id: "origin",
+					type: "String",
+					label: "Origin",
+					description: "The origin of the computed trace"
+				},
+				{
+					id: "rules",
+					type: "String",
+					label: "Rules",
+					description: "The description of the rules"
+				}
+			]
+		},
+		{
+			id: "pipe",
+			label: "Pipe",
+			description: "This method applies the component methods in sequence",
+			source_traces_cardinality: '*',
+			extensible: false,
+			available_parameters: [
+				{
+					id: "methods",
+					type: "Array",
+					label: "Methods",
+					description: "List of methods"
+				}
+			]
+		},
+		{
+			id: "parallel",
+			label: "Parallel",
+			description: "This method applies the component methods in parallel, and merges all resulting traces",
+			source_traces_cardinality: '*',
+			extensible: false,
+			available_parameters: [
+				{
+					id: "methods",
+					type: "Array",
+					label: "Methods",
+					description: "List of methods"
+				},
+				{
+					id: "model",
+					type: "Model",
+					label: "Model",
+					description: "The model of the computed trace"
+				},
+				{
+					id: "origin",
+					type: "String",
+					label: "Origin",
+					description: "The origin of the computed trace"
+				}
+			]
+		},
+		{
+			id: "sparql",
+			label: "Sparql",
+			description: "This method applies a SPARQL CONSTRUCT query to the source trace",
+			source_traces_cardinality: 1,
+			extensible: true,
+			available_parameters: [
+				{
+					id: "model",
+					type: "Model",
+					label: "Model",
+					description: "The model of the computed trace"
+				},
+				{
+					id: "origin",
+					type: "String",
+					label: "Origin",
+					description: "The origin of the computed trace"
+				},
+				{
+					id: "sparql",
+					type: "String",
+					label: "Sparql query",
+					description: "A SPARQL CONSTRUCT query",
+					required: true
+				},
+				{
+					id: "scope",
+					type: "String",
+					label: "Scope",
+					description: "Graph against which the SPARQL query must be executed",
+					allowed_values: [
+						{
+							value: "trace",
+							label: "Trace",
+							description: "The SPARQL query only has access to the obsels of the source trace"
+						},
+						{
+							value: "base",
+							label: "Base",
+							description: "The default graph is the union of all the information contained in the base (including subbases). The GRAPH keyword can be used to filter information per graph. Note that this is concetually clean, but very inefficient with the current implementation"
+						},
+						{
+							value: "store",
+							label : "Store",
+							description: "The default graph is the entire content of the underlying triple-sore. The GRAPH keyword can be used to filter information per graph. Note that this is only safe if all users are allowed to access any stored information. For this reason, this option is disable by default."
+						}
+					],
+					default_value: "trace"
+				},
+				{
+					id: "inherit",
+					type: "Boolean",
+					label: "Inherit properties",
+					description: "Inherit properties from source obsel"
+				}
+			]
+		},
+		{
+			id: "isparql",
+			label: "Incremental Sparql (ISparql)",
+			description: "This method applies a SPARQL SELECT query to the source trace, and builds new obsels with the result.",
+			source_traces_cardinality: 1,
+			extensible: true,
+			available_parameters: [
+				{
+					id: "model",
+					type: "Model",
+					label: "Model",
+					description: "The model of the computed trace"
+				},
+				{
+					id: "origin",
+					type: "String",
+					label: "Origin",
+					description: "The origin of the computed trace"
+				},
+				{
+					id: "sparql",
+					type: "String",
+					label: "Sparql query",
+					description: "A SPARQL SELECT query",
+					required: true
+				}
+			]
+		},
+		{
+			id: "external",
+			label: "External",
+			description: "This method invokes an external program to compute a computed trace. The external program is given as a command line, expected to produce the obsels graph of the computed trace",
+			source_traces_cardinality: '*',
+			extensible: true,
+			available_parameters: [
+				{
+					id: "model",
+					type: "Model",
+					label: "Model",
+					description: "The model of the computed trace"
+				},
+				{
+					id: "origin",
+					type: "String",
+					label: "Origin",
+					description: "The origin of the computed trace"
+				},
+				{
+					id: "command-line",
+					type: "String",
+					label: "Command line",
+					description: "The command line to execute",
+					required: true
+				},
+				{
+					id: "format",
+					type: "String",
+					label: "Format",
+					description: "The format expected and produced by the command line",
+					default_value: "turtle"
+				},
+				{
+					id: "min-sources",
+					type: "Number",
+					label: "Minimum number of sources",
+					description: "The minimum number of sources expected by the command-line"
+				},
+				{
+					id: "max-sources",
+					type: "Number",
+					label: "Maximum number of sources",
+					description: "The maximum number of sources expected by the command-line"
+				},
+				{
+					id: "feed-to-stdin",
+					type: "Boolean",
+					label: "Feed to standard input",
+					description: "Whether to use the external command standard input"
+				}
+			]
+		}
+	];	
 }
-
-/**
- * The prefix for builtin methods URIs
- * \var string
- * \static
- * \protected
- */
-Method.builtin_methods_prefix = "http://liris.cnrs.fr/silex/2009/ktbs#";
-
-/**
- * Data describing builtin methods supported by default and their respective parameters
- * \var Array
- * \static
- * \protected
- */
-Method._builtin_methods_data = [
-	{
-		id: "filter",
-		label: "Filter",
-		description: "This method copies the obsels of the source trace if they pass the filter",
-		source_traces_cardinality: 1,
-		extensible: false,
-		available_parameters: [
-			{
-				id: "model",
-				type: Model,
-				label: "Model",
-				description: "The model of the computed trace. If not provided, the model (resp. origin) of the source trace will be used instead"
-			},
-			{
-				id: "origin",
-				type: String,
-				label: "Origin",
-				description: "The origin of the computed trace"
-			},
-			{
-				id: "after",
-				type: Number,
-				label: "After (timestamp)",
-				description: "The integer timestamp below which obsels are filtered out"
-			},
-			{
-				id: "before",
-				type: Number,
-				label: "Before (timestamp)",
-				description: "The integer timestamp above which obsels are filtered out"
-			},
-			{
-				id: "afterDT",
-				type: Date,
-				label: "After (date/time)",
-				description: "The datetime timestamp below which obsels are filtered out"
-			},
-			{
-				id: "beforeDT",
-				type: Date,
-				label: "Before (date/time)",
-				description: "The datetime timestamp above which obsels are filtered out"
-			},
-			{
-				id: "otypes",
-				type: Array,
-				label: "Obsel types",
-				description: "Only obsels of these types (or their subtypes) will be kept"
-			},
-			{
-				id: "bgp",
-				type: String,
-				label: "Basic graph pattern",
-				description: "A SPARQL Basic Graph Pattern used to express additional criteria"
-			},
-		]
-	},
-	{
-		id: "fusion",
-		label: "Fusion",
-		description: "This method merges the content of all its sources",
-		source_traces_cardinality: '*',
-		extensible: false,
-		available_parameters: [
-			{
-				id: "model",
-				type: Model,
-				label: "Model",
-				description: "The model of the computed trace"
-			},
-			{
-				id: "origin",
-				type: String,
-				label: "Origin",
-				description: "The origin of the computed trace"
-			}
-		]
-	},
-	{
-		id: "fsa",
-		label: "Finite State Automaton (FSA)",
-		description: "This method applies a Finite State Automaton to detect patterns of obsels in the source trace, and produce an obsel in the transformed trace for each pattern occurence",
-		source_traces_cardinality: 1,
-		extensible: false,
-		available_parameters: [
-			{
-				id: "model",
-				type: Model,
-				label: "Model",
-				description: "The model of the computed trace"
-			},
-			{
-				id: "origin",
-				type: String,
-				label: "Origin",
-				description: "The origin of the computed trace"
-			},
-			{
-				id: "fsa",
-				type: String,
-				label: "FSA",
-				description: "The description of the FSA"
-			}
-		]
-	},
-	{
-		id: "hrules",
-		label: "Hubble Rules (HRules)",
-		description: "This method is named after the Hubble project, in which they have been proposed. Those rules can be used both as a stylesheet in the Taaabs timeline component, and as a transformation, thanks to this method. A benefit is that such a transformation can be built interactively in the timeline, with a direct visual feedback of its effect, then “materialized” as a user-defined method and applied to other traces",
-		source_traces_cardinality: 1,
-		extensible: false,
-		available_parameters: [
-			{
-				id: "model",
-				type: Model,
-				label: "Model",
-				description: "The model of the computed trace"
-			},
-			{
-				id: "origin",
-				type: String,
-				label: "Origin",
-				description: "The origin of the computed trace"
-			},
-			{
-				id: "rules",
-				type: String,
-				label: "Rules",
-				description: "The description of the rules"
-			}
-		]
-	},
-	{
-		id: "pipe",
-		label: "Pipe",
-		description: "This method applies the component methods in sequence",
-		source_traces_cardinality: '*',
-		extensible: false,
-		available_parameters: [
-			{
-				id: "methods",
-				type: Array,
-				label: "Methods",
-				description: "List of methods"
-			}
-		]
-	},
-	{
-		id: "parallel",
-		label: "Parallel",
-		description: "This method applies the component methods in parallel, and merges all resulting traces",
-		source_traces_cardinality: '*',
-		extensible: false,
-		available_parameters: [
-			{
-				id: "methods",
-				type: Array,
-				label: "Methods",
-				description: "List of methods"
-			},
-			{
-				id: "model",
-				type: Model,
-				label: "Model",
-				description: "The model of the computed trace"
-			},
-			{
-				id: "origin",
-				type: String,
-				label: "Origin",
-				description: "The origin of the computed trace"
-			}
-		]
-	},
-	{
-		id: "sparql",
-		label: "Sparql",
-		description: "This method applies a SPARQL CONSTRUCT query to the source trace",
-		source_traces_cardinality: 1,
-		extensible: true,
-		available_parameters: [
-			{
-				id: "model",
-				type: Model,
-				label: "Model",
-				description: "The model of the computed trace"
-			},
-			{
-				id: "origin",
-				type: String,
-				label: "Origin",
-				description: "The origin of the computed trace"
-			},
-			{
-				id: "sparql",
-				type: String,
-				label: "Sparql query",
-				description: "A SPARQL CONSTRUCT query",
-				required: true
-			},
-			{
-				id: "scope",
-				type: String,
-				label: "Scope",
-				description: "Graph against which the SPARQL query must be executed",
-				allowed_values: [
-					{
-						value: "trace",
-						label: "Trace",
-						description: "The SPARQL query only has access to the obsels of the source trace"
-					},
-					{
-						value: "base",
-						label: "Base",
-						description: "The default graph is the union of all the information contained in the base (including subbases). The GRAPH keyword can be used to filter information per graph. Note that this is concetually clean, but very inefficient with the current implementation"
-					},
-					{
-						value: "store",
-						label : "Store",
-						description: "The default graph is the entire content of the underlying triple-sore. The GRAPH keyword can be used to filter information per graph. Note that this is only safe if all users are allowed to access any stored information. For this reason, this option is disable by default."
-					}
-				],
-				default_value: "trace"
-			},
-			{
-				id: "inherit",
-				type: Boolean,
-				label: "Inherit properties",
-				description: "Inherit properties from source obsel"
-			}
-		]
-	},
-	{
-		id: "isparql",
-		label: "Incremental Sparql (ISparql)",
-		description: "This method applies a SPARQL SELECT query to the source trace, and builds new obsels with the result.",
-		source_traces_cardinality: 1,
-		extensible: true,
-		available_parameters: [
-			{
-				id: "model",
-				type: Model,
-				label: "Model",
-				description: "The model of the computed trace"
-			},
-			{
-				id: "origin",
-				type: String,
-				label: "Origin",
-				description: "The origin of the computed trace"
-			},
-			{
-				id: "sparql",
-				type: String,
-				label: "Sparql query",
-				description: "A SPARQL SELECT query",
-				required: true
-			}
-		]
-	},
-	{
-		id: "external",
-		label: "External",
-		description: "This method invokes an external program to compute a computed trace. The external program is given as a command line, expected to produce the obsels graph of the computed trace",
-		source_traces_cardinality: '*',
-		extensible: true,
-		available_parameters: [
-			{
-				id: "model",
-				type: Model,
-				label: "Model",
-				description: "The model of the computed trace"
-			},
-			{
-				id: "origin",
-				type: String,
-				label: "Origin",
-				description: "The origin of the computed trace"
-			},
-			{
-				id: "command-line",
-				type: String,
-				label: "Command line",
-				description: "The command line to execute",
-				required: true
-			},
-			{
-				id: "format",
-				type: String,
-				label: "Format",
-				description: "The format expected and produced by the command line",
-				default_value: "turtle"
-			},
-			{
-				id: "min-sources",
-				type: Number,
-				label: "Minimum number of sources",
-				description: "The minimum number of sources expected by the command-line"
-			},
-			{
-				id: "max-sources",
-				type: Number,
-				label: "Maximum number of sources",
-				description: "The maximum number of sources expected by the command-line"
-			},
-			{
-				id: "feed-to-stdin",
-				type: Boolean,
-				label: "Feed to standard input",
-				description: "Whether to use the external command standard input"
-			}
-		]
-	}
-];
