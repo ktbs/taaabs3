@@ -1,0 +1,12 @@
+:host {
+    outline: none;
+}
+
+#select {
+    overflow-y: hidden;
+}
+
+#select option#default {
+    font-style: italic;
+    color: grey;
+}
