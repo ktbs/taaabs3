@@ -128,17 +128,17 @@ export class HubbleRule {
     }
     
     /**
-     * Gets a default "catch-all" sub-rule that matches any obsel
-     * \return HubbleSubRule
+     * Gets a default "catch-all" rule that matches any obsel
+     * \return HubbleRule
      * \static
      * \public
      */
     static get catchAllRule() {
         if(!HubbleRule._catchAllRule) {
             HubbleRule._catchAllRule = new HubbleRule();
-            let aRuleRule = new HubbleSubRule();
-            aRuleRule.type = "*";
-            HubbleRule._catchAllRule.rules.push(aRuleRule);
+            let subRule = new HubbleSubRule();
+            subRule.type = "*";
+            HubbleRule._catchAllRule.rules.push(subRule);
         }
 
 		return HubbleRule._catchAllRule;

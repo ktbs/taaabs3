@@ -1,7 +1,7 @@
 import {RestError} from "./Errors.js";
 import {KtbsError} from "./Errors.js";
 import {JSONLDError} from "./Errors.js";
-import { ResourceMultiton } from "./ResourceMultiton.js";
+import {ResourceMultiton} from "./ResourceMultiton.js";
 
 /**
  * Abstract class intended to be inherited by KTBS resource types
