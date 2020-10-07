@@ -161,8 +161,8 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
      */
     checkValidity() {
         return (
-                ((this.value) && (this.value != ""))
-            ||  (!this.required)
+                (!this.required)
+            ||  ((this.value) && (this.value != ""))
         );
     }
 
