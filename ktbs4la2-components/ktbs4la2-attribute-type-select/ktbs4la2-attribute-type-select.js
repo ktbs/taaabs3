@@ -172,8 +172,8 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
 	onComponentReady() {
         this._select = this.shadowRoot.querySelector("#select");
         this._select.addEventListener("focus", this._onFocusSelect.bind(this));
-        this._select.addEventListener("input", this._onSelectEvent.bind(this));
         this._select.addEventListener("change", this._onSelectEvent.bind(this));
+        this._select.addEventListener("input", this._onSelectEvent.bind(this));
 
         if(!this.required && !this.multiple)
             this._instanciateDefaultOption();
@@ -204,18 +204,14 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
 		super.attributeChangedCallback(name, oldValue, newValue);
         
         if(name == "model-uri") {
-            const current_value = this._valueChanged?this.value:this.getAttribute("value");
-
-            this._componentReady.then(() => {
-                this._purgeOptions();
-            }).catch(() => {});
-
             if(newValue) {
                 this._model = ResourceMultiton.get_resource(Model, newValue);
 
                 this._model.get(this._abortController.signal)
                     .then(() => {
                         this._componentReady.then(() => {
+                            const current_value = this._valueChanged?this.value:this.getAttribute("value");
+                            this._purgeOptions();
                             this._buildOptions(current_value);
                         }).catch(() => {});
                     })

@@ -4,6 +4,14 @@
 
 #select {
     overflow-y: hidden;
+    padding-top: initial;
+    padding-bottom: initial;
+    -webkit-padding-before: 2px;
+    -webkit-padding-after: 3px;
+}
+
+#select option {
+    height: 20px;
 }
 
 #select option#default {
