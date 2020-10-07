@@ -1,0 +1,23 @@
+:host {
+    outline: none;
+}
+
+#operator-select {
+    padding-top: initial;
+    padding-bottom: initial;
+    -webkit-padding-before: 2px;
+    -webkit-padding-after: 3px;
+}
+
+#value-input {
+    border-style: solid;
+    border-width: 1px;
+    border-color: lightgray;
+    outline: none;
+    height: 20px;
+    width: 200px;
+}
+
+#value-input:focus {
+    background-color: rgb(230, 245, 255);
+}
