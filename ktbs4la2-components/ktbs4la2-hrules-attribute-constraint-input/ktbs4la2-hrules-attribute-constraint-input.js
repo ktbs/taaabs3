@@ -135,10 +135,7 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
-        return (
-                !(this.required && !this._valueInput.value)
-            &&  !(this._valueInput.value && !this._attributeTypeSelect.value)
-        );
+        return ((this._operatorSelect.value == "==") || this._valueInput.value);
     }
 
     /**
@@ -149,7 +146,6 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
         _observedAttributes.push("model-uri");
         _observedAttributes.push("obsel-type");
         _observedAttributes.push("value");
-        _observedAttributes.push("required");
         return _observedAttributes;
     }
 
@@ -218,11 +214,6 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
                 }).catch(() => {});
             }
         }
-        else if(name == "required") {
-            this._componentReady.then(() => {
-                this._attributeTypeSelect.setAttribute("required", newValue);
-            }).catch(() => {});
-        }
     }
 
     /**
@@ -271,7 +262,9 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
         event.stopPropagation();
 
         this._componentReady.then(() => {
-            this._attributeTypeSelect.focus();
+            setTimeout(() => {
+                this._attributeTypeSelect.focus();
+            });
         }).catch(() => {});
     }
 
