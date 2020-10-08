@@ -2,6 +2,10 @@
     outline: none;
 }
 
+#container {
+    white-space: nowrap;
+}
+
 #operator-select {
     padding-top: initial;
     padding-bottom: initial;
