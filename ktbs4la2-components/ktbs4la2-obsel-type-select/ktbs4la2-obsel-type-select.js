@@ -80,16 +80,12 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
       * 
       */
     set value(newValue) {
-        if(newValue) {
-            if(this.multiple) {
-                const selected_values = newValue.split(" ").filter(Boolean);
-
-                for(let i = 0; i < selected_values.length; i++)
-                    this._selectMatchingOption(selected_values[i]);
-            }
-            else
-                this._selectMatchingOption(newValue);
+        if(newValue != null) {
+            if(this.getAttribute("value") != newValue)
+                this.setAttribute("value", newValue);
         }
+        else if(this.hasAttribute("value"))
+            this.removeAttribute("value");
     }
     
      /**
@@ -519,10 +515,20 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
                             this._options.appendChild(newObselTypeOption);
                         }
 
-                        this._adjustWidth();
-
-                        if(!this.multiple && !this.value)
+                        if(this.hasAttribute("value")) {
+                            if(this.multiple) {
+                                const selected_values = this.getAttribute("value").split(" ").filter(Boolean);
+                
+                                for(let i = 0; i < selected_values.length; i++)
+                                    this._selectMatchingOption(selected_values[i]);
+                            }
+                            else
+                                this._selectMatchingOption(this.getAttribute("value"));
+                        }
+                        else if(!this.multiple)
                             this._selectFirstAvailableOption();
+
+                        this._adjustWidth();
                     }).catch(() => {});
                 })
                 .catch((error) => {
@@ -553,8 +559,16 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
                     this._selectFirstAvailableOption();
             }).catch(() => {});
         }
-        else if(name == "value")
-            this.value = newValue;
+        else if(name == "value") {
+            if(this.multiple) {
+                const selected_values = newValue.split(" ").filter(Boolean);
+
+                for(let i = 0; i < selected_values.length; i++)
+                    this._selectMatchingOption(selected_values[i]);
+            }
+            else
+                this._selectMatchingOption(newValue);
+        }
     }
 
 	/**
