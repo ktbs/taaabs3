@@ -1,0 +1,11 @@
+:host {
+    display: inline-block;
+    border: 1px solid lightgrey;
+    padding-left: 10px;
+    padding-right: 10px;
+    outline: none;
+}
+
+#attribute-constraints-label {
+    display: block;
+}
