@@ -85,7 +85,65 @@ export class ObselType {
 			this._parentModel = new_parent_model;
 		else
 			throw new TypeError("New value for parent_model property must be of type Model.");
-	}
+    }
+    
+    /**
+     * Gets the super obsel types of the current obsel type
+     * \return Array of ObselType
+     * \public
+     */
+    get super_obsel_types() {
+        if(!this._super_obsel_types) {
+            this._super_obsel_types = new Array();
+
+            if(this._JSONData["hasSuperObselType"]) {
+                if(this._JSONData["hasSuperObselType"] instanceof Array) {
+                    for(let i = 0; i < this._JSONData["hasSuperObselType"].length; i++) {
+                        const super_obsel_type_id = this._JSONData["hasSuperObselType"][i].substring(1);
+                        this._super_obsel_types.push(this.parent_model.get_obsel_type(super_obsel_type_id));
+                    }
+                }
+                else {
+                    const super_obsel_type_id = this._JSONData["hasSuperObselType"].substring(1);
+                    this._super_obsel_types.push(this.parent_model.get_obsel_type(super_obsel_type_id));
+                }
+            }
+        }
+        
+        return this._super_obsel_types;
+    }
+
+    /**
+     * Sets the super obsel types of the current obsel type
+     * \param Array of ObselType new_super_obsel_types the new super obsel types for the current obsel type
+     * \throws TypeError if the provided argument is not an Array of ObselType
+     * \throws KtbsError if at least one ObselType instances in the provided Array does not belong to the same Model as the current ObselType
+     * \public
+     */
+    set super_obsel_types(new_super_obsel_types) {
+        if(new_super_obsel_types instanceof Array) {
+            for(let i = 0; i < new_super_obsel_types.length; i++) {
+                if(!(new_super_obsel_types[i] instanceof ObselType))
+                    throw new TypeError("New value for super_obsel_types property must be an Array of ObselType");
+
+                if(new_super_obsel_types[i].parentModel != this.parentModel)
+                    throw new KtbsError("super_obsel_types must belong to the same Model as their descendant");
+            }
+
+            this._JSONData["hasSuperObselType"] = new Array();
+
+            for(let i = 0; i < new_super_obsel_types.length; i++)
+                this._JSONData["hasSuperObselType"].push("#" + new_super_obsel_types[i].id);
+
+            if(this._super_obsel_types)
+                delete this._super_obsel_types;
+
+            if(this._available_attribute_types)
+                delete this._available_attribute_types;
+        }
+        else
+            throw new TypeError("New value for super_obsel_types property must be an Array of ObselType");
+    }
 
     /**
      * Gets the default color (if defined) to use for representing Obsels of the current type
@@ -211,7 +269,7 @@ export class ObselType {
     }
 
     /**
-     * Gets the attribute types associated with the current model
+     * Gets the attribute types directly associated with the current ObselType in its belonging Model. Note that this does not include attribute types inherited from super ObselTypes, nor builtin AttributeTypes. To get the full list of available attribute types, use "available_attribute_types" property.
      * \return Array of AttributeType
      * \public
      */
@@ -225,7 +283,7 @@ export class ObselType {
                 for(let i = 0; i < model_attribute_types.length; i++) {
                     let anAttributeType = model_attribute_types[i];
 
-                    if(anAttributeType.appliesToObselType(this))
+                    if(anAttributeType.isAssignedToObselType(this))
                         this._attribute_types.push(anAttributeType);
                 }
             }
@@ -235,8 +293,8 @@ export class ObselType {
     }
 
     /**
-     * Sets the attribute types associated with the current model
-     * \param Array of AttributeType new_attribute_types - the new attribute types associated with the current model
+     * Sets the attribute types directly associated with the current ObselType
+     * \param Array of AttributeType new_attribute_types - the new attribute types associated with the current ObselType
      * \throws TypeError throws a TypeError if the provided argument is not an Array of AttributeType
      * \throws KtbsError throws a KtbsError if one of the AttributeType provided as an argument has a different parent model than the current obsel type
      * \public
@@ -256,9 +314,36 @@ export class ObselType {
                     new_attribute_types[i].obsel_types.push(this);
 
             this._attribute_types = new_attribute_types;
+
+            if(this._available_attribute_types)
+                delete this._available_attribute_types;
         }
         else
             throw new TypeError("New value for attribute_types property must be an array of AttributeType.");
+    }
+
+    /**
+     * Gets the full list of attribute types available for the current ObselType, including builtin attribute types and attribute types inherited from super obsel types.
+     * \return Array of AttributeType
+     * \public
+     * \readonly
+     */
+    get available_attribute_types() {
+        if(!this._available_attribute_types) {
+            let unfilteredAttributes = new Array();
+
+            if(this.super_obsel_types.length > 0) {
+                for(let i = 0; i < this.super_obsel_types.length; i++)
+                    unfilteredAttributes = unfilteredAttributes.concat(this.super_obsel_types[i].available_attribute_types);
+            }
+            else
+                unfilteredAttributes = AttributeType.builtin_attribute_types;
+            
+            unfilteredAttributes = unfilteredAttributes.concat(this.attribute_types);
+            this._available_attribute_types = new Array(...new Set(unfilteredAttributes));
+        }
+
+        return this._available_attribute_types;
     }
     
     /**

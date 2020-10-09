@@ -849,7 +849,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 		tableCellEnd.innerText = this.formatTimeStampToDate(obsel.end);
 		tableRow.appendChild(tableCellEnd);
 
-		let obsel_attributes = obsel.attributes;
+		let obsel_attributes = obsel.non_builtin_attributes;
 
 		if(obsel_attributes.length > 0) {
 			let obsel_attribute = obsel_attributes[0];

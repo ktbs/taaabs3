@@ -1,6 +1,7 @@
 import {TemplatedHTMLElement} from '../common/TemplatedHTMLElement.js';
 import {ResourceMultiton} from '../../ktbs-api/ResourceMultiton.js'
 import {Model} from '../../ktbs-api/Model.js';
+import {AttributeType} from '../../ktbs-api/AttributeType.js';
 
 /**
  * 
@@ -343,7 +344,24 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
         }
         else if(previous_value)
                 valueString = previous_value;
+
+        // add builtin attribute types
+        for(let i = 0; i < AttributeType.builtin_attribute_types.length; i++) {
+            const attributeType = AttributeType.builtin_attribute_types[i];
+            const newAttributeTypeOption = document.createElement("option");
+            newAttributeTypeOption.setAttribute("value", attributeType.id); 
+            newAttributeTypeOption.innerText = attributeType.get_translated_label(this._lang);
+
+            if(
+                    (this.multiple && valuesArray && valuesArray.includes(attributeType.id))
+                ||  (!this.multiple && valueString && (valueString == attributeType.id))
+            )
+                newAttributeTypeOption.setAttribute("selected", "");
+
+            this._select.appendChild(newAttributeTypeOption);
+        }
         
+        // add model-defined attribute types
         for(let i = 0; i < this._model.attribute_types.length; i++) {
             const attributeType = this._model.attribute_types[i];
             

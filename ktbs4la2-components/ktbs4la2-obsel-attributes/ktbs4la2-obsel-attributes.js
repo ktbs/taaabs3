@@ -137,7 +137,7 @@ class KTBS4LA2ObselAttributes extends KtbsResourceElement {
         }
 
         // display other attributes (custom attributes)
-        let obsel_attributes = this._ktbsResource.attributes;
+        let obsel_attributes = this._ktbsResource.non_builtin_attributes;
 
         for(let i = 0; i < obsel_attributes.length; i++) {
             let obsel_attribute = obsel_attributes[i];

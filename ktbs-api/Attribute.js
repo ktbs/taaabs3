@@ -1,3 +1,5 @@
+import {AttributeType} from "./AttributeType.js";
+
 /**
  * This class handles attributes of Obsels.
  */
@@ -41,12 +43,16 @@ export class Attribute {
      */
     get type_id() {
         if(!this._type_id) {
-            let type_uri = this._parentObsel.uri?this._parentObsel.resolve_link_uri(this._type_link):this._type_link;
+            if(AttributeType.builtin_attribute_types_ids.includes(this._type_link))
+                this._type_id = this._type_link;
+            else {
+                let type_uri = this._parentObsel.uri?this._parentObsel.resolve_link_uri(this._type_link):this._type_link;
 
-            if(type_uri.hash)
-                this._type_id = decodeURIComponent(type_uri.hash.substring(1));
-            else
-                this._type_id = decodeURIComponent(this._type_link);
+                if(type_uri.hash)
+                    this._type_id = decodeURIComponent(type_uri.hash.substring(1));
+                else
+                    this._type_id = decodeURIComponent(this._type_link);
+            }
         }
 
         return this._type_id;
@@ -58,9 +64,13 @@ export class Attribute {
      * \public
      */
     get type() {
-        if(!this._type && this._parentObsel.parent && this._parentObsel.parent.model)
-            this._type = this._parentObsel.parent.model.get_attribute_type(this.type_id);
-        
+        if(!this._type) {
+            if(AttributeType.builtin_attribute_types_ids.includes(this.type_id))
+                this._type = AttributeType.get_builtin_attribute_type(this.type_id);
+            else if(this._parentObsel.parent && this._parentObsel.parent.model)
+                this._type = this._parentObsel.parent.model.get_attribute_type(this.type_id);
+        }
+
         return this._type;
     }
 

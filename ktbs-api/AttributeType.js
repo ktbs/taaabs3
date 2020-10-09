@@ -7,6 +7,22 @@ import {KtbsError} from "./Errors.js";
  */
 export class AttributeType {
 
+	/**
+	 * Prefix for the builtin attributes URIs
+	 * \var String
+	 * \static
+	 * \public
+	 */
+	static builtin_attribute_types_prefix = "https://projet.liris.cnrs.fr/silex/2011/ktbs-jsonld-context#";
+
+	/**
+	 * An array listing the attribute types IDs that are "system" attribute types
+	 * \var Array
+	 * \static
+	 * \public
+	 */
+	static system_types_ids = ["@context", "@type", "hasSourceObsel", "hasTrace"];
+
     /**
      * Constructor for class AttributeType
      * \param Model parentModel - the model the AttributeType is described in
@@ -36,8 +52,12 @@ export class AttributeType {
 	 * \public
      */
     get id() {
-		if(!this._id)
-			this._id = decodeURIComponent(this.uri.hash.substring(1));
+		if(!this._id) {
+			if(this._JSONData["@id"].startsWith("#"))
+				this._id = this._JSONData["@id"].substring(1);
+			else
+				this._id = this._JSONData["@id"];
+		}
 
 		return this._id;
     }
@@ -59,12 +79,26 @@ export class AttributeType {
      */
     get uri() {
 		if(!this._uri) {
-			let rawID = this._JSONData["@id"];
-			this._uri = this.parent_model.resolve_link_uri(rawID);
+			if(this.is_builtin)
+				this._uri = new URL(AttributeType.builtin_attribute_types_prefix + this._JSONData["@id"]);
+			else
+				this._uri = this.parent_model.resolve_link_uri(this._JSONData["@id"]);
 		}
 
 		return this._uri;
-    }
+	}
+	
+	/**
+	 * 
+	 * \return Boolean
+	 * \public
+	 */
+	get is_builtin() {
+		return (
+				this._JSONData["@id"]
+			&&	AttributeType.builtin_attribute_types_ids.includes(this._JSONData["@id"])
+		);
+	}
 
     /**
      * Gets the model the AttributeType is described in
@@ -175,19 +209,37 @@ export class AttributeType {
 	}
 
 	/**
-	 * Checks if the current AttributeType is assigned to an obsel type provided as an argument
-	 * \param ObselType - obsel_type the obsel type we want to check if the AttributeType is is assigned to
+	 * Checks if the current AttributeType applies to an obsel type provided as an argument
+	 * \param ObselType - obsel_type the obsel type we want to check if the current AttributeType applies to
 	 * \return boolean
 	 * \public
 	 */
 	appliesToObselType(obsel_type) {
 		let applies = false;
 
-		if(this.parent_model && (this.parent_model == obsel_type.parent_model))
-			for(let i = 0; !applies && (i < this.obsel_types.length); i++)
-				applies = (this.obsel_types[i].id == obsel_type.id);
+		if(this.is_builtin)
+			applies = true;
+		else if(this.parent_model && (this.parent_model == obsel_type.parent_model))
+			for(let i = 0; !applies && (i < obsel_type.available_attribute_types.length); i++)
+				applies = (this.id == obsel_type.available_attribute_types[i].id);
 
 		return applies;
+	}
+
+	/**
+	 * Checks if the current AttributeType is directly assigned (ignoring inheritance and builtin attribute types) to an obsel type provided as an argument
+	 * \param ObselType - obsel_type the obsel type we want to check if the current AttributeType is assigned to
+	 * \return boolean
+	 * \public
+	 */
+	isAssignedToObselType(obsel_type) {
+		let assigned = false;
+
+		if(!this.is_builtin && this.parent_model && (this.parent_model == obsel_type.parent_model))
+			for(let i = 0; !assigned && (i < this.obsel_types.length); i++)
+				assigned = (this.obsel_types[i].id == obsel_type.id);
+
+		return assigned;
 	}
 
 	/**
@@ -299,13 +351,144 @@ export class AttributeType {
 		}
 		else
 			throw new KtbsError("AttributeType POST data cannot be built before the AttributeType's parent model has been set");
-    }
-}
+	}
+	
+	/**
+	 * Gets the list of the builtin attribute types
+	 * \return Array of AttributeType
+	 * \static
+	 * \public
+	 */
+	static get builtin_attribute_types() {
+		if(!AttributeType._builtin_attribute_types) {
+			AttributeType._builtin_attribute_types = [
+				new AttributeType(null, {
+					"@id": "@id",
+					"@type": "AttributeType",
+					"http://www.w3.org/2000/01/rdf-schema#label": [
+						{
+							"@language": "en",
+							"@value": "Identifier"
+						},
+						{
+							"@language": "fr",
+							"@value": "Identifiant"
+						}
+					]
+					// @TODO "hasAttributeDatatype": ["???"]
+				}),
+				new AttributeType(null, {
+					"@id": "begin",
+					"@type": "AttributeType",
+					"http://www.w3.org/2000/01/rdf-schema#label": [
+						{
+							"@language": "en",
+							"@value": "Begin timestamp"
+						},
+						{
+							"@language": "fr",
+							"@value": "Timestamp de début"
+						}
+					],
+					"hasAttributeDatatype": ["xsd:integer"]
+				}),
+				new AttributeType(null, {
+					"@id": "beginDT",
+					"@type": "AttributeType",
+					"http://www.w3.org/2000/01/rdf-schema#label": [
+						{
+							"@language": "en",
+							"@value": "Begin date time"
+						},
+						{
+							"@language": "fr",
+							"@value": "Date et heure de début"
+						}
+					],
+					"hasAttributeDatatype": ["xsd:dateTime"]
+				}),
+				new AttributeType(null, {
+					"@id": "end",
+					"@type": "AttributeType",
+					"http://www.w3.org/2000/01/rdf-schema#label": [
+						{
+							"@language": "en",
+							"@value": "End timestamp"
+						},
+						{
+							"@language": "fr",
+							"@value": "Timestamp de fin"
+						}
+					],
+					"hasAttributeDatatype": ["xsd:integer"]
+				}),
+				new AttributeType(null, {
+					"@id": "endDT",
+					"@type": "AttributeType",
+					"http://www.w3.org/2000/01/rdf-schema#label": [
+						{
+							"@language": "en",
+							"@value": "End date time"
+						},
+						{
+							"@language": "fr",
+							"@value": "Date et heure de fin"
+						}
+					],
+					"hasAttributeDatatype": ["xsd:dateTime"]
+				}),
+				new AttributeType(null, {
+					"@id": "subject",
+					"@type": "AttributeType",
+					"http://www.w3.org/2000/01/rdf-schema#label": [
+						{
+							"@language": "en",
+							"@value": "Subject"
+						},
+						{
+							"@language": "fr",
+							"@value": "Sujet"
+						}
+					]
+					// @TODO "hasAttributeDatatype": ["???"]
+				})
+			];
+		}
 
-/**
- * An array listing the attribute types IDs that are "system" attribute types
- * \var Array
- * \static
- * \public
- */
-AttributeType.system_types_ids = ["@context", "@id", "@type", "begin", "beginDT", "end", "endDT", "hasSourceObsel", "hasTrace", "subject"];
+		return AttributeType._builtin_attribute_types;
+	}
+
+	/**
+	 * Gets a builtin attribute type by its ID
+	 * \param String builtin_attribute_type_id the ID of the builtin attribute type we want
+	 * \return AttributeType
+	 * \static
+	 * \public
+	 */
+	static get_builtin_attribute_type(builtin_attribute_type_id) {
+		let attribute_type = undefined;
+
+		for(let i = 0; !attribute_type && (i < AttributeType.builtin_attribute_types.length); i++)
+			if(AttributeType.builtin_attribute_types[i].id == builtin_attribute_type_id)
+				attribute_type = AttributeType.builtin_attribute_types[i];
+
+		return attribute_type;
+	}
+
+	/**
+	 * Gets the lists of the builtin attribute types IDs 
+	 * \var Array of String
+	 * \static
+	 * \public
+	 */
+	static get builtin_attribute_types_ids() {
+		if(!AttributeType._builtin_attribute_types_ids) {
+			AttributeType._builtin_attribute_types_ids = new Array();
+
+			for(let i = 0; i < AttributeType.builtin_attribute_types.length; i++)
+				AttributeType._builtin_attribute_types_ids.push(AttributeType.builtin_attribute_types[i].id);
+		}
+
+		return AttributeType._builtin_attribute_types_ids;
+	}
+}

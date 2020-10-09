@@ -175,7 +175,7 @@ export class Obsel extends Resource {
     }
 
     /**
-     * Gets the non-system attributes of the Obsel
+     * Gets the attributes of the Obsel, including builtin attributes
      * \return Array of Attribute
      * \public
      */
@@ -196,9 +196,30 @@ export class Obsel extends Resource {
     }
 
     /**
+     * Gets the non-builtin attributes of the Obsel
+     * \return Array of Attribute
+     * \public
+     */
+    get non_builtin_attributes() {
+        if(!this._attributes) {
+            this._attributes = new Array();
+
+            for(let attribute_type_link in this._JSONData) {
+                if((!AttributeType.system_types_ids.includes(attribute_type_link)) && (!AttributeType.builtin_attribute_types_ids.includes(attribute_type_link))) {
+                    let attribute_value = this._JSONData[attribute_type_link];
+                    let attribute = new Attribute(this, attribute_type_link, attribute_value);
+                    this._attributes.push(attribute);
+                }
+            }
+        }
+
+        return this._attributes;
+    }
+
+    /**
      * Sets the non-system attributes of the Obsel
      * \param Array of Attributes - newAttribute the new non-system attributes for the Obsel
-     * \throws KtbsError throws a KtbsError if at least one of the new attributes is a reserved system attribute (ex: @id, @type, begin etc...)
+     * \throws KtbsError throws a KtbsError if at least one of the new attributes is a reserved system attribute (ex: @context, @type, hasSourceObsel, hasTrace etc...)
      * \public
      */
     set attributes(newAttributes) {
@@ -253,7 +274,13 @@ export class Obsel extends Resource {
             if(!AttributeType.system_types_ids.includes(attribute_type_link)) {
                 let attribute_value = postData[attribute_type_link];
                 delete postData[attribute_type_link];
-                let attribute_post_key = this.parent.model.uri.toString() + "#" + attribute_type_link;
+                let attribute_post_key;
+
+                if(AttributeType.builtin_attribute_types_ids.includes(attribute_type_link))
+                    attribute_post_key = this.parent.model.uri.toString() + "#" + attribute_type_link;
+                else
+                    attribute_post_key = attribute_type_link;
+
                 postData[attribute_post_key] = attribute_value;
             }
         }
