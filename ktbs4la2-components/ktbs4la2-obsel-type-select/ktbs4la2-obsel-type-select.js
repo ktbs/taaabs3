@@ -630,7 +630,16 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
      * 
      */
     _selectFirstAvailableOption() {
+        const valueBefore = this.value;
         this._selectOption(this._options.querySelector(".option"), true);
+
+        if(this.value != valueBefore) {
+            this.dispatchEvent(new Event("change", {
+                bubbles: true,
+                cancelable: false,
+                composed: false
+            }));
+        }
     }
 
     /**

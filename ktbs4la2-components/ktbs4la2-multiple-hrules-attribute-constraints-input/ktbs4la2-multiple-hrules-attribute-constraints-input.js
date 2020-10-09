@@ -257,7 +257,10 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
                 const attributeConstraintInputs = this._getAttributeConstraintInputs();
 
                 for(let i = 0; i < attributeConstraintInputs.length; i++)
-                    attributeConstraintInputs[i].setAttribute("obsel-type", newValue);
+                    if(newValue)
+                        attributeConstraintInputs[i].setAttribute("obsel-type", newValue);
+                    else if(attributeConstraintInputs[i].hasAttribute("obsel-type"))
+                        attributeConstraintInputs[i].removeAttribute("obsel-type");
             }).catch(() => {});
         }
     }
@@ -294,6 +297,11 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
                     attributeConstraintInputs[0].focus();
                 });
             }).catch(() => {});
+        else {
+            setTimeout(() => {
+                this._addAttributeContraintButton.focus();
+            });
+        }
     }
     
     /**
@@ -387,14 +395,24 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
 			const parentContainer = clickedButton.parentNode;
 
 			if(parentContainer.classList.contains("attribute-constraint-input-container")) {
-				parentContainer.remove();
-				this._reIndexTabNavigation();
-            }
-            
-            const currentAttributeConstraintInputsCount = this._getAttributeConstraintInputs().length;
+                const attributeConstraint = parentContainer.querySelector("ktbs4la2-hrules-attribute-constraint-input");
+                const attributeConstraintWasValid = attributeConstraint.checkValidity();
 
-            if((currentAttributeConstraintInputsCount == 0) && !this._container.classList.contains("empty"))
-                this._container.classList.add("empty");
+				parentContainer.remove();
+                this._reIndexTabNavigation();
+                
+                const currentAttributeConstraintInputsCount = this._getAttributeConstraintInputs().length;
+
+                if((currentAttributeConstraintInputsCount == 0) && !this._container.classList.contains("empty"))
+                    this._container.classList.add("empty");
+
+                if(attributeConstraintWasValid)
+                    this.dispatchEvent(new Event("change", {
+                        bubbles: true,
+                        cancelable: false,
+                        composed: false
+                    }));
+            }
 		}
     }
     

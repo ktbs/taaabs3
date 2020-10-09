@@ -161,7 +161,10 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
             }).catch(() => {});
         else if(name == "obsel-type")
             this._componentReady.then(() => {
-                this._attributeTypeSelect.setAttribute("obsel-type", newValue);
+                if(newValue)
+                    this._attributeTypeSelect.setAttribute("obsel-type", newValue);
+                else if(this._attributeTypeSelect.hasAttribute("obsel-type"))
+                    this._attributeTypeSelect.removeAttribute("obsel-type");
             }).catch(() => {});
         else if(name == "value") {
             if(newValue) {

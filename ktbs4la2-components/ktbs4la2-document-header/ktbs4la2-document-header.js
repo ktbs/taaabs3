@@ -13,6 +13,8 @@ class KTBS4LA2DocumentHeader extends HTMLElement {
             if(this.hasAttribute("id"))
                 KTBS4LA2DocumentHeader._alreadyInjectedHeadersIDs.push(this.getAttribute("id"));
         }
+
+        this.style.display = "none";
     }
 }
 

@@ -42,6 +42,7 @@
     background: #fff;
     visibility: hidden;
     left: 0px;
+    z-index: 1;
 }
 
 #select.open #options, :host([multiple]) #options {
