@@ -129,6 +129,25 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
     /**
      * 
      */
+    get model_uri() {
+        return this.getAttribute("model-uri");
+    }
+
+    /**
+     * 
+     */
+    set model_uri(newValue) {
+        if(newValue != null) {
+            if(this.getAttribute("model-uri") != newValue)
+                this.setAttribute("model-uri", newValue);
+        }
+        else if(this.hasAttribute("model-uri"))
+            this.removeAttribute("model-uri");
+    }
+
+    /**
+     * 
+     */
     checkValidity() {
         return (
                 ((this.value) && (this.value != ""))
