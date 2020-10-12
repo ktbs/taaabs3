@@ -90,7 +90,7 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
      */
     get value() {
         const returnObject = {
-            "type": this._obselTypeSelect.value?this.model_uri + "#" + this._obselTypeSelect.value:"",
+            "type": this._obselTypeSelect.value,
             "attributes": JSON.parse(this._attributeConstraints.value)
         };
 
@@ -166,11 +166,8 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
 
                     if(valueObject instanceof Object) {
                         this._componentReady.then(() => {
-                            if(valueObject.type) {
-                                const obselTypeUri = new URL(valueObject.type);
-                                const obselTypeId = obselTypeUri.hash.substring(1);
-                                this._obselTypeSelect.setAttribute("value", obselTypeId);
-                            }
+                            if(valueObject.type)
+                                this._obselTypeSelect.setAttribute("value", valueObject.type);
 
                             if(valueObject.attributes)
                                 this._attributeConstraints.setAttribute("value", JSON.stringify(valueObject.attributes));

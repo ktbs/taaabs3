@@ -60,8 +60,19 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
             const selectedOptions = this._select.selectedOptions;
             let selectedValues = new Array();
 
-            for(let i = 0; i < selectedOptions.length; i++)
-                selectedValues.push(selectedOptions[i].getAttribute("value"));
+            for(let i = 0; i < selectedOptions.length; i++) {
+                const attibuteType_Id = selectedOptions[i].getAttribute("value");
+                let attributeType;
+
+                if(AttributeType.builtin_attribute_types_ids.includes(attibuteType_Id))
+                    attributeType = AttributeType.get_builtin_attribute_type(attibuteType_Id);
+                else
+                    attributeType = this._model.get_attribute_type(attibuteType_Id);
+
+                if(attributeType)
+                    selectedValues.push(attributeType.uri);
+            }
+                
 
             returnValue = selectedValues.filter(Boolean).join(" ");
         }
@@ -213,7 +224,13 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
                         this._componentReady.then(() => {
                             const current_value = this._valueChanged?this.value:this.getAttribute("value");
                             this._purgeOptions();
-                            this._buildOptions(current_value);
+
+                            try {
+                                this._buildOptions(current_value);
+                            }
+                            catch(error) {
+                                this.emitErrorEvent(error);
+                            }
                         }).catch(() => {});
                     })
                     .catch((error) => {
@@ -227,7 +244,13 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
             if(this._optionsInstanciated) {
                 const current_value = this._valueChanged?this.value:this.getAttribute("value");
                 this._purgeOptions();
-                this._buildOptions(current_value);
+                
+                try {
+                    this._buildOptions(current_value);
+                }
+                catch(error) {
+                    this.emitErrorEvent(error);
+                }
             }
         }
         else if(name == "required") {
@@ -336,19 +359,45 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
      */
     _buildOptions(previous_value) {
         let obselType = null;
+        let selected_attribute_types_ids = new Array();
 
         if(this.obsel_type)
             obselType = this._model.get_obsel_type(this.obsel_type);
         
-        let valuesArray = null;
-        let valueString = null;
-
-        if(this.multiple) {
-            if(previous_value)
-                valuesArray = previous_value.split(" ").filter(Boolean);
+        if(previous_value) {
+            if(this.multiple) {
+                const valuesArray = previous_value.split(" ").filter(Boolean);
+    
+                for(let i = 0; i < valuesArray.length; i++) {
+                    const attribute_type_uri_string = valuesArray[i];
+                    const attribute_type_uri = new URL(attribute_type_uri_string);
+                    const attribute_type_id = attribute_type_uri.hash.substring(1);
+                    let attribute_type;
+        
+                    if(attribute_type_uri_string.startsWith(AttributeType.builtin_attribute_types_prefix))
+                        attribute_type = AttributeType.get_builtin_attribute_type_by_real_id(attribute_type_id);
+                    else
+                        attribute_type = this._model.get_attribute_type(attribute_type_id);
+        
+                    if(attribute_type)
+                        selected_attribute_types_ids.push(attribute_type.id);
+                }
+            }
+            else {
+                const attribute_type_uri_string = previous_value;
+                const attribute_type_uri = new URL(attribute_type_uri_string);
+                const attribute_type_id = attribute_type_uri.hash.substring(1);
+                let attribute_type;
+    
+                if(attribute_type_uri_string.startsWith(AttributeType.builtin_attribute_types_prefix))
+                    attribute_type = AttributeType.get_builtin_attribute_type_by_real_id(attribute_type_id);
+                else
+                    attribute_type = this._model.get_attribute_type(attribute_type_id);
+    
+                if(attribute_type)
+                    selected_attribute_types_ids.push(attribute_type.id);
+            }
         }
-        else if(previous_value)
-                valueString = previous_value;
 
         // add builtin attribute types
         for(let i = 0; i < AttributeType.builtin_attribute_types.length; i++) {
@@ -357,10 +406,7 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
             newAttributeTypeOption.setAttribute("value", attributeType.id); 
             newAttributeTypeOption.innerText = attributeType.get_translated_label(this._lang);
 
-            if(
-                    (this.multiple && valuesArray && valuesArray.includes(attributeType.id))
-                ||  (!this.multiple && valueString && (valueString == attributeType.id))
-            )
+            if(selected_attribute_types_ids.includes(attributeType.id))
                 newAttributeTypeOption.setAttribute("selected", "");
 
             this._select.appendChild(newAttributeTypeOption);
@@ -375,10 +421,7 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
                 newAttributeTypeOption.setAttribute("value", attributeType.id); 
                 newAttributeTypeOption.innerText = attributeType.get_translated_label(this._lang);
 
-                if(
-                        (this.multiple && valuesArray && valuesArray.includes(attributeType.id))
-                    ||  (!this.multiple && valueString && (valueString == attributeType.id))
-                )
+                if(selected_attribute_types_ids.includes(attributeType.id))
                     newAttributeTypeOption.setAttribute("selected", "");
 
                 this._select.appendChild(newAttributeTypeOption);
@@ -398,23 +441,48 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
      * \param String value 
      */
     _applyValueToSelection(value) {
+        let selected_attribute_types_ids = new Array();
+
+        if(this.multiple) {
+            const valuesArray = value.split(" ").filter(Boolean);
+
+            for(let i = 0; i < valuesArray.length; i++) {
+                const attribute_type_uri_string = valuesArray[i];
+                const attribute_type_uri = new URL(attribute_type_uri_string);
+                const attribute_type_id = attribute_type_uri.hash.substring(1);
+                let attribute_type;
+    
+                if(attribute_type_uri_string.startsWith(AttributeType.builtin_attribute_types_prefix))
+                    attribute_type = AttributeType.get_builtin_attribute_type_by_real_id(attribute_type_id);
+                else
+                    attribute_type = this._model.get_attribute_type(attribute_type_id);
+    
+                if(attribute_type)
+                    selected_attribute_types_ids.push(attribute_type.id);
+            }
+        }
+        else {
+            const attribute_type_uri_string = value;
+            const attribute_type_uri = new URL(attribute_type_uri_string);
+            const attribute_type_id = attribute_type_uri.hash.substring(1);
+            let attribute_type;
+
+            if(attribute_type_uri_string.startsWith(AttributeType.builtin_attribute_types_prefix))
+                attribute_type = AttributeType.get_builtin_attribute_type_by_real_id(attribute_type_id);
+            else
+                attribute_type = this._model.get_attribute_type(attribute_type_id);
+
+            if(attribute_type)
+                selected_attribute_types_ids.push(attribute_type.id);
+        }
+
         for(let i = 0; i < this._select.options.length; i++) {
             const anOption = this._select.options[i];
 
-            if(this.multiple) {
-                const valuesArray = value.split(" ").filter(Boolean);
-
-                if(valuesArray.includes(anOption.getAttribute("value")) && !anOption.hasAttribute("selected"))
-                    anOption.setAttribute("selected", true);
-                else if(!valuesArray.includes(anOption.getAttribute("value")) && anOption.hasAttribute("selected"))
-                    anOption.removeAttribute("selected");
-            }
-            else {
-                if((anOption.getAttribute("value") == value) && !anOption.hasAttribute("selected"))
-                    anOption.setAttribute("selected", true);
-                else if((anOption.getAttribute("value") != value) && anOption.hasAttribute("selected"))
-                    anOption.removeAttribute("selected");
-            }
+            if(selected_attribute_types_ids.includes(anOption.getAttribute("value")) && !anOption.hasAttribute("selected"))
+                anOption.setAttribute("selected", true);
+            else if(!selected_attribute_types_ids.includes(anOption.getAttribute("value")) && anOption.hasAttribute("selected"))
+                anOption.removeAttribute("selected");
         }
     }
 

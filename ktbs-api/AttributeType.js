@@ -13,7 +13,7 @@ export class AttributeType {
 	 * \static
 	 * \public
 	 */
-	static builtin_attribute_types_prefix = "https://projet.liris.cnrs.fr/silex/2011/ktbs-jsonld-context#";
+	static builtin_attribute_types_prefix = "http://liris.cnrs.fr/silex/2009/ktbs#";
 
 	/**
 	 * An array listing the attribute types IDs that are "system" attribute types
@@ -21,7 +21,7 @@ export class AttributeType {
 	 * \static
 	 * \public
 	 */
-	static system_types_ids = ["@context", "@type", "hasSourceObsel", "hasTrace"];
+	static system_types_ids = ["@id", "@context", "@type", "hasSourceObsel", "hasTrace"];
 
     /**
      * Constructor for class AttributeType
@@ -80,7 +80,7 @@ export class AttributeType {
     get uri() {
 		if(!this._uri) {
 			if(this.is_builtin)
-				this._uri = new URL(AttributeType.builtin_attribute_types_prefix + this._JSONData["@id"]);
+				this._uri = new URL(AttributeType.builtin_attribute_types_prefix + this._JSONData["real_id"]);
 			else
 				this._uri = this.parent_model.resolve_link_uri(this._JSONData["@id"]);
 		}
@@ -363,22 +363,8 @@ export class AttributeType {
 		if(!AttributeType._builtin_attribute_types) {
 			AttributeType._builtin_attribute_types = [
 				new AttributeType(null, {
-					"@id": "@id",
-					"@type": "AttributeType",
-					"http://www.w3.org/2000/01/rdf-schema#label": [
-						{
-							"@language": "en",
-							"@value": "Identifier"
-						},
-						{
-							"@language": "fr",
-							"@value": "Identifiant"
-						}
-					]
-					// @TODO "hasAttributeDatatype": ["???"]
-				}),
-				new AttributeType(null, {
 					"@id": "begin",
+					"real_id": "hasBegin",
 					"@type": "AttributeType",
 					"http://www.w3.org/2000/01/rdf-schema#label": [
 						{
@@ -394,6 +380,7 @@ export class AttributeType {
 				}),
 				new AttributeType(null, {
 					"@id": "beginDT",
+					"real_id": "hasBeginDT",
 					"@type": "AttributeType",
 					"http://www.w3.org/2000/01/rdf-schema#label": [
 						{
@@ -409,6 +396,7 @@ export class AttributeType {
 				}),
 				new AttributeType(null, {
 					"@id": "end",
+					"real_id": "hasEnd",
 					"@type": "AttributeType",
 					"http://www.w3.org/2000/01/rdf-schema#label": [
 						{
@@ -424,6 +412,7 @@ export class AttributeType {
 				}),
 				new AttributeType(null, {
 					"@id": "endDT",
+					"real_id": "hasEndDT",
 					"@type": "AttributeType",
 					"http://www.w3.org/2000/01/rdf-schema#label": [
 						{
@@ -439,6 +428,7 @@ export class AttributeType {
 				}),
 				new AttributeType(null, {
 					"@id": "subject",
+					"real_id": "hasSubject",
 					"@type": "AttributeType",
 					"http://www.w3.org/2000/01/rdf-schema#label": [
 						{
@@ -450,7 +440,6 @@ export class AttributeType {
 							"@value": "Sujet"
 						}
 					]
-					// @TODO "hasAttributeDatatype": ["???"]
 				})
 			];
 		}
@@ -470,6 +459,23 @@ export class AttributeType {
 
 		for(let i = 0; !attribute_type && (i < AttributeType.builtin_attribute_types.length); i++)
 			if(AttributeType.builtin_attribute_types[i].id == builtin_attribute_type_id)
+				attribute_type = AttributeType.builtin_attribute_types[i];
+
+		return attribute_type;
+	}
+
+	/**
+	 * Gets a builtin attribute type by its ID
+	 * \param String builtin_attribute_type_real_id the real ID of the builtin attribute type we want
+	 * \return AttributeType
+	 * \static
+	 * \public
+	 */
+	static get_builtin_attribute_type_by_real_id(builtin_attribute_type_real_id) {
+		let attribute_type = undefined;
+
+		for(let i = 0; !attribute_type && (i < AttributeType.builtin_attribute_types.length); i++)
+			if(AttributeType.builtin_attribute_types[i]._JSONData["real_id"] == builtin_attribute_type_real_id)
 				attribute_type = AttributeType.builtin_attribute_types[i];
 
 		return attribute_type;

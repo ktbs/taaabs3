@@ -1,8 +1,6 @@
 import {TemplatedHTMLElement} from '../common/TemplatedHTMLElement.js';
 import "../ktbs4la2-attribute-type-select/ktbs4la2-attribute-type-select.js";
 
-import {AttributeType} from "../../ktbs-api/AttributeType.js";
-
 /**
  * 
  */
@@ -52,15 +50,8 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
      */
     get value() {
         if(this._attributeTypeSelect.value) {
-            let uri;
-
-            if(AttributeType.builtin_attribute_types_ids.includes(this._attributeTypeSelect.value))
-                uri = this._attributeTypeSelect.value;
-            else
-                uri = this.model_uri + "#" + this._attributeTypeSelect.value;
-
             const returnObject = {
-                "uri": uri,
+                "uri": this._attributeTypeSelect.value,
                 "operator": this._operatorSelect.value,
                 "value": this._valueInput.value
             };
@@ -181,12 +172,8 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
                     const valueObject = JSON.parse(newValue);
 
                     this._componentReady.then(() => {
-                        if(valueObject.uri) {
-                            if(this.model_uri && valueObject.uri.startsWith(this.model_uri + "#"))
-                                this._attributeTypeSelect.setAttribute("value", valueObject.uri.substring(this.model_uri.length + 1));
-                            else
-                                this._attributeTypeSelect.setAttribute("value", valueObject.uri);
-                        }
+                        if(valueObject.uri)
+                            this._attributeTypeSelect.setAttribute("value", valueObject.uri);
 
                         if(valueObject.operator) {
                             switch(valueObject.operator) {
