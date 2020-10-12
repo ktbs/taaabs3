@@ -1,6 +1,8 @@
 import {TemplatedHTMLElement} from '../common/TemplatedHTMLElement.js';
 import "../ktbs4la2-attribute-type-select/ktbs4la2-attribute-type-select.js";
 
+import {AttributeType} from "../../ktbs-api/AttributeType.js";
+
 /**
  * 
  */
@@ -50,8 +52,15 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
      */
     get value() {
         if(this._attributeTypeSelect.value) {
+            let uri;
+
+            if(AttributeType.builtin_attribute_types_ids.includes(this._attributeTypeSelect.value))
+                uri = this._attributeTypeSelect.value;
+            else
+                uri = this.model_uri + "#" + this._attributeTypeSelect.value;
+
             const returnObject = {
-                "uri": this.model_uri + "#" + this._attributeTypeSelect.value,
+                "uri": uri,
                 "operator": this._operatorSelect.value,
                 "value": this._valueInput.value
             };
