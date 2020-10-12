@@ -46,30 +46,6 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
     get type() {
         return this.localName;
     }
-
-    /**
-     * 
-     */
-    get value() {
-        const returnObject = {
-            "type": this._obselTypeSelect.value?this._obselTypeSelect.value:"",
-            "attributes": JSON.parse(this._attributeConstraints.value)
-        };
-
-        return JSON.stringify(returnObject);
-    }
- 
-    /**
-     * 
-     */
-    set value(newValue) {
-        if(newValue != null) {
-            if(this.getAttribute("value") != newValue)
-                this.setAttribute("value", newValue);
-        }
-        else if(this.hasAttribute("value"))
-            this.removeAttribute("value");
-    }
     
     /**
      * 
@@ -88,6 +64,49 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
         }
         else if(this.hasAttribute("required"))
             this.removeAttribute("required");
+    }
+
+    /**
+     * 
+     */
+    get model_uri() {
+        return this.getAttribute("model-uri");
+    }
+
+    /**
+     * 
+     */
+    set model_uri(newValue) {
+        if(newValue != null) {
+            if(this.getAttribute("model-uri") != newValue)
+                this.setAttribute("model-uri", newValue);
+        }
+        else if(this.hasAttribute("model-uri"))
+            this.removeAttribute("model-uri");
+    }
+
+    /**
+     * 
+     */
+    get value() {
+        const returnObject = {
+            "type": this._obselTypeSelect.value?this.model_uri + "#" + this._obselTypeSelect.value:"",
+            "attributes": JSON.parse(this._attributeConstraints.value)
+        };
+
+        return JSON.stringify(returnObject);
+    }
+ 
+    /**
+     * 
+     */
+    set value(newValue) {
+        if(newValue != null) {
+            if(this.getAttribute("value") != newValue)
+                this.setAttribute("value", newValue);
+        }
+        else if(this.hasAttribute("value"))
+            this.removeAttribute("value");
     }
 
     /**
@@ -147,8 +166,11 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
 
                     if(valueObject instanceof Object) {
                         this._componentReady.then(() => {
-                            if(valueObject.type)
-                                this._obselTypeSelect.setAttribute("value", valueObject.type);
+                            if(valueObject.type) {
+                                const obselTypeUri = new URL(valueObject.type);
+                                const obselTypeId = obselTypeUri.hash.substring(1);
+                                this._obselTypeSelect.setAttribute("value", obselTypeId);
+                            }
 
                             if(valueObject.attributes)
                                 this._attributeConstraints.setAttribute("value", JSON.stringify(valueObject.attributes));
