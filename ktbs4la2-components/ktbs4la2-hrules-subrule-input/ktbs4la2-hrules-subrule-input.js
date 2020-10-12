@@ -121,6 +121,7 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
         this._attributeConstraints.addEventListener("change", this._onChildEvent.bind(this));
         this._attributeConstraintsLabel.addEventListener("click", this._onClickAttributeConstraintsLabel.bind(this));
         this._attributeConstraintsLabel.addEventListener("focus", this._onChildElementFocus.bind(this));
+        this.addEventListener("focus", this._onFocus.bind(this));
     }
 
     /**
