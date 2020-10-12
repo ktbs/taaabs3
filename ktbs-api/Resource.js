@@ -15,7 +15,7 @@ export class Resource {
 	 */
 	constructor(uri = null) {
 
-		this._bindedOnClientAbortsGetRequestMethod = this._onClientAbortsGetRequest.bind(this)
+		this._bindedOnClientAbortsGetRequestMethod = this._onClientAbortsGetRequest.bind(this);
 
 		/**
 		 * The etag provided by the server at the resource latest HTTP query
