@@ -284,7 +284,12 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
 		for(let i = 0; i < attributeTypesOptions.length; i++) {
             const anOption = attributeTypesOptions[i];
             const attributeTypeId = anOption.getAttribute("value");
-            const attributeType = this._model.get_attribute_type(attributeTypeId);
+            let attributeType;
+            
+            if(AttributeType.builtin_attribute_types_ids.includes(attributeTypeId)) 
+                attributeType = AttributeType.get_builtin_attribute_type(attributeTypeId);
+            else
+                attributeType = this._model.get_attribute_type(attributeTypeId);
 
             if(attributeType)
                 anOption.innerText = attributeType.get_translated_label(this._lang);
