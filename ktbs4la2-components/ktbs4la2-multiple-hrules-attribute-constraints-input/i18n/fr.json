@@ -1,5 +1,6 @@
 {
     "Add an attribute constraint": "Ajouter une contrainte d'attribut",
     "Remove this attribute constraint": "Retirer cette contrainte d'attribut",
-    "No attribute constraint is defined yet": "Aucune contrainte d'attribut n'est définie pour le moment"
+    "No attribute constraint is defined yet": "Aucune contrainte d'attribut n'est définie pour le moment",
+    "And": "Et"
 }

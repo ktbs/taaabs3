@@ -1,3 +1,9 @@
+<style id="translate-and-rule">
+    .attribute-constraint-input-container:not(:first-child)::before {
+        content: "{translate: 'And'}";
+    }
+</style>
+
 <div id="container" class="empty">
     <p id="empty-message">{translate: 'No attribute constraint is defined yet'}</p>
     <div id="attribute-contraint-inputs"></div>

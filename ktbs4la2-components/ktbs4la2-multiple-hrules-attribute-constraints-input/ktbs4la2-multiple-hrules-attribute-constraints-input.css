@@ -33,6 +33,19 @@
     white-space: nowrap;
 }
 
+.attribute-constraint-input-container:not(:only-child):first-child {
+    margin-left: 25px;
+}
+
+.attribute-constraint-input-container:not(:first-child)::before {
+    display: inline-block;
+    width: 25px;
+    font-size: 8pt;
+    color: gray;
+    font-style: italic;
+    text-align: center;
+}
+
 ktbs4la2-hrules-attribute-constraint-input:only-child {
     padding-right: 30px;
 }

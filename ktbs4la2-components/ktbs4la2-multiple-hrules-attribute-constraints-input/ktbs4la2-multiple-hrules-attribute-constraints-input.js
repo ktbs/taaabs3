@@ -146,6 +146,7 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
 	 * 
 	 */
 	onComponentReady() {
+        this._translateAndRule = this.shadowRoot.querySelector("#translate-and-rule");
         this._container = this.shadowRoot.querySelector("#container");
         this._emptyMessage = this.shadowRoot.querySelector("#empty-message");
         this._attributeConstraintInputsDiv = this.shadowRoot.querySelector("#attribute-contraint-inputs");
@@ -269,6 +270,7 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
      * 
      */
     _updateStringsTranslation() {
+        this._translateAndRule.innerHTML = ".attribute-constraint-input-container:not(:first-child)::before {content: \"" + this._translateString("And") + "\";}";
         this._emptyMessage.innerText = this._translateString("No attribute constraint is defined yet");
         const attributeConstraintInputs = this._getAttributeConstraintInputs();
 
