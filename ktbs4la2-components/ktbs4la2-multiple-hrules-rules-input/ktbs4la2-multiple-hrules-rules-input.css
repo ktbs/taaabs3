@@ -1,0 +1,74 @@
+:host {
+    display: inline-block;
+    vertical-align: middle;
+    outline: none;
+}
+
+#container {
+    border: 1px solid lightgray;
+    display: inline-block;
+    padding: 10px 10px;
+    border-radius: 5px;
+}
+
+#empty-message {
+    font-size: 10pt;
+    font-style: italic;
+    color: grey;
+    text-align: center;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    display: none;
+}
+
+#container.empty #empty-message {
+    display: block;
+}
+
+.rule-input-container {
+    clear: both;
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    white-space: nowrap;
+}
+
+.rule-input-container:nth-child(even) {
+    background: #F5F5F5;
+}
+
+ktbs4la2-hrules-rule-input:only-child {
+    padding-right: 30px;
+}
+
+.remove-rule-button {
+    border: none;
+    outline: none;
+    background: none;
+    cursor: pointer;
+    opacity: 0.2;
+    display: inline-block;
+}
+
+.remove-rule-button:hover, .remove-rule-button:focus {
+    opacity: 1;
+}
+
+#add-rule {
+    background-color: var(--color-main, cornflowerblue);
+    opacity: 0.5;
+    width: calc(100% - 30px);
+    min-width: 443px;
+    height: 22px;
+    cursor: pointer;
+    color: white;
+    border: none;
+    text-align: center;
+    align-self: center;
+    font-size: 14pt;
+}
+
+#add-rule:hover, #add-rule:focus {
+    background-color: var(--color-highlight, royalblue);
+    opacity: 1;
+}
