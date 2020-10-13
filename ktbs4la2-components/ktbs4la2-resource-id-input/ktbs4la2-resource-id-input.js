@@ -91,7 +91,8 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
         this._parentResourcePathSpan = this.shadowRoot.querySelector("#parent-resource-path");
         this._parentResourcePathSpan.addEventListener("focus", this._onChildElementFocus.bind(this));
         this._idInput = this.shadowRoot.querySelector("#id-input");
-        this._idInput.addEventListener("input", this._onChangeIdInputValue.bind(this));
+        this._idInput.addEventListener("input", this._onInputIdInput.bind(this));
+        this._idInput.addEventListener("change", this._onIdInputEvent.bind(this));
         this._idInput.addEventListener("focus", this._onChildElementFocus.bind(this));
         this._trailingSlash = this.shadowRoot.querySelector("#trailing-slash");
         this._trailingSlash.addEventListener("focus", this._onChildElementFocus.bind(this));
@@ -150,12 +151,29 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
 	 * 
 	 * \param Event event 
 	 */
-	_onChangeIdInputValue(event) {
+	_onInputIdInput(event) {
+        this._onIdInputEvent(event);
+
         if(this._idInput.value)
             this._adjustIdInputWidthForText(this._idInput.value);
         else
             this._adjustIdInputWidthForText(this.getAttribute("placeholder"));
-	}
+    }
+    
+    /**
+     * 
+     */
+    _onIdInputEvent(event) {
+        event.stopPropagation();
+ 
+        const componentEvent = new Event(event.type, {
+            bubbles: true,
+            cancelable: false,
+            composed: event.composed
+        });
+
+        this.dispatchEvent(componentEvent);
+    }
 
     /**
      * 
