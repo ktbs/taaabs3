@@ -33,6 +33,19 @@
     white-space: nowrap;
 }
 
+.subrule-input-container:not(:only-child):first-child {
+    margin-left: 25px;
+}
+
+.subrule-input-container:not(:first-child)::before {
+    display: inline-block;
+    width: 25px;
+    font-size: 8pt;
+    color: gray;
+    font-style: italic;
+    text-align: center;
+}
+
 .subrule-input-container:nth-child(even) {
     background: #F5F5F5;
 }

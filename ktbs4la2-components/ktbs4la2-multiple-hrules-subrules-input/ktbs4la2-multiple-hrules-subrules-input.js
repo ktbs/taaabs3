@@ -124,6 +124,7 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
 	 * 
 	 */
 	onComponentReady() {
+        this._translateOrRule = this.shadowRoot.querySelector("#translate-or-rule");
         this._container = this.shadowRoot.querySelector("#container");
         this._emptyMessage = this.shadowRoot.querySelector("#empty-message");
         this._subruleInputsDiv = this.shadowRoot.querySelector("#subrules-inputs");
@@ -235,6 +236,7 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
      * 
      */
     _updateStringsTranslation() {
+        this._translateOrRule.innerHTML = ".subrule-input-container:not(:first-child)::before {content: \"" + this._translateString("Or") + "\";}";
         this._emptyMessage.innerText = this._translateString("No sub-rule is defined yet");
         const subrulesInputs = this._getSubrulesInputs();
 

@@ -1,3 +1,9 @@
+<style id="translate-or-rule">
+    .subrule-input-container:not(:first-child)::before {
+        content: "{translate: 'Or'}";
+    }
+</style>
+
 <div id="container" class="empty">
     <p id="empty-message">{translate: 'No sub-rule is defined yet'}</p>
     <div id="subrules-inputs"></div>
