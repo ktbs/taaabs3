@@ -1,0 +1,48 @@
+<div id="container">
+    <p>
+        <label for="id-input" id="id-input-label">{translate: 'Rule identifier'} :</label>
+
+        <ktbs4la2-resource-id-input
+            id="id-input"
+            placeholder="{translate: '&lt;id&gt;'}"
+            tabindex="1"
+            required>
+        </ktbs4la2-resource-id-input>
+    </p>
+
+    <p>
+        <label for="visible-checkbox" id="visible-checkbox-label">{translate: 'Visible'} :</label>
+
+        <input type="checkbox" id="visible-checkbox" tabindex="2" checked/>
+    </p>
+
+    <fieldset class="for-stylesheets">
+        <p>
+            <label for="color-input" id="color-input-label" value="">{translate: 'Color'} :</label>
+
+            <input type="color" id="color-input" tabindex="3"/>
+        </p>
+
+        <p>
+            <label for="shape-select" id="shape-select-label">{translate: "Shape"} :</label>
+            
+            <select id="shape-select" tabindex="4">
+                <option id="shape-option-durationbar" value="duration-bar">{translate: 'Duration bar (default)'}</option>
+                <option id="shape-option-square" value="SQUARE">{translate: 'Square'}</option>
+                <option id="shape-option-circle" value="CIRCLE">{translate: 'Circle'}</option>
+                <option id="shape-option-diamond" value="DIAMOND">{translate: 'Diamond'}</option>
+                <option id="shape-option-star" value="STAR">{translate: 'Star'}</option>
+            </select>
+        </p>
+    </fieldset>
+
+    <p>
+        <label for="subrules-input" id="subrules-input-label">{translate: 'Sub-rules'} :</label>
+
+        <ktbs4la2-multiple-hrules-subrules-input
+            id="subrules-input"
+            tabindex="5"
+            required>
+        </ktbs4la2-multiple-hrules-subrules-input>
+    </p>
+</div>

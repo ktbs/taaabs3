@@ -1,0 +1,13 @@
+{
+    "Rule identifier": "Identifiant de la règle",
+    "<id>": "<id>",
+    "Visible": "Visible",
+    "Color": "Couleur",
+    "Shape": "Forme",
+    "Duration bar (default)": "Barre de durée (par défaut)",
+    "Square": "Carré",
+    "Circle": "Disque",
+    "Diamond": "Losange",
+    "Star": "Etoile",
+    "Sub-rules": "Sous-règles"
+}
