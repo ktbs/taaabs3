@@ -296,6 +296,7 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onChildEventToStop(event) {
+        event.preventDefault();
 		event.stopPropagation();
     }
     

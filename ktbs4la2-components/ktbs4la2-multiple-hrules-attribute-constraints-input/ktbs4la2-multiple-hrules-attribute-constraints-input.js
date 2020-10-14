@@ -373,9 +373,13 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
 			const removeAttributeConstraintButton = document.createElement("button");
 			removeAttributeConstraintButton.classList.add("remove-attribute-constraint-button");
 			removeAttributeConstraintButton.setAttribute("title", this._translateString("Remove this attribute constraint"));
-			removeAttributeConstraintButton.addEventListener("click", this._onClickRemoveAttributeConstraintButton.bind(this));
 			removeAttributeConstraintButton.innerText = "❌";
-			removeAttributeConstraintButton.setAttribute("tabIndex", newAttributeConstraintInputTabIndex + 1);
+            removeAttributeConstraintButton.setAttribute("tabIndex", newAttributeConstraintInputTabIndex + 1);
+            removeAttributeConstraintButton.addEventListener("click", this._onClickRemoveAttributeConstraintButton.bind(this));
+			removeAttributeConstraintButton.addEventListener("focus", this._onAboutToRemoveAttributeConstraint.bind(this));
+            removeAttributeConstraintButton.addEventListener("mouseover", this._onAboutToRemoveAttributeConstraint.bind(this));
+            removeAttributeConstraintButton.addEventListener("mouseout", this._onNoMoreAboutToRemoveAttributeConstraint.bind(this));
+            removeAttributeConstraintButton.addEventListener("blur", this._onNoMoreAboutToRemoveAttributeConstraint.bind(this));
 			inputContainer.appendChild(removeAttributeConstraintButton);
 		}
 
@@ -416,6 +420,36 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
                     }));
             }
 		}
+    }
+
+    /**
+     * 
+     */
+    _onAboutToRemoveAttributeConstraint(event) {
+        event.stopPropagation();
+        const hoveredOrFocusedButton = event.target;
+
+		if(hoveredOrFocusedButton.classList.contains("remove-attribute-constraint-button")) {
+            const parentContainer = hoveredOrFocusedButton.parentNode;
+            
+            if(!parentContainer.classList.contains("about-to-remove"))
+                parentContainer.classList.add("about-to-remove");
+        }
+    }
+
+    /**
+     * 
+     */
+    _onNoMoreAboutToRemoveAttributeConstraint(event) {
+        event.stopPropagation();
+        const hoveredOrFocusedButton = event.target;
+
+		if(hoveredOrFocusedButton.classList.contains("remove-attribute-constraint-button")) {
+            const parentContainer = hoveredOrFocusedButton.parentNode;
+            
+            if(parentContainer.classList.contains("about-to-remove"))
+                parentContainer.classList.remove("about-to-remove");
+        }
     }
     
     /**

@@ -19,6 +19,10 @@
     color: black;
 }
 
+#id-input:not(:focus) {
+    background-color: var(--background-color);
+}
+
 #id-input:focus {
     background-color: rgb(230, 245, 255);
 }
@@ -37,4 +41,5 @@
 #hidden-span-for-id-width {
     visibility: hidden;
     font-size: 12pt;
+    position: absolute;
 }

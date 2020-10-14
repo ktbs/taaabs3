@@ -1,25 +1,25 @@
 <div id="container">
-    <p>
-        <label for="id-input" id="id-input-label">{translate: 'Rule identifier'} :</label>
+    <div id="top-div">
+        <p id="id-div">
+            <label for="id-input" id="id-input-label">{translate: 'Rule identifier'} :</label>
 
-        <ktbs4la2-resource-id-input
-            id="id-input"
-            placeholder="{translate: '&lt;id&gt;'}"
-            tabindex="1"
-            required>
-        </ktbs4la2-resource-id-input>
-    </p>
+            <ktbs4la2-resource-id-input
+                id="id-input"
+                placeholder="{translate: '&lt;id&gt;'}"
+                tabindex="1"
+                required>
+            </ktbs4la2-resource-id-input>
+        </p>
 
-    <p>
-        <label for="visible-checkbox" id="visible-checkbox-label">{translate: 'Visible'} :</label>
-
-        <input type="checkbox" id="visible-checkbox" tabindex="2" checked/>
-    </p>
+        <p id="visible-div">
+            <label for="visible-checkbox" id="visible-checkbox-label">{translate: 'Visible'} :</label>
+            <input type="checkbox" id="visible-checkbox" tabindex="2" checked />
+        </p>
+    </div>
 
     <fieldset class="for-stylesheets">
         <p>
             <label for="color-input" id="color-input-label" value="">{translate: 'Color'} :</label>
-
             <input type="color" id="color-input" tabindex="3"/>
         </p>
 

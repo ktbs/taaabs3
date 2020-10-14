@@ -337,7 +337,10 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
 			removeRuleButton.innerText = "❌";
             removeRuleButton.setAttribute("tabIndex", newRuleInputTabIndex + 1);
             removeRuleButton.addEventListener("click", this._onClickRemoveRuleButton.bind(this));
-            removeRuleButton.addEventListener("focus", this._onChildElementFocus.bind(this));
+            removeRuleButton.addEventListener("focus", this._onAboutToRemoveRule.bind(this));
+            removeRuleButton.addEventListener("mouseover", this._onAboutToRemoveRule.bind(this));
+            removeRuleButton.addEventListener("mouseout", this._onNoMoreAboutToRemoveRule.bind(this));
+            removeRuleButton.addEventListener("blur", this._onNoMoreAboutToRemoveRule.bind(this));
 			inputContainer.appendChild(removeRuleButton);
 		}
 
@@ -391,6 +394,36 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
                     }));
             }
 		}
+    }
+
+    /**
+     * 
+     */
+    _onAboutToRemoveRule(event) {
+        event.stopPropagation();
+        const hoveredOrFocusedButton = event.target;
+
+		if(hoveredOrFocusedButton.classList.contains("remove-rule-button")) {
+            const parentContainer = hoveredOrFocusedButton.parentNode;
+            
+            if(!parentContainer.classList.contains("about-to-remove"))
+                parentContainer.classList.add("about-to-remove");
+        }
+    }
+
+    /**
+     * 
+     */
+    _onNoMoreAboutToRemoveRule(event) {
+        event.stopPropagation();
+        const hoveredOrFocusedButton = event.target;
+
+		if(hoveredOrFocusedButton.classList.contains("remove-rule-button")) {
+            const parentContainer = hoveredOrFocusedButton.parentNode;
+            
+            if(parentContainer.classList.contains("about-to-remove"))
+                parentContainer.classList.remove("about-to-remove");
+        }
     }
 
     /**

@@ -7,7 +7,7 @@
 #container {
     border: 1px solid lightgray;
     display: inline-block;
-    padding: 10px 10px;
+    padding: 5px 5px;
     border-radius: 5px;
 }
 
@@ -28,17 +28,29 @@
 .rule-input-container {
     clear: both;
     display: block;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    margin-block-start: 5px;
+    margin-block-end: 5px;
     white-space: nowrap;
 }
 
-.rule-input-container:nth-child(even) {
-    background: #F5F5F5;
+.rule-input-container:first-child {
+    margin-block-start: 0;
+}
+
+.rule-input-container:nth-child(even) ktbs4la2-hrules-rule-input {
+    --background-color: #F5F5F5;
+}
+
+.rule-input-container.about-to-remove ktbs4la2-hrules-rule-input {
+    --background-color: #FEE;
+}
+
+ktbs4la2-hrules-rule-input {
+    min-width: calc(100% - 30px);
 }
 
 ktbs4la2-hrules-rule-input:only-child {
-    padding-right: 30px;
+    margin-right: 30px;
 }
 
 .remove-rule-button {

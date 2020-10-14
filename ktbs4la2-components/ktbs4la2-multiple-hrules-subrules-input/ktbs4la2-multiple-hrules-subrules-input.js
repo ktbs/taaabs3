@@ -336,9 +336,13 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
 			const removeSubruleButton = document.createElement("button");
             removeSubruleButton.classList.add("remove-subrule-button");
 			removeSubruleButton.setAttribute("title", this._translateString("Remove this sub-rule"));
-			removeSubruleButton.addEventListener("click", this._onClickRemoveSubruleButton.bind(this));
 			removeSubruleButton.innerText = "❌";
-			removeSubruleButton.setAttribute("tabIndex", newSubruleInputTabIndex + 1);
+            removeSubruleButton.setAttribute("tabIndex", newSubruleInputTabIndex + 1);
+            removeSubruleButton.addEventListener("click", this._onClickRemoveSubruleButton.bind(this));
+			removeSubruleButton.addEventListener("focus", this._onAboutToRemoveSubrule.bind(this));
+            removeSubruleButton.addEventListener("mouseover", this._onAboutToRemoveSubrule.bind(this));
+            removeSubruleButton.addEventListener("mouseout", this._onNoMoreAboutToRemoveSubrule.bind(this));
+            removeSubruleButton.addEventListener("blur", this._onNoMoreAboutToRemoveSubrule.bind(this));
 			inputContainer.appendChild(removeSubruleButton);
 		}
 
@@ -392,6 +396,36 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
                     }));
             }
 		}
+    }
+
+    /**
+     * 
+     */
+    _onAboutToRemoveSubrule(event) {
+        event.stopPropagation();
+        const hoveredOrFocusedButton = event.target;
+
+		if(hoveredOrFocusedButton.classList.contains("remove-subrule-button")) {
+            const parentContainer = hoveredOrFocusedButton.parentNode;
+            
+            if(!parentContainer.classList.contains("about-to-remove"))
+                parentContainer.classList.add("about-to-remove");
+        }
+    }
+
+    /**
+     * 
+     */
+    _onNoMoreAboutToRemoveSubrule(event) {
+        event.stopPropagation();
+        const hoveredOrFocusedButton = event.target;
+
+		if(hoveredOrFocusedButton.classList.contains("remove-subrule-button")) {
+            const parentContainer = hoveredOrFocusedButton.parentNode;
+            
+            if(parentContainer.classList.contains("about-to-remove"))
+                parentContainer.classList.remove("about-to-remove");
+        }
     }
 
     /**

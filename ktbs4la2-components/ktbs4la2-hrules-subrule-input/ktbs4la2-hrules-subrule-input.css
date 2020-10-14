@@ -1,11 +1,33 @@
 :host {
     display: inline-block;
-    border: 1px solid lightgrey;
-    padding-left: 10px;
-    padding-right: 10px;
     outline: none;
+}
+
+#container {
+    border: 1px solid lightgrey;
+    padding: 5px 5px;
+    border-radius: 5px;
+    background-color: var(--background-color);
 }
 
 #attribute-constraints-label {
     display: block;
+}
+
+p {
+    margin-block-start: 5px;
+    margin-block-end: 5px;
+}
+
+p:first-child {
+    margin-block-start: 0;
+}
+
+p:last-child {
+    margin-block-end: 0;
+}
+
+label {
+    font-size: 10pt;
+    color: darkgray;
 }

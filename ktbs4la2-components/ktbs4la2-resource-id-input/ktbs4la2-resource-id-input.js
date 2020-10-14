@@ -196,6 +196,8 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
      * 
      */
     _onFocus(event) {
+        event.stopPropagation();
+        
         this._componentReady.then(() => {
             this._idInput.focus();
         }).catch(() => {});

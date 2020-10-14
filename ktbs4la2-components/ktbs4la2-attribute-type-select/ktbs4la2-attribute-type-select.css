@@ -8,6 +8,11 @@
     padding-bottom: initial;
     -webkit-padding-before: 2px;
     -webkit-padding-after: 3px;
+    background-color: var(--background-color);
+}
+
+#select:focus {
+    background-color: var(--background-color--focus);
 }
 
 #select option {

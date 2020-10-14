@@ -5,6 +5,15 @@
 
 #container {
     white-space: nowrap;
+    background-color: var(--background-color);
+}
+
+#attribute-type-select {
+    --background-color--focus: rgb(230, 245, 255);
+}
+
+:host-context(.about-to-remove) #attribute-type-select {
+    --background-color--focus: var(--background-color);
 }
 
 #operator-select {
@@ -12,6 +21,7 @@
     padding-bottom: initial;
     -webkit-padding-before: 2px;
     -webkit-padding-after: 3px;
+    background-color: var(--background-color);
 }
 
 #value-input {
@@ -21,8 +31,14 @@
     outline: none;
     height: 20px;
     width: 200px;
+    background-color: var(--background-color);
 }
 
-#value-input:focus {
+#operator-select:focus, #value-input:focus {
     background-color: rgb(230, 245, 255);
+}
+
+:host-context(.about-to-remove) #operator-select:focus,
+:host-context(.about-to-remove) #value-input:focus {
+    background-color: var(--background-color);
 }
