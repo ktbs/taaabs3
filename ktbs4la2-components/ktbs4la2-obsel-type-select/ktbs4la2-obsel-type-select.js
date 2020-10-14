@@ -61,7 +61,7 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
                 let values = new Array();
 
                 for(let i = 0; i < selectedOptions.length; i++)
-                    values.push(selectedOptions[i].getAttribute("value"));
+                    values.push(this.model_uri + "#" + selectedOptions[i].getAttribute("value"));
 
                 return_value = values.join(" ");
             }
@@ -70,7 +70,7 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
             const selectedOption = this._options.querySelector(".option.selected[value]");
 
             if(selectedOption)
-                return_value = selectedOption.getAttribute("value");
+                return_value = this.model_uri + "#" + selectedOption.getAttribute("value");
         }
 
         return return_value;
@@ -539,7 +539,7 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
                                 const selected_values = this.getAttribute("value").split(" ").filter(Boolean);
                 
                                 for(let i = 0; i < selected_values.length; i++)
-                                    this._selectMatchingOption(selected_values[i]);
+                                    this._selectMatchingOption(selected_values[i], false);
                             }
                             else
                                 this._selectMatchingOption(this.getAttribute("value"));
@@ -677,13 +677,22 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
 
     /**
      * 
+     * \param String value an obsel type uri
      */
     _selectMatchingOption(value, unselect_previously_selected = true) {
         this._componentReady.then(() => {
             let matchingOption;
 
-            if(value)
-                matchingOption = this._options.querySelector(".option[value = \"" + CSS.escape(value) + "\"]");
+            if(value && value.startsWith(this.model_uri)) {
+                try {
+                    const obselType_uri = new URL(value);
+                    matchingOption = this._options.querySelector(".option[value = \"" + CSS.escape(obselType_uri.hash.substring(1)) + "\"]");
+                }
+                catch(error) {
+                    this.emitErrorEvent(error);
+                    matchingOption = this._defaultOption;
+                }
+            }
             else
                 matchingOption = this._defaultOption;
 
