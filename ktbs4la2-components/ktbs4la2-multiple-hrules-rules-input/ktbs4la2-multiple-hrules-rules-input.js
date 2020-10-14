@@ -128,7 +128,8 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
         this._emptyMessage = this.shadowRoot.querySelector("#empty-message");
         this._ruleInputsDiv = this.shadowRoot.querySelector("#rules-inputs");
 		this._addRuleButton = this.shadowRoot.querySelector("#add-rule");
-		this._addRuleButton.addEventListener("click", this._onClickAddRuleButton.bind(this));
+        this._addRuleButton.addEventListener("click", this._onClickAddRuleButton.bind(this));
+        this._addRuleButton.addEventListener("focus", this._onChildElementFocus.bind(this));
 
 		if(this.required)
 			this._addRuleInput(null, false);
@@ -168,7 +169,7 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
                             }
                             else if(this.required)
                                 this._addRuleInput(null, false);
-                        })/*.catch(() => {})*/;
+                        }).catch(() => {});
                     }
                     else
                         this.emitErrorEvent(new Error("Invalid value : must be a JSON Array"));
@@ -183,7 +184,7 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
 
                     if(this.required)
                         this._addRuleInput(null, false);
-                })/*.catch(() => {})*/;
+                }).catch(() => {});
             }
         }
         else if(name == "required") {
@@ -219,7 +220,7 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
                 }
                 else if(this.required)
                     this._addRuleInput(null, false);
-            })/*.catch(() => {})*/;
+            }).catch(() => {});
         }
         else if(name == "model-uri") {
             this._componentReady.then(() => {
@@ -227,7 +228,7 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
 
                 for(let i = 0; i < rulesInputs.length; i++)
                     rulesInputs[i].setAttribute("model-uri", newValue);
-            })/*.catch(() => {})*/;
+            }).catch(() => {});
         }
     }
 
@@ -252,7 +253,7 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
     /**
 	 * 
 	 */
-	_onRuleInputFocus(event) {
+	_onChildElementFocus(event) {
 		event.stopPropagation();
 	}
 
@@ -260,7 +261,6 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
      * 
      */
     _onFocus(event) {
-        event.preventDefault();
         event.stopPropagation();
 		const rulesInputs = this._getRulesInputs();
 
@@ -269,7 +269,7 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
                 setTimeout(() => {
                     rulesInputs[0].focus();
                 });
-            })/*.catch(() => {})*/;
+            }).catch(() => {});
         else {
             setTimeout(() => {
                 this._addRuleButton.focus();
@@ -281,7 +281,7 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
      * 
      */
     _onClickAddRuleButton(event) {
-        event.preventDefault();
+        //event.preventDefault();
         event.stopPropagation();
         const rulesInputs = this._getRulesInputs();
         const newRuleInputContainer = this._addRuleInput(null, !((rulesInputs.length == 0) && this.required));
@@ -327,16 +327,17 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
         newRuleInput.addEventListener("change", this._onChildEvent.bind(this));
 
 		inputContainer.appendChild(newRuleInput);
-		newRuleInput.addEventListener("focus", this._onRuleInputFocus.bind(this));
+		newRuleInput.addEventListener("focus", this._onChildElementFocus.bind(this));
 		const currentInputs = this._getRulesInputs();
 
 		if(allow_remove) {
 			const removeRuleButton = document.createElement("button");
             removeRuleButton.classList.add("remove-rule-button");
 			removeRuleButton.setAttribute("title", this._translateString("Remove this rule"));
-			removeRuleButton.addEventListener("click", this._onClickRemoveRuleButton.bind(this));
 			removeRuleButton.innerText = "❌";
-			removeRuleButton.setAttribute("tabIndex", newRuleInputTabIndex + 1);
+            removeRuleButton.setAttribute("tabIndex", newRuleInputTabIndex + 1);
+            removeRuleButton.addEventListener("click", this._onClickRemoveRuleButton.bind(this));
+            removeRuleButton.addEventListener("focus", this._onChildElementFocus.bind(this));
 			inputContainer.appendChild(removeRuleButton);
 		}
 
