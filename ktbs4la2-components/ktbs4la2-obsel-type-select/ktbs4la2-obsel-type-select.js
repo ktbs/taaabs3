@@ -509,7 +509,9 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
                             const newObselTypeOption = document.createElement("div");
                             newObselTypeOption.classList.add("option");
                             newObselTypeOption.setAttribute("value", obselType.id);
-                            newObselTypeOption.setAttribute("tabindex", 0);
+
+                            if(this.multiple)
+                                newObselTypeOption.setAttribute("tabindex", 0);
 
                             if(obselType.suggestedSymbol) {
                                 const symbolSpan = document.createElement("span");
@@ -574,6 +576,19 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
                 if(this._defaultOption && (this.required || this.multiple))
                     this._removeDefaultOption();
 
+                if(this.multiple) {
+                    const optionsWithoutTabindex = this.shadowRoot.querySelectorAll(".option:not([tabindex])");
+
+                    for(let i = 0; i < optionsWithoutTabindex.length; i++)
+                        optionsWithoutTabindex[i].setAttribute("tabindex", 0);
+                }
+                else {
+                    const optionsWithTabindex = this.shadowRoot.querySelectorAll(".option[tabindex]");
+
+                    for(let i = 0; i < optionsWithTabindex.length; i++)
+                        optionsWithTabindex[i].removeAttribute("tabindex");
+                }
+
                 if(this.required && !this.multiple && !this.value)
                     this._selectFirstAvailableOption();
             }).catch(() => {});
@@ -632,7 +647,6 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
             this._defaultOption = document.createElement("div");
             this._defaultOption.id = "default";
             this._defaultOption.className = "option";
-            this._defaultOption.setAttribute("tabindex", 0);
             const defaultOptionLabel = document.createElement("span");
             defaultOptionLabel.className = "default-label";
             defaultOptionLabel.innerText = this._translateString("None");
