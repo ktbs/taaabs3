@@ -192,8 +192,8 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
 
         this.addEventListener("focus", this._onFocus.bind(this));
 
-        if(!this.model_uri)
-            this.emitErrorEvent(new Error("Missing value for required attribute \"model-uri\""));
+        if(!this.model_uri && !this.obsel_type)
+            this.emitErrorEvent(new Error("Missing value : at least either attribute of \"model-uri\" or\"obsel-type\" is required"));
 	}
 
     /**
@@ -216,42 +216,149 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
 		super.attributeChangedCallback(name, oldValue, newValue);
         
         if(name == "model-uri") {
-            if(newValue) {
-                this._model = ResourceMultiton.get_resource(Model, newValue);
+            this._componentReady.then(() => {
+                let new_model_uri;
 
-                this._model.get(this._abortController.signal)
-                    .then(() => {
-                        this._componentReady.then(() => {
-                            const current_value = this._valueChanged?this.value:this.getAttribute("value");
+                if(newValue)
+                    new_model_uri = newValue;
+                else {
+                    if(this.obsel_type) {
+                        const obsel_type_uri = new URL(this.obsel_type);
+
+                        if(obsel_type_uri.hash)
+                            new_model_uri = obsel_type_uri.toString().replace(obsel_type_uri.hash, "");
+                    }
+                    else
+                        this.emitErrorEvent(new Error("Missing value : at least either attribute of \"model-uri\" or\"obsel-type\" is required"));
+                }
+                
+                if(new_model_uri) {
+                    if(!this._model || (new_model_uri != this._model.uri.toString())) {
+                        this._model = ResourceMultiton.get_resource(Model, new_model_uri);
+
+                        try {
+                            this._model.get(this._abortController.signal)
+                                .then(() => {
+                                    if(this.obsel_type) {
+                                        if(this.obsel_type.startsWith(this._model.uri.toString() + "#")) {
+                                            const obsel_type_uri = new URL(this.obsel_type);
+
+                                            if(obsel_type_uri.hash) {
+                                                const obsel_type_id = obsel_type_uri.hash.substring(1);
+                                                this._obselType = this._model.get_obsel_type(obsel_type_id);
+                            
+                                                if(this._obselType) {
+                                                    const current_value = this._valueChanged?this.value:this.getAttribute("value");
+                                                    this._purgeOptions();
+                                                    this._buildOptions(current_value);
+                                                }
+                                                else {
+                                                    this._purgeOptions();
+                                                    this.emitErrorEvent(new Error("Provided value for \"obsel-type\" attribute seems to not be an ObselType described in the Model at \"" + newValue + "\""));
+                                                }
+                                            }
+                                            else {
+                                                this._purgeOptions();
+                                                this.emitErrorEvent(new Error("Provided value for \"obsel-type\" attribute seems to not be a valid ObselType URI. It must be of form : <model_uri>#<obsel_type_id>"));
+                                            }
+                                        }
+                                        else {
+                                            this._purgeOptions();
+                                            this.emitErrorEvent(new Error("Provided value for \"obsel-type\" attribute does not match with the one provided for \"model-uri\". If both are provided, the obsel type must belong to the model so that both uris start the same."));
+                                        }
+                                    }
+                                    else {
+                                        const current_value = this._valueChanged?this.value:this.getAttribute("value");
+                                        this._purgeOptions();
+                                        this._buildOptions(current_value);
+                                    }
+                                })
+                                .catch((error) => {
+                                    this._purgeOptions();
+                                    this.emitErrorEvent(error);
+                                });
+                        }
+                        catch(error) {
                             this._purgeOptions();
-
-                            try {
-                                this._buildOptions(current_value);
-                            }
-                            catch(error) {
-                                this.emitErrorEvent(error);
-                            }
-                        }).catch(() => {});
-                    })
-                    .catch((error) => {
-                        this.emitErrorEvent(error);
-                    })
-            }
-            else
-                this.emitErrorEvent(new Error("Missing value for required attribute \"model-uri\""));
+                            this.emitErrorEvent(error);
+                        }
+                    }
+                }
+                else {
+                    if(this._model)
+                        delete this._model;
+                    
+                    this._purgeOptions();
+                }
+            }).catch(() => {});
         }
         else if(name == "obsel-type") {
-            if(this._optionsInstanciated) {
-                const current_value = this._valueChanged?this.value:this.getAttribute("value");
-                this._purgeOptions();
-                
-                try {
-                    this._buildOptions(current_value);
+            this._componentReady.then(() => {
+                if(newValue) {
+                    try {
+                        const obsel_type_uri = new URL(newValue);
+
+                        if(obsel_type_uri.hash) {
+                            if(!this.model_uri) {
+                                const model_uri_string = newValue.replace(obsel_type_uri.hash, "");
+                                this.model_uri = model_uri_string;
+                            }
+                            else {
+                                if(newValue.startsWith(this.model_uri + "#")) {
+                                    this._model.get(this._abortController.signal)
+                                        .then(() => {
+                                            const obsel_type_id = obsel_type_uri.hash.substring(1);
+
+                                            if(!this._obselType || (obsel_type_id != this._obselType.id)) {
+                                                this._obselType = this._model.get_obsel_type(obsel_type_id);
+
+                                                if(this._obselType) {  
+                                                    const current_value = this._valueChanged?this.value:this.getAttribute("value");
+                                                    this._purgeOptions();
+                                                    this._buildOptions(current_value);
+                                                }
+                                                else {
+                                                    this._purgeOptions();
+                                                    this.emitErrorEvent(new Error("Provided value for \"obsel-type\" attribute seems to not be an ObselType described in the Model at \"" + this.model_uri + "\""));
+                                                }
+                                            }
+                                        })
+                                        .catch((error) => {
+                                            this._purgeOptions();
+                                            this.emitErrorEvent(error);
+                                        });
+                                }
+                                else {
+                                    this._purgeOptions();
+                                    this.emitErrorEvent(new Error("Provided value for \"obsel-type\" attribute does not match with the one provided for \"model-uri\". If both are provided, the obsel type must belong to the model so that both uris start the same."));
+                                }
+                            }
+                        }
+                        else {
+                            this._purgeOptions();
+                            this.emitErrorEvent(new Error("Provided value for \"obsel-type\" attribute seems to not be a valid ObselType URI. It must be of form : <model_uri>#<obsel_type_id>"));
+                        }
+                    }
+                    catch(error) {
+                        this._purgeOptions();
+                        this.emitErrorEvent(error);
+                    }
                 }
-                catch(error) {
-                    this.emitErrorEvent(error);
+                else {
+                    if(this._obselType)
+                        delete this._obselType;
+
+                    if(this.model_uri) {
+                        const current_value = this._valueChanged?this.value:this.getAttribute("value");                            
+                        this._purgeOptions();
+                        this._buildOptions(current_value);
+                    }
+                    else {
+                        this._purgeOptions();
+                        this.emitErrorEvent(new Error("Missing value : at least either attribute of \"model-uri\" or\"obsel-type\" is required"));
+                    }
                 }
-            }
+            }).catch(() => {});
         }
         else if(name == "required") {
             this._componentReady.then(() => {
@@ -358,11 +465,7 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
      * 
      */
     _buildOptions(previous_value) {
-        let obselType = null;
         let selected_attribute_types_ids = new Array();
-
-        if(this.obsel_type)
-            obselType = this._model.get_obsel_type(this.obsel_type);
         
         if(previous_value) {
             if(this.multiple) {
@@ -416,7 +519,7 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
         for(let i = 0; i < this._model.attribute_types.length; i++) {
             const attributeType = this._model.attribute_types[i];
             
-            if(!this.obsel_type || (obselType && attributeType.appliesToObselType(obselType))) {
+            if(!this.obsel_type || (this._obselType && attributeType.appliesToObselType(this._obselType))) {
                 const newAttributeTypeOption = document.createElement("option");
                 newAttributeTypeOption.setAttribute("value", attributeType.id); 
                 newAttributeTypeOption.innerText = attributeType.get_translated_label(this._lang);

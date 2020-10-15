@@ -166,8 +166,10 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
 
                     if(valueObject instanceof Object) {
                         this._componentReady.then(() => {
-                            if(valueObject.type)
+                            if(valueObject.type) {
                                 this._obselTypeSelect.setAttribute("value", valueObject.type);
+                                this._attributeConstraints.setAttribute("obsel-type", valueObject.type);
+                            }
 
                             if(valueObject.attributes)
                                 this._attributeConstraints.setAttribute("value", JSON.stringify(valueObject.attributes));
