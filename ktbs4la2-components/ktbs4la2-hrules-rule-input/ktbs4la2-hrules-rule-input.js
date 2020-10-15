@@ -205,7 +205,7 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
             if(newValue)
                 this._componentReady.then(() => {
                     this._subrulesInput.setAttribute("model-uri", newValue);
-                })
+                }).catch(() => {});
         }
         else if(name == "value") {
             if(newValue) {
