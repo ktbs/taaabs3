@@ -95,7 +95,15 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
         }
         else if(name == "value") {
             this._componentReady.then(() => {
-                this.value = newValue;
+                this._uriInput.value = newValue;
+
+                const newEvent = new InputEvent("change", {
+                    bubbles: true,
+                    cancelable: false,
+                    composed: true
+                });
+
+                this._updateValidation(newEvent);
             });
         }
         else if(name == "placeholder") {
@@ -118,15 +126,7 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
     /**
      * 
      */
-    _onURIInputEvent(event) {
-        event.stopPropagation();
-
-        const newEvent = new InputEvent(event.type, {
-            bubbles: event.bubbles,
-            cancelable: false,
-            composed: event.composed
-        });
-
+    _updateValidation(dispatchAfterResultEvent) {
         if(this._abortTestQueryController)
             this._abortTestQueryController.abort();
 
@@ -169,7 +169,7 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                                     this._showMessage(this._translateString("Not a Ktbs resource"), "error");
                                 })
                                 .finally(() => {
-                                    this.dispatchEvent(newEvent);
+                                    this.dispatchEvent(dispatchAfterResultEvent);
                                 });
                         }
                         else {
@@ -180,12 +180,12 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                             else
                                 this._showMessage(this._translateString("Error : ") + response.status + " (" + response.statusText + ")", "error");
 
-                           this.dispatchEvent(newEvent);
+                        this.dispatchEvent(dispatchAfterResultEvent);
                         }
                     })
                     .catch((error) => {
                         this._showMessage(this._translateString("HTTP query failed"), "error");
-                        this.dispatchEvent(newEvent);
+                        this.dispatchEvent(dispatchAfterResultEvent);
                     });
 
                 this._showMessage(this._translateString("Pending..."), "pending");
@@ -200,13 +200,28 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                 else 
                     this._showMessage(this._translateString("Not a valid URL"), "error");
 
-                this.dispatchEvent(newEvent);
+                this.dispatchEvent(dispatchAfterResultEvent);
             }
         }
         else {
             this._clearMessage();
-            this.dispatchEvent(newEvent);
+            this.dispatchEvent(dispatchAfterResultEvent);
         }
+    }
+
+    /**
+     * 
+     */
+    _onURIInputEvent(event) {
+        event.stopPropagation();
+
+        const newEvent = new InputEvent(event.type, {
+            bubbles: event.bubbles,
+            cancelable: false,
+            composed: event.composed
+        });
+
+        this._updateValidation(newEvent);
     }
 
     /**
@@ -280,11 +295,7 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
      * 
      */
     set value(new_value) {
-        this._componentReady.then(() => {
-            if(new_value != this._uriInput.value) {
-                this._uriInput.value = new_value;
-            }
-        });
+        this.setAttribute("value", new_value);
     }
 
     /**

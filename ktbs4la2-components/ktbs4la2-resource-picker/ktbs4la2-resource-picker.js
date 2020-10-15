@@ -60,7 +60,7 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         this._resourcesExplorer.addEventListener("keydown", this._onResourceExplorerKeyDown.bind(this));
         this._uriInput = this.shadowRoot.querySelector("#uri-input");
         this._uriInput.setAttribute("lang", this._lang);
-        this._uriInput.addEventListener("input", this._onInputURIInput.bind(this));
+        this._uriInput.addEventListener("input", this._onURIInputEvent.bind(this));
         this._uriInput.addEventListener("change", this._onURIInputEvent.bind(this));
         this._uriInput.addEventListener("focus", this._onChildElementFocus.bind(this));
 
@@ -236,7 +236,8 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
     /**
      * 
      */
-    _onInputURIInput(event) {
+    _onURIInputEvent(event) {
+        event.stopPropagation();
         let previouslySelectedElementsQuery, newlySelectedElementQuery;
 
         if(Method.builtin_methods_ids.includes(this._uriInput.value)) {
@@ -260,18 +261,9 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
             if(newlySelectedElement && !newlySelectedElement.classList.contains("selected"))
                 newlySelectedElement.classList.add("selected");
         }
-
-        this._onURIInputEvent(event);
-    }
-
-    /**
-     * 
-     */
-    _onURIInputEvent(event) {
-        event.stopPropagation();
  
         const componentEvent = new Event(event.type, {
-            bubbles: true,
+            bubbles: event.bubbles,
             cancelable: false,
             composed: event.composed
         });
