@@ -53,7 +53,8 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
         this._container = this.shadowRoot.querySelector("#container");
         this._inputContainer = this.shadowRoot.querySelector("#input-container");
         this._uriInput = this.shadowRoot.querySelector("#uri-input");
-        this._uriInput.addEventListener("input", this._onInputUriInput.bind(this));
+        this._uriInput.addEventListener("input", this._onURIInputEvent.bind(this));
+        this._uriInput.addEventListener("change", this._onURIInputEvent.bind(this));
         this._uriInput.addEventListener("focus", this._onUriInputFocus.bind(this));
         this._uriInput.addEventListener("blur", this._onUriInputBlur.bind(this));
         this._messageArea = this.shadowRoot.querySelector("#message-area");
@@ -117,33 +118,14 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
     /**
      * 
      */
-    _onInputUriInput(event) {
-        let newEvent = null;
+    _onURIInputEvent(event) {
+        event.stopPropagation();
 
-        if(event) {
-            event.stopPropagation();
-
-            const newEventInit = {};
-
-            if(event.inputType)
-                newEventInit.inputType = event.inputType;
-
-            if(event.data)
-                newEventInit.data = event.data;
-
-            if(event.dataTransfer)
-                newEventInit.dataTransfer = event.dataTransfer;
-
-            if(event.isComposing)
-                newEventInit.isComposing = event.isComposing;
-
-            if(event.ranges)
-                newEventInit.inputType = event.ranges;
-
-            newEvent = new InputEvent("input", newEventInit);
-        }
-        else
-            newEvent = new InputEvent("input");
+        const newEvent = new InputEvent(event.type, {
+            bubbles: event.bubbles,
+            cancelable: false,
+            composed: event.composed
+        });
 
         if(this._abortTestQueryController)
             this._abortTestQueryController.abort();
@@ -301,7 +283,6 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
         this._componentReady.then(() => {
             if(new_value != this._uriInput.value) {
                 this._uriInput.value = new_value;
-                this._onInputUriInput(null);
             }
         });
     }

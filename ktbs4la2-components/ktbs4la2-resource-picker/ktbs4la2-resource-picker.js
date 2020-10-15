@@ -60,7 +60,8 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         this._resourcesExplorer.addEventListener("keydown", this._onResourceExplorerKeyDown.bind(this));
         this._uriInput = this.shadowRoot.querySelector("#uri-input");
         this._uriInput.setAttribute("lang", this._lang);
-        this._uriInput.addEventListener("input", this._onChangeURIInputValue.bind(this));
+        this._uriInput.addEventListener("input", this._onInputURIInput.bind(this));
+        this._uriInput.addEventListener("change", this._onURIInputEvent.bind(this));
         this._uriInput.addEventListener("focus", this._onChildElementFocus.bind(this));
 
         if(!this.getAttribute("browse-scope-uris"))
@@ -111,7 +112,9 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
             }).catch(() => {});
 
         if(name == "value")
-            this.value = newValue;
+            this._componentReady.then(() => {
+                this._uriInput.value = newValue;
+            }).catch(() => {});
     }
 
     /**
@@ -141,9 +144,7 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
      * 
      */
     set value(new_value) {
-        this._componentReady.then(() => {
-            this._uriInput.value = new_value;
-        });
+        this.setAttribute("value", new_value);
     }
 
     /**
@@ -217,14 +218,25 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         event.stopPropagation();
         const selectedElement = event.target;
 
-        if(selectedElement)
+        if(selectedElement) {
             this._selectElement(selectedElement);
+
+            setTimeout(() => {
+                const componentEvent = new Event("change", {
+                    bubbles: true,
+                    cancelable: false,
+                    composed: true
+                });
+        
+                this.dispatchEvent(componentEvent);
+            });
+        }
     }
 
     /**
      * 
      */
-    _onChangeURIInputValue(event) {
+    _onInputURIInput(event) {
         let previouslySelectedElementsQuery, newlySelectedElementQuery;
 
         if(Method.builtin_methods_ids.includes(this._uriInput.value)) {
@@ -249,7 +261,22 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
                 newlySelectedElement.classList.add("selected");
         }
 
-        this.dispatchEvent(new InputEvent("input"));
+        this._onURIInputEvent(event);
+    }
+
+    /**
+     * 
+     */
+    _onURIInputEvent(event) {
+        event.stopPropagation();
+ 
+        const componentEvent = new Event(event.type, {
+            bubbles: true,
+            cancelable: false,
+            composed: event.composed
+        });
+
+        this.dispatchEvent(componentEvent);
     }
 
     /**
@@ -333,6 +360,14 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
                         this._selectElement(selectableElements[selectedElementRank - 1]);
                     else if((event.keyCode == 40) && (selectedElementRank < (selectableElements.length - 1)))
                         this._selectElement(selectableElements[selectedElementRank + 1]);
+
+                    const componentEvent = new Event("change", {
+                        bubbles: true,
+                        cancelable: false,
+                        composed: true
+                    });
+            
+                    this.dispatchEvent(componentEvent);
                 }
             }
         }
