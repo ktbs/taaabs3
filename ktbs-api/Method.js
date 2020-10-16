@@ -70,18 +70,26 @@ export class Method extends Resource {
 
 		if(this.is_builtin)
 			resolveHierarchyPromise(this);
-		else if(this.parent_method.is_builtin)
-			resolveHierarchyPromise(this.parent_method);
 		else {
-			this.parent_method.get(abortSignal, credentials)
+			this.get(abortSignal, credentials)
 				.then(() => {
-					this.parent_method.get_methods_hierarchy(abortSignal, credentials)
-						.then((builtin_method) => {
-							resolveHierarchyPromise(builtin_method);
-						})
-						.catch((error) => {
-							rejectHierarchyPromise(error);
-						});
+					if(this.parent_method.is_builtin)
+						resolveHierarchyPromise(this.parent_method);
+					else {
+						this.parent_method.get(abortSignal, credentials)
+							.then(() => {
+								this.parent_method.get_methods_hierarchy(abortSignal, credentials)
+									.then((builtin_method) => {
+										resolveHierarchyPromise(builtin_method);
+									})
+									.catch((error) => {
+										rejectHierarchyPromise(error);
+									});
+							})
+							.catch((error) => {
+								rejectHierarchyPromise(error);
+							});
+					}
 				})
 				.catch((error) => {
 					rejectHierarchyPromise(error);

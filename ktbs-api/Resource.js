@@ -836,23 +836,29 @@ export class Resource {
 			rejectRootPromise = reject;
 		});
 
-		if(this.type == "Ktbs")
-			resolveRootPromise(this);
-		else {
-			this.parent.get(abortSignal, credentials)
-				.then(() => {
-					this.parent.get_root(abortSignal, credentials)
-						.then((root) => {
-							resolveRootPromise(root);
+		this.get(abortSignal, credentials)
+			.then(() => {
+				if(this.type == "Ktbs")
+					resolveRootPromise(this);
+				else {
+					this.parent.get(abortSignal, credentials)
+						.then(() => {
+							this.parent.get_root(abortSignal, credentials)
+								.then((root) => {
+									resolveRootPromise(root);
+								})
+								.catch((error) => {
+									rejectRootPromise(error);
+								});
 						})
 						.catch((error) => {
 							rejectRootPromise(error);
 						});
-				})
-				.catch((error) => {
-					rejectRootPromise(error);
-				});
-		}
+				}
+			})
+			.catch((error) => {
+				rejectRootPromise(error);
+			});
 
 		return rootPromise;
 	}
