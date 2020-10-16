@@ -42,4 +42,6 @@
     visibility: hidden;
     font-size: 12pt;
     position: absolute;
+    top: 0;
+    left: 0;
 }
