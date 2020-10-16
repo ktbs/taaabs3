@@ -492,69 +492,80 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
 		super.attributeChangedCallback(name, oldValue, newValue);
         
         if(name == "model-uri") {
-            this._model = ResourceMultiton.get_resource(Model, newValue);
+            if(newValue) {
+                this._model = ResourceMultiton.get_resource(Model, newValue);
 
-            this._model.get(this._abortController.signal)
-                .then(() => {
-                    this._componentReady.then(() => {
-                        // remove previous option children
-                        const currentObselOptions = this._select.querySelectorAll("[value]");
+                this._model.get(this._abortController.signal)
+                    .then(() => {
+                        this._componentReady.then(() => {
+                            // remove previous option children
+                            const currentObselOptions = this._select.querySelectorAll("[value]");
 
-                        for(let i = (currentObselOptions.length - 1); i >= 0; i--)
-                            currentObselOptions[i].remove();
-                        
-                        // rebuild list
-                        for(let i = 0; i < this._model.obsel_types.length; i++) {
-                            const obselType = this._model.obsel_types[i];
-                            const newObselTypeOption = document.createElement("div");
-                            newObselTypeOption.classList.add("option");
-                            newObselTypeOption.setAttribute("value", obselType.id);
+                            for(let i = (currentObselOptions.length - 1); i >= 0; i--)
+                                currentObselOptions[i].remove();
+                            
+                            // rebuild list
+                            for(let i = 0; i < this._model.obsel_types.length; i++) {
+                                const obselType = this._model.obsel_types[i];
+                                const newObselTypeOption = document.createElement("div");
+                                newObselTypeOption.classList.add("option");
+                                newObselTypeOption.setAttribute("value", obselType.id);
 
-                            if(this.multiple)
-                                newObselTypeOption.setAttribute("tabindex", 0);
+                                if(this.multiple)
+                                    newObselTypeOption.setAttribute("tabindex", 0);
 
-                            if(obselType.suggestedSymbol) {
-                                const symbolSpan = document.createElement("span");
-                                symbolSpan.className = "obsel-type-symbol";
-                                symbolSpan.innerText = obselType.suggestedSymbol;
+                                if(obselType.suggestedSymbol) {
+                                    const symbolSpan = document.createElement("span");
+                                    symbolSpan.className = "obsel-type-symbol";
+                                    symbolSpan.innerText = obselType.suggestedSymbol;
+
+                                    if(obselType.suggestedColor)
+                                        symbolSpan.style.color = obselType.suggestedColor;
+
+                                    newObselTypeOption.appendChild(symbolSpan);
+                                }
+                                
+                                const labelSpan = document.createElement("span");
+                                labelSpan.className = "obsel-type-label";
+                                labelSpan.innerText = obselType.get_translated_label(this._lang);
 
                                 if(obselType.suggestedColor)
-                                    symbolSpan.style.color = obselType.suggestedColor;
+                                    labelSpan.style.color = obselType.suggestedColor;
 
-                                newObselTypeOption.appendChild(symbolSpan);
+                                newObselTypeOption.appendChild(labelSpan);
+                                newObselTypeOption.addEventListener("click", this._onClickOption.bind(this));
+                                this._options.appendChild(newObselTypeOption);
                             }
-                            
-                            const labelSpan = document.createElement("span");
-                            labelSpan.className = "obsel-type-label";
-                            labelSpan.innerText = obselType.get_translated_label(this._lang);
 
-                            if(obselType.suggestedColor)
-                                labelSpan.style.color = obselType.suggestedColor;
-
-                            newObselTypeOption.appendChild(labelSpan);
-                            newObselTypeOption.addEventListener("click", this._onClickOption.bind(this));
-                            this._options.appendChild(newObselTypeOption);
-                        }
-
-                        if(this.hasAttribute("value")) {
-                            if(this.multiple) {
-                                const selected_values = this.getAttribute("value").split(" ").filter(Boolean);
-                
-                                for(let i = 0; i < selected_values.length; i++)
-                                    this._selectMatchingOption(selected_values[i], false);
+                            if(this.hasAttribute("value")) {
+                                if(this.multiple) {
+                                    const selected_values = this.getAttribute("value").split(" ").filter(Boolean);
+                    
+                                    for(let i = 0; i < selected_values.length; i++)
+                                        this._selectMatchingOption(selected_values[i], false);
+                                }
+                                else
+                                    this._selectMatchingOption(this.getAttribute("value"));
                             }
-                            else
-                                this._selectMatchingOption(this.getAttribute("value"));
-                        }
-                        else if(!this.multiple)
-                            this._selectFirstAvailableOption();
+                            else if(!this.multiple)
+                                this._selectFirstAvailableOption();
 
-                        this._adjustWidth();
-                    }).catch(() => {});
-                })
-                .catch((error) => {
-                    this.emitErrorEvent(error);
-                })
+                            this._adjustWidth();
+                        }).catch(() => {});
+                    })
+                    .catch((error) => {
+                        this.emitErrorEvent(error);
+                    })
+            }
+            else {
+                this._componentReady.then(() => {
+                    // remove previous option children
+                    const currentObselOptions = this._select.querySelectorAll("[value]");
+
+                    for(let i = (currentObselOptions.length - 1); i >= 0; i--)
+                        currentObselOptions[i].remove();
+                }).catch(() => {});
+            }
         }
         else if(name == "required") {
             this._componentReady.then(() => {
