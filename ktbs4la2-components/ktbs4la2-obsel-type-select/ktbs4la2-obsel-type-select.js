@@ -54,23 +54,25 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
     get value() {
         let return_value = null;
 
-        if(this.multiple) {
-            const selectedOptions = this._options.querySelectorAll(".option.selected[value]");
+        if(this._options) {
+            if(this.multiple) {
+                const selectedOptions = this._options.querySelectorAll(".option.selected[value]");
 
-            if(selectedOptions.length > 0) {
-                let values = new Array();
+                if(selectedOptions.length > 0) {
+                    let values = new Array();
 
-                for(let i = 0; i < selectedOptions.length; i++)
-                    values.push(this.model_uri + "#" + selectedOptions[i].getAttribute("value"));
+                    for(let i = 0; i < selectedOptions.length; i++)
+                        values.push(this.model_uri + "#" + selectedOptions[i].getAttribute("value"));
 
-                return_value = values.join(" ");
+                    return_value = values.join(" ");
+                }
             }
-        }
-        else {
-            const selectedOption = this._options.querySelector(".option.selected[value]");
+            else {
+                const selectedOption = this._options.querySelector(".option.selected[value]");
 
-            if(selectedOption)
-                return_value = this.model_uri + "#" + selectedOption.getAttribute("value");
+                if(selectedOption)
+                    return_value = this.model_uri + "#" + selectedOption.getAttribute("value");
+            }
         }
 
         return return_value;

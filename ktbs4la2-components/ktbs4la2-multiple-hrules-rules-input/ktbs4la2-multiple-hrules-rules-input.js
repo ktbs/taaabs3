@@ -226,8 +226,12 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
             this._componentReady.then(() => {
                 const rulesInputs = this._getRulesInputs();
 
-                for(let i = 0; i < rulesInputs.length; i++)
-                    rulesInputs[i].setAttribute("model-uri", newValue);
+                for(let i = 0; i < rulesInputs.length; i++) {
+                    if(newValue)
+                        rulesInputs[i].setAttribute("model-uri", newValue);
+                    else if(rulesInputs[i].hasAttribute("model-uri"))
+                        rulesInputs[i].removeAttribute("model-uri");
+                }
             }).catch(() => {});
         }
     }

@@ -306,7 +306,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
-        const valid = true;
+        let valid = true;
         const pickers = this._getResourcePickers();
 
         for(let i = 0; valid && (i < pickers.length); i++)
