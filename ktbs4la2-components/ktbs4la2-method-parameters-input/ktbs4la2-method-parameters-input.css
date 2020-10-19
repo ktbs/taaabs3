@@ -1,0 +1,88 @@
+:host {
+    display: inline-block;
+    vertical-align: middle;
+    outline: none;
+}
+
+#container {
+    border: 1px solid lightgray;
+    display: inline-block;
+    padding: 5px 5px;
+    border-radius: 5px;
+    width: calc(100% - 12px);
+    background-color: var(--background-color);
+}
+
+label {
+    font-size: 10pt;
+    color: darkgray;
+}
+
+#method-uri-not-set-message,
+.model-not-set-message {
+    font-size: 9pt;
+    color: gray;
+    font-style: italic;
+    display: none;
+}
+
+:host(:not([method-uri])) #method-uri-not-set-message, :host([method-uri = ""]) #method-uri-not-set-message {
+    display: block;
+}
+
+input[type = "text"], input[type = "number"], input[type = "datetime-local"] {
+    border-style: solid;
+    border-width: 1px;
+    border-color: lightgray;
+    outline: none;
+    height: 20px;
+    width: 400px;
+}
+
+input:focus {
+    background-color: rgb(230, 245, 255);
+}
+
+ktbs4la2-resource-picker {
+    vertical-align: top;
+    margin-top: -3px;
+    width: 455px;
+}
+
+ktbs4la2-multiple-resources-picker {
+    width: 455px;
+}
+
+:host(:not([method-uri])) section, 
+:host([method-uri = ""]) section,
+#container.error section,
+#container.filter section:not(.filter),
+#container.fusion section:not(.fusion),
+#container.fsa section:not(.fsa),
+#container.hrules section:not(.hrules),
+#container.sparql section:not(.sparql),
+#container.isparql section:not(.isparql),
+#container.parallel section:not(.parallel),
+#container.pipe section:not(.pipe),
+#container.external section:not(.external) {
+	display: none;
+}
+
+textarea {
+    display: block;
+    margin: 0 0 !important;
+    outline: none;
+    border-color: lightgray;
+}
+
+textarea:focus {
+    background-color: rgb(230, 245, 255);
+}
+
+p.model-not-set .model-not-set-message {
+    display: inline;
+}
+
+p.model-not-set .needs-model {
+    display: none;
+}
