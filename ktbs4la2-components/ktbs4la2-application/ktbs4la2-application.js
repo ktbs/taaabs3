@@ -597,124 +597,133 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	setMainObject(main_type = "documentation", main_id = null, ktbs_type = null, ktbs_label = null, skipHistoryPush = false) {
 		// remove previous main content
 		let mainElements = this.querySelectorAll("[slot = \"main\"]");
+		let previousMainElementPreventsRemoval = false;
 
-		for(let i = 0; i < mainElements.length; i++)
-			mainElements[i].remove();
+		for(let i = 0; !previousMainElementPreventsRemoval && (i < mainElements.length); i++) {
+			const beforeRemoveEvent = new Event("beforeremove", {bubbles: true, cancelable: true});
+			mainElements[i].dispatchEvent(beforeRemoveEvent);
+			previousMainElementPreventsRemoval = beforeRemoveEvent.defaultPrevented;
 
-		// de-select currently selected navigation panel element
-		if((this._selectedNavElement != null) && this._selectedNavElement.classList.contains("selected"))
-			this._selectedNavElement.classList.remove("selected");
-
-		let previousSelectedParents =  this.querySelectorAll("[slot = \"nav-ktbs-roots\"].parent-of-selected, [slot = \"nav-ktbs-roots\"] .parent-of-selected");
-
-		for(let i = 0; i < previousSelectedParents.length; i++)
-			previousSelectedParents[i].classList.remove("parent-of-selected");
-
-		this._selectedNavElement = null;
-		this._selectedResourceHierarchy = new Array();
-
-		// prepare new main element
-		let mainContentChildrenTag;		
-
-		// prepare history entry
-		let historyState, historyURL;
-
-		let historyLabel = "KTBS4LA2 - ";
-
-		switch(main_type) {
-			case "documentation":
-				let doc_path = "/";
-				historyURL = window.location.pathname;
-
-				if(main_id) {
-					doc_path += main_id;
-					historyURL += "#" + encodeURIComponent(main_id);
-					historyLabel += this._translateString("Documentation");
-				}
-				else
-					historyLabel += this._translateString("Home");
-
-				historyState = {main_type: "documentation", documentation_path: doc_path};
-				mainContentChildrenTag = document.createElement("ktbs4la2-main-documentation");
-
-				// build the url of the "documentation" path
-				let docPath = window.location.origin;
-
-				if(window.location.pathname)
-					docPath += window.location.pathname;
-				else
-					docPath += "/";
-
-				 docPath += "doc/";
-
-				mainContentChildrenTag.setAttribute("doc-path", docPath);
-
-				if(main_id)
-					mainContentChildrenTag.setAttribute("page", main_id);
-
-				mainContentChildrenTag.addEventListener("page-change", this.onDocChangePage.bind(this));
-				break;
-			case "ktbs-resource":				
-				historyState = {main_type: "ktbs-resource", ktbs_resource_type: ktbs_type, ktbs_resource_uri: main_id, ktbs_resource_label: ktbs_label};
-				historyURL = "#type=" + encodeURIComponent(ktbs_type) + "&uri=" + encodeURIComponent(main_id);
-
-				if(ktbs_label) {
-					historyLabel += ktbs_label;
-					historyURL += "&label=" + encodeURIComponent(ktbs_label);
-				}
-				else
-					historyLabel += main_id;
-
-				historyLabel += " (" + ktbs_type + ")";
-
-				// select the corresponding element in navigation panel
-				let queryString = "[slot = \"nav-ktbs-roots\"][uri = \"" + main_id + "\"], [slot = \"nav-ktbs-roots\"] [uri = \"" + main_id + "\"]";
-				let newSelectedNavElement = this.querySelector(queryString);
-
-				if(newSelectedNavElement) {
-					newSelectedNavElement.classList.add("selected");
-					this._selectedNavElement = newSelectedNavElement;
-				}
-
-				let ktbsResource = ResourceMultiton.get_resource(this._get_resource_class(ktbs_type), main_id);
-				this._selectedResourceHierarchy.unshift(ktbsResource);
-				this._highlightNavParent(ktbsResource);
-
-				// instantiate the new main element
-				mainContentChildrenTag = document.createElement("ktbs4la2-main-resource");
-
-				if(main_id != null)
-					mainContentChildrenTag.setAttribute("uri", main_id);
-
-				if(ktbs_type != null)
-					mainContentChildrenTag.setAttribute("resource-type", ktbs_type);
-
-				if(ktbs_label != null)
-					mainContentChildrenTag.setAttribute("label", ktbs_label);
-
-				if(this.mainHeaderFolded)
-					mainContentChildrenTag.setAttribute("fold-header", "true");
-
-				break;
-			case "dashboard":
-				// @TODO
-				break;
-			default:
-				this.emitErrorEvent(new Error("Object with unkown type can not be set as main content"));
+			if(!previousMainElementPreventsRemoval)
+				mainElements[i].remove();
 		}
 
-		// add new content to main
-		mainContentChildrenTag.setAttribute("slot", "main");
-		this.appendChild(mainContentChildrenTag);
+		if(!previousMainElementPreventsRemoval) {
+			// de-select currently selected navigation panel element
+			if((this._selectedNavElement != null) && this._selectedNavElement.classList.contains("selected"))
+				this._selectedNavElement.classList.remove("selected");
 
-		// reset main area scrollbar
-		this.shadowRoot.querySelector("#main-scrollable").scrollTop = 0;
+			let previousSelectedParents =  this.querySelectorAll("[slot = \"nav-ktbs-roots\"].parent-of-selected, [slot = \"nav-ktbs-roots\"] .parent-of-selected");
 
-		// push new entry to navigation history
-		if(!skipHistoryPush)
-			history.pushState(historyState, historyLabel, historyURL);
+			for(let i = 0; i < previousSelectedParents.length; i++)
+				previousSelectedParents[i].classList.remove("parent-of-selected");
 
-		window.document.title = historyLabel;
+			this._selectedNavElement = null;
+			this._selectedResourceHierarchy = new Array();
+
+			// prepare new main element
+			let mainContentChildrenTag;		
+
+			// prepare history entry
+			let historyState, historyURL;
+
+			let historyLabel = "KTBS4LA2 - ";
+
+			switch(main_type) {
+				case "documentation":
+					let doc_path = "/";
+					historyURL = window.location.pathname;
+
+					if(main_id) {
+						doc_path += main_id;
+						historyURL += "#" + encodeURIComponent(main_id);
+						historyLabel += this._translateString("Documentation");
+					}
+					else
+						historyLabel += this._translateString("Home");
+
+					historyState = {main_type: "documentation", documentation_path: doc_path};
+					mainContentChildrenTag = document.createElement("ktbs4la2-main-documentation");
+
+					// build the url of the "documentation" path
+					let docPath = window.location.origin;
+
+					if(window.location.pathname)
+						docPath += window.location.pathname;
+					else
+						docPath += "/";
+
+					docPath += "doc/";
+
+					mainContentChildrenTag.setAttribute("doc-path", docPath);
+
+					if(main_id)
+						mainContentChildrenTag.setAttribute("page", main_id);
+
+					mainContentChildrenTag.addEventListener("page-change", this.onDocChangePage.bind(this));
+					break;
+				case "ktbs-resource":				
+					historyState = {main_type: "ktbs-resource", ktbs_resource_type: ktbs_type, ktbs_resource_uri: main_id, ktbs_resource_label: ktbs_label};
+					historyURL = "#type=" + encodeURIComponent(ktbs_type) + "&uri=" + encodeURIComponent(main_id);
+
+					if(ktbs_label) {
+						historyLabel += ktbs_label;
+						historyURL += "&label=" + encodeURIComponent(ktbs_label);
+					}
+					else
+						historyLabel += main_id;
+
+					historyLabel += " (" + ktbs_type + ")";
+
+					// select the corresponding element in navigation panel
+					let queryString = "[slot = \"nav-ktbs-roots\"][uri = \"" + main_id + "\"], [slot = \"nav-ktbs-roots\"] [uri = \"" + main_id + "\"]";
+					let newSelectedNavElement = this.querySelector(queryString);
+
+					if(newSelectedNavElement) {
+						newSelectedNavElement.classList.add("selected");
+						this._selectedNavElement = newSelectedNavElement;
+					}
+
+					let ktbsResource = ResourceMultiton.get_resource(this._get_resource_class(ktbs_type), main_id);
+					this._selectedResourceHierarchy.unshift(ktbsResource);
+					this._highlightNavParent(ktbsResource);
+
+					// instantiate the new main element
+					mainContentChildrenTag = document.createElement("ktbs4la2-main-resource");
+
+					if(main_id != null)
+						mainContentChildrenTag.setAttribute("uri", main_id);
+
+					if(ktbs_type != null)
+						mainContentChildrenTag.setAttribute("resource-type", ktbs_type);
+
+					if(ktbs_label != null)
+						mainContentChildrenTag.setAttribute("label", ktbs_label);
+
+					if(this.mainHeaderFolded)
+						mainContentChildrenTag.setAttribute("fold-header", "true");
+
+					break;
+				case "dashboard":
+					// @TODO
+					break;
+				default:
+					this.emitErrorEvent(new Error("Object with unkown type can not be set as main content"));
+			}
+
+			// add new content to main
+			mainContentChildrenTag.setAttribute("slot", "main");
+			this.appendChild(mainContentChildrenTag);
+
+			// reset main area scrollbar
+			this.shadowRoot.querySelector("#main-scrollable").scrollTop = 0;
+
+			// push new entry to navigation history
+			if(!skipHistoryPush)
+				history.pushState(historyState, historyLabel, historyURL);
+
+			window.document.title = historyLabel;
+		}
 	}
 
 	/**

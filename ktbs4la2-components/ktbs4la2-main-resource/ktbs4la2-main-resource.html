@@ -1,4 +1,4 @@
-<article id="container" class="pending">
+<article id="container" class="pending view">
 	<header id="header">
 		<ul id="breadcrumbs">
 			<slot name="breadcrumbs"></slot>
@@ -11,7 +11,13 @@
 			</div>
 
 			<div id="resource-description">
-				<h1 id="title"></h1>
+				<h1 id="title" class="view"></h1>
+
+				<ktbs4la2-multiple-translations-text-input 
+					id="edit-label-input"
+					class="edit">
+				</ktbs4la2-multiple-translations-text-input>
+
 				<a id="resource-link" target="_blank" title="{translate: 'See the resource on the REST console (opens in a new tab)'}"></a>
 				
 				<div id="resource-status">
@@ -23,8 +29,8 @@
 		</div>
         
         <div id="resource-tools">
-            <!--<a id="tool-edit" class="resource-tool" title="{translate: 'Edit'}"></a>-->
-            <a id="tool-remove" class="resource-tool" title="{translate: 'Delete'}"></a>
+            <a id="tool-edit" class="resource-tool view" title="{translate: 'Edit'}"></a>
+            <a id="tool-remove" class="resource-tool view" title="{translate: 'Delete'}"></a>
         </div>
 
         <div id="resource-about" class="folded">
@@ -33,18 +39,18 @@
 			<div id="resource-about-content">
 				<p id="root-comment"></p>
 
-				<div id="ktbs-version">
+				<div id="ktbs-version" class="view">
 					<span id="version-label">{translate: 'Version'}</span> : 
 					<span id="root-version"></span>
 				</div>
 
-				<ul id="root-builin-methods">
+				<ul id="root-builin-methods" class="view">
 					<h2 id="root-builin-methods-header">{translate: 'Builtin methods'}:</h2>
 				</ul>
 			</div>
 		</div>
 
-		<div id="fold-header-button" title="{translate: 'Condense header'}"></div>
+		<div id="fold-header-button" title="{translate: 'Condense header'}" class="view"></div>
 	</header>
 
 	<section id="resource-contents">
@@ -52,44 +58,92 @@
             <slot name="head-content"></slot>
         </section>
 
-		<ktbs4la2-main-subsection id="child-bases" title="{translate: 'Bases'} :" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="child-bases" title="{translate: 'Bases'} :" foldable="true" expanded="true" class="view">
 			<slot name="bases"></slot>
 			<button class="add-resource-button" id="add-base-button" title="{translate: 'Create a new base'}">+</button>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="child-models" title="{translate: 'Models'} :" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="child-models" title="{translate: 'Models'} :" foldable="true" expanded="true" class="view">
 			<slot name="models"></slot>
 			<button class="add-resource-button" id="add-model-button" title="{translate: 'Create a new model'}">+</button>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="child-stored-traces" title="{translate: 'Stored traces'} :" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="child-stored-traces" title="{translate: 'Stored traces'} :" foldable="true" expanded="true" class="view">
 			<slot name="stored-traces"></slot>
 			<button class="add-resource-button" id="add-storedtrace-button" title="{translate: 'Create a new stored trace'}">+</button>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="child-methods" title="{translate: 'Methods'} :" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="child-methods" title="{translate: 'Methods'} :" foldable="true" expanded="true" class="view">
 			<slot name="methods"></slot>
 			<button class="add-resource-button" id="add-method-button" title="{translate: 'Create a new method'}">+</button>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="child-computed-traces" title="{translate: 'Computed traces'} :" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="child-computed-traces" title="{translate: 'Computed traces'} :" foldable="true" expanded="true" class="view">
 			<slot name="computed-traces"></slot>
 			<button class="add-resource-button" id="add-computedtrace-button" title="{translate: 'Create a new computed trace'}">+</button>
-        </ktbs4la2-main-subsection>
+		</ktbs4la2-main-subsection>
+		
+		<ktbs4la2-main-subsection id="source-traces" title="{translate: 'Source traces'} :" foldable="true" expanded="true">
+			<slot name="source-trace" class="view"></slot>
+
+			<div class="edit">
+				<ktbs4la2-resource-picker
+					id="single-source-trace-picker"
+					allowed-resource-types="StoredTrace ComputedTrace"
+					required>
+				</ktbs4la2-resource-picker>
+
+				<ktbs4la2-multiple-resources-picker
+					id="multiple-source-trace-picker"
+					allowed-resource-types="StoredTrace ComputedTrace"
+					required>
+				</ktbs4la2-multiple-resources-picker>
+			</div>
+		</ktbs4la2-main-subsection>
         
-        <ktbs4la2-main-subsection id="parent-method" title="{translate: 'Parent method'} :" foldable="true" expanded="false">
-			<slot name="parent-method"></slot>
+        <ktbs4la2-main-subsection id="parent-method" title="{translate: 'Parent method'} :" foldable="true" expanded="true">
+			<slot name="parent-method" class="view"></slot>
+
+			<ktbs4la2-resource-picker
+				id="parent-method-picker"
+				allowed-resource-types="Method"
+				class="edit"
+				required>
+			</ktbs4la2-resource-picker>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="model" title="{translate: 'Model'} :" foldable="true" expanded="false">
-			<slot name="model"></slot>
+		<ktbs4la2-main-subsection id="model" title="{translate: 'Model'} :" foldable="true" expanded="true">
+			<slot name="model" class="view"></slot>
+
+			<ktbs4la2-resource-picker
+				id="model-picker"
+				allowed-resource-types="Model"
+				class="edit"
+				required>
+			</ktbs4la2-resource-picker>
         </ktbs4la2-main-subsection>
         
-        <ktbs4la2-main-subsection id="method" title="{translate: 'Method'} :" foldable="true" expanded="false">
-			<slot name="method"></slot>
+        <ktbs4la2-main-subsection id="method" title="{translate: 'Method'} :" foldable="true" expanded="true">
+			<slot name="method" class="view"></slot>
+
+			<ktbs4la2-resource-picker
+				id="method-picker"
+				allowed-resource-types="Method"
+				class="edit"
+				required>
+			</ktbs4la2-resource-picker>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="obsels" title="{translate: 'Obsels'} :" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="parameters" title="{translate: 'Parameters'} :" foldable="true" expanded="true">
+			<slot name="parameters" class="view"></slot>
+
+			<ktbs4la2-method-parameters-input
+				id="parameters-input"
+				class="edit">
+			</ktbs4la2-method-parameters-input>
+		</ktbs4la2-main-subsection>
+
+		<ktbs4la2-main-subsection id="obsels" title="{translate: 'Obsels'} :" foldable="true" expanded="true" class="view">
 			<ktbs4la2-icon-tabs-group>
 				<ktbs4la2-icon-tab id="timeline-tab" title="{translate: 'Timeline view'}" icon="{my-component-folder}/timeline.svg">
 					<div style="height: 400px;">
@@ -105,7 +159,7 @@
 			</ktbs4la2-icon-tabs-group>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="stats" title="{translate: 'Statistics'} :" foldable="true" expanded="true">
+		<ktbs4la2-main-subsection id="stats" title="{translate: 'Statistics'} :" foldable="true" expanded="true" class="view">
 			<slot name="stats"></slot>
 		</ktbs4la2-main-subsection>
 	</section>

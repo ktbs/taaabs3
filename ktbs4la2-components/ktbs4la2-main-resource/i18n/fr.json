@@ -30,7 +30,8 @@
 	"Edit": "Modifier",
     "Delete": "Supprimer",
     "Deleted": "Supprimé(e)",
-	"Version": "Version",
+    "Version": "Version",
+    "Source traces": "Traces-sources",
     "Parent method": "Méthode-mère",
     "Condense header": "Réduire l'entête",
     "Expand header": "Etendre l'entête",
@@ -45,5 +46,7 @@
     "Create a new model": "Créer un nouveau modèle",
     "Create a new stored trace": "Créer une nouvelle trace enregistrée",
     "Create a new method": "Créer une nouvelle méthode",
-    "Create a new computed trace": "Créer une nouvelle trace transformée"
+    "Create a new computed trace": "Créer une nouvelle trace transformée",
+    "Your modifications haven't been saved. Are you sure you want to leave ?": "Vos modifications n'ont pas été enregistrées. Êtes-vous sûr(e) de vouloir quitter ?",
+    "Parameters": "Paramètres"
 }
