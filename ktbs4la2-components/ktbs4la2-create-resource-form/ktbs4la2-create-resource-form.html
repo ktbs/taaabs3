@@ -8,13 +8,16 @@
     <section class="all">
         <p>
             <label id="new-resource-id-label" for="new-resource-id">
-                <span id="new-resource-id-label-aligned">{translate: 'ID'}</span><span class="required-field">*</span> : 
-                <span id="parent-resource-path"></span>
+                <span id="new-resource-id-label-label">{translate: 'ID'}</span><span class="required-field">*</span> : 
             </label>
-            
-            <input id="new-resource-id" name="new-resource-id" placeholder="&lt;id&gt;" tabIndex="1" required/>
-            <span id="id-trailing-slash">/</span>
-            <span id="hidden-span-for-id-width"></span>
+
+            <ktbs4la2-resource-id-input
+                id="new-resource-id"
+                name="new-resource-id"
+                placeholder="&lt;id&gt;"
+                tabIndex="1" 
+                required>
+            </ktbs4la2-resource-id-input>
         </p>
 
         <p>
@@ -66,36 +69,58 @@
 
     <section class="ComputedTrace">
         <p>
-            <label for="source-trace" id="source-trace-label"><span id="source-trace-label-span">{translate: 'Source trace'}</span><span class="required-field">*</span> : </label>
-
-            <ktbs4la2-resource-picker 
-                id="source-trace" 
-                name="source-trace" 
-                allowed-resource-types="StoredTrace ComputedTrace" 
-                tabIndex="6" 
-                required>
-            </ktbs4la2-resource-picker>
-        </p>
-
-        <p>
             <label for="method" id="method-label"><span id="method-label-span">{translate: 'Method'}</span><span class="required-field">*</span> : </label>
 
             <ktbs4la2-resource-picker 
                 id="method" 
                 name="method" 
                 allowed-resource-types="Method" 
-                tabIndex="7" 
+                tabIndex="6" 
                 required>
             </ktbs4la2-resource-picker>
         </p>
+
+        <div id="source-trace" class="notset">
+            <p id="source-trace-method-not-set">
+                <label for="source-trace-method-not-set-message" id="source-trace-method-not-set-label">{translate: 'Source trace(s) :'}</label>
+                <span id="source-trace-method-not-set-message">{translate: "You have to choose a method first."}</span>
+            </p>
+
+            <p id="single-source-trace-div">
+                <label for="single-source-trace" id="single-source-trace-label"><span id="single-source-trace-label-span">{translate: 'Source trace'}</span><span class="required-field">*</span> : </label>
+
+                <ktbs4la2-resource-picker 
+                    id="single-source-trace" 
+                    name="single-source-trace" 
+                    allowed-resource-types="StoredTrace ComputedTrace" 
+                    tabIndex="7" 
+                    required>
+                </ktbs4la2-resource-picker>
+            </p>
+
+            <p id="multiple-source-traces-div">
+                <label for="multiple-source-traces" id="multiple-source-traces-label"><span id="multiple-source-traces-label-span">{translate: 'Source traces'}</span><span class="required-field">*</span> : </label>
+
+                <ktbs4la2-multiple-resources-picker 
+                    id="multiple-source-traces" 
+                    name="multiple-source-traces" 
+                    allowed-resource-types="StoredTrace ComputedTrace" 
+                    tabIndex="8" 
+                    required>
+                </ktbs4la2-multiple-resources-picker>
+            </p>
+        </div>
     </section>
 
     <section class="Method ComputedTrace">
         <p>
             <label for="parameters" id="parameters-label">{translate: 'Parameters'} : </label>
 
-            <!-- TODO : create a "method parameters form input" component -->
-            <textarea id="parameters" name="parameters" tabIndex="8" rows="10"></textarea>
+            <ktbs4la2-method-parameters-input
+                id="parameters" 
+                name="parameters" 
+                tabIndex="9">
+            </ktbs4la2-method-parameters-input>
         </p>
     </section>
 

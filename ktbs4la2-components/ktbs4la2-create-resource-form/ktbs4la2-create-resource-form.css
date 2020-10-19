@@ -1,7 +1,3 @@
-:host(:not([create-type = Base]):not([create-type = StoredTrace]):not([create-type = ComputedTrace])) #id-trailing-slash  {
-    display: none;
-}
-
 #resource-form {
     padding-right: 10px;
 }
@@ -17,7 +13,7 @@
     width: 400px;
 }
 
-label:not(#new-resource-id-label), #new-resource-id-label-aligned {
+label {
     text-align: right;
     width: 150px;
     display: inline-block;
@@ -48,32 +44,6 @@ p#buttons {
 	background-color: #CCC;
 }
 
-#parent-resource-path {
-    font-size: 11pt;
-    color: gray;
-    font-style: italic;
-}
-
-#new-resource-id {
-    width: 30px;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    border-bottom: 1px solid lightgray;
-    outline: none;
-    font-size: 12pt;
-    color: black;
-}
-
-#new-resource-id:focus {
-    background-color: rgb(230, 245, 255);
-}
-
-#hidden-span-for-id-width {
-    visibility: hidden;
-    font-size: 12pt;
-}
-
 #origin {
     border-style: solid;
     border-width: 1px;
@@ -87,20 +57,40 @@ p#buttons {
     background-color: rgb(230, 245, 255);
 }
 
-#parameters {
-    vertical-align: middle;
-    border-color: lightgray;
-    border-style: solid;
-    outline: none;
-    width: 400px;
-}
-
-#parameters:focus {
-    background-color: rgb(230, 245, 255);
-}
-
 ktbs4la2-resource-picker {
     vertical-align: top;
     margin-top: -3px;
     width: 505px;
+}
+
+ktbs4la2-multiple-resources-picker {
+    width: 505px;
+}
+
+#source-trace-method-not-set-message {
+    font-size: 9pt;
+    color: gray;
+    font-style: italic;
+}
+
+#source-trace-method-not-set,
+#single-source-trace-div,
+#multiple-source-traces-div {
+    display: none !important;
+}
+
+#source-trace.notset #source-trace-method-not-set,
+#source-trace.single #single-source-trace-div,
+#source-trace.multiple #multiple-source-traces-div {
+    display: block !important;
+}
+
+/* ---------------------------- */
+
+:host([create-type="Base"]) section:not(.all):not(.Base),
+:host([create-type="StoredTrace"]) section:not(.all):not(.StoredTrace),
+:host([create-type="ComputedTrace"]) section:not(.all):not(.ComputedTrace),
+:host([create-type="Model"]) section:not(.all):not(.Model),
+:host([create-type="Method"]) section:not(.all):not(.Method) {
+    display: none;
 }

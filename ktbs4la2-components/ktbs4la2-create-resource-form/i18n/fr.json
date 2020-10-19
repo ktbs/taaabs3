@@ -5,7 +5,9 @@
     "Origin": "Origine",
     "Parent method": "Méthode parente",
     "Method": "Méthode",
+    "Source trace(s) :": "Trace(s)-source(s) :",
     "Source trace": "Trace-source",
+    "Source traces": "Traces-sources",
     "Create": "Créer",
     "Cancel": "Annuler",
     "Create a new base": "Créer une nouvelle base",
@@ -14,5 +16,6 @@
     "Create a new model": "Créer un nouveau modèle",
     "Create a new method": "Créer une nouvelle méthode",
     "Parameters": "Paramètres",
-    "Create into": "Créer dans"
+    "Create into": "Créer dans",
+    "You have to choose a method first.": "Vous devez d'abord choisir une méthode."
 }

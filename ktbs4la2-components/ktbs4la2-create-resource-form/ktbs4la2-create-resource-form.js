@@ -1,9 +1,16 @@
-import { ResourceMultiton } from '../../ktbs-api/ResourceMultiton.js';
+import {ResourceMultiton} from '../../ktbs-api/ResourceMultiton.js';
+import {Method} from '../../ktbs-api/Method.js';
+import {Trace} from '../../ktbs-api/Trace.js';
+
 import {TemplatedHTMLElement} from '../common/TemplatedHTMLElement.js';
 
 import '../ktbs4la2-main-related-resource/ktbs4la2-main-related-resource.js';
+import '../ktbs4la2-resource-id-input/ktbs4la2-resource-id-input.js';
 import '../ktbs4la2-multiple-translations-text-input/ktbs4la2-multiple-translations-text-input.js';
 import '../ktbs4la2-resource-picker/ktbs4la2-resource-picker.js';
+import '../ktbs4la2-multiple-resources-picker/ktbs4la2-multiple-resources-picker.js';
+import '../ktbs4la2-method-parameters-input/ktbs4la2-method-parameters-input.js';
+
 
 /**
  * 
@@ -65,10 +72,20 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 					this._parentSpan.appendChild(parentElement);
 				});
 
+				let childrenIDs = new Array();
+
+				for(let i = 0; i < parentResource.children.length; i++)
+					childrenIDs.push(parentResource.children[i].id);
+
+				if(childrenIDs.length > 0)
+					this._componentReady.then(() => {
+						this._idInput.setAttribute("reserved-ids", childrenIDs.join(" "));
+					});
+
 				parentResource.get_root(this._abortController.signal)
 					.then((parentRoot) => {
 						this._componentReady.then(() => {
-							const resourcePickers = this.shadowRoot.querySelectorAll("ktbs4la2-resource-picker");
+							const resourcePickers = this.shadowRoot.querySelectorAll("ktbs4la2-resource-picker, ktbs4la2-multiple-resources-picker");
 
 							for(let i = 0; i < resourcePickers.length; i++) {
 								resourcePickers[i].setAttribute("root-uri", parentRoot.uri.toString());
@@ -91,12 +108,14 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 			this._resolveParentURISet();
 
 			this._componentReady.then(() => {
-				this._parentResourcePathSpan.innerText = newValue;
-				const resourcePickers = this.shadowRoot.querySelectorAll("ktbs4la2-resource-picker");
+				this._idInput.setAttribute("parent-resource-path", newValue);
+				const resourcePickers = this.shadowRoot.querySelectorAll("ktbs4la2-resource-picker, ktbs4la2-multiple-resources-picker");
 
 				for(let i = 0; i < resourcePickers.length; i++) {
-					resourcePickers[i].setAttribute("browse-start-uri", this.getAttribute("parent-uri"));
+					resourcePickers[i].setAttribute("browse-start-uri", newValue);
 				}
+
+				this._parametersInput.setAttribute("parent-base-uri", newValue);
 			});
 		}
 		else if((name == "parent-type") && newValue)
@@ -116,12 +135,11 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._resourceForm.addEventListener("submit", this._onSubmitResourceForm.bind(this));
 		this._parentReminderLabelSpan = this.shadowRoot.querySelector("#parent-reminder-label");
 		this._parentSpan = this.shadowRoot.querySelector("#parent");
-		this._parentResourcePathSpan = this.shadowRoot.querySelector("#parent-resource-path");
-		this._newResourceIdLabel = this.shadowRoot.querySelector("#new-resource-id-label-aligned");
-		this._newResourceIdInput = this.shadowRoot.querySelector("#new-resource-id");
-		this._hiddenSpanForIdWidth = this.shadowRoot.querySelector("#hidden-span-for-id-width");
-		this._newResourceIdInput.addEventListener("input", this._onChangeIdInputValue.bind(this));
-		this._newResourceIdInput.addEventListener("focus", this._newResourceIdInput.select.bind(this._newResourceIdInput));
+		this._idLabel = this.shadowRoot.querySelector("#new-resource-id-label");
+		this._idLabelSpan = this.shadowRoot.querySelector("#new-resource-id-label-label");
+		this._idInput = this.shadowRoot.querySelector("#new-resource-id");
+		this._idLabel.addEventListener("click", this._onClickIdLabel.bind(this));
+		this._idInput.addEventListener("input", this._updateOkButtonState.bind(this));
 		this._labelLabel = this.shadowRoot.querySelector("#label-label");
 		this._labelFormInput = this.shadowRoot.querySelector("#label");
 		this._labelFormInput.setAttribute("lang", this._lang);
@@ -132,6 +150,8 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._parentMethodPicker = this.shadowRoot.querySelector("#parent-method");
 		this._parentMethodPicker.setAttribute("lang", this._lang);
 		this._parentMethodPicker.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._parentMethodPicker.addEventListener("input", this._onParentMethodPickerChange.bind(this));
+		this._parentMethodPicker.addEventListener("change", this._onParentMethodPickerChange.bind(this));
 		this._parentMethodPicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
 		this._parentMethodLabel.addEventListener("click", this._onClickParentMethodLabel.bind(this));
 		this._traceModelLabelSpan = this.shadowRoot.querySelector("#trace-model-label-span");
@@ -144,23 +164,38 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._originLabel = this.shadowRoot.querySelector("#origin-label");
 		this._originInput = this.shadowRoot.querySelector("#origin");
 		this._originInput.addEventListener("input", this._updateOkButtonState.bind(this));
-		this._sourceTraceLabelSpan = this.shadowRoot.querySelector("#source-trace-label-span");
-		this._sourceTraceLabel = this.shadowRoot.querySelector("#source-trace-label");
-		this._sourceTracePicker = this.shadowRoot.querySelector("#source-trace");
-		this._sourceTracePicker.setAttribute("lang", this._lang);
-		this._sourceTracePicker.addEventListener("input", this._updateOkButtonState.bind(this));
-		this._sourceTracePicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
-		this._sourceTraceLabel.addEventListener("click", this._onClickSourceTraceLabel.bind(this));
+		this._sourceTraceDiv = this.shadowRoot.querySelector("#source-trace");
+		this._sourceTraceMethodNotSetLabel = this.shadowRoot.querySelector("#source-trace-method-not-set-label");
+		this._sourceTraceMethodNotSetMessageSpan = this.shadowRoot.querySelector("#source-trace-method-not-set-message");
+		this._singleSourceTraceLabelSpan = this.shadowRoot.querySelector("#single-source-trace-label-span");
+		this._singleSourceTraceLabel = this.shadowRoot.querySelector("#single-source-trace-label");
+		this._singleSourceTracePicker = this.shadowRoot.querySelector("#single-source-trace");
+		this._singleSourceTracePicker.setAttribute("lang", this._lang);
+		this._singleSourceTracePicker.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._singleSourceTracePicker.addEventListener("input", this._onSingleSourceTracePickerEvent.bind(this));
+		this._singleSourceTracePicker.addEventListener("change", this._onSingleSourceTracePickerEvent.bind(this));
+		this._singleSourceTracePicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
+		this._singleSourceTraceLabel.addEventListener("click", this._onClickSourceTraceLabel.bind(this));
+		this._multipleSourceTracesLabelSpan = this.shadowRoot.querySelector("#multiple-source-traces-label-span");
+		this._multipleSourceTracesLabel = this.shadowRoot.querySelector("#multiple-source-traces-label");
+		this._multipleSourceTracesPicker = this.shadowRoot.querySelector("#multiple-source-traces");
+		this._multipleSourceTracesPicker.setAttribute("lang", this._lang);
+		this._multipleSourceTracesPicker.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._multipleSourceTracesPicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
+		this._multipleSourceTracesLabel.addEventListener("click", this._onClickMultipleSourceTracesLabel.bind(this));
 		this._methodLabelSpan = this.shadowRoot.querySelector("#method-label-span");
 		this._methodLabel = this.shadowRoot.querySelector("#method-label");
 		this._methodPicker = this.shadowRoot.querySelector("#method");
 		this._methodPicker.setAttribute("lang", this._lang);
 		this._methodPicker.addEventListener("input", this._updateOkButtonState.bind(this));
 		this._methodPicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
+		this._methodPicker.addEventListener("input", this._onMethodChange.bind(this));
+		this._methodPicker.addEventListener("change", this._onMethodChange.bind(this));
 		this._methodLabel.addEventListener("click", this._onClickMethodLabel.bind(this));
 		this._parametersLabel = this.shadowRoot.querySelector("#parameters-label");
-		this._parametersTextarea = this.shadowRoot.querySelector("#parameters");
-		this._parametersTextarea.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._parametersInput = this.shadowRoot.querySelector("#parameters");
+		this._parametersInput.setAttribute("lang", this._lang);
+		this._parametersInput.addEventListener("input", this._updateOkButtonState.bind(this));
 
 		this._title = this.shadowRoot.querySelector("#title");
 		const createTypeString = this.getAttribute("create-type");
@@ -188,24 +223,11 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._okButton = this.shadowRoot.querySelector("#ok");
 		this._cancelButton = this.shadowRoot.querySelector("#cancel");
 		this._cancelButton.addEventListener("click", this._onClickCancelButton.bind(this));
-		const notApplicableSections = this.shadowRoot.querySelectorAll("section:not(.all):not(." + CSS.escape(createTypeString) + ")");
-
-		for(let i = 0; i < notApplicableSections.length; i++)
-			notApplicableSections[i].remove();
-
-		this._newResourceIdInput.focus();
-	}
-
-	/**
-	 * 
-	 * @param {*} event 
-	 */
-	_onChangeIdInputValue(event) {
-		this._hiddenSpanForIdWidth.innerText = this._newResourceIdInput.value;
-		const textWidth = this._hiddenSpanForIdWidth.offsetWidth;
-		let newInputWidth = (textWidth >= 27)?(textWidth + 3):30;
-		this._newResourceIdInput.style.width = newInputWidth + "px";
-		this._updateOkButtonState();
+		this._idInput.setAttribute("force-trailing-slash", ((this.getAttribute("create-type") == "Base") || (this.getAttribute("create-type") == "StoredTrace") || (this.getAttribute("create-type") == "ComputedTrace")));
+		
+		this._idInput._componentReady.then(() => {
+			this._idInput.focus();
+		});
 	}
 
 	/**
@@ -226,11 +248,11 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 			"create-type": createType,
 			"parent-type": this.getAttribute("parent-type"),
 			"parent-uri": this.getAttribute("parent-uri"),
-			"new-resource-id": this._newResourceIdInput.value
+			"new-resource-id": this._idInput.value
 		};
 
 		if((createType == "Base") || (createType == "StoredTrace") || (createType == "ComputedTrace"))
-			formData["new-resource-id"] = this._newResourceIdInput.value + "/";
+			formData["new-resource-id"] = this._idInput.value + "/";
 
 		if(this._labelFormInput.value)
 			formData["label"] = this._labelFormInput.value;
@@ -247,7 +269,7 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		}
 
 		if((createType == "Method") || (createType == "ComputedTrace"))
-			formData["parameters"] = this._parametersTextarea.value;
+			formData["parameters"] = this._parametersInput.value;
 
 		if(createType == "Method")
 			formData["parent-method"] = this._parentMethodPicker.value;
@@ -263,14 +285,22 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 			const createType = this.getAttribute("create-type");
 
 			this._okButton.disabled = !(
-					this._newResourceIdInput.checkValidity()
+					this._idInput.checkValidity()
 				&&	((createType != "Method") || this._parentMethodPicker.checkValidity())
 				&&	((createType != "StoredTrace") || this._traceModelPicker.checkValidity())
 				&&	(((createType != "StoredTrace") && (createType != "ComputedTrace")) || this._originInput.checkValidity())
-				&&	((createType != "ComputedTrace") || (this._sourceTracePicker.checkValidity() && this._methodPicker.checkValidity()))
-				&&	(((createType != "Method") && (createType != "ComputedTrace")) || this._parametersTextarea.checkValidity())
+				&&	((createType != "ComputedTrace") || (this._singleSourceTracePicker.checkValidity() && this._methodPicker.checkValidity()))
+				&&	(((createType != "Method") && (createType != "ComputedTrace")) || this._parametersInput.checkValidity())
 			);
 		});
+	}
+
+	/**
+	 *  
+	 */
+	_onClickIdLabel(event) {
+		event.preventDefault();
+		this._idInput.focus();
 	}
 
 	/**
@@ -302,7 +332,15 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 	 */
 	_onClickSourceTraceLabel(event) {
 		event.preventDefault();
-		this._sourceTracePicker.focus();
+		this._singleSourceTracePicker.focus();
+	}
+
+	/**
+	 * 
+	 */
+	_onClickMultipleSourceTracesLabel(event) {
+		event.preventDefault();
+		this._multipleSourceTracesPicker.focus();
 	}
 
 	/**
@@ -347,48 +385,117 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		}
 
 		this._title.innerText = this._translateString("Create a new " + createTypeLabel);
-		
 		this._parentReminderLabelSpan.innerText = this._translateString("Create into");
-		this._newResourceIdLabel.innerText = this._translateString("ID");
+		this._idLabelSpan.innerText = this._translateString("ID");
 		this._labelLabel.innerText = this._translateString("Label") + " : ";
 		this._labelFormInput.setAttribute("placeholder", this._translateString("Label"));
 		this._labelFormInput.setAttribute("lang", this._lang);
-
-		if(this._parentMethodLabelSpan)
-			this._parentMethodLabelSpan.innerText = this._translateString("Parent method");
-
-		if(this._parentMethodPicker)
-			this._parentMethodPicker.setAttribute("lang", this._lang);
-
-		if(this._traceModelLabelSpan)
-			this._traceModelLabelSpan.innerText = this._translateString("Model");
-
-		if(this._traceModelPicker)
-			this._traceModelPicker.setAttribute("lang", this._lang);
-
-		if(this._originLabel)
-			this._originLabel.innerText = this._translateString("Origin") + " : ";
-
-		if(this._originInput)
-			this._originInput.setAttribute("placeholder", this._translateString("Origin"));
-
-		if(this._sourceTraceLabelSpan)
-			this._sourceTraceLabelSpan.innerText = this._translateString("Source trace");
-
-		if(this._sourceTracePicker)
-			this._sourceTracePicker.setAttribute("lang", this._lang);
-
-		if(this._methodLabelSpan)
-			this._methodLabelSpan.innerText = this._translateString("Method");
-
-		if(this._methodPicker)
-			this._methodPicker.setAttribute("lang", this._lang);
-
-		if(this._parametersLabel)
-			this._parametersLabel.innerText = this._translateString("Parameters") + " : ";
-
+		this._parentMethodLabelSpan.innerText = this._translateString("Parent method");
+		this._parentMethodPicker.setAttribute("lang", this._lang);
+		this._traceModelLabelSpan.innerText = this._translateString("Model");
+		this._traceModelPicker.setAttribute("lang", this._lang);
+		this._originLabel.innerText = this._translateString("Origin") + " : ";
+		this._originInput.setAttribute("placeholder", this._translateString("Origin"));
+		this._sourceTraceMethodNotSetLabel.innerText = this._translateString("Source trace(s) :");
+		this._sourceTraceMethodNotSetMessageSpan.innerText = this._translateString("You have to choose a method first.");
+		this._singleSourceTraceLabelSpan.innerText = this._translateString("Source trace");
+		this._singleSourceTracePicker.setAttribute("lang", this._lang);
+		this._multipleSourceTracesLabelSpan.innerText = this._translateString("Source traces");
+		this._multipleSourceTracesPicker.setAttribute("lang", this._lang);
+		this._methodLabelSpan.innerText = this._translateString("Method");
+		this._methodPicker.setAttribute("lang", this._lang);
+		this._parametersLabel.innerText = this._translateString("Parameters") + " : ";
+		this._parametersInput.setAttribute("lang", this._lang);
 		this._okButton.innerText = this._translateString("Create");
 		this._cancelButton.innerText = this._translateString("Cancel");
+	}
+
+	/**
+	 * 
+	 * \param Event event 
+	 * \protected
+	 */
+	_onParentMethodPickerChange(event) {
+		if(this._parentMethodPicker.checkValidity()) {
+			const parentMethodPicker_value = this._parentMethodPicker.value;
+
+			if(parentMethodPicker_value)
+				this._parametersInput.setAttribute("method-uri", parentMethodPicker_value);
+			else if(this._parametersInput.hasAttribute("method-uri"))
+				this._parametersInput.removeAttribute("method-uri");
+		}
+		else {
+			this._sourceTraceDiv.className = "notset";
+
+			if(this._parametersInput.hasAttribute("method-uri"))
+				this._parametersInput.removeAttribute("method-uri");
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onMethodChange(event) {
+		if(this._methodPicker.checkValidity()) {
+			const methodPicker_value = this._methodPicker.value;
+
+			if(methodPicker_value)
+				this._parametersInput.setAttribute("method-uri", methodPicker_value);
+			else if(this._parametersInput.hasAttribute("method-uri"))
+				this._parametersInput.removeAttribute("method-uri");
+
+			let method;
+
+			if(Method.builtin_methods_ids.includes(methodPicker_value))
+				method = Method.getBuiltinMethod(methodPicker_value);
+			else
+				method = ResourceMultiton.get_resource(Method, methodPicker_value);
+
+			method.get_methods_hierarchy(this._abortController.signal)
+				.then(() => {
+					if(method.source_traces_cardinality == "1")
+						this._sourceTraceDiv.className = "single";
+					else if(method.source_traces_cardinality == "*")
+						this._sourceTraceDiv.className = "multiple";
+				}) 
+				.catch((error) => {
+					this._sourceTraceDiv.className = "notset";
+				});
+		}
+		else {
+			this._sourceTraceDiv.className = "notset";
+
+			if(this._parametersInput.hasAttribute("method-uri"))
+				this._parametersInput.removeAttribute("method-uri");
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onSingleSourceTracePickerEvent(event) {
+		if(this._singleSourceTracePicker.checkValidity()) {
+			const singleSourceTracePicker_value = this._singleSourceTracePicker.value;
+
+			if(singleSourceTracePicker_value) {
+				const sourceTrace = ResourceMultiton.get_resource(Trace, singleSourceTracePicker_value);
+				
+				sourceTrace.get(this._abortController.signal)
+					.then(() => {
+						this._parametersInput.setAttribute("default-model-uri", sourceTrace.model.uri);
+					})
+					.catch((error) => {
+						this.emitErrorEvent(error);
+
+						if(this._parametersInput.hasAttribute("default-model-uri"))
+							this._parametersInput.removeAttribute("default-model-uri");
+					});
+			}
+			else if(this._parametersInput.hasAttribute("default-model-uri"))
+				this._parametersInput.removeAttribute("default-model-uri");
+		}
+		else if(this._parametersInput.hasAttribute("default-model-uri"))
+			this._parametersInput.removeAttribute("default-model-uri");
 	}
 }
 
