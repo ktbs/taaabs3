@@ -596,6 +596,30 @@ export class Resource {
 	}
 
 	/**
+	 * Gets the resource's label(s) raw data
+	 * \return Array
+	 * \public
+	 */
+	get raw_labels_data() {
+		let returnData = [];
+
+		if(this._JSONData["label"])
+			returnData.push({
+				"@language": "*",
+				"@value": this._JSONData["label"]
+			});
+
+		if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"]) {
+			if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] instanceof Array)
+				returnData = returnData.concat(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"]);
+			else if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] instanceof Object)
+				returnData.push(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"]);
+		}
+
+		return returnData;
+	}
+
+	/**
 	 * Set a user-friendly label.
 	 * \param string new_label The new label for the resource
 	 * \public

@@ -272,6 +272,54 @@ export class ComputedTrace extends Trace {
 	}
 
 	/**
+	 * Gets the ComputedTrace's parameters
+	 * \return Array
+	 * \public
+	 */
+	get parameters() {
+		if(!this._parameters) {
+			this._parameters = new Array();
+
+			if(this._JSONData.parameter && (this._JSONData.parameter instanceof array)) {
+				for(let i = 0; i < this._JSONData.parameter.length; i++) {
+					let parameterString = parameters[i];
+					let equalCharPos = parameterString.indexOf('=');
+
+					if(equalCharPos != -1) {
+						let parameterKey = parameterString.substring(0, equalCharPos);
+						let parameterValue = parameterString.substring(equalCharPos + 1);
+						this._parameters[parameterKey] = parameterValue;
+					}
+				}
+			}
+		}
+
+		return this._parameters;
+	}
+
+	/**
+	 * Gets raw parameters data
+	 * \return String
+	 * \public
+	 */
+	get raw_parameters_data() {
+		return this._JSONData.parameter;
+	}
+
+	/**
+	 * Sets the ComputedTrace's parameters
+	 * \param Array new_parameters - the new parameters for the ComputedTrace
+	 * \throws TypeError throws a TypeError if the provided argument is not an Array
+	 * \public
+	 */
+	set parameters(new_parameters) {
+		if(new_parameters instanceof Array)
+			this._parameters = new_parameters;
+		else
+			throw new TypeError("New value for property parameters must be of type Array.");
+	}
+
+	/**
      * Gets the data to be sent for this resource to be POSTed to a parent one
 	 * \return Object
 	 * \protected

@@ -176,6 +176,15 @@ export class Method extends Resource {
 	}
 
 	/**
+	 * Gets raw parameters data
+	 * \return String
+	 * \public
+	 */
+	get raw_parameters_data() {
+		return this._JSONData.parameter;
+	}
+
+	/**
 	 * Sets the Method's parameters
 	 * \param Array new_parameters - the new parameters for the Method
 	 * \throws TypeError throws a TypeError if the provided argument is not an Array
