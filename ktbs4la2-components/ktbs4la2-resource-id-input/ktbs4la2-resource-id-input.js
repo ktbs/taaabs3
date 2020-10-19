@@ -45,6 +45,35 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
     }
 
     /**
+     * 
+     */
+    get value() {
+        if(
+                this.hasAttribute("force-trailing-slash") 
+            &&  (
+                        (this.getAttribute("force-trailing-slash") == "")
+                    ||  (this.getAttribute("force-trailing-slash") == "true")
+                    ||  (this.getAttribute("force-trailing-slash") == "1")
+            )
+        )
+            return this._idInput.value + "/";
+        else
+            return this._idInput.value;
+    }
+
+    /**
+     * 
+     */
+    set value(newValue) {
+        if(newValue != null) {
+            if(this.getAttribute("value") != newValue)
+                this.setAttribute("value", newValue);
+        }
+        else if(this.hasAttribute("value"))
+            this.removeAttribute("value");
+    }
+
+    /**
 	 * 
 	 */
 	static get observedAttributes() {
@@ -69,8 +98,27 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
             this._componentReady.then(() => {
                 this._parentResourcePathSpan.innerText = newValue;
             }).catch(() => {});
-        else if(name == "value")
-            this.value = newValue;
+        else if(name == "value") {
+            this._componentReady.then(() => {
+                let inputValue;
+    
+                if(
+                        this.hasAttribute("force-trailing-slash") 
+                    &&  (
+                                (this.getAttribute("force-trailing-slash") == "")
+                            ||  (this.getAttribute("force-trailing-slash") == "true")
+                            ||  (this.getAttribute("force-trailing-slash") == "1")
+                    )
+                    &&  (newValue.charAt(newValue.length - 1) == '/')
+                )
+                    inputValue = newValue.substring(0, newValue.length - 1);
+                else
+                    inputValue = newValue;
+    
+                this._adjustIdInputWidthForText(inputValue);
+                this._idInput.value = inputValue;
+            }).catch(() => {});
+        }
         else if(name == "placeholder") 
             this._componentReady.then(() => {
                 if(!this.value)
@@ -103,48 +151,6 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
             this._adjustIdInputWidthForText(this.getAttribute("placeholder"));
 
         this.addEventListener("focus", this._onFocus.bind(this));
-    }
-
-    /**
-     * 
-     */
-    get value() {
-        if(
-                this.hasAttribute("force-trailing-slash") 
-            &&  (
-                        (this.getAttribute("force-trailing-slash") == "")
-                    ||  (this.getAttribute("force-trailing-slash") == "true")
-                    ||  (this.getAttribute("force-trailing-slash") == "1")
-            )
-        )
-            return this._idInput.value + "/";
-        else
-            return this._idInput.value;
-    }
-
-    /**
-     * 
-     */
-    set value(newValue) {
-        this._componentReady.then(() => {
-            let inputValue;
-
-            if(
-                    this.hasAttribute("force-trailing-slash") 
-                &&  (
-                            (this.getAttribute("force-trailing-slash") == "")
-                        ||  (this.getAttribute("force-trailing-slash") == "true")
-                        ||  (this.getAttribute("force-trailing-slash") == "1")
-                )
-                &&  (newValue.charAt(newValue.length - 1) == '/')
-            )
-                inputValue = newValue.substring(0, newValue.length - 1);
-            else
-                inputValue = newValue;
-
-            this._adjustIdInputWidthForText(inputValue);
-            this._idInput.value = inputValue;
-        }).catch(() => {});
     }
 
     /**

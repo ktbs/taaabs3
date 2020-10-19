@@ -287,16 +287,21 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 	 * 
 	 */
 	set value(new_value) {
-		this._clearAllInputs();
+		this._componentReady.then(() => {
+			try {
+				const new_values_array = JSON.parse(new_value);
 
-		if((new_value instanceof Array) && (new_value.length > 0)) {
-			for(let i = 0; i < new_value.length; i++) {
-				const aTranslation = new_value[i];
-				this._addLocalizedInput(aTranslation.value, aTranslation.lang);
+				if((new_values_array instanceof Array) && (new_values_array.length > 0)) {
+					for(let i = 0; i < new_values_array.length; i++) {
+						const aTranslation = new_values_array[i];
+						this._addLocalizedInput(aTranslation["@value"], aTranslation["@language"]);
+					}
+				}
 			}
-		}
-		else
-			this._addLocalizedInput(new_value);
+			catch(error) {
+				this._addLocalizedInput(new_value);
+			}
+		});
 	}
 	
 	/**
