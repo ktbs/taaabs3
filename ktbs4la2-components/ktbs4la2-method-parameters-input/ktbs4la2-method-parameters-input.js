@@ -112,6 +112,25 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
     /**
      * 
      */
+    get hasVariousSourceTracesModels() {
+        return this.hasAttribute("has-various-source-traces-models");
+    }
+
+    /**
+     * 
+     */
+    set hasVariousSourceTracesModels(newValue) {
+        if(newValue != null) {
+            if(this.getAttribute("has-various-source-traces-models") != newValue)
+                this.setAttribute("has-various-source-traces-models", newValue);
+        }
+        else if(this.hasAttribute("has-various-source-traces-models"))
+            this.removeAttribute("has-various-source-traces-models");
+    }
+
+    /**
+     * 
+     */
     get value() {
         let returnArray = [];
 
@@ -285,6 +304,7 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
         _observedAttributes.push("default-model-uri");
         _observedAttributes.push("parent-base-uri");
         _observedAttributes.push("value");
+        _observedAttributes.push("has-various-source-traces-models");
 		return _observedAttributes;
 	}
 
@@ -309,6 +329,7 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
                         if(this._container.className != this._method.id) {
                             const containerClassBefore = this._container.className;
                             this._container.className = this._method.id;
+                            this._updateModelRequired();
 
                             if(containerClassBefore)
                                 this.dispatchEvent(new Event("change", {
@@ -327,6 +348,7 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
                             this._componentReady.then(() => {
                                 if(this._container.className != builtin_ancestor.id) {
                                     this._container.className = builtin_ancestor.id;
+                                    this._updateModelRequired();
 
                                     this.dispatchEvent(new Event("change", {
                                         buubles: true,
@@ -346,6 +368,7 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
                             this._componentReady.then(() => {
                                 if(this._container.className != "error") {
                                     this._container.className = "error";
+                                    this._updateModelRequired();
 
                                     this.dispatchEvent(new Event("change", {
                                         buubles: true,
@@ -369,6 +392,7 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
                 this._componentReady.then(() => {
                     if(this._container.className) {
                         this._container.className = null;
+                        this._updateModelRequired();
 
                         this.dispatchEvent(new Event("change", {
                             buubles: true,
@@ -563,6 +587,11 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
                 }
             }
         }
+        else if(name == "has-various-source-traces-models") {
+            this._componentReady.then(() => {
+                this._updateModelRequired();
+            });
+        }
     }
 
     /**
@@ -571,6 +600,7 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
 	onComponentReady() {
         this._container = this.shadowRoot.querySelector("#container");
         this._methodUriNotSetMessageDiv = this.shadowRoot.querySelector("#method-uri-not-set-message");
+        this._modelP = this.shadowRoot.querySelector("#model-p");
         this._modelLabel = this.shadowRoot.querySelector("#model-label");
         this._modelPicker = this.shadowRoot.querySelector("#model");
         this._modelPicker.setAttribute("lang", this._lang);
@@ -663,17 +693,17 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
      */
     _updateStringsTranslation() {
         this._methodUriNotSetMessageDiv.innerText = this._translateString("Waiting for method choice...");
-        this._modelLabel.innerText = this._translateString("Model") + " :";
+        this._modelLabel.innerText = this._translateString("Model");
         this._modelPicker.setAttribute("lang", this._lang);
-        this._originLabel.innerText = this._translateString("Origin") + " :";
+        this._originLabel.innerText = this._translateString("Origin");
         this._originInput.setAttribute("placeholder", this._translateString("Origin"));
-        this._afterLabel.innerText = this._translateString("After timestamp") + " :";
+        this._afterLabel.innerText = this._translateString("After timestamp");
         this._afterInput.setAttribute("placeholder", this._translateString("Timestamp"));
-        this._beforeLabel.innerText = this._translateString("Before timestamp") + " :";
+        this._beforeLabel.innerText = this._translateString("Before timestamp");
         this._beforeInput.setAttribute("placeholder", this._translateString("Timestamp"));
-        this._afterDTLabel.innerText = this._translateString("After date/time") + " :";
-        this._beforeDTLabel.innerText = this._translateString("Before date/time") + " :";
-        this._otypesLabel.innerText = this._translateString("Obsel types") + " :";
+        this._afterDTLabel.innerText = this._translateString("After date/time");
+        this._beforeDTLabel.innerText = this._translateString("Before date/time");
+        this._otypesLabel.innerText = this._translateString("Obsel types");
         this._otypesSelect.setAttribute("lang", this._lang);
 
         const modelNotSetMessageSpans = this.shadowRoot.querySelectorAll("span.model-not-set-message");
@@ -681,9 +711,9 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
         for(let i = 0; i < modelNotSetMessageSpans.length; i++)
             modelNotSetMessageSpans[i].innerText = this._translateString("Please choose a model");
 
-        this._bgpLabel.innerText = this._translateString("SPARQL Basic Graph Pattern") + " :";
-        this._fsaLabel.innerText = this._translateString("Finite state automata JSON description") + " :";
-        this._rulesLabel.innerText = this._translateString("HRules rules") + " :";
+        this._bgpLabel.innerText = this._translateString("SPARQL Basic Graph Pattern");
+        this._fsaLabel.innerText = this._translateString("Finite state automata JSON description");
+        this._rulesLabel.innerText = this._translateString("HRules rules");
         this._rulesInput.setAttribute("lang", this._lang);
         this._sparqlSparqlLabel.innerText = this._translateString("SPARQL CONSTRUCT query");
         this._scopeLabel.innerText = this._translateString("Scope");
@@ -755,6 +785,33 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
 
         this.dispatchEvent(componentEvent);
     }
+
+    /**
+     * 
+     */
+     _updateModelRequired() {
+         let modelRequired = false;
+
+        if(this._container.className == "hrules")
+            modelRequired = true;
+        else if((this._container.className == "fusion") || (this._container.className == "parallel"))
+            modelRequired = this.hasVariousSourceTracesModels;
+
+        if(modelRequired) {
+            if(!this._modelPicker.hasAttribute("required"))
+                this._modelPicker.setAttribute("required", true);
+
+            if(!this._modelP.classList.contains("required"))
+                this._modelP.classList.add("required");
+        }
+        else {
+            if(this._modelPicker.hasAttribute("required"))
+                this._modelPicker.removeAttribute("required");
+
+            if(this._modelP.classList.contains("required"))
+                this._modelP.classList.remove("required");
+        }
+     }
 }
 
 customElements.define('ktbs4la2-method-parameters-input', KTBS4LA2MethodParametersInput);

@@ -86,3 +86,11 @@ p.model-not-set .model-not-set-message {
 p.model-not-set .needs-model {
     display: none;
 }
+
+label:after {
+    content: " :";
+}
+
+p.required label:after {
+    content: "* :";
+}

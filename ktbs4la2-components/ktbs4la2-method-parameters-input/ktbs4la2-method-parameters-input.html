@@ -2,8 +2,8 @@
     <div id="method-uri-not-set-message">{translate: 'Waiting for method choice...'}</div>
 
     <section class="pipe parallel">
-        <p>
-            <label for="methods" id="methods-label">{translate: 'Methods'} :</label>
+        <p class="required">
+            <label for="methods" id="methods-label">{translate: 'Methods'}</label>
 
             <ktbs4la2-multiple-resources-picker 
                 id="methods" 
@@ -16,8 +16,8 @@
     </section>
 
     <section class="filter fusion fsa hrules sparql isparql parallel external">
-        <p>
-            <label for="model" id="model-label">{translate: "Model"} :</label>
+        <p id="model-p">
+            <label for="model" id="model-label">{translate: "Model"}</label>
 
             <ktbs4la2-resource-picker 
                 id="model" 
@@ -28,34 +28,34 @@
         </p>    
 
         <p>
-            <label for="origin" id="origin-label">{translate: 'Origin'} :</label>
+            <label for="origin" id="origin-label">{translate: 'Origin'}</label>
             <input type="text" id="origin" name="origin" placeholder="{translate: 'Origin'}" tabIndex="3" />
         </p>
     </section>
 
     <section class="filter">
         <p>
-            <label for="after" id="after-label">{translate: 'After timestamp'} :</label>
+            <label for="after" id="after-label">{translate: 'After timestamp'}</label>
             <input type="number" id="after" name="after" placeholder="{translate: 'Timestamp'}" tabIndex="4" />
         </p>
 
         <p>
-            <label for="before" id="before-label">{translate: 'Before timestamp'} :</label>
+            <label for="before" id="before-label">{translate: 'Before timestamp'}</label>
             <input type="number" id="before" name="before" placeholder="{translate: 'Timestamp'}" tabIndex="5" />
         </p>
 
         <p>
-            <label for="afterDT" id="afterDT-label">{translate: 'After date/time'} :</label>
+            <label for="afterDT" id="afterDT-label">{translate: 'After date/time'}</label>
             <input type="datetime-local" id="afterDT" name="afterDT" tabIndex="6" />
         </p>
 
         <p>
-            <label for="beforeDT" id="beforeDT-label">{translate: 'Before date/time'} :</label>
+            <label for="beforeDT" id="beforeDT-label">{translate: 'Before date/time'}</label>
             <input type="datetime-local" id="beforeDT" name="beforeDT" tabIndex="7" />
         </p>
 
         <p id="otypes-p" class="model-not-set">
-            <label for="otypes" id="otypes-label">{translate: 'Obsel types'} :</label>
+            <label for="otypes" id="otypes-label">{translate: 'Obsel types'}</label>
             <span class="model-not-set-message">{translate: 'Please choose a model'}</span>
 
             <ktbs4la2-obsel-type-select
@@ -68,21 +68,21 @@
         </p>
 
         <p>
-            <label for="bgp" id="bgp-label">{translate: 'SPARQL Basic Graph Pattern'} :</label>
+            <label for="bgp" id="bgp-label">{translate: 'SPARQL Basic Graph Pattern'}</label>
             <textarea id="bgp" name="bgp" rows="10" cols="70" tabindex="9"></textarea>
         </p>
     </section>
 
     <section class="fsa">
         <p>
-            <label for="fsa" id="fsa-label">{translate: 'Finite state automata JSON description'} :</label>
+            <label for="fsa" id="fsa-label">{translate: 'Finite state automata JSON description'}</label>
             <textarea id="fsa" name="fsa" rows="10" cols="70" tabindex="10"></textarea>
         </p>
     </section>
 
     <section class="hrules">
         <p id="rules-p" class="model-not-set">
-            <label for="rules" id="rules-label">{translate: 'HRules rules'} : </label>
+            <label for="rules" id="rules-label">{translate: 'HRules rules'}</label>
             <span class="model-not-set-message">{translate: 'Please choose a model'}</span>
 
             <ktbs4la2-multiple-hrules-rules-input
@@ -95,13 +95,13 @@
     </section>
 
     <section class="sparql">
-        <p>
-            <label for="sparql-sparql" id="sparql-sparql-label">{translate: 'SPARQL CONSTRUCT query'} :</label>
+        <p class="required">
+            <label for="sparql-sparql" id="sparql-sparql-label">{translate: 'SPARQL CONSTRUCT query'}</label>
             <textarea id="sparql-sparql" name="sparql-sparql" rows="10" cols="70" tabindex="12" required></textarea>
         </p>
 
         <p>
-            <label for="scope" id="scope-label">{translate: 'Scope'} : </label>
+            <label for="scope" id="scope-label">{translate: 'Scope'}</label>
 
             <select id="scope" name="scope" tabIndex="13">
                 <option id="scope-trace" value="trace" selected>{translate: 'Trace'}</option>
@@ -111,41 +111,41 @@
         </p>
 
         <p>
-            <label for="inherit" id="inherit-label">{translate: 'Inherit'} : </label>
+            <label for="inherit" id="inherit-label">{translate: 'Inherit'}</label>
             <input type="checkbox" id="inherit" name="inherit" tabIndex="14" />
         </p>
     </section>
 
     <section class="isparql">
-        <p>
-            <label for="isparql-sparql" id="isparql-sparql-label">{translate: 'SPARQL SELECT query'} :</label>
+        <p class="required">
+            <label for="isparql-sparql" id="isparql-sparql-label">{translate: 'SPARQL SELECT query'}</label>
             <textarea id="isparql-sparql" name="isparql-sparql" rows="10" cols="70" tabindex="15" required></textarea>
         </p>
     </section>
 
     <section class="external">
         <p>
-            <label for="command-line" id="command-line-label">{translate: 'Command line'} : </label>
+            <label for="command-line" id="command-line-label">{translate: 'Command line'}</label>
             <input type="text" id="command-line" name="command-line" placeholder="{translate: 'Command line'}" tabIndex="16" />
         </p>
 
         <p>
-            <label for="format" id="format-label">{translate: 'Format'} : </label>
+            <label for="format" id="format-label">{translate: 'Format'}</label>
             <input type="text" id="format" name="format" placeholder="{translate: 'Format'}" tabIndex="17" />
         </p>
 
         <p>
-            <label for="min-sources" id="min-sources-label">{translate: 'Min. number of sources'} : </label>
+            <label for="min-sources" id="min-sources-label">{translate: 'Min. number of sources'}</label>
             <input type="number" id="min-sources" name="min-sources" tabIndex="18" />
         </p>
 
         <p>
-            <label for="max-sources" id="max-sources-label">{translate: 'Max. number of sources'} : </label>
+            <label for="max-sources" id="max-sources-label">{translate: 'Max. number of sources'}</label>
             <input type="number" id="max-sources" name="max-sources" tabIndex="19" />
         </p>
 
         <p>
-            <label for="feed-to-stdin" id="feed-to-stdin-label">{translate: 'Feed to standard input'} : </label>
+            <label for="feed-to-stdin" id="feed-to-stdin-label">{translate: 'Feed to standard input'}</label>
             <input type="checkbox" id="feed-to-stdin" name="feed-to-stdin" tabIndex="20" />
         </p>
     </section>
