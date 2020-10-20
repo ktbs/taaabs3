@@ -313,8 +313,10 @@ export class ComputedTrace extends Trace {
 	 * \public
 	 */
 	set parameters(new_parameters) {
-		if(new_parameters instanceof Array)
+		if(new_parameters instanceof Array) {
+			this._JSONData.parameter = new_parameters;
 			this._parameters = new_parameters;
+		}
 		else
 			throw new TypeError("New value for property parameters must be of type Array.");
 	}
