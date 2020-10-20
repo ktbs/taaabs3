@@ -140,16 +140,20 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._idInput = this.shadowRoot.querySelector("#new-resource-id");
 		this._idLabel.addEventListener("click", this._onClickIdLabel.bind(this));
 		this._idInput.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._idInput.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._labelLabel = this.shadowRoot.querySelector("#label-label");
 		this._labelFormInput = this.shadowRoot.querySelector("#label");
 		this._labelFormInput.setAttribute("lang", this._lang);
 		this._labelFormInput.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
+		this._labelFormInput.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._labelFormInput.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._labelLabel.addEventListener("click", this._onClickLabelLabel.bind(this));
 		this._parentMethodLabel = this.shadowRoot.querySelector("#parent-method-label");
 		this._parentMethodLabelSpan = this.shadowRoot.querySelector("#parent-method-label-span");
 		this._parentMethodPicker = this.shadowRoot.querySelector("#parent-method");
 		this._parentMethodPicker.setAttribute("lang", this._lang);
 		this._parentMethodPicker.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._parentMethodPicker.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._parentMethodPicker.addEventListener("input", this._onParentMethodPickerChange.bind(this));
 		this._parentMethodPicker.addEventListener("change", this._onParentMethodPickerChange.bind(this));
 		this._parentMethodPicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
@@ -160,10 +164,13 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._traceModelPicker.setAttribute("lang", this._lang);
 		this._traceModelPicker.addEventListener("input", this._updateOkButtonState.bind(this));
 		this._traceModelPicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
+		this._traceModelPicker.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._traceModelPicker.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._traceModelLabel.addEventListener("click", this._onClickTraceModelLabel.bind(this));
 		this._originLabel = this.shadowRoot.querySelector("#origin-label");
 		this._originInput = this.shadowRoot.querySelector("#origin");
 		this._originInput.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._originInput.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._sourceTraceDiv = this.shadowRoot.querySelector("#source-trace");
 		this._sourceTraceMethodNotSetLabel = this.shadowRoot.querySelector("#source-trace-method-not-set-label");
 		this._sourceTraceMethodNotSetMessageSpan = this.shadowRoot.querySelector("#source-trace-method-not-set-message");
@@ -172,6 +179,7 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._singleSourceTracePicker = this.shadowRoot.querySelector("#single-source-trace");
 		this._singleSourceTracePicker.setAttribute("lang", this._lang);
 		this._singleSourceTracePicker.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._singleSourceTracePicker.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._singleSourceTracePicker.addEventListener("input", this._onSingleSourceTracePickerEvent.bind(this));
 		this._singleSourceTracePicker.addEventListener("change", this._onSingleSourceTracePickerEvent.bind(this));
 		this._singleSourceTracePicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
@@ -181,6 +189,7 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._multipleSourceTracesPicker = this.shadowRoot.querySelector("#multiple-source-traces");
 		this._multipleSourceTracesPicker.setAttribute("lang", this._lang);
 		this._multipleSourceTracesPicker.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._multipleSourceTracesLabel.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._multipleSourceTracesPicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
 		this._multipleSourceTracesLabel.addEventListener("click", this._onClickMultipleSourceTracesLabel.bind(this));
 		this._methodLabelSpan = this.shadowRoot.querySelector("#method-label-span");
@@ -188,6 +197,7 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._methodPicker = this.shadowRoot.querySelector("#method");
 		this._methodPicker.setAttribute("lang", this._lang);
 		this._methodPicker.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._methodPicker.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._methodPicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
 		this._methodPicker.addEventListener("input", this._onMethodChange.bind(this));
 		this._methodPicker.addEventListener("change", this._onMethodChange.bind(this));
@@ -196,7 +206,7 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._parametersInput = this.shadowRoot.querySelector("#parameters");
 		this._parametersInput.setAttribute("lang", this._lang);
 		this._parametersInput.addEventListener("input", this._updateOkButtonState.bind(this));
-
+		this._parametersInput.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._title = this.shadowRoot.querySelector("#title");
 		const createTypeString = this.getAttribute("create-type");
 		let createTypeLabel;
@@ -281,18 +291,44 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 	 * 
 	 */
 	_updateOkButtonState(event) {
-		this._componentReady.then(() => {
-			const createType = this.getAttribute("create-type");
+		let formIsValid;
+		const createType = this.getAttribute("create-type");
 
-			this._okButton.disabled = !(
-					this._idInput.checkValidity()
-				&&	((createType != "Method") || this._parentMethodPicker.checkValidity())
-				&&	((createType != "StoredTrace") || this._traceModelPicker.checkValidity())
-				&&	(((createType != "StoredTrace") && (createType != "ComputedTrace")) || this._originInput.checkValidity())
-				&&	((createType != "ComputedTrace") || (this._singleSourceTracePicker.checkValidity() && this._methodPicker.checkValidity()))
-				&&	(((createType != "Method") && (createType != "ComputedTrace")) || this._parametersInput.checkValidity())
-			);
-		});
+		if(["Base", "Model", "StoredTrace", "Method", "ComputedTrace"].includes(createType)) {
+			formIsValid = true;
+			let formElementsToValidate = [this._idInput, this._labelFormInput];
+			
+			switch(createType) {
+				case "StoredTrace" :
+					formElementsToValidate.push(this._traceModelPicker);
+					formElementsToValidate.push(this._originInput);
+					break;
+				case "Method" :
+					formElementsToValidate.push(this._parentMethodPicker);
+					formElementsToValidate.push(this._parametersInput);
+					break;
+				case "ComputedTrace" :
+					formElementsToValidate.push(this._originInput);
+					formElementsToValidate.push(this._methodPicker);
+
+					if(this._sourceTraceDiv.className == "single")
+						formElementsToValidate.push(this._singleSourceTracePicker);
+					else if(this._sourceTraceDiv.className == "multiple")
+						formElementsToValidate.push(this._multipleSourceTracesPicker);
+					else if(this._sourceTraceDiv.className == "notset")
+						formIsValid = false;
+
+					formElementsToValidate.push(this._parametersInput);
+					break;
+			}
+
+			for(let i = 0; formIsValid && (i < formElementsToValidate.length); i++)
+				formIsValid = formElementsToValidate[i].checkValidity();
+		}
+		else
+			formIsValid = false;
+
+		this._okButton.disabled = !formIsValid;
 	}
 
 	/**
@@ -425,8 +461,6 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 				this._parametersInput.removeAttribute("method-uri");
 		}
 		else {
-			this._sourceTraceDiv.className = "notset";
-
 			if(this._parametersInput.hasAttribute("method-uri"))
 				this._parametersInput.removeAttribute("method-uri");
 		}
