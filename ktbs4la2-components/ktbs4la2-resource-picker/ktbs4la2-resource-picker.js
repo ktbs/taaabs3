@@ -49,6 +49,25 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
     }
 
     /**
+     * 
+     */
+    get required() {
+        return this.hasAttribute("required");
+    }
+
+    /**
+     * 
+     */
+    set required(newValue) {
+        if(newValue != null) {
+            if(this.getAttribute("required") != newValue)
+                this.setAttribute("required", newValue);
+        }
+        else if(this.hasAttribute("required"))
+            this.removeAttribute("required");
+    }
+
+    /**
 	 * 
 	 */
 	onComponentReady() {
@@ -369,15 +388,19 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
-        const valid = (
-                this._uriInput
-            &&  this._uriInput.checkValidity()
-        );
+        if(this._uriInput) {
+            const valid = (
+                    this._uriInput.checkValidity()
+                &&  (!this.required || (this._uriInput.value != ""))
+            );
 
-        if(!valid)
-            this.dispatchEvent(new Event("invalid"));
+            /*if(!valid)
+                this.dispatchEvent(new Event("invalid"));*/
 
-        return valid;
+            return valid;
+        }
+        else
+            return false;
     }
 
     /**
