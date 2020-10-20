@@ -203,6 +203,13 @@ class KTBS4LA2LocalizedTextInput extends TemplatedHTMLElement {
         this.shadowRoot.querySelector("#language-select option[value = \"en\"]").setAttribute("title", this._translateString("English"));
         this.shadowRoot.querySelector("#language-select option[value = \"fr\"]").setAttribute("title", this._translateString("French"));
     }
+
+    /**
+     * 
+     */
+    checkValidity() {
+        return this._textInput.checkValidity();
+    }
 }
 
 customElements.define('ktbs4la2-localized-text-input', KTBS4LA2LocalizedTextInput);
