@@ -114,10 +114,23 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
-        return (
-            !this.required
-        ||  (this.value != "[]")
-    );
+        if(this._ruleInputsDiv) {
+            let allRulesAreValid = true;
+            const rulesInputs = this._getRulesInputs();
+
+            for(let i = 0; allRulesAreValid && (i < rulesInputs.length); i++)
+                allRulesAreValid = rulesInputs[i].checkValidity();
+
+            return (
+                    allRulesAreValid 
+                &&  (
+                        !this.required 
+                    ||  (this.value != "[]")
+                )
+            );
+        }
+        else 
+            return false;
     }
 
     /**
