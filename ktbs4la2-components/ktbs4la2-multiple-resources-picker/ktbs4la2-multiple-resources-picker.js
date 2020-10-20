@@ -46,6 +46,25 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
     }
 
     /**
+     * 
+     */
+    get required() {
+        return this.hasAttribute("required");
+    }
+
+    /**
+     * 
+     */
+    set required(newValue) {
+        if(newValue != null) {
+            if(this.getAttribute("required") != newValue)
+                this.setAttribute("required", newValue);
+        }
+        else if(this.hasAttribute("required"))
+            this.removeAttribute("required");
+    }
+
+    /**
 	 * 
 	 */
 	static get observedAttributes() {
@@ -114,7 +133,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
                 const currentPickers = this._getResourcePickers();
                 
                 if(currentPickers.length > 0)
-                    currentPickers[0].setAttribute("required", ((this.getAttribute("required") == "") || (this.getAttribute("required") == "true") || (this.getAttribute("required") == "1")));
+                    currentPickers[0].setAttribute("required", this.required);
             }).catch(() => {});
         }
         if(name == "allowed-resource-count") {
@@ -187,6 +206,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 	 * 
 	 */
 	_addResourcePicker(value = null, allow_remove = true) {
+        const currentPickers = this._getResourcePickers();
 		const pickerContainer = document.createElement("div");
 		pickerContainer.classList.add("resource-picker-container");
 		const newResourcePicker = document.createElement("ktbs4la2-resource-picker");
@@ -212,32 +232,29 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 
         const currentPickersCount = this._getResourcePickers().length;
 		const newPickerTabIndex = (currentPickersCount > 0)?(2 * currentPickersCount):1;
-		newResourcePicker.setAttribute("tabIndex", newPickerTabIndex);
+        newResourcePicker.setAttribute("tabIndex", newPickerTabIndex);
+        
+        if(
+                (currentPickers.length == 0)
+            &&  this.required
+        )
+            newResourcePicker.setAttribute("required", true);
 
 		pickerContainer.appendChild(newResourcePicker);
 		newResourcePicker.addEventListener("focus", this._onResourcePickerFocus.bind(this));
-		const currentPickers = this._getResourcePickers();
-
+		
 		if(allow_remove && (currentPickers.length > 0)) {
 			const removeResourceButton = document.createElement("button");
 			removeResourceButton.classList.add("remove-resource-button");
 			removeResourceButton.setAttribute("title", this._translateString("Remove this resource"));
 			removeResourceButton.addEventListener("click", this._onClickRemoveResourceButton.bind(this));
 			removeResourceButton.innerText = "❌";
-			removeResourceButton.setAttribute("tabIndex", newPickerTabIndex + 1);
+            removeResourceButton.setAttribute("tabIndex", newPickerTabIndex + 1);
+            newResourcePicker.addEventListener("input", this._onChildResourcePickerEvent.bind(this));
+            newResourcePicker.addEventListener("change", this._onChildResourcePickerEvent.bind(this));
 			pickerContainer.appendChild(removeResourceButton);
         }
         
-        if(
-                (currentPickers.length == 0)
-            &&  (
-                    (this.getAttribute("required") == "")
-                ||  (this.getAttribute("required") == "true")
-                ||  (this.getAttribute("required") == "1")
-            )
-        )
-            pickerContainer.setAttribute("required", true);
-
 		this._resourcePickedsDiv.appendChild(pickerContainer);
 		return pickerContainer;
     }
@@ -288,6 +305,14 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 			if(parentContainer.classList.contains("resource-picker-container")) {
                 parentContainer.remove();
                 this._reIndexTabNavigation();
+
+                const newEvent = new Event("change", {
+                    bubbles: true,
+                    cancelable: false,
+                    composed: false
+                });
+
+                this.dispatchEvent(newEvent);
             }
 		}
     }
@@ -313,6 +338,21 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
             valid = pickers[i].checkValidity();
 
         return valid;
+    }
+
+    /**
+     * 
+     */
+    _onChildResourcePickerEvent(event) {
+        event.stopPropagation();
+
+        const newEvent = new Event(event.type, {
+            bubbles: event.bubbles,
+            cancelable: false,
+            composed: event.composed
+        });
+
+        this.dispatchEvent(newEvent);
     }
 }
 
