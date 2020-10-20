@@ -139,13 +139,18 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
-        return (
-                !this.required
-            ||  (
-                    this._idInput.value
+        if(this._idInput && this._subrulesInput) {
+            return (
+                    this._idInput.checkValidity()
                 &&  this._subrulesInput.checkValidity()
-            )
-        );
+                &&  !(
+                        (this._subrulesInput.value != "[]")
+                    &&  (this._idInput.value == "")
+                )
+            );
+        }
+        else
+            return false;
     }
 
     /**
@@ -192,6 +197,7 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
         let _observedAttributes = super.observedAttributes;
         _observedAttributes.push("model-uri");
         _observedAttributes.push("value");
+        _observedAttributes.push("required");
         return _observedAttributes;
     }
 
@@ -257,6 +263,13 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
                     this._subrulesInput.value = "[]";
                 }).catch(() => {});
             }
+        }
+        else if(name == "required") {
+            if(newValue != null)
+                this._idInput.setAttribute("required", newValue);
+            else
+                if(this._idInput.hasAttribute("required"))
+                    this._idInput.removeAttribute("required");
         }
     }
 
