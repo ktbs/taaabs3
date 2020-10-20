@@ -188,8 +188,8 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._multipleSourceTracesLabel = this.shadowRoot.querySelector("#multiple-source-traces-label");
 		this._multipleSourceTracesPicker = this.shadowRoot.querySelector("#multiple-source-traces");
 		this._multipleSourceTracesPicker.setAttribute("lang", this._lang);
-		this._multipleSourceTracesPicker.addEventListener("input", this._updateOkButtonState.bind(this));
-		this._multipleSourceTracesLabel.addEventListener("change", this._updateOkButtonState.bind(this));
+		this._multipleSourceTracesPicker.addEventListener("input", this._updateParametersMultipleModel.bind(this));
+		this._multipleSourceTracesPicker.addEventListener("change", this._updateParametersMultipleModel.bind(this));
 		this._multipleSourceTracesPicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
 		this._multipleSourceTracesLabel.addEventListener("click", this._onClickMultipleSourceTracesLabel.bind(this));
 		this._methodLabelSpan = this.shadowRoot.querySelector("#method-label-span");
@@ -274,12 +274,16 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 			formData["origin"] = this._originInput.value;
 
 		if(createType == "ComputedTrace") {
-			formData["source-trace"] = this._resourceForm["source-trace"].value;
 			formData["method"] = this._methodPicker.value;
+
+			if(this._sourceTraceDiv.className == "single")
+				formData["source-trace"] = this._singleSourceTracePicker.value;
+			else if(this._sourceTraceDiv.className == "multiple")
+				formData["source-trace"] = JSON.parse(this._multipleSourceTracesPicker.value);
 		}
 
 		if((createType == "Method") || (createType == "ComputedTrace"))
-			formData["parameters"] = this._parametersInput.value;
+			formData["parameters"] = JSON.parse(this._parametersInput.value);
 
 		if(createType == "Method")
 			formData["parent-method"] = this._parentMethodPicker.value;
@@ -530,6 +534,51 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		}
 		else if(this._parametersInput.hasAttribute("default-model-uri"))
 			this._parametersInput.removeAttribute("default-model-uri");
+	}
+
+	/**
+	 * 
+	 */
+	_updateParametersMultipleModel(event) {
+		const source_traces_uris = this._multipleSourceTracesPicker.value.split(" ").filter(Boolean);
+		let source_traces_promises = new Array();
+		let source_traces_models = new Array();
+
+		for(let i = 0; i < source_traces_uris.length; i++) {
+			const aSourceTrace = ResourceMultiton.get_resource(Trace, source_traces_uris[i]);
+			const aSourceTraceGetPromise = aSourceTrace.get(this._abortController.signal);
+
+			aSourceTraceGetPromise
+				.then(() => {
+					source_traces_models.push(aSourceTrace.model);
+				})
+				.catch((error) => {
+					this.emitErrorEvent(error);
+				});
+
+			source_traces_promises.push(aSourceTraceGetPromise);
+		}
+
+		Promise.allSettled(source_traces_promises)
+			.then(() => {
+				let hasVariousSourceTracesModels = false;
+
+				for(let i = 1; !hasVariousSourceTracesModels && (i < source_traces_models.length); i++)
+					hasVariousSourceTracesModels = (source_traces_models[i] != source_traces_models[i - 1]);
+
+				if(hasVariousSourceTracesModels) {
+					if(!this._parametersInput.hasAttribute("has-various-source-traces-models"))
+						this._parametersInput.setAttribute("has-various-source-traces-models", true);
+				}
+				else {
+					if(this._parametersInput.hasAttribute("has-various-source-traces-models"))
+						this._parametersInput.removeAttribute("has-various-source-traces-models");
+				}
+
+				setTimeout(() => {
+					this._updateOkButtonState();
+				});
+			});
 	}
 }
 
