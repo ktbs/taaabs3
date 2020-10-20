@@ -206,7 +206,83 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
-        // @TODO
+        if(
+                this._container
+            &&  [
+                    "filter", 
+                    "fusion", 
+                    "fsa", 
+                    "hrules", 
+                    "sparql", 
+                    "isparql", 
+                    "parallel", 
+                    "pipe", 
+                    "external"
+                ].includes(this._container.className)
+        ) {
+                let valid = true;
+                let formsElementsToValidate = new Array();
+
+                // ---------------------
+
+                if((this._container.className == "pipe") || (this._container.className == "parallel"))
+                    formsElementsToValidate.push(this._methodsPicker);
+        
+                if(["filter", "fusion", "fsa", "hrules", "sparql", "isparql", "parallel", "external"].includes(this._container.className)) {
+                    formsElementsToValidate.push(this._modelPicker);
+                    formsElementsToValidate.push(this._originInput);
+                }
+        
+                if(this._container.className == "filter") {
+                    formsElementsToValidate.push(this._afterInput);
+                    formsElementsToValidate.push(this._beforeInput);
+                    formsElementsToValidate.push(this._afterDTInput);
+                    formsElementsToValidate.push(this._beforeDTInput);
+
+                    if(!this._otypesP.classList.contains("model-not-set"))
+                        formsElementsToValidate.push(this._otypesSelect);
+
+                    formsElementsToValidate.push(this._bgpTextarea);
+                }
+                    
+                if(this._container.className == "fsa")
+                    formsElementsToValidate.push(this._fsaTextarea);
+                    
+                if(this._container.className == "hrules")
+                    if(!this._otypesP.classList.contains("model-not-set"))
+                        formsElementsToValidate.push(this._rulesInput);
+                    
+                if(this._container.className == "sparql") {
+                    formsElementsToValidate.push(this._sparqlSparqlTextarea);
+                    formsElementsToValidate.push(this._scopeSelect);
+                    formsElementsToValidate.push(this._inheritCheckbox);
+                }
+                    
+                if(this._container.className == "isparql")
+                    formsElementsToValidate.push(this._isparqlSparqlTextarea);
+        
+                if(this._container.className == "external") {
+                    formsElementsToValidate.push(this._commandLineInput);
+                    formsElementsToValidate.push(this._formatInput);
+                    formsElementsToValidate.push(this._minSourcesInput);
+                    formsElementsToValidate.push(this._maxSourcesInput);
+                    formsElementsToValidate.push(this._feedToStdinCheckbox);
+                }
+
+                // ----------------------
+
+                console.log("-----------------------------");
+                console.log("KTBS4LA2MethodParametersInput::checkValidity() => formsElementsToValidate = ");
+                console.log(formsElementsToValidate);
+                console.log("-----------------------------");
+
+                for(let i = 0; valid && (i < formsElementsToValidate.length); i++)
+                    valid = formsElementsToValidate[i].checkValidity();
+
+                return valid;
+        }
+        else
+            return false;
     }
 
     /**
