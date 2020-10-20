@@ -345,7 +345,20 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 
         for(let i = 0; i < localizedInputsAndRemoveButtons.length; i++)
             localizedInputsAndRemoveButtons[i].setAttribute("tabIndex", (i + 1));
-    }
+	}
+	
+	/**
+     * 
+     */
+    checkValidity() {
+		let valid = true;
+		const localizedInputs = this._getLocalizedInputs();
+
+		for(let i = 0; valid && (i < localizedInputs.length); i++)
+			valid = localizedInputs[i].checkValidity();
+
+		return valid;
+	}
 }
 
 customElements.define('ktbs4la2-multiple-translations-text-input', KTBS4LA2MultipleTranslationsTextInput);
