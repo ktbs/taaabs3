@@ -223,8 +223,6 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
                 let valid = true;
                 let formsElementsToValidate = new Array();
 
-                // ---------------------
-
                 if((this._container.className == "pipe") || (this._container.className == "parallel"))
                     formsElementsToValidate.push(this._methodsPicker);
         
@@ -268,13 +266,6 @@ class KTBS4LA2MethodParametersInput extends TemplatedHTMLElement {
                     formsElementsToValidate.push(this._maxSourcesInput);
                     formsElementsToValidate.push(this._feedToStdinCheckbox);
                 }
-
-                // ----------------------
-
-                console.log("-----------------------------");
-                console.log("KTBS4LA2MethodParametersInput::checkValidity() => formsElementsToValidate = ");
-                console.log(formsElementsToValidate);
-                console.log("-----------------------------");
 
                 for(let i = 0; valid && (i < formsElementsToValidate.length); i++)
                     valid = formsElementsToValidate[i].checkValidity();
