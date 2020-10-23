@@ -152,8 +152,6 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._parentMethodLabelSpan = this.shadowRoot.querySelector("#parent-method-label-span");
 		this._parentMethodPicker = this.shadowRoot.querySelector("#parent-method");
 		this._parentMethodPicker.setAttribute("lang", this._lang);
-		this._parentMethodPicker.addEventListener("input", this._updateOkButtonState.bind(this));
-		this._parentMethodPicker.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._parentMethodPicker.addEventListener("input", this._onParentMethodPickerChange.bind(this));
 		this._parentMethodPicker.addEventListener("change", this._onParentMethodPickerChange.bind(this));
 		this._parentMethodPicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
@@ -196,11 +194,11 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		this._methodLabel = this.shadowRoot.querySelector("#method-label");
 		this._methodPicker = this.shadowRoot.querySelector("#method");
 		this._methodPicker.setAttribute("lang", this._lang);
-		this._methodPicker.addEventListener("input", this._updateOkButtonState.bind(this));
-		this._methodPicker.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._methodPicker.addEventListener("keyup", this._onTextInputKeyboardEvent.bind(this));
 		this._methodPicker.addEventListener("input", this._onMethodChange.bind(this));
 		this._methodPicker.addEventListener("change", this._onMethodChange.bind(this));
+		this._methodPicker.addEventListener("input", this._updateOkButtonState.bind(this));
+		this._methodPicker.addEventListener("change", this._updateOkButtonState.bind(this));
 		this._methodLabel.addEventListener("click", this._onClickMethodLabel.bind(this));
 		this._parametersLabel = this.shadowRoot.querySelector("#parameters-label");
 		this._parametersInput = this.shadowRoot.querySelector("#parameters");
@@ -267,11 +265,10 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 		if(this._labelFormInput.value)
 			formData["label"] = this._labelFormInput.value;
 		
-		if(createType == "StoredTrace")
+		if(createType == "StoredTrace") {
 			formData["trace-model"] = this._traceModelPicker.value;
-
-		if((createType == "StoredTrace") || (createType == "ComputedTrace"))
 			formData["origin"] = this._originInput.value;
+		}
 
 		if(createType == "ComputedTrace") {
 			formData["method"] = this._methodPicker.value;
@@ -312,7 +309,6 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 					formElementsToValidate.push(this._parametersInput);
 					break;
 				case "ComputedTrace" :
-					formElementsToValidate.push(this._originInput);
 					formElementsToValidate.push(this._methodPicker);
 
 					if(this._sourceTraceDiv.className == "single")
@@ -495,9 +491,12 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 						this._sourceTraceDiv.className = "single";
 					else if(method.source_traces_cardinality == "*")
 						this._sourceTraceDiv.className = "multiple";
+
+					this._updateOkButtonState();
 				}) 
 				.catch((error) => {
 					this._sourceTraceDiv.className = "notset";
+					this._updateOkButtonState();
 				});
 		}
 		else {
@@ -505,6 +504,8 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 
 			if(this._parametersInput.hasAttribute("method-uri"))
 				this._parametersInput.removeAttribute("method-uri");
+
+			this._updateOkButtonState();
 		}
 	}
 
