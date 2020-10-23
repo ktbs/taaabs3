@@ -55,6 +55,6 @@
 	background: url('{my-component-folder}/chevron-up.svg') no-repeat;
 }
 
-:host([expanded = "false"]) #content {
+:host([expanded = "false"]:not([foldable = "false"])) #content {
 	display: none;
 }
