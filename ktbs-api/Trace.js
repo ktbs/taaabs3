@@ -37,8 +37,6 @@ export class Trace extends Resource {
 		return this._model;
 	}
 
-	
-
 	/**
 	 * Gets the temporal origin of the Trace
 	 * \return string
@@ -46,15 +44,6 @@ export class Trace extends Resource {
 	 */
 	get origin() {
 		return this._JSONData.origin;
-	}
-
-	/**
-	 * Sets the temporal origin for the Trace
-	 * \param String newOrigin - the new origin for the Trace
-	 * \public
-	 */
-	set origin(newOrigin) {
-		this._JSONData.origin = newOrigin;
 	}
 
 	/**
@@ -139,6 +128,24 @@ export class StoredTrace extends Trace {
 		}
 		else
 			throw new TypeError("New value for property \"model\" must be an instance of Model");
+	}
+
+	/**
+	 * Gets the temporal origin of the Trace
+	 * \return string
+	 * \public
+	 */
+	get origin() {
+		return super.origin;
+	}
+
+	/**
+	 * Sets the temporal origin for the Trace
+	 * \param String newOrigin - the new origin for the Trace
+	 * \public
+	 */
+	set origin(newOrigin) {
+		this._JSONData.origin = newOrigin;
 	}
 
 	/**
