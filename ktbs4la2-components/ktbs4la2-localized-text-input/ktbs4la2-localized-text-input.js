@@ -208,7 +208,10 @@ class KTBS4LA2LocalizedTextInput extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
-        return this._textInput.checkValidity();
+        if(this._textInput)
+            return this._textInput.checkValidity();
+        else
+            return false;
     }
 }
 
