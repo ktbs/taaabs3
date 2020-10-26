@@ -564,59 +564,7 @@ export class Resource {
 	 * \public
 	 */
 	get label() {
-		if(!this._label) {
-			if(this._JSONData["label"])
-				this._label = this._JSONData["label"];
-			else
-				this._label = this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
-		}
-
-		return this._label;
-	}
-
-	/**
-	 * Gets the label for a given language
-	 * \param string lang a short code for the language we want the label translated into
-	 * \return string the translated label, or the default label if no translated label has been found, or undefined if no default label has been found
-	 * \public
-	 */
-	get_translated_label(lang) {
-		let label = this.label;
-
-		if(label instanceof Array) {
-			for(let i = 0; i < label.length; i++) {
-				let aLabel = label[i];
-
-				if((aLabel instanceof Object) && (aLabel["@language"] == lang))
-					return aLabel["@value"];
-			}
-		}
-		else
-			return label;
-	}
-
-	/**
-	 * Gets the resource's label(s) raw data
-	 * \return Array
-	 * \public
-	 */
-	get raw_labels_data() {
-		let returnData = [];
-
-		if(this._JSONData["label"])
-			returnData.push({
-				"@language": "*",
-				"@value": this._JSONData["label"]
-			});
-
-		if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"]) {
-			if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] instanceof Array)
-				returnData = returnData.concat(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"]);
-			else if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] instanceof Object)
-				returnData.push(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"]);
-		}
-
-		return returnData;
+		return this._JSONData["label"];
 	}
 
 	/**
@@ -630,27 +578,70 @@ export class Resource {
 	}
 
 	/**
+	 * Gets the labels translations array
+	 * \return Array
+	 * \public
+	 */
+	get label_translations() {
+		return this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+	}
+
+	/**
+	 * Sets the labels translations array
+	 * \param Array newValue
+	 * \public
+	 */
+	set label_translations(newValue) {
+		this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] = newValue;
+	}
+
+	/**
+	 * Gets the label for a given language
+	 * \param string lang a short code for the language we want the label translated into
+	 * \return string the translated label, or the default label if no translated label has been found (which can be "undefined" if it hasn't been set)
+	 * \public
+	 */
+	get_translated_label(lang) {
+		let labelTranslations = this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+
+		if(labelTranslations instanceof Array) {
+			for(let i = 0; i < labelTranslations.length; i++) {
+				let aLabelTranslation = labelTranslations[i];
+
+				if((aLabelTranslation instanceof Object) && (aLabelTranslation["@language"] == lang))
+					return aLabelTranslation["@value"];
+			}
+		}
+		
+		return this.label;
+	}
+
+	/**
 	 * Sets a translation for the label in a given language
 	 * \param string label the translated label
 	 * \param string lang a short code for the language the label is translated in
 	 * \public
 	 */
 	set_translated_label(label, lang) {
-		let newLabel;
+		let label_translations;
 
-		if(this._JSONData["label"] && !this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"]) {
-			newLabel = new Array();
-			newLabel.push({"@value": this._JSONData["label"], "@language": "en"});
-			this._label = null;
-			delete this._JSONData["label"];
-		}
-		else if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"])
-			newLabel = this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+		if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"])
+			label_translations = this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
 		else
-			newLabel = new Array();
+			label_translations = new Array();
 
-		newLabel.push({"@value": label, "@language": lang})
-		this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] = newLabel;
+		let existing_translation_replaced = false;
+
+		for(let i = 0; !existing_translation_replaced && (i < label_translations.length); i++)
+			if(label_translations[i]["@language"] == lang) {
+				label_translations[i]["@value"] = label;
+				existing_translation_replaced = true;
+			}
+	
+		if(!existing_translation_replaced)
+			label_translations.push({"@value": label, "@language": lang})
+		
+		this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] = label_translations;
 	}
 
 	/**
