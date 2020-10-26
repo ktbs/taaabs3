@@ -94,8 +94,27 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
     attributeChangedCallback(name, oldValue, newValue) {
 		super.attributeChangedCallback(name, oldValue, newValue);
 		
-		if(name == "value")
-			this.value = newValue;
+		if(name == "value") {
+			this._componentReady.then(() => {
+				this._clearAllInputs();
+
+				if(newValue) {
+					try {
+						const new_values_array = JSON.parse(newValue);
+		
+						if(new_values_array instanceof Array) {
+							for(let i = 0; i < new_values_array.length; i++) {
+								const aTranslation = new_values_array[i];
+								this._addLocalizedInput(aTranslation["value"], aTranslation["lang"]);
+							}
+						}
+					}
+					catch(error) {
+						this._addLocalizedInput(new_value);
+					}
+				}
+			});
+		}
         else if(name == "disabled-langs") {
 			if(!this.getAttribute("allowed-langs")) {
 				this._disabled_langs = newValue.split(" ").filter(Boolean);
@@ -267,10 +286,7 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 			}
 		}
 
-		if(translations.length > 0)
-			return translations;
-		else
-			return null;
+		return JSON.stringify(translations);
 	}
 
 	/**
@@ -287,21 +303,7 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 	 * 
 	 */
 	set value(new_value) {
-		this._componentReady.then(() => {
-			try {
-				const new_values_array = JSON.parse(new_value);
-
-				if((new_values_array instanceof Array) && (new_values_array.length > 0)) {
-					for(let i = 0; i < new_values_array.length; i++) {
-						const aTranslation = new_values_array[i];
-						this._addLocalizedInput(aTranslation["@value"], aTranslation["@language"]);
-					}
-				}
-			}
-			catch(error) {
-				this._addLocalizedInput(new_value);
-			}
-		});
+		this.setAttribute("value", new_value);
 	}
 	
 	/**

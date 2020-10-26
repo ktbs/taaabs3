@@ -263,7 +263,7 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 			formData["new-resource-id"] = this._idInput.value + "/";
 
 		if(this._labelFormInput.value)
-			formData["label"] = this._labelFormInput.value;
+			formData["label"] = JSON.parse(this._labelFormInput.value);
 		
 		if(createType == "StoredTrace") {
 			formData["trace-model"] = this._traceModelPicker.value;
