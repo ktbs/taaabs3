@@ -384,6 +384,30 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_clearTimeDivisions() {
+		this._timeDiv.innerHTML = "";
+
+		if(this._timeDiv.classList.contains("subdivided"))
+			this._timeDiv.classList.remove("subdivided");
+
+		if(this._widgetContainer.hasAttribute("hidden"))
+			this._widgetContainer.removeAttribute("hidden");
+
+		this._timeDivisionsAreInitialized = false;
+
+		this._timeDivisionsInitialized = new Promise(function(resolve, reject) {
+			this._resolveTimeDivisionsInitialized = resolve;
+			this._rejectTimeDivisionsInitialized = reject;
+		}.bind(this));
+
+		this._timeDivisionsInitialized.then(() => {
+			this._timeDivisionsAreInitialized = true;
+		});
+	}
+
+	/**
+	 * 
+	 */
 	attributeChangedCallback(attributeName, oldValue, newValue) {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
 
@@ -395,13 +419,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		if(((attributeName == "begin") || (attributeName == "end")) && this.hasAttribute("begin") && this.hasAttribute("end"))
 			this._componentReady.then(() => {
-				this._timeDiv.innerHTML = "";
-
-				if(this._timeDiv.classList.contains("subdivided"))
-					this._timeDiv.classList.remove("subdivided");
-
-				if(this._widgetContainer.hasAttribute("hidden"))
-					this._widgetContainer.removeAttribute("hidden");
+				this._clearTimeDivisions();
 
 				if(this._displayWindow.clientWidth > 0)
 					this._initDisplay();
@@ -868,7 +886,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			this._visibleEventsNodes = null;
 			this._eventsData = null;
 			
-			this._componentReady.then(() => {
+			//this._componentReady.then(() => {
+			this._timeDivisionsInitialized.then(() => {
 				this._updateScrollBarContent();
 				this._requestUpdateEventsRow();
 			});
