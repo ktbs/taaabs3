@@ -372,14 +372,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				this._originTime = parsedOrigin;
 		}
 
-		if(this._model) {
-			this._model.unregisterObserver(this._onModelNotification.bind(this));
-			delete this._model;
-		}
+		if(!this._model || (this._trace.model != this._model)) {
+			if(this._model) {
+				this._model.unregisterObserver(this._onModelNotification.bind(this));
+				delete this._model;
+			}
 
-		this._model = this._trace.model;
-		this._model.registerObserver(this._onModelNotification.bind(this), "sync-status-change");
-		this._onModelNotification(this._model, "sync-status-change");
+			this._model = this._trace.model;
+			this._model.registerObserver(this._onModelNotification.bind(this), "sync-status-change");
+			this._onModelNotification(this._model, "sync-status-change");
+		}
 
 		if(this._stats) {
 			this._stats.unregisterObserver(this._onStatsNotification.bind(this), "sync-status-change");
@@ -389,7 +391,10 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._stats = this._trace.stats;
 		this._stats.registerObserver(this._onStatsNotification.bind(this));
 		this._onStatsNotification(this._stats, "sync-status-change");
-		this._initObselsLoading();
+		
+		this._componentReady.then(() => {
+			this._reloadObsels();
+		});
 	}
 
 	/**
@@ -402,6 +407,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				break;
 			case "in_sync" :
 				this._onModelReady();
+				break;
+			case "pending" :
 				break;
 			default:
 				this._onModelError();
@@ -588,25 +595,27 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_applyStyleSheet(stylesheet, emit_event = false) {
-		this._currentStylesheet = stylesheet;
+		if(!this._currentStylesheet || (this._currentStylesheet != stylesheet)) {
+			this._currentStylesheet = stylesheet;
 
-		// rebuild the legend
-		this._rebuildLegend(stylesheet);
+			// rebuild the legend
+			this._rebuildLegend(stylesheet);
 
-		// update stylesheet selector if needed (i.e. the stylesheet has been changed, not from the selector, but from the "stylesheet" attribute)
-		if(stylesheet.name != this._styleSheetSelector.value) {
-			let selectorEntries = this._styleSheetSelector.options;
-			
-			for(let i = 0; i < selectorEntries.length; i++) {
-				let anEntry = selectorEntries[i];
+			// update stylesheet selector if needed (i.e. the stylesheet has been changed, not from the selector, but from the "stylesheet" attribute)
+			if(stylesheet.name != this._styleSheetSelector.value) {
+				let selectorEntries = this._styleSheetSelector.options;
+				
+				for(let i = 0; i < selectorEntries.length; i++) {
+					let anEntry = selectorEntries[i];
 
-				if(anEntry.selected && (anEntry.innerText != stylesheet.name))
-					anEntry.selected = false;
-				else if(!anEntry.selected && (anEntry.innerText == stylesheet.name))
-					anEntry.selected = true;
+					if(anEntry.selected && (anEntry.innerText != stylesheet.name))
+						anEntry.selected = false;
+					else if(!anEntry.selected && (anEntry.innerText == stylesheet.name))
+						anEntry.selected = true;
+				}
 			}
 		}
-
+		
 		// --- apply rules to obsels ---
 		for(let i = 0; i < this._obsels.length; i++) {
 			let anObsel = this._obsels[i];
