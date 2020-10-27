@@ -15,7 +15,9 @@
 
 				<ktbs4la2-multiple-translations-text-input 
 					id="edit-label-input"
-					class="edit">
+					class="edit"
+					placeholder="{translate: 'Label'}"
+					tabindex="1">
 				</ktbs4la2-multiple-translations-text-input>
 
 				<a id="resource-link" target="_blank" title="{translate: 'See the resource on the REST console (opens in a new tab)'}"></a>
@@ -30,7 +32,9 @@
         
         <div id="resource-tools">
             <a id="tool-edit" class="resource-tool view" title="{translate: 'Edit'}"></a>
-            <a id="tool-remove" class="resource-tool view" title="{translate: 'Delete'}"></a>
+			<a id="tool-remove" class="resource-tool view" title="{translate: 'Delete'}"></a>
+			<a id="tool-save-modifications" class="resource-tool edit" title="{translate: 'Save modifications'}" tabindex="8"></a>
+			<a id="tool-cancel-modifications" class="resource-tool edit" title="{translate: 'Cancel modifications'}" tabindex="9"></a>
         </div>
 
         <div id="resource-about" class="folded">
@@ -58,6 +62,8 @@
             <slot name="head-content"></slot>
         </section>
 
+		<!-- Childs resources (KtbsRoot & Base) -->
+
 		<ktbs4la2-main-subsection id="child-bases" title="{translate: 'Bases'} :" foldable="true" expanded="true" class="view">
 			<slot name="bases"></slot>
 			<button class="add-resource-button" id="add-base-button" title="{translate: 'Create a new base'}">+</button>
@@ -82,65 +88,100 @@
 			<slot name="computed-traces"></slot>
 			<button class="add-resource-button" id="add-computedtrace-button" title="{translate: 'Create a new computed trace'}">+</button>
 		</ktbs4la2-main-subsection>
-		
-		<ktbs4la2-main-subsection id="source-traces" title="{translate: 'Source traces'} :" foldable="true" expanded="true">
-			<slot name="source-trace" class="view"></slot>
 
-			<div class="edit">
+		<!-- Resource's data -->
+
+		<ktbs4la2-main-subsection id="resource-data" title="{translate: 'Resource data'} :" foldable="true" expanded="false">	
+			<p id="parent-method">
+				<label id="parent-method-label" for="parent-method-picker">{translate: 'Parent method'} :</label>
+				
+				<slot name="parent-method" class="view"></slot>
+
+				<ktbs4la2-resource-picker
+					id="parent-method-picker"
+					name="parent-method-picker"
+					allowed-resource-types="Method"
+					class="edit"
+					tabindex="2"
+					required>
+				</ktbs4la2-resource-picker>
+			</p>
+
+			<p id="model">
+				<label id="model-label" for="model-picker">{translate: 'Model'} :</label>
+
+				<slot name="model" class="view"></slot>
+
+				<ktbs4la2-resource-picker
+					id="model-picker"
+					name="model-picker"
+					allowed-resource-types="Model"
+					class="edit"
+					tabindex="3"
+					required>
+				</ktbs4la2-resource-picker>
+			</p>
+
+			<p id="origin">
+				<label for="origin-input" id="origin-label">{translate: 'Origin'} :</label>
+				<input type="text" id="origin-input" tabindex="4" class="edit" placeholder="{translate: 'Origin'}" />
+				<span id="origin-display" class="view"></span>
+			</p>
+
+			<p id="method">
+				<label id="method-label" for="method-picker">{translate: 'Method'}  :</label>
+
+				<slot name="method" class="view"></slot>
+
+				<ktbs4la2-resource-picker
+					id="method-picker"
+					name="method-picker"
+					allowed-resource-types="Method"
+					class="edit"
+					tabindex="5"
+					required>
+				</ktbs4la2-resource-picker>
+			</p>
+
+			<p id="source-traces" class="notset">
+				<label id="single-source-trace-label" for="single-source-trace-picker">{translate: 'Source trace'}  :</label>
+				<label id="multiple-source-traces-label" for="multiple-source-traces-picker">{translate: 'Source traces'}  :</label>
+
+				<slot name="source-trace" class="view"></slot>
+
+				<span id="source-trace-method-not-set-message">{translate: "You have to choose a method first."}</span>
+
 				<ktbs4la2-resource-picker
 					id="single-source-trace-picker"
+					name="single-source-trace-picker"
 					allowed-resource-types="StoredTrace ComputedTrace"
+					tabindex="6"
+					class="edit"
 					required>
 				</ktbs4la2-resource-picker>
 
 				<ktbs4la2-multiple-resources-picker
-					id="multiple-source-trace-picker"
+					id="multiple-source-traces-picker"
+					name="multiple-source-traces-picker"
 					allowed-resource-types="StoredTrace ComputedTrace"
+					tabindex="7"
+					class="edit"
 					required>
 				</ktbs4la2-multiple-resources-picker>
-			</div>
-		</ktbs4la2-main-subsection>
-        
-        <ktbs4la2-main-subsection id="parent-method" title="{translate: 'Parent method'} :" foldable="true" expanded="true">
-			<slot name="parent-method" class="view"></slot>
+			</p>
 
-			<ktbs4la2-resource-picker
-				id="parent-method-picker"
-				allowed-resource-types="Method"
-				class="edit"
-				required>
-			</ktbs4la2-resource-picker>
-		</ktbs4la2-main-subsection>
+			<p id="parameters">
+				<label id="parameters-label" for="parameters-input">{translate: 'Parameters'}  :</label>
 
-		<ktbs4la2-main-subsection id="model" title="{translate: 'Model'} :" foldable="true" expanded="true">
-			<slot name="model" class="view"></slot>
+				<slot name="parameters" class="view"></slot>
 
-			<ktbs4la2-resource-picker
-				id="model-picker"
-				allowed-resource-types="Model"
-				class="edit"
-				required>
-			</ktbs4la2-resource-picker>
-        </ktbs4la2-main-subsection>
-        
-        <ktbs4la2-main-subsection id="method" title="{translate: 'Method'} :" foldable="true" expanded="true">
-			<slot name="method" class="view"></slot>
-
-			<ktbs4la2-resource-picker
-				id="method-picker"
-				allowed-resource-types="Method"
-				class="edit"
-				required>
-			</ktbs4la2-resource-picker>
-		</ktbs4la2-main-subsection>
-
-		<ktbs4la2-main-subsection id="parameters" title="{translate: 'Parameters'} :" foldable="true" expanded="true">
-			<slot name="parameters" class="view"></slot>
-
-			<ktbs4la2-method-parameters-input
-				id="parameters-input"
-				class="edit">
-			</ktbs4la2-method-parameters-input>
+				<ktbs4la2-method-parameters-input
+					id="parameters-input"
+					name="parameters-input"
+					tabindex="8"
+					class="edit">
+				</ktbs4la2-method-parameters-input>
+			</p>
 		</ktbs4la2-main-subsection>
 
 		<ktbs4la2-main-subsection id="obsels" title="{translate: 'Obsels'} :" foldable="true" expanded="true" class="view">

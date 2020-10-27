@@ -524,10 +524,12 @@
 #child-stored-traces,
 #child-methods,
 #child-computed-traces,
+#resource-data,
 #source-traces,
 #resource-head-content,
 #parent-method,
 #model,
+#origin,
 #method,
 #parameters,
 #obsels,
@@ -540,12 +542,13 @@
 :host([resource-type = Ktbs]) #child-builtin-methods,
 :host([resource-type = Base]) #child-models, :host([resource-type = Base]) #child-stored-traces, :host([resource-type = Base]) #child-methods, :host([resource-type = Base]) #child-computed-traces,
 :host([resource-type = Model]) #resource-head-content,
+:host([resource-type = StoredTrace]) #resource-data, :host([resource-type = Method]) #resource-data, :host([resource-type = ComputedTrace]) #resource-data,
 :host([resource-type = Method]) #parent-method,
 :host([resource-type = Method]) #parameters, :host([resource-type = ComputedTrace]) #parameters,
-:host([resource-type = ComputedTrace]) #source-traces, :host([resource-type = ComputedTrace]) #method, :host([resource-type = ComputedTrace]) #obsels, :host([resource-type = ComputedTrace]) #stats,
-:host([resource-type = StoredTrace]) #model, :host([resource-type = StoredTrace]) #obsels, :host([resource-type = StoredTrace]) #stats
+:host([resource-type = ComputedTrace]) #container.view #model, :host([resource-type = ComputedTrace]) #container.view #origin, :host([resource-type = ComputedTrace]) #source-traces, :host([resource-type = ComputedTrace]) #method, :host([resource-type = ComputedTrace]) #obsels, :host([resource-type = ComputedTrace]) #stats,
+:host([resource-type = StoredTrace]) #model, :host([resource-type = StoredTrace]) #origin, :host([resource-type = StoredTrace]) #obsels, :host([resource-type = StoredTrace]) #stats
 {
-    display: block;
+    display: block !important;
 }
 
 /* ----- Authentication form ------- */
@@ -679,12 +682,32 @@
 	opacity: 1;
 }
 
+.resource-tool.disabled {
+	cursor: default;
+}
+
+.resource-tool.disabled:hover {
+	opacity: .3;
+}
+
 #tool-edit {
 	background-image: url('{my-component-folder}/edit.svg');
 }
 
 #tool-remove {
 	background-image: url('{my-component-folder}/trash.svg');
+}
+
+#tool-save-modifications {
+	background-image: url('{my-component-folder}/floppy_green.svg');
+}
+
+#tool-save-modifications.disabled {
+	background-image: url('{my-component-folder}/floppy_black.svg');
+}
+
+#tool-cancel-modifications {
+	background-image: url('{my-component-folder}/cancel.svg');
 }
 
 /* --------------- */
@@ -734,9 +757,38 @@ ktbs4la2-multiple-resources-picker{
 }
 
 #container:not(.view) .view {
-	display: none;
+	display: none !important;
 }
 
 #container:not(.edit) .edit {
+	display: none !important;
+}
+
+/* ------------------------------- */
+
+#source-trace-method-not-set-message {
+    font-size: 9pt;
+    color: gray;
+    font-style: italic;
+}
+
+#source-traces.single #multiple-source-traces-label, 
+#source-traces.single #multiple-source-traces-picker, 
+#source-traces.single #source-trace-method-not-set-message,
+#source-traces.multiple #single-source-trace-label, 
+#source-traces.multiple #single-source-trace-picker,
+#source-traces.multiple #source-trace-method-not-set-message,
+#source-traces.notset #multiple-source-traces-label,
+#source-traces.notset #multiple-source-traces-picker, 
+#source-traces.notset #single-source-trace-picker {
 	display: none;
+}
+
+#resource-data {
+	font-size: 9pt;
+}
+
+#resource-data p {
+	margin-block-start: 5px;
+	margin-block-end: 5px;
 }
