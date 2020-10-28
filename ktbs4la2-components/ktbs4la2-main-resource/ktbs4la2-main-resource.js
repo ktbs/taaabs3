@@ -530,7 +530,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             let labels_translations = new Array();
 
             if(this._ktbsResource.label)
-                labels_translations.push({value: this._ktbsResource.label, lang: "*"});
+                labels_translations.push({lang: "*", value: this._ktbsResource.label});
 
             if(this._ktbsResource.label_translations instanceof Array) {
                 for(let i = 0; i < this._ktbsResource.label_translations.length; i++) {
@@ -538,17 +538,25 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
                     if(aLabelTranslation instanceof Object) {
                         if(aLabelTranslation["@value"] && aLabelTranslation["@language"])
-                            labels_translations.push({value: aLabelTranslation["@value"], lang: aLabelTranslation["@language"]});
+                            labels_translations.push({lang: aLabelTranslation["@language"], value: aLabelTranslation["@value"]});
                         else if(aLabelTranslation["@value"])
-                            labels_translations.push({value: aLabelTranslation["@value"], lang: "*"});
+                            labels_translations.push({lang: "*", value: aLabelTranslation["@value"]});
                     }
                     else
                         labels_translations.push({value: aLabelTranslation, lang: "*"});
                 }
             }
 
-            if(labels_translations.length > 0)
-                this._editLabelInput.setAttribute("value", JSON.stringify(labels_translations));
+            if(labels_translations.length > 0) {
+                const newEditLabelInputValue = JSON.stringify(labels_translations);
+
+                if(this._editLabelInput.value != newEditLabelInputValue)
+                    this._editLabelInput.setAttribute("value", newEditLabelInputValue);
+            }
+            else {
+                if(this._editLabelInput.hasAttribute("value"))
+                    this._editLabelInput.removeAttribute("value");
+            }
 
             if(resourceType == "Method") {
                 this._parentMethodPicker.setAttribute("browse-start-uri", this._ktbsResource.uri);
@@ -1312,7 +1320,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 this._ktbsResource.parent_method = newParentMethod;
             }
             
-            this._ktbsResource.put()
+            this._ktbsResource.put(this._abortController.signal)
                 .then(() => {
                     this._switchToViewMode();
                 })

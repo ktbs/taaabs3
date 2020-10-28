@@ -181,20 +181,22 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 		if(attributeName == "uri") {
 			if(newValue) {
-				try {
-					const trace_uri = new URL(newValue);
+				if(!this._trace || (this._trace.uri.toString() != newValue)) {
+					try {
+						const trace_uri = new URL(newValue);
 
-					if(this._trace) {
-						this._trace.unregisterObserver(this._onTraceNotification.bind(this));
-						delete this._trace;
+						if(this._trace) {
+							this._trace.unregisterObserver(this._onTraceNotification.bind(this));
+							delete this._trace;
+						}
+
+						this._trace = ResourceMultiton.get_resource(Trace, trace_uri);
+						this._trace.registerObserver(this._onTraceNotification.bind(this), "sync-status-change");
+						this._onTraceNotification(this._trace, "sync-status-change");
 					}
-
-					this._trace = ResourceMultiton.get_resource(Trace, trace_uri);
-					this._trace.registerObserver(this._onTraceNotification.bind(this), "sync-status-change");
-					this._onTraceNotification(this._trace, "sync-status-change");
-				}
-				catch(error) {
-					this._setError(error);
+					catch(error) {
+						this._setError(error);
+					}
 				}
 			}
 			else
