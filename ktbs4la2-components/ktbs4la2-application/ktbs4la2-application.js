@@ -33,7 +33,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._resizing_initial_width = 250;
 		this._resizing_origin_x = null;
 		this._selectedNavElement = null;
-		this._selectedResourceHierarchy = new Array();
 		this._bindedResizeFunction = this.resize.bind(this);
 		this._bindedStopresizingFunction = this.stopResizing.bind(this);
 	}
@@ -58,7 +57,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.separatorDiv.addEventListener("mousedown", this.startResizing.bind(this), true);
 		this.addEventListener("selectelement", this.onSelectNavElement.bind(this));
 		this.addEventListener("error", this.onErrorEvent.bind(this));
-		//this.addEventListener("request-edit-ktbs-resource", this.onRequestEditKtbsResource.bind(this));
 		this.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
 		this.addEventListener("request-create-ktbs-resource", this._onRequestCreateKtbsResource.bind(this));
 		this.addEventListener("fold-header", this._onMainResourceFoldHeader.bind(this));
@@ -217,29 +215,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			}
 		}
 	}
-
-	/**
-	 * 
-	 */
-	/*onRequestEditKtbsResource(event) {
-		let target = event.target;
-		let resourceType = target.getAttribute("resource-type");
-		let uri = target.getAttribute("uri");
-		let label = target.getAttribute("label");
-
-		switch(resourceType) {
-			case "Ktbs":
-				let formElement = document.createElement("ktbs4la2-root-form");
-				formElement.setAttribute("uri", uri);
-				formElement.setAttribute("label", label);
-				formElement.addEventListener("submit", this.onSubmitEditRootForm.bind(this));
-				formElement.addEventListener("cancel", this.removeOverlay.bind(this));
-				this.setOverlay(formElement);
-				break;
-			default:
-				this.emitErrorEvent(new Error("Unsupported resource type : " + resourceType));
-		}
-	}*/
 
 	/**
 	 * 
@@ -619,7 +594,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 				previousSelectedParents[i].classList.remove("parent-of-selected");
 
 			this._selectedNavElement = null;
-			this._selectedResourceHierarchy = new Array();
 
 			// prepare new main element
 			let mainContentChildrenTag;		
@@ -676,7 +650,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					historyLabel += " (" + ktbs_type + ")";
 
 					// select the corresponding element in navigation panel
-					let queryString = "[slot = \"nav-ktbs-roots\"][uri = \"" + main_id + "\"], [slot = \"nav-ktbs-roots\"] [uri = \"" + main_id + "\"]";
+					let queryString = "[slot = \"nav-ktbs-roots\"][uri = \"" + CSS.escape(main_id) + "\"], [slot = \"nav-ktbs-roots\"] [uri = \"" + CSS.escape(main_id) + "\"]";
 					let newSelectedNavElement = this.querySelector(queryString);
 
 					if(newSelectedNavElement) {
@@ -684,9 +658,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 						this._selectedNavElement = newSelectedNavElement;
 					}
 
-					let ktbsResource = ResourceMultiton.get_resource(this._get_resource_class(ktbs_type), main_id);
-					this._selectedResourceHierarchy.unshift(ktbsResource);
-					this._highlightNavParent(ktbsResource);
+					this._highlightSelectedNavElementParents(main_id);
 
 					// instantiate the new main element
 					mainContentChildrenTag = document.createElement("ktbs4la2-main-resource");
@@ -729,44 +701,44 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_highlightNavParent(ktbsResource) {
-		ktbsResource.get(this._abortController.signal).then(() => {
-			let resourceParent = ktbsResource.parent;
+	_highlightSelectedNavElementParents(selected_element_uri) {
+		const previousHighlightedParents = this.querySelectorAll(".parent-of-selected");
+		const selectedNavParents = [];
+		const uri_parts = selected_element_uri.split("/");
 
-			if(resourceParent) {
-				this._selectedResourceHierarchy.unshift(resourceParent);
-				let queryString = "[slot = \"nav-ktbs-roots\"][uri = \"" + resourceParent.uri + "\"], [slot = \"nav-ktbs-roots\"] [uri = \"" + resourceParent.uri + "\"]";
-				let parentNavElement = this.querySelector(queryString);
+		for(let i = uri_parts.length - 1; i > 2; i--) {
+			const parent_uri_parts = uri_parts.slice(0, i);
+			const parent_uri = parent_uri_parts.join("/") + "/";
+
+			if(parent_uri != selected_element_uri) {
+				const parents_query_string = "[slot=\"nav-ktbs-roots\"][uri=\"" + CSS.escape(parent_uri) + "\"], [slot=\"nav-ktbs-roots\"] [uri=\"" + CSS.escape(parent_uri) + "\"]";
+				const parents = this.querySelectorAll(parents_query_string);
 				
-				if(parentNavElement)
-					if(!parentNavElement.classList.contains("parent-of-selected"))
-						parentNavElement.classList.add("parent-of-selected");
+				for(let j = 0; j < parents.length; j++) {
+					if(!parents[j].classList.contains("parent-of-selected"))
+						parents[j].classList.add("parent-of-selected");
 
-				this._highlightNavParent(resourceParent);
+					if(!selectedNavParents.includes(parents[j]))
+						selectedNavParents.push(parents[j]);
+				}
 			}
-		})
-		.catch((error) => {
-			if(this.debug)
-				console.error(error);
-		});
+		}
+
+		for(let i = 0; i < previousHighlightedParents.length; i++)
+			if(!selectedNavParents.includes(previousHighlightedParents[i]))
+				previousHighlightedParents[i].classList.remove("parent-of-selected");
 	}
 
 	/**
 	 * 
 	 */
 	_resourceUriIsParentOfSelected(uri) {
-		let isParentOfSelected = false;
+		let mainElement = this.querySelector("[slot = \"main\"]");
 
-		for(let i = 0; i < (this._selectedResourceHierarchy.length - 1); i++) {
-			let aParent = this._selectedResourceHierarchy[i];
-
-			if(aParent.uri == uri) {
-				isParentOfSelected = true;
-				break;
-			}
-		}
-
-		return isParentOfSelected;
+		if(mainElement)
+			return (mainElement.getAttribute("uri").startsWith(uri.toString()));
+		else
+			return false;
 	}
 
 	/**
