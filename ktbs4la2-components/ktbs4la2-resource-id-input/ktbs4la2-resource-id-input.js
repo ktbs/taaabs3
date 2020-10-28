@@ -213,13 +213,17 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
-        return ( 
-                this._idInput.checkValidity()
-            &&  (
-                        !this.getAttribute("reserved-ids")
-                    ||  !(this.getAttribute("reserved-ids").split(" ").filter(Boolean).includes(this.value))
-            )
-        );
+        if(this._idInput) {
+            return ( 
+                    this._idInput.checkValidity()
+                &&  (
+                            !this.getAttribute("reserved-ids")
+                        ||  !(this.getAttribute("reserved-ids").split(" ").filter(Boolean).includes(this.value))
+                )
+            );
+        }
+        else
+            return false;
 	}
 }
 
