@@ -79,6 +79,13 @@ export class ObselList extends Resource {
 		 * \protected
 		 */
 		this._reverse = null;
+
+		/**
+		 * 
+		 * \var Object
+		 * \protected
+		 */
+		this._pages = {};
 	}
 
 	/**
@@ -188,8 +195,12 @@ export class ObselList extends Resource {
 	 * \protected
 	 */
 	get_first_page(limit = 500) {
-		let firstPageURI = this._get_first_page_uri(limit);
-		return ResourceMultiton.get_resource(ObselListPage, firstPageURI);
+		if(!this._pages[limit]) {
+			let page_uri = this._get_first_page_uri(limit);
+			this._pages[limit] = ResourceMultiton.get_resource(ObselListPage, page_uri);
+		}
+
+		return this._pages[limit];
 	}
 
 	/**
@@ -243,5 +254,20 @@ export class ObselList extends Resource {
 
 		if(this._obsels)
 			delete this._obsels;
+	}
+
+	/**
+	 * Resets all the resource's source data
+	 * \public
+	 */
+	force_state_refresh() {
+		const page_keys = Object.keys(this._pages);
+
+		for(let i = 0; i < page_keys.length; i++) {
+			const key = page_keys[i];
+			this._pages[key].force_state_refresh();
+		}
+
+		super.force_state_refresh();
 	}
 }

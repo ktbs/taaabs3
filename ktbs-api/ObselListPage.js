@@ -44,12 +44,12 @@ export class ObselListPage extends Resource {
                                 let aLinkData = links[i];
                                 let aLinkParts = aLinkData.split(';');
 
-                                if((aLinkParts.length == 2) && (aLinkParts[1] == "rel=\"next\""))
+                                if((aLinkParts.length == 2) && (aLinkParts[1] == "rel=\"next\"")) 
                                     this._nextPageURI = new URL(aLinkParts[0].substring(1, aLinkParts[0].length - 1));
-
-                                resolve(response);
                             }
                         }
+
+                        resolve(response);
                     })
                     .catch((error) => {
                         this._obselListPageGetPromise = null;
@@ -141,7 +141,10 @@ export class ObselListPage extends Resource {
 	 * \public
 	 */
 	_resetCachedData() {
-		super._resetCachedData();
+        super._resetCachedData();
+        
+        if(this._nextPageURI)
+            this._nextPageURI = undefined;
 
         if(this._next_page)
             this._next_page = undefined;
@@ -152,4 +155,17 @@ export class ObselListPage extends Resource {
         if(this._obsels)
             delete this._obsels;
     }
+
+    /**
+	 * Resets all the resource's source data
+	 * \public
+	 */
+	force_state_refresh() {
+        this._obselListPageGetPromise = null;
+
+		if(this._next_page)
+            this._next_page.force_state_refresh();
+
+		super.force_state_refresh();
+	}
 }

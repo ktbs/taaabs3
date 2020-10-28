@@ -358,6 +358,26 @@ export class ComputedTrace extends Trace {
 	}
 
 	/**
+	 * Stores the current existing Resource modifications
+	 * \param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
+	 * \param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
+	 * \throws KtbsError throws a KtbsError when invoked for a Resource whose lifecycle status is not "exists" or "modified", and/or sync status is not "in_sync"
+	 * \return Promise
+	 * \public
+	 */
+	put(abortSignal = null, credentials = null) {
+		const putPromise = super.put(abortSignal, credentials);
+
+		if(this._obsel_list)
+			this._obsel_list.force_state_refresh();
+
+		if(this._stats)
+			this._stats.force_state_refresh();
+		
+		return putPromise;
+	}
+
+	/**
 	 * Resets all the resource cached data
 	 * \public
 	 */
