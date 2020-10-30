@@ -150,7 +150,7 @@ class KTBS4LA2LocalizedTextInput extends TemplatedHTMLElement {
                         else 
                             anOption.disabled = false;
                     }
-                });
+                }).catch(() => {});
             }
         }
         else if(name == "allowed-langs") {
@@ -169,12 +169,12 @@ class KTBS4LA2LocalizedTextInput extends TemplatedHTMLElement {
                         anOption.selected = false;
                     }
                 }
-            });
+            }).catch(() => {});
         }
         else
             this._componentReady.then(() => {
                 this._textInput.setAttribute(name, newValue);
-            });
+            }).catch(() => {});
     }
 
     /**
