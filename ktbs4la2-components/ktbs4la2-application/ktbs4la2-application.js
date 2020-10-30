@@ -640,10 +640,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					historyState = {main_type: "ktbs-resource", ktbs_resource_type: ktbs_type, ktbs_resource_uri: main_id, ktbs_resource_label: ktbs_label};
 					historyURL = "#type=" + encodeURIComponent(ktbs_type) + "&uri=" + encodeURIComponent(main_id);
 
-					if(ktbs_label) {
+					if(ktbs_label)
 						historyLabel += ktbs_label;
-						historyURL += "&label=" + encodeURIComponent(ktbs_label);
-					}
 					else
 						historyLabel += main_id;
 
@@ -668,9 +666,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 					if(ktbs_type != null)
 						mainContentChildrenTag.setAttribute("resource-type", ktbs_type);
-
-					if(ktbs_label != null)
-						mainContentChildrenTag.setAttribute("label", ktbs_label);
 
 					if(this.mainHeaderFolded)
 						mainContentChildrenTag.setAttribute("fold-header", "true");
