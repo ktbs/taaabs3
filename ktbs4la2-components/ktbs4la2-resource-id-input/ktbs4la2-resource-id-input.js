@@ -142,10 +142,12 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
         this._idInput.addEventListener("input", this._onInputIdInput.bind(this));
         this._idInput.addEventListener("change", this._onIdInputEvent.bind(this));
         this._idInput.addEventListener("focus", this._onChildElementFocus.bind(this));
+        this._idInputResizeObserver = new ResizeObserver(this._onIdInputResized.bind(this));
+		this._idInputResizeObserver.observe(this._idInput);
+
         this._trailingSlash = this.shadowRoot.querySelector("#trailing-slash");
         this._trailingSlash.addEventListener("focus", this._onChildElementFocus.bind(this));
         this._hiddenSpanForIdWidth = this.shadowRoot.querySelector("#hidden-span-for-id-width");
-
 
         if(!this._idInput.value)
             this._adjustIdInputWidthForText(this.getAttribute("placeholder"));
@@ -160,6 +162,16 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
 	_onInputIdInput(event) {
         this._onIdInputEvent(event);
 
+        if(this._idInput.value)
+            this._adjustIdInputWidthForText(this._idInput.value);
+        else
+            this._adjustIdInputWidthForText(this.getAttribute("placeholder"));
+    }
+
+    /**
+     * 
+     */
+    _onIdInputResized() {
         if(this._idInput.value)
             this._adjustIdInputWidthForText(this._idInput.value);
         else
