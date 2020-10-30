@@ -328,7 +328,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 		this._childComputedTracesSubsection.setAttribute("lang", this._lang);
         this._childComputedTracesSubsection.setAttribute("title", this._translateString("Computed traces") + " :");
         this._resourceDataSubsection.setAttribute("lang", this._lang);
-        this._resourceDataSubsection.setAttribute("title", this._translateString("Resource data") + " :");
+        this._resourceDataSubsection.setAttribute("title", this._translateString("Resource details") + " :");
         this._parentMethodLabel.innerText = this._translateString("Parent method") + " :";
         this._parentMethodPicker.setAttribute("lang", this._lang);
         this._modelLabel.innerText = this._translateString("Model") + " :";
