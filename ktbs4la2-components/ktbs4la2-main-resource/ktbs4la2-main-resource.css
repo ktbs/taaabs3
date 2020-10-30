@@ -792,3 +792,9 @@ ktbs4la2-multiple-resources-picker{
 	margin-block-start: 5px;
 	margin-block-end: 5px;
 }
+
+#resource-data label {
+	display: inline-block;
+	width: 90px;
+	text-align: right;
+}

@@ -341,7 +341,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         this._singleSourceTracePicker.setAttribute("lang", this._lang);
         this._multipleSourceTracesLabel.innerText = this._translateString("Source traces") + " :";
         this._multipleSourceTracesPicker.setAttribute("lang", this._lang);
-        this._parametersLabel.innerText = this._translateString("Parameters");
+        this._parametersLabel.innerText = this._translateString("Parameters") + " :";
         this._parametersInput.setAttribute("lang", this._lang);
         this._obselsSubsection.setAttribute("lang", this._lang);
         this._obselsSubsection.setAttribute("title", this._translateString("Obsels") + " :");
