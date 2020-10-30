@@ -1259,16 +1259,35 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 const labelInputValues = JSON.parse(this._editLabelInput.value);
 
                 if(labelInputValues instanceof Array) {
+                    let default_label_set = false;
+                    let new_label_translations = new Array();
+
                     for(let i = 0; i < labelInputValues.length; i++) {
                         const aLabelTranslation = labelInputValues[i];
                         const aLabelLang = aLabelTranslation.lang;
                         const aLabelValue = aLabelTranslation.value;
         
-                        if(!aLabelLang || (aLabelLang == "*"))
+                        if(!aLabelLang || (aLabelLang == "*")) {
                             this._ktbsResource.label = aLabelValue;
-                        else
-                            this._ktbsResource.set_translated_label(aLabelValue, aLabelLang);
+                            default_label_set = true;
+                        }
+                        else {
+                            new_label_translations.push({
+                                "@value": aLabelValue,
+                                "@language": aLabelLang
+                            });
+                        }
                     }
+
+                    // clean default label if it has been unset
+                    if(!default_label_set && this._ktbsResource.label)
+                        this._ktbsResource.label = undefined;
+
+                    // update label translations
+                    if(new_label_translations.length > 0)
+                        this._ktbsResource.label_translations = new_label_translations;
+                    else
+                        this._ktbsResource.label_translations = undefined;
                 }
             }
             catch(error) {
