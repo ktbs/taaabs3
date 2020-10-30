@@ -366,14 +366,13 @@ export class ComputedTrace extends Trace {
 	 * \public
 	 */
 	put(abortSignal = null, credentials = null) {
-		return super.put(abortSignal, credentials)
-			.then(() => {
-				if(this._obsel_list)
-					this._obsel_list.force_state_refresh();
+		if(this._obsel_list)
+			this._obsel_list.force_state_refresh();
 
-				if(this._stats)
-					this._stats.force_state_refresh();
-			});
+		if(this._stats)
+			this._stats.force_state_refresh();
+
+		return super.put(abortSignal, credentials);
 	}
 
 	/**
