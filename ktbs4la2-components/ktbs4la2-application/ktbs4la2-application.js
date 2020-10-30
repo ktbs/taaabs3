@@ -735,7 +735,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	_resourceUriIsParentOfSelected(uri) {
 		let mainElement = this.querySelector("[slot = \"main\"]");
 
-		if(mainElement)
+		if(mainElement && mainElement.hasAttribute("uri"))
 			return (mainElement.getAttribute("uri").startsWith(uri.toString()));
 		else
 			return false;
