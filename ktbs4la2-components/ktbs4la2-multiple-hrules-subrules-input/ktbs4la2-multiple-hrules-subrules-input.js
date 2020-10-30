@@ -300,7 +300,10 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
 	 * 
 	 */
 	_getSubrulesInputs() {
-		return this._subruleInputsDiv.querySelectorAll("ktbs4la2-hrules-subrule-input");
+        if(this._subruleInputsDiv)
+            return this._subruleInputsDiv.querySelectorAll("ktbs4la2-hrules-subrule-input");
+        else
+            return [];
     }
     
     /**
