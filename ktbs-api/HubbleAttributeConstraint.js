@@ -96,19 +96,14 @@ export class HubbleAttributeConstraint {
         switch(this.operator) {
             case "==": 
                 return (obselAttribute.value == this.value);
-                break;
             case "<":
                 return (obselAttribute.value < this.value);
-                break;
             case ">":
                 return (obselAttribute.value > this.value);
-                break;
             case "<=":
                 return (obselAttribute.value <= this.value);
-                break;
             case ">=":
                 return (obselAttribute.value >= this.value);
-                break;
             default:
                 return false;
         }

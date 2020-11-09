@@ -1,4 +1,5 @@
 import {HubbleSubRule} from "./HubbleSubRule.js";
+import {KtbsError} from "./Errors.js";
 
 /**
  * Class for Hubble rules. Please note that this class is NOT a descendant from "Resource". Therefore, HubbleRule instances don't support get/put/post/delete as Hubble rules data management is the responsibility of their respective parent Model instance.
@@ -10,7 +11,7 @@ export class HubbleRule {
      * \param Object JSONData - the data describing the Hubble rule
      * \public
      */
-    constructor(JSONData = {}) {
+    constructor(JSONData = {}, parent) {
 
         /**
          * The data describing the Hubble rule
@@ -18,6 +19,22 @@ export class HubbleRule {
          * \protected
          */
         this._JSONData = JSONData;
+
+        /**
+         * The parent for the Hubble rule
+         * \var {*}
+         * \protected
+         */
+        this._parent = parent;
+    }
+
+    /**
+     * Gets the rule's parent
+     * \return {*}
+     * \public
+     */
+    get parent() {
+        return this._parent;
     }
 
     /**
@@ -92,7 +109,7 @@ export class HubbleRule {
             if(this._JSONData["rules"] instanceof Array) {
                 for(let i = 0; i < this._JSONData["rules"].length; i++) {
                     let aRuleRuleData = this._JSONData["rules"][i];
-                    let aRuleRule = new HubbleSubRule(aRuleRuleData);
+                    let aRuleRule = new HubbleSubRule(aRuleRuleData, this);
                     this._rules.push(aRuleRule);
                 }
             }
@@ -108,6 +125,30 @@ export class HubbleRule {
      */
     set rules(new_rules) {
         this._rules = new_rules;
+    }
+
+    /**
+     * Gets the rank of a subrule within the current rule's subrules
+     * \param HubbleSubRule subrule
+     * \throws TypeError throws a TypeError if the provided argument is not an instance of HubbleSubRule
+     * \throws KtbsError throws a KtbsError if the subrule provided as argument does not belong to the current rule
+     * \return int the rank of the subrule within the current rule's subrules, or null if it can't be determined
+     * \public
+     */
+    get_subrule_rank(subrule) {
+        if(subrule instanceof HubbleSubRule) {
+            if(subrule.parent == this) {
+                for(let i = 0; i < this.rules.length; i++)
+                    if(subrule == this.rules[i])
+                        return i;
+
+                return null;
+            }
+            else
+                throw new KtbsError("The provided subrule does not belong to the current rule");
+        }
+        else
+            throw new TypeError("Argument must be an instance of HubbleSubRule");
     }
 
     /**
@@ -133,14 +174,11 @@ export class HubbleRule {
      * \static
      * \public
      */
-    static get catchAllRule() {
-        if(!HubbleRule._catchAllRule) {
-            HubbleRule._catchAllRule = new HubbleRule();
-            let subRule = new HubbleSubRule();
-            subRule.type = "*";
-            HubbleRule._catchAllRule.rules.push(subRule);
-        }
-
-		return HubbleRule._catchAllRule;
+    static get_catchAllRule(parent) {
+        let catchAllRule = new HubbleRule([], parent);
+        let subRule = new HubbleSubRule([], catchAllRule);
+        subRule.type = "*";
+        catchAllRule.rules.push(subRule);
+        return catchAllRule;
 	}
 }

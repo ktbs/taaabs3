@@ -10,7 +10,7 @@ export class HubbleSubRule {
      * \param Object JSONData - the data describing the Hubble sub-rule
      * \public
      */
-    constructor(JSONData = {}) {
+    constructor(JSONData = {}, parent) {
 
         /**
          * The data describing the Hubble sub-rule
@@ -18,6 +18,22 @@ export class HubbleSubRule {
          * \protected
          */
         this._JSONData = JSONData;
+
+        /**
+         * The parent Hubble rule for the Hubble sub-rule
+         * \var HubbleRule
+         * \protected
+         */
+        this._parent = parent;
+    }
+
+    /**
+     * Gets the sub-rule's parent rule
+     * \return HubbleRule
+     * \public
+     */
+    get parent() {
+        return this._parent;
     }
 
     /**
