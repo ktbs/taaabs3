@@ -232,11 +232,13 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     let obselsTimelineElement = document.createElement("ktbs4la2-trace-timeline");
                     obselsTimelineElement.setAttribute("uri", this.getAttribute("uri"));
                     obselsTimelineElement.setAttribute("slot", "obsels-timeline");
+                    obselsTimelineElement.style.height = "400px";
                     this.appendChild(obselsTimelineElement);
 
                     let obselsTableElement = document.createElement("ktbs4la2-trace-table");
                     obselsTableElement.setAttribute("uri", this.getAttribute("uri"));
                     obselsTableElement.setAttribute("slot", "obsels-table");
+                    obselsTableElement.style.height = "400px";
                     this.appendChild(obselsTableElement);
 
                     let statsElement = document.createElement("ktbs4la2-trace-stats");

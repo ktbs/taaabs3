@@ -187,15 +187,11 @@
 		<ktbs4la2-main-subsection id="obsels" title="{translate: 'Obsels'} :" foldable="true" expanded="true" class="view">
 			<ktbs4la2-icon-tabs-group>
 				<ktbs4la2-icon-tab id="timeline-tab" title="{translate: 'Timeline view'}" icon="{my-component-folder}/timeline.svg">
-					<div style="height: 400px;">
-						<slot name="obsels-timeline"></slot>
-					</div>
+					<slot name="obsels-timeline"></slot>
 				</ktbs4la2-icon-tab>
 
 				<ktbs4la2-icon-tab id="table-tab" title="{translate: 'Table view'}" icon="{my-component-folder}/table.svg">
-					<div style="height: 400px;">
-						<slot name="obsels-table"></slot>
-					</div>
+					<slot name="obsels-table"></slot>
 				</ktbs4la2-icon-tab>
 			</ktbs4la2-icon-tabs-group>
 		</ktbs4la2-main-subsection>
