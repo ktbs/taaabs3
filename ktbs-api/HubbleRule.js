@@ -124,6 +124,11 @@ export class HubbleRule {
      * \public
      */
     set rules(new_rules) {
+        this._JSONData["rules"] = new Array();
+
+        for(let i = 0; i < new_rules.length; i++)
+            this._JSONData["rules"].push(new_rules[i]._JSONData);
+
         this._rules = new_rules;
     }
 
@@ -175,8 +180,8 @@ export class HubbleRule {
      * \public
      */
     static get_catchAllRule(parent) {
-        let catchAllRule = new HubbleRule([], parent);
-        let subRule = new HubbleSubRule([], catchAllRule);
+        let catchAllRule = new HubbleRule({}, parent);
+        let subRule = new HubbleSubRule({}, catchAllRule);
         subRule.type = "*";
         catchAllRule.rules.push(subRule);
         return catchAllRule;

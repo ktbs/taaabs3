@@ -90,7 +90,7 @@ export class Model extends Resource {
 	}
 
 	/**
-	 * Gets the data to be send in a POST query
+	 * Gets the data to be sent in POST queries
 	 * \return Object
 	 * \protected
 	 */
@@ -385,18 +385,18 @@ export class Model extends Resource {
 	get stylesheets() {
 		if(!this._styleSheets) {
 			this._styleSheets = new Array();
-			let graphs = this._JSONData["@graph"];
+			const graphs = this._JSONData["@graph"];
 
 			if(graphs instanceof Object) {
 				for(let i = 0; (i < graphs.length); i++) {
-					let graph = graphs[i];
+					const graph = graphs[i];
 
 					if((graph["@type"]) && (graph["@type"] == "TraceModel") && (graph["http://www.example.com/TODO#ModelStylesheets"])) {
-						let styleSheetsData = graph["http://www.example.com/TODO#ModelStylesheets"];
+						const styleSheetsData = graph["http://www.example.com/TODO#ModelStylesheets"];
 						
 						if(styleSheetsData instanceof Array) {
 							for(let i = 0; i < styleSheetsData.length; i++) {
-								let aStyleSheetData = styleSheetsData[i];
+								const aStyleSheetData = styleSheetsData[i];
 								this._styleSheets.push(new Stylesheet(JSON.parse(aStyleSheetData)));
 							}
 						}
@@ -408,6 +408,42 @@ export class Model extends Resource {
 		}
 
 		return this._styleSheets;
+	}
+
+	/**
+	 * Sets the user stylesheets defined in the Model
+	 * \param Array of Stylesheet new_stylesheets
+	 * \throws TypeError throws a TypeError if the provided argument is not an Array of Stylesheet
+	 * \public
+	 */
+	set stylesheets(new_stylesheets) {
+		if(new_stylesheets instanceof Array) {
+			for(let i = 0; i < new_stylesheets.length; i++)
+				if(!(new_stylesheets[i] instanceof Stylesheet))
+					throw new TypeError("Argument must be an array of Stylesheet");
+
+			const graphs = this._JSONData["@graph"];
+
+			if(graphs instanceof Object) {
+				for(let i = 0; (i < graphs.length); i++) {
+					const graph = graphs[i];
+
+					if((graph["@type"]) && (graph["@type"] == "TraceModel")) {
+						let new_stylesheets_data = new Array();
+
+						for(let i = 0; i < new_stylesheets.length; i++)
+							new_stylesheets_data.push(JSON.stringify(new_stylesheets[i]._JSONData));
+
+						this._JSONData["@graph"][i]["http://www.example.com/TODO#ModelStylesheets"] = new_stylesheets_data;
+						break;
+					}
+				}
+			}
+
+			this._styleSheets = new_stylesheets;
+		}
+		else
+			throw new TypeError("Argument must be an array of Stylesheet");
 	}
 
 	/**

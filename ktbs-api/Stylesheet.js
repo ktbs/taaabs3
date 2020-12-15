@@ -82,14 +82,30 @@ export class Stylesheet {
     /**
      * Sets the rules of the style sheet
      * \param Array of HubbleRule new_rules - the new rules for the style sheet
+     * \throws TypeError throws a TypeError if the provided argument is not an Array of HubbleRule
      * \public
      */
     set rules(new_rules) {
-        this._rules = new_rules;
+        if(new_rules instanceof Array) {
+            for(let i = 0; i < new_rules.length; i++)
+                if(!(new_rules[i] instanceof HubbleRule))
+                    throw new TypeError("Argument must be an array of HubbleRule");
+
+            this._JSONData["rules"] = new Array();
+
+            for(let i = 0; i < new_rules.length; i++)
+                this._JSONData["rules"].push(new_rules[i]._JSONData);
+
+            this._rules = new_rules;
+        }
+        else
+            throw new TypeError("Argument must be an array of HubbleRule");
     }
 
     /**
-     * 
+     * Gets the rules of the Stylesheet, ordered by priority according to the subrule precedence ordering (see : https://ktbs.readthedocs.io/en/latest/methods/hrules.html#precedence-of-subrules)
+     * \return Array of HubbleRule
+     * \public
      */
     get priority_ordered_subrules() {
         if(!this._priority_ordered_subrules) {
@@ -206,5 +222,19 @@ export class Stylesheet {
         }
 
 		return null;
-	}
+    }
+    
+    /**
+     * Creates a duplicate of the current stylesheet and returns it
+     * \param String clone_name the name for the new clone
+     * \return Stylesheet
+     * \public
+     */
+    clone(clone_name) {
+        let clone = new Stylesheet();
+        // we use this weird JSON.parse+JSON.stringify trick in order to easily make a deep copy of the data
+        clone._JSONData = JSON.parse(JSON.stringify(this._JSONData));
+        clone.name = clone_name;
+        return clone;
+    }
 }
