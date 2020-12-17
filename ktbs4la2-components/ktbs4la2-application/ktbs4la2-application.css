@@ -121,6 +121,7 @@
 #lists {
 	padding-left: 10px;
 	padding-right: 10px;
+	user-select: none;
 }
 
 #lists h2 {
