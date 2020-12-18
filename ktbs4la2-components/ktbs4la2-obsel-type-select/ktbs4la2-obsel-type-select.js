@@ -731,7 +731,8 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
             if(value && value.startsWith(this.model_uri)) {
                 try {
                     const obselType_uri = new URL(value);
-                    matchingOption = this._options.querySelector(".option[value = \"" + CSS.escape(obselType_uri.hash.substring(1)) + "\"]");
+                    const obselType_id = decodeURI(obselType_uri.hash.substring(1));
+                    matchingOption = this._options.querySelector(".option[value = \"" + CSS.escape(obselType_id) + "\"]");
                 }
                 catch(error) {
                     this.emitErrorEvent(error);
