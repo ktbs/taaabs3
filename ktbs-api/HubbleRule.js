@@ -127,9 +127,10 @@ export class HubbleRule {
         this._JSONData["rules"] = new Array();
 
         for(let i = 0; i < new_rules.length; i++)
-            this._JSONData["rules"].push(new_rules[i]._JSONData);
+            this._JSONData["rules"].push(JSON.parse(JSON.stringify(new_rules[i]._JSONData)));
 
-        this._rules = new_rules;
+        if(this._rules)
+            delete this._rules;
     }
 
     /**
@@ -183,7 +184,9 @@ export class HubbleRule {
         let catchAllRule = new HubbleRule({}, parent);
         let subRule = new HubbleSubRule({}, catchAllRule);
         subRule.type = "*";
-        catchAllRule.rules.push(subRule);
+        let catchAllRule_subrules = new Array();
+        catchAllRule_subrules.push(subRule);
+        catchAllRule.rules = catchAllRule_subrules;
         return catchAllRule;
 	}
 }

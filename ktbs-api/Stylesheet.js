@@ -94,9 +94,10 @@ export class Stylesheet {
             this._JSONData["rules"] = new Array();
 
             for(let i = 0; i < new_rules.length; i++)
-                this._JSONData["rules"].push(new_rules[i]._JSONData);
+                this._JSONData["rules"].push(JSON.parse(JSON.stringify(new_rules[i]._JSONData)));
 
-            this._rules = new_rules;
+            if(this._rules)
+                delete this._rules;
         }
         else
             throw new TypeError("Argument must be an array of HubbleRule");
