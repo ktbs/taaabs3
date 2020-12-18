@@ -259,7 +259,7 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
                 this._componentReady.then(() => {
                     this._idInput.value = "";
                     this._visibleCheckBox.checked = true;
-                    this._colorInput.value = "";
+                    this._colorInput.value = "#000000";
                     this._subrulesInput.value = "[]";
                 }).catch(() => {});
             }
