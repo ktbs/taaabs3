@@ -123,6 +123,29 @@ export class Stylesheet {
     }
 
     /**
+     * Gets a rule from the stylesheet by it's rule ID
+     * \param string rule_id the ID of the rule we want
+     * \return HubbleRule, or null if no rule with the provided rule_id has been found in the stylesheet
+     * \public
+     */
+    getRuleByID(rule_id) {
+       let rule = null;
+
+        if(this._JSONData["rules"] instanceof Array) {
+            for(let i = 0; i < this._JSONData["rules"].length; i++) {
+                let aRuleJSONData = this._JSONData["rules"][i];
+
+                if(aRuleJSONData["id"] == rule_id) {
+                    rule = new HubbleRule(aRuleJSONData, this);
+                    break;
+                }
+            }
+        }
+
+        return rule;
+    }
+
+    /**
      * Gets the rank of a rule within the current stylesheet's rules
      * \param HubbleRule rule
      * \throws TypeError throws a TypeError if the provided argument is not an instance of HubbleRule
