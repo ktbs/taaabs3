@@ -173,6 +173,18 @@ export class HubbleRule {
 
 		return matches;
     }
+
+    /**
+     * Creates a duplicate of the current HubbleRule and returns it
+     * \return HubbleRule
+     * \public
+     */
+    clone() {
+        // we use this weird JSON.parse+JSON.stringify trick in order to easily make a deep copy of the data
+        let clonedJSONData = JSON.parse(JSON.stringify(this._JSONData));
+        let clone = new HubbleRule(clonedJSONData, this.parent);
+        return clone;
+    }
     
     /**
      * Gets a default "catch-all" rule that matches any obsel
