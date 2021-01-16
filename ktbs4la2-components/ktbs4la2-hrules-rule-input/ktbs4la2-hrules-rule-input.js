@@ -264,11 +264,13 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
             }
         }
         else if(name == "required") {
-            if(newValue != null)
-                this._idInput.setAttribute("required", newValue);
-            else
-                if(this._idInput.hasAttribute("required"))
-                    this._idInput.removeAttribute("required");
+            this._componentReady.then(() => {
+                if(newValue != null)
+                    this._idInput.setAttribute("required", newValue);
+                else
+                    if(this._idInput.hasAttribute("required"))
+                        this._idInput.removeAttribute("required");
+            }).catch(() => {});
         }
     }
 
