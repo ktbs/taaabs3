@@ -70,10 +70,8 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
      * 
      */
     set value(newValue) {
-        if(newValue != null) {
-            if(this.getAttribute("value") != newValue)
+        if(newValue != null)
                 this.setAttribute("value", newValue);
-        }
         else if(this.hasAttribute("value"))
             this.removeAttribute("value");
     }

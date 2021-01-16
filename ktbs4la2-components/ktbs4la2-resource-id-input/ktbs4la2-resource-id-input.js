@@ -65,10 +65,8 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
      * 
      */
     set value(newValue) {
-        if(newValue != null) {
-            if(this.getAttribute("value") != newValue)
-                this.setAttribute("value", newValue);
-        }
+        if(newValue != null)
+            this.setAttribute("value", newValue);
         else if(this.hasAttribute("value"))
             this.removeAttribute("value");
     }
@@ -114,9 +112,9 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
                     inputValue = newValue.substring(0, newValue.length - 1);
                 else
                     inputValue = newValue;
-    
-                this._adjustIdInputWidthForText(inputValue);
+                
                 this._idInput.value = inputValue;
+                this._adjustIdInputWidthForText(inputValue);
             }).catch(() => {});
         }
         else if(name == "placeholder") 
