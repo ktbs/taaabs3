@@ -83,6 +83,7 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
         _observedAttributes.push("value");
         _observedAttributes.push("required");
         _observedAttributes.push("parent-resource-path");
+        _observedAttributes.push("pattern");
 		return _observedAttributes;
 	}
 

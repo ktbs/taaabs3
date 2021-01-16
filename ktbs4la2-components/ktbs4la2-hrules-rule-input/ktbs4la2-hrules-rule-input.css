@@ -53,12 +53,12 @@ label {
 }
 
 #id-div {
-    width: calc(100% - 75px);
+    width: calc(100% - 85px);
     text-align: left;
 }
 
 #visible-div {
     display: inline-block;
-    width: 70px;
+    width: 80px;
     text-align: right;
 }
