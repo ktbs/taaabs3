@@ -98,6 +98,9 @@ export class Stylesheet {
 
             if(this._rules)
                 delete this._rules;
+
+            if(this._priority_ordered_subrules)
+                delete this._priority_ordered_subrules;
         }
         else
             throw new TypeError("Argument must be an array of HubbleRule");
@@ -158,7 +161,7 @@ export class Stylesheet {
         if(rule instanceof HubbleRule) {
             if(rule.parent == this) {
                 for(let i = 0; i < this.rules.length; i++)
-                    if(rule == this.rules[i])
+                    if(rule._JSONData == this.rules[i]._JSONData)
                         return i;
 
                 return null;
@@ -250,15 +253,13 @@ export class Stylesheet {
     
     /**
      * Creates a duplicate of the current stylesheet and returns it
-     * \param String clone_name the name for the new clone
      * \return Stylesheet
      * \public
      */
     clone(clone_name) {
-        let clone = new Stylesheet();
         // we use this weird JSON.parse+JSON.stringify trick in order to easily make a deep copy of the data
-        clone._JSONData = JSON.parse(JSON.stringify(this._JSONData));
-        clone.name = clone_name;
+        let clonedJSONData = JSON.parse(JSON.stringify(this._JSONData));
+        let clone = new Stylesheet(clonedJSONData);
         return clone;
     }
 }
