@@ -1,3 +1,11 @@
+:host {
+	display: inline-block;
+}
+
+#container {
+	user-select: none;
+}
+
 #marker {
     height: 12px;
     width: 12px;

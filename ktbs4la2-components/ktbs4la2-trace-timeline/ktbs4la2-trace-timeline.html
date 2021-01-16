@@ -10,7 +10,18 @@
             </select>
         </form>
 
-        <div id="legend"></div>
+        <div id="legend">
+            <button id="add-style-button" title="{translate: 'Add a new style'}">+</button>
+        </div>
+
+        <div id="current-stylesheet-tools">
+            <a class="stylesheet-tool" id="edit-stylesheet-button" title="{translate: 'Edit this stylesheet'}"></a>
+            <a class="stylesheet-tool" id="save-stylesheet-button" title="{translate: 'Save this stylesheet'}"></a>
+            <a class="stylesheet-tool" id="cancel-stylesheet-modifications-button" title="{translate: 'Cancel modifications of this stylesheet'}"></a>
+            <a class="stylesheet-tool" id="duplicate-stylesheet-button" title="{translate: 'Duplicate this stylesheet'}"></a>
+            <a class="stylesheet-tool" id="create-computed-trace-from-stylesheet-button" title="{translate: 'Create a computed trace from this stylesheet'}"></a>
+            <a class="stylesheet-tool" id="delete-stylesheet-button" title="{translate: 'Delete this stylesheet'}"></a>
+        </div>
     </div>
 
     <div id="timeline-container">
@@ -24,6 +35,16 @@
 
             <div id="progress-bar-container">
                 <div id="progress-bar" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <div id="style-edit-popup">
+            <ktbs4la2-hrules-rule-input id="style-edit-input" stylesheet="true" tabindex="0" required></ktbs4la2-hrules-rule-input>
+
+            <div id="style-tools">
+                <a class="style-tool" id="close-style-edit-popup-button" title="{translate: 'Close'}"></a>
+                <a class="style-tool" id="cancel-style-modifications-button" title="{translate: 'Cancel modifications of this style'}"></a>
+                <a class="style-tool" id="delete-style-button" title="{translate: 'Delete this style'}"></a>
             </div>
         </div>
     </div>

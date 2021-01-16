@@ -1,3 +1,7 @@
+:host {
+	display: block;
+}
+
 #container {
 	display: flex;
 	flex-flow: column;
@@ -47,12 +51,17 @@
 	border: none;
 	font-size: 9pt;
 	color: #666;
-	outline: none;
 }
 
 #slylesheet-selector[disabled] {
 	font-style: italic;
 	color: #AAA;
+}
+
+#create-new-stylesheet {
+	font-weight: bold;
+	font-style: italic;
+	color: green;
 }
 
 #legend {
@@ -65,9 +74,125 @@
 	display: none;
 }
 
-#legend > * {
+#stylesheet-tools ktbs4la2-trace-timeline-style-legend {
+	padding-left: 3px;
+	padding-right: 3px;
+	padding-top: 2px;
+	padding-bottom: 2px;
 	margin-right: 20px;
+}
+
+#stylesheet-tools.edit-mode:not(.style-being-edited) ktbs4la2-trace-timeline-style-legend:not(.selected) {
+	cursor: pointer;
+}
+
+#stylesheet-tools.edit-mode:not(.style-being-edited) ktbs4la2-trace-timeline-style-legend:hover,
+#stylesheet-tools.edit-mode ktbs4la2-trace-timeline-style-legend.is-being-edited {
+	border: 1px solid var(--color-main, cornflowerblue);
+	border-radius: 3px;
+	box-shadow: 0px 0px 4px 2px #888;
+	background-color: var(--color-main, cornflowerblue);
+	color: white;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 1px;
+	padding-bottom: 1px;
+}
+
+#add-style-button {
+    text-decoration-line: none;
+    color: green;
+    border-radius: 4px;
+    text-align: center;
+    background-color: none;
+    outline: none;
+	border: none;
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+#stylesheet-tools.edit-mode:not(.style-being-edited) #add-style-button {
+	cursor: pointer;
+}
+
+#stylesheet-tools.edit-mode:not(.style-being-edited) #add-style-button:hover {
+	background-color: green;
+	color: white;
+	box-shadow: 0px 0px 4px 2px #888;
+}
+
+#current-stylesheet-tools {
+	display: inline-flex;
+	border-left: 1px solid #EEE;
+	position: absolute;
+	right: 12px;
+}
+
+.stylesheet-tool {
 	display: inline-block;
+	background-repeat: no-repeat;
+	background-size: contain;
+	width: 16px;
+	height: 16px;
+	opacity: 0.3;
+	cursor: pointer;
+	margin-left: 2px;
+	margin-right: 2px;
+}
+
+.stylesheet-tool:hover {
+	opacity: 1;
+}
+
+#edit-stylesheet-button {
+	background-image: url('{my-component-folder}/edit.svg');
+}
+
+#save-stylesheet-button {
+	background-image: url('{my-component-folder}/floppy_black.svg');
+}
+
+#cancel-stylesheet-modifications-button {
+	background-image: url('{my-component-folder}/cancel.svg');
+}
+
+#duplicate-stylesheet-button {
+	background-image: url('{my-component-folder}/duplicate.svg');
+}
+
+#create-computed-trace-from-stylesheet-button {
+	background-image: url('{my-component-folder}/ComputedTrace.svg');
+	display: none;
+}
+
+#delete-stylesheet-button {
+	background-image: url('{my-component-folder}/trash.svg');
+}
+
+#stylesheet-tools:not(.edit-mode) #add-style-button,
+#stylesheet-tools:not(.edit-mode) #save-stylesheet-button,
+#stylesheet-tools:not(.edit-mode) #cancel-stylesheet-modifications-button,
+#stylesheet-tools.edit-mode #edit-stylesheet-button,
+#stylesheet-tools.edit-mode #duplicate-stylesheet-button,
+#stylesheet-tools.edit-mode #delete-stylesheet-button,
+#stylesheet-tools.edit-mode #create-computed-trace-from-stylesheet-button,
+#current-stylesheet-tools.stylesheet-automatically-generated #edit-stylesheet-button,
+#current-stylesheet-tools.stylesheet-automatically-generated #save-stylesheet-button,
+#current-stylesheet-tools.stylesheet-automatically-generated #cancel-stylesheet-modifications-button,
+#current-stylesheet-tools.stylesheet-automatically-generated #delete-stylesheet-button {
+	display: none;
+}
+
+#current-stylesheet-tools:not(.has-unsaved-modifications) #save-stylesheet-button {
+	cursor: default;
+}
+
+#current-stylesheet-tools:not(.has-unsaved-modifications) #save-stylesheet-button:hover {
+	opacity: 0.3;
+}
+
+#current-stylesheet-tools.has-unsaved-modifications #save-stylesheet-button {
+	background-image: url('{my-component-folder}/floppy_green.svg');
 }
 
 #timeline-container {
@@ -77,12 +202,15 @@
 
 #wait-message-container {
 	background-color: rgb(0, 0, 0, 0.2);
+	height: 100%;
 	text-align: center;
 	padding: 10px 10px 10px 10px;
 	border-radius: 5px;
+	display: block;
 }
 
 #wait-message {
+	vertical-align: middle;
 	display: inline-block;
 	color: white;	
 	font-weight: bold;
@@ -141,7 +269,7 @@
 
 #obsels-loading-indications {
 	position: absolute;
-	bottom: 22px;
+	bottom: 24px;
 	width: 100%;
 }
 
@@ -205,7 +333,7 @@
 
 #progress-bar-container {
 	padding-left: 70px;
-	padding-right: 16px;
+	padding-right: 18px;
 	position: relative;
 	bottom: -14px;
 	height: 2px;
@@ -242,3 +370,75 @@
 	visibility: hidden;
 }
 
+#style-edit-popup {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	max-height: calc(100% - 10px);
+	overflow-y: auto;
+	background-color: white;
+	z-index: 2;
+	opacity: 0.5;
+	padding: 5px 5px;
+	border: 1px solid lightgrey;
+	border-radius: 10px;
+	visibility: hidden;
+	transform: translateX(-100%);
+	transition: transform 0.25s 0s, visibility 0s 0.25s;
+}
+
+#style-edit-popup.visible {
+	visibility: visible;
+	transform: translateX(0);
+	transition: transform 0.25s 0s;
+}
+
+#style-edit-popup:hover,
+#style-edit-popup:focus-within {
+	opacity: 1;
+}
+
+#style-tools {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.style-tool {
+	display: block;
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+	width: 16px;
+	height: 16px;
+	opacity: 0.3;
+	cursor: pointer;
+	margin-bottom: 3px;
+}
+
+.style-tool:hover {
+	opacity: 1;
+}
+
+#close-style-edit-popup-button {
+	background-image: url('{my-component-folder}/left-oriented-triangle.svg');
+}
+
+#style-edit-popup.is-invalid #close-style-edit-popup-button {
+	cursor: default;
+}
+
+#style-edit-popup.is-invalid #close-style-edit-popup-button:hover {
+	opacity: 0.3;
+}
+
+#cancel-style-modifications-button {
+	background-image: url('{my-component-folder}/cancel.svg');
+}
+
+#delete-style-button {
+	background-image: url('{my-component-folder}/trash.svg');
+}
+
+#style-edit-popup.is-new #delete-style-button {
+	display: none;
+}

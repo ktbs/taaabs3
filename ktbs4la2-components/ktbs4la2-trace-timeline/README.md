@@ -72,6 +72,14 @@ Whether or not the user should see a legend for the current stylesheet.
 + **optional**
 + **default**: "true"
 
+### allow-edit-stylesheet
+
+Whether or not the user should be able to edit stylesheets (modify or delete existing ones, or create new ones)
+
++ **format**: "true", "1", "false" or "0"
++ **optional**
++ **default**: "true"
+
 ## Emitted events
 
 ### set-stylesheet
