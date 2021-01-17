@@ -117,6 +117,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._closeStyleEditPopupButton.addEventListener("click", this._onClickCloseStyleEditButton.bind(this));
 		this._cancelStyleModificationsButton = this.shadowRoot.querySelector("#cancel-style-modifications-button");
 		this._cancelStyleModificationsButton.addEventListener("click", this._onClickCancelStyleModificationsButton.bind(this));
+		this._duplicateStyleButton = this.shadowRoot.querySelector("#duplicate-style-button");
+		this._duplicateStyleButton.addEventListener("click", this._onClickDuplicateStyleButton.bind(this));
 		this._deleteStyleButton = this.shadowRoot.querySelector("#delete-style-button");
 		this._deleteStyleButton.addEventListener("click", this._onClickDeleteStyleButton.bind(this));
 		this.appendChild(this._timeline);
@@ -1120,6 +1122,29 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_onClickDuplicateStyleButton(event) {
+		let newRule_ID = "";
+
+		// loops if the user validates an empty string, exits loop when the user enters a non-empty sting OR cancels the dialog
+		while(newRule_ID == "") {
+			newRule_ID = window.prompt(this._translateString("Please enter an ID for the new style") + " :");
+		}
+
+		// user didn't cancel the dialog popup
+		if(newRule_ID != null) {
+			const newRule = new HubbleRule(JSON.parse(this._styleEditInput.value), this._currentStylesheet);
+			newRule.id = newRule_ID;
+			let styleSheetRules = this._currentStylesheet.rules;
+			styleSheetRules.push(newRule);
+			this._currentStylesheet.rules = styleSheetRules;
+			this._applyStyleSheet(this._currentStylesheet);
+			this._current_stylesheet_has_unsaved_modifications = true;
+		}
+	}
+
+	/**
+	 * 
+	 */
 	_onClickDeleteStyleButton(event) {
 		if(confirm(this._translateString("Are you sure you want to remove this style ?\n(Please note this won't erase the style's data from the model until you save the modified stylesheet)"))) {
 			let styleSheetRules = this._currentStylesheet.rules;
@@ -1165,6 +1190,11 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			let aRule = stylesheet.rules[i];
 			let styleNode = document.createElement("ktbs4la2-trace-timeline-style-legend");
 			styleNode.setAttribute("rule-id", aRule.id);
+
+			if(this._styleEditPopup.classList.contains("visible") && (i == this._editedRule_rank)) {
+				styleNode.classList.add("is-being-edited");
+				this._editedStyleLegend = styleNode;
+			}
 
 			if(aRule.label)
 				styleNode.setAttribute("label", this._translateString(aRule.label));
@@ -1504,6 +1534,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._styleEditInput.setAttribute("lang", this._lang);
 		this._closeStyleEditPopupButton.setAttribute("title", this._translateString("Close"));
 		this._cancelStyleModificationsButton.setAttribute("title", this._translateString("Cancel modifications of this style"));
+		this._duplicateStyleButton.setAttribute("title", this._translateString("Duplicate this style"));
 		this._deleteStyleButton.setAttribute("title", this._translateString("Delete this style"));
 
 		// rebuild the default stylesheet and it's legend if it is the currently applied stylesheet

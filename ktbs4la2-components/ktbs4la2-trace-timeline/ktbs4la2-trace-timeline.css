@@ -435,6 +435,10 @@
 	background-image: url('{my-component-folder}/cancel.svg');
 }
 
+#duplicate-style-button {
+	background-image: url('{my-component-folder}/duplicate.svg');
+}
+
 #delete-style-button {
 	background-image: url('{my-component-folder}/trash.svg');
 }
