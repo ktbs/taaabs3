@@ -282,22 +282,39 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
                                 this._lastSetValuePromise = null;
                             });
                         }
-                        else
+                        else {
                             this.emitErrorEvent(new Error("Invalid data provided as attribute \"value\""));
+                            this._rejectLastSetValuePromise("Invalid JSON Data");
+                            this._lastSetValuePromise = null;
+                        }
+                    }
+                    else {
+                        this.emitErrorEvent(new Error("Invalid data provided as attribute \"value\""));
+                        this._rejectLastSetValuePromise("Invalid JSON Data");
+                        this._lastSetValuePromise = null;
                     }
                 }
                 catch(error) {
                     this.emitErrorEvent(error);
+                    this._rejectLastSetValuePromise(error);
+                    this._lastSetValuePromise = null;
                 }
             }
             else {
-                this._componentReady.then(() => {
-                    this._idInput.value = "";
-                    this._visibleCheckBox.checked = true;
-                    this._colorInput.value = "#000000";
-                    this._shapeSelect.value = "duration-bar";
-                    this._subrulesInput.value = "[]";
-                }).catch(() => {});
+                this._componentReady
+                    .then(() => {
+                        this._idInput.value = "";
+                        this._visibleCheckBox.checked = true;
+                        this._colorInput.value = "#000000";
+                        this._shapeSelect.value = "duration-bar";
+                        this._subrulesInput.value = "[]";
+                        this._resolveLastSetValuePromise();
+                        this._lastSetValuePromise = null;
+                    })
+                    .catch((error) => {
+                        this._rejectLastSetValuePromise(error);
+                        this._lastSetValuePromise = null;
+                    });
             }
         }
         else if(name == "required") {

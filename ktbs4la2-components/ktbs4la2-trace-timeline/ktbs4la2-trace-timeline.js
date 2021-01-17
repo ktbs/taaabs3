@@ -983,13 +983,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			this._editedStyleLegend = newStyleLegend;
 			this._editedRule = new HubbleRule({}, this._currentStylesheet);
 			this._editedRule.is_new = true;
-			this._styleEditPopup.classList.add("is-new");
-			this._styleEditPopup.classList.add("is-invalid");
+
+			if(!this._styleEditPopup.classList.contains("is-new"))
+				this._styleEditPopup.classList.add("is-new");
+
+			if(!this._styleEditPopup.classList.contains("is-invalid"))
+				this._styleEditPopup.classList.add("is-invalid");
 
 			if(!this._styleEditPopup.classList.contains("visible"))
 				this._styleEditPopup.classList.add("visible");
 
-			this._styleEditInput.setAttribute("value", "{}");
 			this._styleEditInput.focus();
 		}
 	}
@@ -1073,6 +1076,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				delete this._editedRule_original;
 
 			delete this._editedStyleLegend;
+			delete this._editedRule;
 		}
 		else {
 			const error = new Error("Could not find style legend for rule \"" + this._editedRule.id + "\"");
