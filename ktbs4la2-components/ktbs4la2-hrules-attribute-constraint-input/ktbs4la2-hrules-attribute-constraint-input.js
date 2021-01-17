@@ -24,6 +24,28 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
     /**
      * 
      */
+    setAttribute(name, value) {
+        if(name == "value") {
+            if(this._lastSetValuePromise)
+                this._rejectLastSetValuePromise("A newer value has been set");
+
+            this._lastSetValuePromise = new Promise((resolve, reject) => {
+                this._resolveLastSetValuePromise = resolve;
+                this._rejectLastSetValuePromise = reject;
+            });
+
+            super.setAttribute(name, value);
+            return this._lastSetValuePromise;
+        }
+        else {
+            super.setAttribute(name, value);
+            return Promise.resolve();
+        }
+    }
+
+    /**
+     * 
+     */
     get form() {
         if(this._internals)
             return this._internals.form;
@@ -66,10 +88,8 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
      * 
      */
     set value(newValue) {
-        if(newValue != null) {
-            if(this.getAttribute("value") != newValue)
-                this.setAttribute("value", newValue);
-        }
+        if(newValue != null)
+            this.setAttribute("value", newValue);
         else if(this.hasAttribute("value"))
             this.removeAttribute("value");
     }
@@ -171,38 +191,72 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
                 try {
                     const valueObject = JSON.parse(newValue);
 
-                    this._componentReady.then(() => {
-                        if(valueObject.uri)
-                            this._attributeTypeSelect.setAttribute("value", valueObject.uri);
+                    this._componentReady
+                        .then(() => {
+                            let attributeTypeSelectSetValuePromise = null;
 
-                        if(valueObject.operator) {
-                            switch(valueObject.operator) {
-                                case "==" :
-                                    this._operatorSelect.selectedIndex = 0;
-                                    break;
-                                case "<" :
-                                    this._operatorSelect.selectedIndex = 1;
-                                    break;
-                                case ">" :
-                                    this._operatorSelect.selectedIndex = 2;
-                                    break;
-                                case "<=" :
-                                    this._operatorSelect.selectedIndex = 3;
-                                    break;
-                                case ">=" :
-                                    this._operatorSelect.selectedIndex = 4;
-                                    break;
-                                default: 
-                                    this.emitErrorEvent("Unsupported operator \"" + valueObject.operator + "\"");
+                            if(valueObject.uri)
+                                attributeTypeSelectSetValuePromise = this._attributeTypeSelect.setAttribute("value", valueObject.uri);
+
+                            let operator_error = false;
+
+                            if(valueObject.operator) {
+                                switch(valueObject.operator) {
+                                    case "==" :
+                                        this._operatorSelect.selectedIndex = 0;
+                                        break;
+                                    case "<" :
+                                        this._operatorSelect.selectedIndex = 1;
+                                        break;
+                                    case ">" :
+                                        this._operatorSelect.selectedIndex = 2;
+                                        break;
+                                    case "<=" :
+                                        this._operatorSelect.selectedIndex = 3;
+                                        break;
+                                    case ">=" :
+                                        this._operatorSelect.selectedIndex = 4;
+                                        break;
+                                    default: 
+                                        this.emitErrorEvent("Unsupported operator \"" + valueObject.operator + "\"");
+                                        operator_error = true;
+                                }
                             }
-                        }
 
-                        if(valueObject.value)
-                            this._valueInput.setAttribute("value", valueObject.value);
-                    }).catch(() => {});
+                            if(valueObject.value)
+                                this._valueInput.setAttribute("value", valueObject.value);
+
+                            if(!operator_error) {
+                                if(attributeTypeSelectSetValuePromise != null) {
+                                    attributeTypeSelectSetValuePromise
+                                        .then(() => {
+                                            this._resolveLastSetValuePromise();
+                                            this._lastSetValuePromise = null;
+                                        })
+                                        .catch((error) => {
+                                            this._rejectLastSetValuePromise(error);
+                                            this._lastSetValuePromise = null;
+                                        });
+                                }
+                                else {
+                                    this._resolveLastSetValuePromise();
+                                    this._lastSetValuePromise = null;
+                                }
+                            }
+                            else {
+                                this._rejectLastSetValuePromise("Operator error");
+                                this._lastSetValuePromise = null;
+                            }
+                        })
+                        .catch((error) => {
+                            this._rejectLastSetValuePromise(error);
+                            this._lastSetValuePromise = null;
+                        });
                 }
                 catch(error) {
                     this.emitErrorEvent(error);
+                    this._rejectLastSetValuePromise(error);
+                    this._lastSetValuePromise = null;
                 }
             }
             else {
@@ -211,6 +265,9 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
                     this._operatorSelect.selectedIndex = 0;
                     this._valueInput.value = "";
                 }).catch(() => {});
+
+                this._resolveLastSetValuePromise();
+                this._lastSetValuePromise = null;
             }
         }
     }

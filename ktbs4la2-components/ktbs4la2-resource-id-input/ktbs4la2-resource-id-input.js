@@ -23,6 +23,28 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
     /**
      * 
      */
+    setAttribute(name, value) {
+        if(name == "value") {
+            if(this._lastSetValuePromise)
+                this._rejectLastSetValuePromise("A newer value has been set");
+
+            this._lastSetValuePromise = new Promise((resolve, reject) => {
+                this._resolveLastSetValuePromise = resolve;
+                this._rejectLastSetValuePromise = reject;
+            });
+
+            super.setAttribute(name, value);
+            return this._lastSetValuePromise;
+        }
+        else {
+            super.setAttribute(name, value);
+            return Promise.resolve();
+        }
+    }
+
+    /**
+     * 
+     */
     get form() {
         if(this._internals)
             return this._internals.form;
@@ -115,8 +137,13 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
                     inputValue = newValue;
                 
                 this._idInput.value = inputValue;
+                this._resolveLastSetValuePromise();
+                this._lastSetValuePromise = null;
                 this._adjustIdInputWidthForText(inputValue);
-            }).catch(() => {});
+            }).catch((error) => {
+                this._rejectLastSetValuePromise(error);
+                this._lastSetValuePromise = null;
+            });
         }
         else if(name == "placeholder") 
             this._componentReady.then(() => {

@@ -27,6 +27,28 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
     /**
      * 
      */
+    setAttribute(name, value) {
+        if(name == "value") {
+            if(this._lastSetValuePromise)
+                this._rejectLastSetValuePromise("A newer value has been set");
+
+            this._lastSetValuePromise = new Promise((resolve, reject) => {
+                this._resolveLastSetValuePromise = resolve;
+                this._rejectLastSetValuePromise = reject;
+            });
+
+            super.setAttribute(name, value);
+            return this._lastSetValuePromise;
+        }
+        else {
+            super.setAttribute(name, value);
+            return Promise.resolve();
+        }
+    }
+
+    /**
+     * 
+     */
     get form() {
         if(this._internals)
             return this._internals.form;
@@ -82,10 +104,8 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
       * 
       */
     set value(newValue) {
-        if(newValue != null) {
-            if(this.getAttribute("value") != newValue)
-                this.setAttribute("value", newValue);
-        }
+        if(newValue != null)
+            this.setAttribute("value", newValue);
         else if(this.hasAttribute("value"))
             this.removeAttribute("value");
     }
@@ -496,7 +516,7 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
         if(name == "model-uri") {
             if(newValue) {
                 this._model = ResourceMultiton.get_resource(Model, newValue);
-
+                
                 this._model.get(this._abortController.signal)
                     .then(() => {
                         this._componentReady.then(() => {
@@ -557,6 +577,9 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
                                 }
                                 else
                                     this._selectMatchingOption(this.getAttribute("value"));
+
+                                this._resolveLastSetValuePromise();
+                                this._lastSetValuePromise = null;
                             }
                             else if(!this.multiple)
                                 this._selectFirstAvailableOption();
@@ -616,14 +639,24 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
             }).catch(() => {});
         }
         else if(name == "value") {
-            if(this.multiple) {
-                const selected_values = newValue.split(" ").filter(Boolean);
+            this._componentReady
+                .then(() => {
+                    if(this.multiple) {
+                        const selected_values = newValue.split(" ").filter(Boolean);
 
-                for(let i = 0; i < selected_values.length; i++)
-                    this._selectMatchingOption(selected_values[i]);
-            }
-            else
-                this._selectMatchingOption(newValue);
+                        for(let i = 0; i < selected_values.length; i++)
+                            this._selectMatchingOption(selected_values[i]);
+                    }
+                    else
+                        this._selectMatchingOption(newValue);
+
+                    this._resolveLastSetValuePromise();
+                    this._lastSetValuePromise = null;
+                })
+                .catch((error) => {
+                    this._rejectLastSetValuePromise(error);
+                    this._lastSetValuePromise = null;
+                });
         }
     }
 
@@ -725,26 +758,24 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
      * \param String value an obsel type uri
      */
     _selectMatchingOption(value, unselect_previously_selected = true) {
-        this._componentReady.then(() => {
-            let matchingOption;
+        let matchingOption;
 
-            if(value && value.startsWith(this.model_uri)) {
-                try {
-                    const obselType_uri = new URL(value);
-                    const obselType_id = decodeURI(obselType_uri.hash.substring(1));
-                    matchingOption = this._options.querySelector(".option[value = \"" + CSS.escape(obselType_id) + "\"]");
-                }
-                catch(error) {
-                    this.emitErrorEvent(error);
-                    matchingOption = this._defaultOption;
-                }
+        if(value && value.startsWith(this.model_uri)) {
+            try {
+                const obselType_uri = new URL(value);
+                const obselType_id = decodeURI(obselType_uri.hash.substring(1));
+                matchingOption = this._options.querySelector(".option[value = \"" + CSS.escape(obselType_id) + "\"]");
             }
-            else
+            catch(error) {
+                this.emitErrorEvent(error);
                 matchingOption = this._defaultOption;
+            }
+        }
+        else
+            matchingOption = this._defaultOption;
 
-            if(matchingOption)
-                this._selectOption(matchingOption, unselect_previously_selected);
-        }).catch(() => {});
+        if(matchingOption)
+            this._selectOption(matchingOption, unselect_previously_selected);
     }
 
     /**

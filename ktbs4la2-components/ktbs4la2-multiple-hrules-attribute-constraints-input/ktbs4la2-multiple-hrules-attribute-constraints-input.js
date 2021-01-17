@@ -25,6 +25,28 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
     /**
      * 
      */
+    setAttribute(name, value) {
+        if(name == "value") {
+            if(this._lastSetValuePromise)
+                this._rejectLastSetValuePromise("A newer value has been set");
+
+            this._lastSetValuePromise = new Promise((resolve, reject) => {
+                this._resolveLastSetValuePromise = resolve;
+                this._rejectLastSetValuePromise = reject;
+            });
+
+            super.setAttribute(name, value);
+            return this._lastSetValuePromise;
+        }
+        else {
+            super.setAttribute(name, value);
+            return Promise.resolve();
+        }
+    }
+
+    /**
+     * 
+     */
     get form() {
         if(this._internals)
             return this._internals.form;
@@ -64,10 +86,8 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
      * 
      */
     set value(newValue) {
-        if(newValue != null) {
-            if(this.getAttribute("value") != newValue)
-                this.setAttribute("value", newValue);
-        }
+        if(newValue != null)
+            this.setAttribute("value", newValue);
         else if(this.hasAttribute("value"))
             this.removeAttribute("value");
     }
@@ -154,7 +174,7 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
 		this._addAttributeContraintButton.addEventListener("click", this._onClickAddAttributeContraintButton.bind(this));
 
 		if(this.required)
-			this._addAttributeConstraintInput(null, false);
+			this._addAttributeConstraintInput(false);
 			
 		this.addEventListener("focus", this._onFocus.bind(this));
     }
@@ -183,31 +203,71 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
                     const valueObject = JSON.parse(newValue);
 
                     if(valueObject instanceof Array) {
-                        this._componentReady.then(() => {
-                            this._clearAllInputs();
+                        this._componentReady
+                            .then(() => {
+                                this._clearAllInputs();
+                                
 
-                            if(valueObject.length > 0) {
-                                for(let i = 0; i < valueObject.length; i++)
-                                    this._addAttributeConstraintInput(JSON.stringify(valueObject[i]), !((i == 0) && this.required));
-                            }
-                            else if(this.required)
-                                this._addAttributeConstraintInput(null, false);
-                        }).catch(() => {});
+                                if(valueObject.length > 0) {
+                                    let attributeConstraintInputsSetValuePromises = new Array();
+                                    
+                                    for(let i = 0; i < valueObject.length; i++) {
+                                        const anAttributeConstraintInput = this._addAttributeConstraintInput(!((i == 0) && this.required));
+                                        const anAttributeConstraintInputSetValuePromise = anAttributeConstraintInput.setAttribute("value", JSON.stringify(valueObject[i]));
+                                        attributeConstraintInputsSetValuePromises.push(anAttributeConstraintInputSetValuePromise);
+                                    }
+
+                                    Promise.all(attributeConstraintInputsSetValuePromises)
+                                        .then(() => {
+                                            this._resolveLastSetValuePromise();
+                                            this._lastSetValuePromise = null;
+                                        })
+                                        .catch((error) => {
+                                            this._rejectLastSetValuePromise(error);
+                                            this._lastSetValuePromise = null;
+                                        });
+                                   
+                                }
+                                else {
+                                    if(this.required)
+                                        this._addAttributeConstraintInput(false);
+
+                                    this._resolveLastSetValuePromise();
+                                    this._lastSetValuePromise = null;
+                                }
+                            })
+                            .catch((error) => {
+                                this._rejectLastSetValuePromise(error);
+                                this._lastSetValuePromise = null;
+                            });
                     }
-                    else
+                    else {
                         this.emitErrorEvent(new Error("Invalid value : must be a JSON Array"));
+                        this._rejectLastSetValuePromise("Invalid JSON Data");
+                        this._lastSetValuePromise = null;
+                    }
                 }
                 catch(error) {
                     this.emitErrorEvent(error);
+                    this._rejectLastSetValuePromise(error);
+                    this._lastSetValuePromise = null;
                 }
             }
             else {
-                this._componentReady.then(() => {
-                    this._clearAllInputs();
+                this._componentReady
+                    .then(() => {
+                        this._clearAllInputs();
 
-                    if(this.required)
-                        this._addAttributeConstraintInput(null, false);
-                }).catch(() => {});
+                        if(this.required)
+                            this._addAttributeConstraintInput(false);
+
+                        this._resolveLastSetValuePromise();
+                        this._lastSetValuePromise = null;
+                    })
+                    .catch((error) => {
+                        this._rejectLastSetValuePromise(error);
+                        this._lastSetValuePromise = null;
+                    });
             }
         }
         else if(name == "required") {
@@ -242,7 +302,7 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
                     }
                 }
                 else if(this.required)
-                    this._addAttributeConstraintInput(null, false);
+                    this._addAttributeConstraintInput(false);
             }).catch(() => {});
         }
         else if(name == "model-uri") {
@@ -320,9 +380,8 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
         event.preventDefault();
         event.stopPropagation();
         const attributeConstraintInputs = this._getAttributeConstraintInputs();
-        const newAttributeContainer = this._addAttributeConstraintInput(null, !((attributeConstraintInputs.length == 0) && this.required));
-        const newAttributeConstraint = newAttributeContainer.querySelector("ktbs4la2-hrules-attribute-constraint-input");
-
+        const newAttributeConstraint = this._addAttributeConstraintInput(!((attributeConstraintInputs.length == 0) && this.required));
+        
 		newAttributeConstraint._componentReady.then(() => {
             setTimeout(() => {
                 newAttributeConstraint.focus();
@@ -340,14 +399,11 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
     /**
 	 * 
 	 */
-	_addAttributeConstraintInput(value = null, allow_remove = true) {
+	_addAttributeConstraintInput(allow_remove = true) {
 		const inputContainer = document.createElement("div");
 		inputContainer.classList.add("attribute-constraint-input-container");
         const newAttributeConstraintInput = document.createElement("ktbs4la2-hrules-attribute-constraint-input");
         newAttributeConstraintInput.setAttribute("lang", this._lang);
-
-		if(value)
-            newAttributeConstraintInput.setAttribute("value", value);
             
         if(this.hasAttribute("model-uri"))
             newAttributeConstraintInput.setAttribute("model-uri", this.getAttribute("model-uri"));
@@ -388,7 +444,7 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
         if(this._container.classList.contains("empty"))
             this._container.classList.remove("empty");
 
-		return inputContainer;
+		return newAttributeConstraintInput;
     }
     
     /**

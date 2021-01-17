@@ -29,6 +29,28 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
     /**
      * 
      */
+    setAttribute(name, value) {
+        if(name == "value") {
+            if(this._lastSetValuePromise)
+                this._rejectLastSetValuePromise("A newer value has been set");
+
+            this._lastSetValuePromise = new Promise((resolve, reject) => {
+                this._resolveLastSetValuePromise = resolve;
+                this._rejectLastSetValuePromise = reject;
+            });
+
+            super.setAttribute(name, value);
+            return this._lastSetValuePromise;
+        }
+        else {
+            super.setAttribute(name, value);
+            return Promise.resolve();
+        }
+    }
+
+    /**
+     * 
+     */
     get form() {
         if(this._internals)
             return this._internals.form;
@@ -84,10 +106,8 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
      * 
      */
     set value(newValue) {
-        if(newValue != null) {
-            if(this.getAttribute("value") != newValue)
-                this.setAttribute("value", newValue);
-        }
+        if(newValue != null)
+            this.setAttribute("value", newValue);
         else if(this.hasAttribute("value"))
             this.removeAttribute("value");
     }
@@ -372,10 +392,20 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
             }).catch(() => {});
         }
         else if(name == "value") {
-            if(this._optionsInstanciated)
-                this._applyValueToSelection(newValue);
+            this._componentReady
+                .then(() => {
+                    if(this._optionsInstanciated)
+                        this._applyValueToSelection(newValue);
+        
+                    this._valueChanged = false;
 
-            this._valueChanged = false;
+                    this._resolveLastSetValuePromise();
+                    this._lastSetValuePromise = null;
+                })
+                .catch((error) => {
+                    this._rejectLastSetValuePromise(error);
+                    this._lastSetValuePromise = null;
+                });
         }
         else if(name == "multiple") {
             this._componentReady.then(() => {

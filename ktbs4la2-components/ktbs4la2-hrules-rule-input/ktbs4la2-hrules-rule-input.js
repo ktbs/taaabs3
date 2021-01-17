@@ -26,6 +26,29 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
     /**
      * 
      */
+    setAttribute(name, value) {
+        if(name == "value") {
+            if(this._lastSetValuePromise != null) {
+                this._rejectLastSetValuePromise("A newer value has been set");
+            }
+
+            this._lastSetValuePromise = new Promise((resolve, reject) => {
+                this._resolveLastSetValuePromise = resolve;
+                this._rejectLastSetValuePromise = reject;
+            });
+
+            super.setAttribute(name, value);
+            return this._lastSetValuePromise;
+        }
+        else {
+            super.setAttribute(name, value);
+            return Promise.resolve();
+        }
+    }
+
+    /**
+     * 
+     */
     get form() {
         if(this._internals)
             return this._internals.form;
@@ -71,7 +94,7 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
      */
     set value(newValue) {
         if(newValue != null)
-                this.setAttribute("value", newValue);
+            this.setAttribute("value", newValue);
         else if(this.hasAttribute("value"))
             this.removeAttribute("value");
     }
@@ -219,7 +242,7 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
                     if(valueObject instanceof Object) {
                         if(valueObject.id && valueObject.rules && (valueObject.rules instanceof Array)) {
                             this._componentReady.then(() => {
-                                this._idInput.value = valueObject.id;
+                                const idInputSetValuePromise = this._idInput.setAttribute("value", valueObject.id);
 
                                 if(valueObject.visible != undefined)
                                     this._visibleCheckBox.checked = valueObject.visible;
@@ -242,8 +265,22 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
                                     this._shapeSelect.value = "duration-bar";
                                 }
 
-                                this._subrulesInput.value = JSON.stringify(valueObject.rules);
-                            }).catch(() => {});
+                                const subRulesSetValuePromise = this._subrulesInput.setAttribute("value", JSON.stringify(valueObject.rules));
+                                
+                                Promise.all([idInputSetValuePromise, subRulesSetValuePromise])
+                                    .then(() => {
+                                        this._resolveLastSetValuePromise();
+                                        this._lastSetValuePromise = null;
+                                    })
+                                    .catch((error) => {
+                                        this._rejectLastSetValuePromise(error);
+                                        this._lastSetValuePromise = null;
+                                    });
+                            })
+                            .catch((error) => {
+                                this._rejectLastSetValuePromise(error);
+                                this._lastSetValuePromise = null;
+                            });
                         }
                         else
                             this.emitErrorEvent(new Error("Invalid data provided as attribute \"value\""));

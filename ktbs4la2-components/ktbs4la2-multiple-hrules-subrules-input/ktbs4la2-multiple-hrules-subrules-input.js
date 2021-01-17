@@ -25,6 +25,28 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
     /**
      * 
      */
+    setAttribute(name, value) {
+        if(name == "value") {
+            if(this._lastSetValuePromise)
+                this._rejectLastSetValuePromise("A newer value has been set");
+
+            this._lastSetValuePromise = new Promise((resolve, reject) => {
+                this._resolveLastSetValuePromise = resolve;
+                this._rejectLastSetValuePromise = reject;
+            });
+
+            super.setAttribute(name, value);
+            return this._lastSetValuePromise;
+        }
+        else {
+            super.setAttribute(name, value);
+            return Promise.resolve();
+        }
+    }
+
+    /**
+     * 
+     */
     get form() {
         if(this._internals)
             return this._internals.form;
@@ -64,10 +86,8 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
      * 
      */
     set value(newValue) {
-        if(newValue != null) {
-            if(this.getAttribute("value") != newValue)
-                this.setAttribute("value", newValue);
-        }
+        if(newValue != null)
+            this.setAttribute("value", newValue);
         else if(this.hasAttribute("value"))
             this.removeAttribute("value");
     }
@@ -132,7 +152,7 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
 		this._addSubruleButton.addEventListener("click", this._onClickAddSubruleButton.bind(this));
 
 		if(this.required)
-			this._addSubruleInput(null, false);
+			this._addSubruleInput(false);
 			
 		this.addEventListener("focus", this._onFocus.bind(this));
     }
@@ -160,31 +180,69 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
                     const valueObject = JSON.parse(newValue);
 
                     if(valueObject instanceof Array) {
-                        this._componentReady.then(() => {
-                            this._clearAllInputs();
+                        this._componentReady
+                            .then(() => {
+                                this._clearAllInputs();
 
-                            if(valueObject.length > 0) {
-                                for(let i = 0; i < valueObject.length; i++)
-                                    this._addSubruleInput(JSON.stringify(valueObject[i]), !((i == 0) && this.required));
-                            }
-                            else if(this.required)
-                                this._addSubruleInput(null, false);
-                        }).catch(() => {});
+                                if(valueObject.length > 0) {
+                                    let subRuleInputsValueSetPromises = new Array();
+
+                                    for(let i = 0; i < valueObject.length; i++) {
+                                        const aSubRuleInput = this._addSubruleInput(!((i == 0) && this.required));
+                                        const aSubRuleInputValueSetPromise = aSubRuleInput.setAttribute("value", JSON.stringify(valueObject[i]));
+                                        subRuleInputsValueSetPromises.push(aSubRuleInputValueSetPromise);
+                                    }
+
+                                    Promise.all(subRuleInputsValueSetPromises)
+                                        .then(() => {
+                                            this._resolveLastSetValuePromise();
+                                            this._lastSetValuePromise = null;
+                                        })
+                                        .catch((error) => {
+                                            this._rejectLastSetValuePromise(error);
+                                            this._lastSetValuePromise = null;
+                                        });
+                                }
+                                else {
+                                    if(this.required)
+                                        this._addSubruleInput(false);
+                                    
+                                    this._resolveLastSetValuePromise();
+                                    this._lastSetValuePromise = null;
+                                }
+                            })
+                            .catch((error) => {
+                                this._rejectLastSetValuePromise(error);
+                                this._lastSetValuePromise = null;
+                            });
                     }
-                    else
+                    else {
                         this.emitErrorEvent(new Error("Invalid value : must be a JSON Array"));
+                        this._rejectLastSetValuePromise("Invalid JSON Data");
+                        this._lastSetValuePromise = null;
+                    }
                 }
                 catch(error) {
                     this.emitErrorEvent(error);
+                    this._rejectLastSetValuePromise(error);
+                    this._lastSetValuePromise = null;
                 }
             }
             else {
-                this._componentReady.then(() => {
-                    this._clearAllInputs();
+                this._componentReady
+                    .then(() => {
+                        this._clearAllInputs();
 
-                    if(this.required)
-                        this._addSubruleInput(null, false);
-                }).catch(() => {});
+                        if(this.required)
+                            this._addSubruleInput(false);
+
+                        this._resolveLastSetValuePromise();
+                        this._lastSetValuePromise = null;
+                    })
+                    .catch((error) => {
+                        this._rejectLastSetValuePromise(error);
+                        this._lastSetValuePromise = null;
+                    });
             }
         }
         else if(name == "required") {
@@ -219,7 +277,7 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
                     }
                 }
                 else if(this.required)
-                    this._addSubruleInput(null, false);
+                    this._addSubruleInput(false);
             }).catch(() => {});
         }
         else if(name == "model-uri") {
@@ -286,8 +344,7 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
         event.preventDefault();
         event.stopPropagation();
         const subrulesInputs = this._getSubrulesInputs();
-        const newSubruleInputContainer = this._addSubruleInput(null, !((subrulesInputs.length == 0) && this.required));
-        const newSubruleInput = newSubruleInputContainer.querySelector("ktbs4la2-hrules-subrule-input");
+        const newSubruleInput = this._addSubruleInput(!((subrulesInputs.length == 0) && this.required));
 
 		newSubruleInput._componentReady.then(() => {
             setTimeout(() => {
@@ -309,14 +366,11 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
     /**
 	 * 
 	 */
-	_addSubruleInput(value = null, allow_remove = true) {
+	_addSubruleInput(allow_remove = true) {
 		const inputContainer = document.createElement("div");
 		inputContainer.classList.add("subrule-input-container");
         const newSubruleInput = document.createElement("ktbs4la2-hrules-subrule-input");
         newSubruleInput.setAttribute("lang", this._lang);
-
-		if(value)
-            newSubruleInput.setAttribute("value", value);
             
         if(this.hasAttribute("model-uri"))
             newSubruleInput.setAttribute("model-uri", this.getAttribute("model-uri"));
@@ -354,7 +408,7 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
         if(this._container.classList.contains("empty"))
             this._container.classList.remove("empty");
 
-		return inputContainer;
+		return newSubruleInput;
     }
 
     /**

@@ -26,6 +26,28 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
     /**
      * 
      */
+    setAttribute(name, value) {
+        if(name == "value") {
+            if(this._lastSetValuePromise)
+                this._rejectLastSetValuePromise("A newer value has been set");
+
+            this._lastSetValuePromise = new Promise((resolve, reject) => {
+                this._resolveLastSetValuePromise = resolve;
+                this._rejectLastSetValuePromise = reject;
+            });
+
+            super.setAttribute(name, value);
+            return this._lastSetValuePromise;
+        }
+        else {
+            super.setAttribute(name, value);
+            return Promise.resolve();
+        }
+    }
+
+    /**
+     * 
+     */
     get form() {
         if(this._internals)
             return this._internals.form;
@@ -101,10 +123,8 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
      * 
      */
     set value(newValue) {
-        if(newValue != null) {
-            if(this.getAttribute("value") != newValue)
-                this.setAttribute("value", newValue);
-        }
+        if(newValue != null)
+            this.setAttribute("value", newValue);
         else if(this.hasAttribute("value"))
             this.removeAttribute("value");
     }
@@ -165,21 +185,48 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
                     const valueObject = JSON.parse(newValue);
 
                     if(valueObject instanceof Object) {
-                        this._componentReady.then(() => {
-                            if(valueObject.type) {
-                                this._obselTypeSelect.setAttribute("value", valueObject.type);
-                                this._attributeConstraints.setAttribute("obsel-type", valueObject.type);
-                            }
+                        this._componentReady
+                            .then(() => {
+                                let valuesSetPromises = new Array();
 
-                            if(valueObject.attributes)
-                                this._attributeConstraints.setAttribute("value", JSON.stringify(valueObject.attributes));
-                        }).catch(() => {});
+                                if(valueObject.type) {
+                                    valuesSetPromises.push(this._obselTypeSelect.setAttribute("value", valueObject.type));
+                                    this._attributeConstraints.setAttribute("obsel-type", valueObject.type);
+                                }
+
+                                if(valueObject.attributes)
+                                    valuesSetPromises.push(this._attributeConstraints.setAttribute("value", JSON.stringify(valueObject.attributes)));
+
+                                if(valuesSetPromises.length > 0)
+                                    Promise.all(valuesSetPromises)
+                                        .then(() => {
+                                            this._resolveLastSetValuePromise();
+                                            this._lastSetValuePromise = null;
+                                        })
+                                        .catch((error) => {
+                                            this._rejectLastSetValuePromise(error);
+                                            this._lastSetValuePromise = null;
+                                        });
+                                else {
+                                    this._resolveLastSetValuePromise();
+                                    this._lastSetValuePromise = null;
+                                }
+                            })
+                            .catch((error) => {
+                                this._rejectLastSetValuePromise(error);
+                                this._lastSetValuePromise = null;
+                            });
                     }
-                    else
+                    else {
                         this.emitErrorEvent(new Error("Invalid value : must be a JSON Object"));
+                        this._rejectLastSetValuePromise("Invalid JSON Data");
+                        this._lastSetValuePromise = null;
+                    }
                 }
                 catch(error) {
                     this.emitErrorEvent(error);
+                    this._rejectLastSetValuePromise(error);
+                    this._lastSetValuePromise = null;
                 }
             }
             else {
@@ -189,7 +236,13 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
 
                     if(this._attributeConstraints.hasAttribute("value"))
                         this._attributeConstraints.removeAttribute("value");
-                }).catch(() => {});
+
+                    this._resolveLastSetValuePromise();
+                    this._lastSetValuePromise = null;
+                }).catch((error) => {
+                    this._rejectLastSetValuePromise(error);
+                    this._lastSetValuePromise = null;
+                });
             }
         }
         else if(name == "model-uri") {
