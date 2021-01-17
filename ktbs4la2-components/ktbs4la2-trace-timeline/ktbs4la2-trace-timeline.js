@@ -626,13 +626,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	_onChangeStyleSheetSelector(event) {
 		if(this._allowChangeStylesheet)
 			setTimeout(() => {
+				// user selected "New stylesheet"
 				if(this._styleSheetSelector.value == "<create-new>") {
 					let newStylesheet_ID = "";
 
+					// loops if the user validates an empty string, exits loop when the user enters a non-empty sting OR cancels the dialog
 					while(newStylesheet_ID == "") {
 						newStylesheet_ID = window.prompt(this._translateString("Please enter an ID for the new stylesheet") + " :");
 					}
 
+					// user didn't cancel the dialog popup
 					if(newStylesheet_ID != null) {
 						let newStylesheet = new Stylesheet();
 						newStylesheet.name = newStylesheet_ID;
@@ -654,6 +657,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 						this._enterEditStylesheetMode();
 						this._current_stylesheet_has_unsaved_modifications = true;
 					}
+					// user canceled the dialog popup
 					else {
 						let currentStylesheetRankInSelect = null;
 
@@ -1004,18 +1008,26 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 					this._editedRule_original = editedRule.clone();
 					this._editedStyleLegend = clickedStyleLegend;
 					this._edited_rule_has_been_modified = false;
-					this._styleEditInput.setAttribute("value", JSON.stringify(editedRule._JSONData));
 
-					setTimeout(() => {
-						if(this._styleEditInput.checkValidity()) {
-							if(this._styleEditPopup.classList.contains("is-invalid"))
-								this._styleEditPopup.classList.remove("is-invalid");
-						}
-						else {
-							if(!this._styleEditPopup.classList.contains("is-invalid"))
-								this._styleEditPopup.classList.add("is-invalid");
-						}
-					});
+					this._styleEditInput.setAttribute("value", JSON.stringify(editedRule._JSONData))
+						.then(() => {
+							if(this._styleEditInput.checkValidity()) {
+								if(this._styleEditPopup.classList.contains("is-invalid"))
+									this._styleEditPopup.classList.remove("is-invalid");
+							}
+							else {
+								if(!this._styleEditPopup.classList.contains("is-invalid"))
+									this._styleEditPopup.classList.add("is-invalid");
+							}
+
+							if(!this._styleEditPopup.classList.contains("visible"))
+								this._styleEditPopup.classList.add("visible");
+
+							this._styleEditInput.focus();
+						})
+						.catch((error) => {
+							this.emitErrorEvent(error);
+						});
 
 					this._stylesheetTools.classList.add("style-being-edited");
 
@@ -1024,11 +1036,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 					if(this._styleEditPopup.classList.contains("is-new"))
 						this._styleEditPopup.classList.remove("is-new");
-
-					if(!this._styleEditPopup.classList.contains("visible"))
-						this._styleEditPopup.classList.add("visible");
-
-					this._styleEditInput.focus();
 				}
 				else {
 					const error = new Error("Cannot find a rule with ID \"" + styleRuleID + "\" in the current stylesheet");
