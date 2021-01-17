@@ -1151,6 +1151,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			styleSheetRules.splice(this._editedRule_rank, 1);
 			this._currentStylesheet.rules = styleSheetRules;
 			this._edited_rule_has_been_modified = true;
+			this._current_stylesheet_has_unsaved_modifications = true;
 			this._applyStyleSheet(this._currentStylesheet);
 			this._exitStyleEdition();
 		}
