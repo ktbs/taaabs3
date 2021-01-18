@@ -70,17 +70,21 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
      * 
      */
     get value() {
-        if(
-                this.hasAttribute("force-trailing-slash") 
-            &&  (
-                        (this.getAttribute("force-trailing-slash") == "")
-                    ||  (this.getAttribute("force-trailing-slash") == "true")
-                    ||  (this.getAttribute("force-trailing-slash") == "1")
+        if(this._idInput) {
+            if(
+                    this.hasAttribute("force-trailing-slash") 
+                &&  (
+                            (this.getAttribute("force-trailing-slash") == "")
+                        ||  (this.getAttribute("force-trailing-slash") == "true")
+                        ||  (this.getAttribute("force-trailing-slash") == "1")
+                )
             )
-        )
-            return this._idInput.value + "/";
+                return this._idInput.value + "/";
+            else
+                return this._idInput.value;
+        }
         else
-            return this._idInput.value;
+            return "";
     }
 
     /**

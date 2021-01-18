@@ -71,17 +71,22 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
      * 
      */
     get value() {
-        if(this._attributeTypeSelect.value) {
-            const returnObject = {
+        let returnObject;
+
+        if(this._attributeTypeSelect && this._operatorSelect && this._valueInput)
+            returnObject = {
                 "uri": this._attributeTypeSelect.value,
                 "operator": this._operatorSelect.value,
                 "value": this._valueInput.value
             };
-
-            return JSON.stringify(returnObject);
-        }
         else
-            return null;
+            returnObject = {
+                "uri": null,
+                "operator": "==",
+                "value": ""
+            };
+
+        return JSON.stringify(returnObject);
     }
  
     /**

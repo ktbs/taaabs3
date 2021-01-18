@@ -374,7 +374,10 @@ class KTBS4LA2MultipleHrulesRulesInput extends TemplatedHTMLElement {
 	 * 
 	 */
 	_getRulesInputs() {
-		return this._ruleInputsDiv.querySelectorAll("ktbs4la2-hrules-rule-input");
+        if(this._ruleInputsDiv)
+            return this._ruleInputsDiv.querySelectorAll("ktbs4la2-hrules-rule-input");
+        else
+            return [];
     }
 
     /**

@@ -393,7 +393,10 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
 	 * 
 	 */
 	_getAttributeConstraintInputs() {
-		return this._attributeConstraintInputsDiv.querySelectorAll("ktbs4la2-hrules-attribute-constraint-input");
+        if(this._attributeConstraintInputsDiv)
+            return this._attributeConstraintInputsDiv.querySelectorAll("ktbs4la2-hrules-attribute-constraint-input");
+        else
+            return [];
     }
     
     /**

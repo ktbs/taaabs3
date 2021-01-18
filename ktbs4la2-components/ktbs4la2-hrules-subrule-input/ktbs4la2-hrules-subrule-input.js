@@ -111,10 +111,18 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
      * 
      */
     get value() {
-        const returnObject = {
-            "type": this._obselTypeSelect.value,
-            "attributes": JSON.parse(this._attributeConstraints.value)
-        };
+        let returnObject;
+
+        if(this._obselTypeSelect && this._attributeConstraints)
+            returnObject = {
+                "type": this._obselTypeSelect.value,
+                "attributes": JSON.parse(this._attributeConstraints.value)
+            };
+        else
+            returnObject = {
+                "type": null,
+                "attributes": []
+            };
 
         return JSON.stringify(returnObject);
     }

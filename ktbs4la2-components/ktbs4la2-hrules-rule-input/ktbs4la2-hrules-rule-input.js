@@ -74,17 +74,34 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
      * 
      */
     get value() {
-        let returnObject = {
-            "id": this._idInput.value,
-            "visible": this._visibleCheckBox.checked,
-            "rules": JSON.parse(this._subrulesInput.value)
-        };
+        let returnObject;
 
-        if(this.stylesheet)
-            returnObject["symbol"] = {
-                "color": this._colorInput.value,
-                "shape": this._shapeSelect.value
-            }
+        if(this._idInput && this._visibleCheckBox && this._subrulesInput && this._colorInput && this._shapeSelect) {
+            returnObject = {
+                "id": this._idInput.value,
+                "visible": this._visibleCheckBox.checked,
+                "rules": JSON.parse(this._subrulesInput.value)
+            };
+
+            if(this.stylesheet)
+                returnObject["symbol"] = {
+                    "color": this._colorInput.value,
+                    "shape": this._shapeSelect.value
+                };
+        }
+        else {
+            returnObject = {
+                "id": "",
+                "visible": true,
+                "rules": []
+            };
+
+            if(this.stylesheet)
+                returnObject["symbol"] = {
+                    "color": "#000000",
+                    "shape": "duration-bar"
+                };
+        }
 
         return JSON.stringify(returnObject);
     }
