@@ -257,9 +257,10 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
                     const valueObject = JSON.parse(newValue);
 
                     if(valueObject instanceof Object) {
-                        if(valueObject.id && valueObject.rules && (valueObject.rules instanceof Array)) {
+                        if(!valueObject.rules || (valueObject.rules instanceof Array)) {
                             this._componentReady.then(() => {
-                                const idInputSetValuePromise = this._idInput.setAttribute("value", valueObject.id);
+                                const id = (valueObject.id)?valueObject.id:"";
+                                const idInputSetValuePromise = this._idInput.setAttribute("value", id);
 
                                 if(valueObject.visible != undefined)
                                     this._visibleCheckBox.checked = valueObject.visible;
@@ -270,7 +271,7 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
                                     if(valueObject.symbol.color)
                                         this._colorInput.value = valueObject.symbol.color;
                                     else
-                                        this._colorInput.value = "";
+                                        this._colorInput.value = "#000000";
 
                                     if(valueObject.symbol.shape)
                                         this._shapeSelect.value = valueObject.symbol.shape;
@@ -278,11 +279,12 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
                                         this._shapeSelect.value = "duration-bar";
                                 }
                                 else {
-                                    this._colorInput.value = "";
+                                    this._colorInput.value = "#000000";
                                     this._shapeSelect.value = "duration-bar";
                                 }
 
-                                const subRulesSetValuePromise = this._subrulesInput.setAttribute("value", JSON.stringify(valueObject.rules));
+                                const rulesData = (valueObject.rules)?valueObject.rules:[];
+                                const subRulesSetValuePromise = this._subrulesInput.setAttribute("value", JSON.stringify(rulesData));
                                 
                                 Promise.all([idInputSetValuePromise, subRulesSetValuePromise])
                                     .then(() => {
