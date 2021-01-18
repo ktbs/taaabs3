@@ -11,6 +11,7 @@ import "./ktbs4la2-trace-timeline-style-legend.js";
 import "../ktbs4la2-timeline/ktbs4la2-timeline.js";
 import "../ktbs4la2-obsel-attributes/ktbs4la2-obsel-attributes.js";
 import "../ktbs4la2-hrules-rule-input/ktbs4la2-hrules-rule-input.js";
+import "../ktbs4la2-resource-id-input/ktbs4la2-resource-id-input.js";
 
 import {getDistinctColor} from "../common/colors-utils.js";
 
@@ -76,7 +77,12 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._styleSheetIcon = this.shadowRoot.querySelector("#stylesheet-icon");
 		this._defaultStylesheetSelectorEntry = this.shadowRoot.querySelector("#default");
 		this._styleSheetSelector.addEventListener("change", this._onChangeStyleSheetSelector.bind(this));
+		this._stylesheetIdInput = this.shadowRoot.querySelector("#stylesheet-id-input");
+		this._stylesheetIdInput.addEventListener("change", this._onChangeStylesheetIdInput.bind(this));
+		this._stylesheetIdInput.addEventListener("input", this._onChangeStylesheetIdInput.bind(this));
 		this._legend = this.shadowRoot.querySelector("#legend");
+		this._stylesheetDescriptionArea = this.shadowRoot.querySelector("#stylesheet-description");
+		this._stylesheetDescriptionArea.addEventListener("input", this._onInputStylesheetDescriptionArea.bind(this));
 		this._addStyleButton = this.shadowRoot.querySelector("#add-style-button");
 		this._addStyleButton.addEventListener("click", this._onClickAddStyleButton.bind(this));
 		this._stylesheetTools = this.shadowRoot.querySelector("#stylesheet-tools");
@@ -281,23 +287,22 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		}
 
 		if(attributeName == "stylesheet") {
-			this._stylesheetsBuilded.then(() => {
-				let newStyleSheet = null;
-				
-				for(let i = 0; i < this._styleSheets.length; i++) {
-					let aStylesheet = this._styleSheets[i];
+			Promise.all([this._componentReady, this._stylesheetsBuilded])
+				.then(() => {
+					for(let i = 0; i < this._styleSheets.length; i++) {
+						let aStylesheet = this._styleSheets[i];
 
-					if(aStylesheet.name.toLowerCase() == newValue.toLowerCase()) {
-						newStyleSheet = aStylesheet;
-						break;
+						if(aStylesheet.name.toLowerCase() == newValue.toLowerCase())
+							setTimeout(() => {
+								if(!this._styleSheetSelector.options[i].selected)
+									this._styleSheetSelector.options[i].selected = true;
+
+								this._applyStyleSheet(aStylesheet, false);
+								this._currentStylesheet_rank = i;
+								this._editedStylesheet_original = aStylesheet;
+							});
 					}
-				}
-
-				if((newStyleSheet) && (newStyleSheet != this._currentStylesheet))
-					this._componentReady.then(() => {
-						this._applyStyleSheet(newStyleSheet, false);
-					});
-			});
+				});
 		}
 	}
 
@@ -586,7 +591,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				let aStyleSheet = modelStyleSheets[i];
 				this._styleSheets.push(aStyleSheet);
 				let styleSheetSelectorEntry = document.createElement("option");
-				styleSheetSelectorEntry.setAttribute("value", i+1);
 				styleSheetSelectorEntry.innerText = aStyleSheet.name;
 				styleSheetSelectorEntry.setAttribute("title", aStyleSheet.description);
 				this._styleSheetSelector.appendChild(styleSheetSelectorEntry);
@@ -643,9 +647,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 						newStylesheet.name = newStylesheet_ID;
 						newStylesheet.is_new = true;
 						this._styleSheets.push(newStylesheet);
-						const newStylesheetRank = this._styleSheets.length - 1;
 						const newStylesheetOption = document.createElement("option");
-						newStylesheetOption.setAttribute("value", newStylesheetRank);
 						newStylesheetOption.innerText = newStylesheet_ID;
 						const createNewStylesheetOption = this._styleSheetSelector.querySelector("option#create-new-stylesheet");
 						
@@ -656,34 +658,21 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 						this._applyStyleSheet(newStylesheet, true);
 						this._editedStylesheet_original = null;
-						this._enterEditStylesheetMode();
+						this._currentStylesheet_rank = this._styleSheets.length - 1;
 						this._current_stylesheet_has_unsaved_modifications = true;
+						this._styleSheetSelector.options[this._currentStylesheet_rank].selected = true;
+						this._enterEditStylesheetMode();
 					}
 					// user canceled the dialog popup
-					else {
-						let currentStylesheetRankInSelect = null;
-
-						for(let i = 0; i < this._styleSheets.length; i++)
-							if(this._styleSheets[i] == this._currentStylesheet) {
-								currentStylesheetRankInSelect = i;
-								break;
-							}
-
-						if(currentStylesheetRankInSelect != null)
-							this._styleSheetSelector.value = currentStylesheetRankInSelect;
-						else
-							throw new Error("Could not find the selector option matching the current stylesheet");
-					}
+					else
+						this._styleSheetSelector.options[this._currentStylesheet_rank].selected = true;
 				}
+				// user selected an existing stylesheet
 				else {
-					let styleSheetID = parseInt(this._styleSheetSelector.value);
-
-					if(!isNaN(styleSheetID)) {
-						let newStyleSheet = this._styleSheets[styleSheetID];
-
-						if(newStyleSheet != this._currentStylesheet)
-							this._applyStyleSheet(newStyleSheet, true);
-					}
+					let newStyleSheet = this._styleSheets[this._styleSheetSelector.selectedIndex];
+					this._applyStyleSheet(newStyleSheet, true);
+					this._editedStylesheet_original = newStyleSheet.clone();
+					this._currentStylesheet_rank = this._styleSheetSelector.selectedIndex;
 				}
 			});
 	}
@@ -734,6 +723,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 		if((!this._styleSheetSelector.hasAttribute("disabled")) || (this._styleSheetSelector.setAttribute("disabled") != "disabled"))
 			this._styleSheetSelector.setAttribute("disabled", "disabled");
+
+		this._stylesheetDescriptionArea.setAttribute("contenteditable", "true");
 	}
 
 	/**
@@ -753,15 +744,19 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		if(this._styleSheetSelector.hasAttribute("disabled"))
 			this._styleSheetSelector.removeAttribute("disabled");
 
+		this._stylesheetDescriptionArea.setAttribute("contenteditable", "false");
 		this._current_stylesheet_has_unsaved_modifications = false;
+		delete this._editedStylesheet_original;
 	}
 
 	/**
 	 * 
 	 */
 	_onClickEditStylesheetButton(event) {
+		const stylesheet_rank = this._styleSheetSelector.selectedIndex;
+
 		// we can't delete stylesheet #0, as it always should be the default stylesheet (automatically generated "on the fly" and not stored)
-		if(this._styleSheetSelector.value != 0) {
+		if(stylesheet_rank != 0) {
 			this._editedStylesheet_original = this._currentStylesheet.clone();
 			this._enterEditStylesheetMode();
 		}
@@ -771,25 +766,14 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onClickSaveStylesheetButton(event) {
-		if(this._current_stylesheet_has_unsaved_modifications) {
-			const stylesheet_name = this._currentStylesheet.name;
+		if(this._stylesheetTools.classList.contains("edit-mode") && !this._stylesheetTools.classList.contains("style-being-edited") && this._current_stylesheet_has_unsaved_modifications) {
 			const model_copy = new Model(this._model.uri);
 
 			model_copy.get(this._abortController.signal)
 				.then(() => {
 					let model_copy_stylesheets_copy = model_copy.stylesheets;
-					let stylesheet_overwritten = false;
-
-					for(let i = 0; i < model_copy_stylesheets_copy.length; i++)
-						if(model_copy_stylesheets_copy[i].name == stylesheet_name) {
-							model_copy_stylesheets_copy[i] = this._currentStylesheet;
-							stylesheet_overwritten = true;
-							break;
-						}
-
-					if(!stylesheet_overwritten)
-						model_copy_stylesheets_copy.push(this._currentStylesheet);
-
+					// we have to withdraw 1 from this._currentStylesheet_rank because the model doesn't has the defaut stylesheet at index 0
+					model_copy_stylesheets_copy[this._currentStylesheet_rank - 1] = this._currentStylesheet;
 					model_copy.stylesheets = model_copy_stylesheets_copy;
 
 					model_copy.put()
@@ -797,6 +781,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 							if(this._currentStylesheet.is_new === true)
 								delete this._currentStylesheet.is_new;
 
+							this._styleSheets[this._currentStylesheet_rank] = this._currentStylesheet;
+							this._styleSheetSelector.options[this._currentStylesheet_rank].innerText = this._currentStylesheet.name;
 							this._exitEditStylesheetMode();
 						})
 						.catch((error) => {
@@ -815,41 +801,27 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onClickCancelStylesheetModificationsButton(event) {
-		if(this._current_stylesheet_has_unsaved_modifications) {
-			if(confirm(this._translateString("This stylesheet has unsaved modifications that will be lost.\nAre you sure ?"))) {
-				if(this._currentStylesheet.is_new == true) {
-					this._styleSheets.splice(this._currentStylesheet_rank, 1);
-					const deletedStylesheetOption = this._styleSheetSelector.querySelector("option[value = \"" + CSS.escape(this._currentStylesheet_rank) + "\"]");
-
-					if(deletedStylesheetOption) {
-						let nextOption = deletedStylesheetOption.nextSibling;
-						deletedStylesheetOption.remove();
-
-						// update selector options indexing
-						while(nextOption && (nextOption.tagName == "OPTION")) {
-							if(nextOption.hasAttribute("value")) {
-								const optionRank = parseInt(nextOption.getAttribute("value"), 10);
-
-								if(!isNaN(optionRank))
-									nextOption.setAttribute("value", optionRank - 1);
-							}
-
-							nextOption = nextOption.nextSibling;
-						}
+		if(this._stylesheetTools.classList.contains("edit-mode") && !this._stylesheetTools.classList.contains("style-being-edited")) {
+			if(this._current_stylesheet_has_unsaved_modifications) {
+				if(confirm(this._translateString("This stylesheet has unsaved modifications that will be lost.\nAre you sure ?"))) {
+					if(this._currentStylesheet.is_new == true) {
+						this._styleSheets.splice(this._currentStylesheet_rank, 1);
+						this._styleSheetSelector.options[this._currentStylesheet_rank].remove();
+						this._currentStylesheet_rank--;
+						this._styleSheetSelector.options[this._currentStylesheet_rank].selected = true;
+						this._applyStyleSheet(this._styleSheets[this._currentStylesheet_rank]);
+					}
+					else {
+						this._styleSheets[this._currentStylesheet_rank] = this._editedStylesheet_original;
+						this._applyStyleSheet(this._editedStylesheet_original);
 					}
 
-					this._applyStyleSheet(this._styleSheets[this._currentStylesheet_rank - 1]);
+					this._exitEditStylesheetMode();
 				}
-				else {
-					this._styleSheets[this._currentStylesheet_rank] = this._editedStylesheet_original;
-					this._applyStyleSheet(this._editedStylesheet_original);
-				}
-
-				this._exitEditStylesheetMode();
 			}
+			else
+				this._exitEditStylesheetMode();
 		}
-		else
-			this._exitEditStylesheetMode();
 	}
 
 	/**
@@ -867,9 +839,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			newStylesheet.name = newStylesheet_ID;
 			newStylesheet.is_new = true;
 			this._styleSheets.push(newStylesheet);
-			const newStylesheetRank = this._styleSheets.length - 1;
 			const newStylesheetOption = document.createElement("option");
-			newStylesheetOption.setAttribute("value", newStylesheetRank);
 			newStylesheetOption.innerText = newStylesheet_ID;
 			const createNewStylesheetOption = this._styleSheetSelector.querySelector("option#create-new-stylesheet");
 			
@@ -880,8 +850,10 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 			this._applyStyleSheet(newStylesheet, true);
 			this._editedStylesheet_original = null;
-			this._enterEditStylesheetMode();
+			this._currentStylesheet_rank = this._styleSheets.length - 1;
 			this._current_stylesheet_has_unsaved_modifications = true;
+			this._styleSheetSelector.options[this._currentStylesheet_rank].selected = true;
+			this._enterEditStylesheetMode();
 		}
 	}
 
@@ -897,69 +869,30 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onClickDeleteStylesheetButton(event) {
 		// we can't delete stylesheet #0, as it always should be the default stylesheet (automatically generated "on the fly" and not stored)
-		if(this._styleSheetSelector.value != 0) {
-			const stylesheet_name = this._currentStylesheet.name;
-
+		if(this._currentStylesheet_rank != 0) {
 			if(confirm(this._translateString("You are about to permanently delete this stylesheet.\nAre you sure ?"))) {			
 				const model_copy = new Model(this._model.uri);
 
 				model_copy.get(this._abortController.signal)
 					.then(() => {
 						let model_copy_stylesheets_copy = model_copy.stylesheets;
-						let stylesheet_removed = false;
+						// we have to withdraw 1 from this._currentStylesheet_rank because the model doesn't has the defaut stylesheet at index 0
+						model_copy_stylesheets_copy.splice(this._currentStylesheet_rank - 1, 1);
+						model_copy.stylesheets = model_copy_stylesheets_copy;
 
-						for(let i = 0; i < model_copy_stylesheets_copy.length; i++)
-							if(model_copy_stylesheets_copy[i].name == stylesheet_name) {
-								model_copy_stylesheets_copy.splice(i, 1);
-								stylesheet_removed = true;
-								break;
-							}
-
-						if(stylesheet_removed) {
-							model_copy.stylesheets = model_copy_stylesheets_copy;
-
-							model_copy.put()
-								.then(() => {
-									for(let i = 0; i < this._styleSheets.length; i++) {
-										if(this._styleSheets[i].name == stylesheet_name) {
-											this._styleSheets.splice(i, 1);
-											const deletedStylesheetOption = this._styleSheetSelector.querySelector("option[value = \"" + CSS.escape(i) + "\"]");
-
-											if(deletedStylesheetOption) {
-												let nextOption = deletedStylesheetOption.nextSibling;
-												deletedStylesheetOption.remove();
-
-												// update selector options indexing
-												while(nextOption && (nextOption.tagName == "OPTION")) {
-													if(nextOption.hasAttribute("value")) {
-														const optionRank = parseInt(nextOption.getAttribute("value"), 10);
-
-														if(!isNaN(optionRank))
-															nextOption.setAttribute("value", optionRank - 1);
-													}
-
-													nextOption = nextOption.nextSibling;
-												}
-											}
-
-											this._applyStyleSheet(this._styleSheets[i - 1]);
-											break;
-										}
-									}
-
-									this._exitEditStylesheetMode();
-								})
-								.catch((error) => {
-									this.emitErrorEvent(error);
-									alert(this._translateString("An error occured while attempting to delete the stylesheet in its model") + " : \n" + error.name + " : " + error.message);
-								});
-						}
-						else {
-							const error = new Error("Could not find stylesheet \"" + stylesheet_name + "\" in the Model");
-							this.emitErrorEvent(error);
-							alert(this._translateString("An error occured while attempting to delete the stylesheet in its model") + " : \n" + error.name + " : " + error.message);
-						}
-
+						model_copy.put()
+							.then(() => {
+								this._styleSheets.splice(this._currentStylesheet_rank, 1);
+								this._styleSheetSelector.options[this._currentStylesheet_rank].remove();
+								this._currentStylesheet_rank--;
+								this._styleSheetSelector.options[this._currentStylesheet_rank].selected = true;
+								const newStylesheet = this._styleSheets[this._currentStylesheet_rank];
+								this._applyStyleSheet(newStylesheet);
+							})
+							.catch((error) => {
+								this.emitErrorEvent(error);
+								alert(this._translateString("An error occured while attempting to delete the stylesheet in its model") + " : \n" + error.name + " : " + error.message);
+							});
 					})
 					.catch((error) => {
 						this.emitErrorEvent(error);
@@ -974,26 +907,54 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onClickAddStyleButton(event) {
 		if(this._stylesheetTools.classList.contains("edit-mode") && !this._stylesheetTools.classList.contains("style-being-edited")) {
-			this._editedRule_rank = this._currentStylesheet.rules.length;
-			const newStyleLegend = document.createElement("ktbs4la2-trace-timeline-style-legend");
-			newStyleLegend.setAttribute("rule-id", this._translateString("New style"));
-			newStyleLegend.setAttribute("color", "#000000");
-			newStyleLegend.classList.add("is-being-edited");
-			this._legend.insertBefore(newStyleLegend, this._addStyleButton);
-			this._editedStyleLegend = newStyleLegend;
-			this._editedRule = new HubbleRule({}, this._currentStylesheet);
-			this._editedRule.is_new = true;
+			let newRule_ID = "";
 
-			if(!this._styleEditPopup.classList.contains("is-new"))
-				this._styleEditPopup.classList.add("is-new");
+			// loops if the user validates an empty string, exits loop when the user enters a non-empty sting OR cancels the dialog
+			while(newRule_ID == "") {
+				newRule_ID = window.prompt(this._translateString("Please enter an ID for the new style") + " :");
+			}
 
-			if(!this._styleEditPopup.classList.contains("is-invalid"))
-				this._styleEditPopup.classList.add("is-invalid");
+			// user didn't cancel the dialog popup
+			if(newRule_ID != null) {
+				this._editedRule_rank = this._currentStylesheet.rules.length;
+				this._editedRule = new HubbleRule({}, this._currentStylesheet);
+				this._editedRule.id = newRule_ID;
 
-			if(!this._styleEditPopup.classList.contains("visible"))
-				this._styleEditPopup.classList.add("visible");
+				this._editedRule.symbol = {
+					shape: "duration-bar",
+					color: "#000000"
+				};
 
-			this._styleEditInput.focus();
+				this._editedRule.is_new = true;
+				let rules_copy = this._currentStylesheet.rules;
+				rules_copy.push(this._editedRule);
+				this._currentStylesheet.rules = rules_copy;
+
+				if(!this._stylesheetTools.classList.contains("style-being-edited"))
+					this._stylesheetTools.classList.add("style-being-edited");
+
+				this._applyStyleSheet(this._currentStylesheet);
+
+				this._styleEditInput.setAttribute("value", JSON.stringify(this._editedRule._JSONData))
+					.then(() => {
+						if(this._styleEditInput.checkValidity()) {
+							if(this._styleEditPopup.classList.contains("is-invalid"))
+								this._styleEditPopup.classList.remove("is-invalid");
+						}
+						else {
+							if(!this._styleEditPopup.classList.contains("is-invalid"))
+								this._styleEditPopup.classList.add("is-invalid");
+						}
+
+						if(!this._styleEditPopup.classList.contains("is-new"))
+							this._styleEditPopup.classList.add("is-new");
+
+						if(!this._styleEditPopup.classList.contains("visible"))
+							this._styleEditPopup.classList.add("visible");
+
+						this._styleEditInput.focus();
+					});
+			}
 		}
 	}
 
@@ -1029,9 +990,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 								this._styleEditPopup.classList.add("visible");
 
 							this._styleEditInput.focus();
-						})
-						.catch((error) => {
-							this.emitErrorEvent(error);
 						});
 
 					this._stylesheetTools.classList.add("style-being-edited");
@@ -1059,7 +1017,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_exitStyleEdition() {
 		if(this._editedStyleLegend) {
-			this._styleEditInput.removeAttribute("value");
+			if(this._styleEditInput.hasAttribute("value"))
+				this._styleEditInput.removeAttribute("value");
 
 			if(this._editedStyleLegend.classList.contains("is-being-edited"))
 				this._editedStyleLegend.classList.remove("is-being-edited");
@@ -1188,15 +1147,15 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * @param Object stylesheet 
 	 */
 	_rebuildLegend(stylesheet) {
-		// rebuild the styles legends
 		let legendContent = new DocumentFragment();
 
+		// rebuild the styles legends
 		for(let i = 0; i < stylesheet.rules.length; i++) {
 			let aRule = stylesheet.rules[i];
 			let styleNode = document.createElement("ktbs4la2-trace-timeline-style-legend");
 			styleNode.setAttribute("rule-id", aRule.id);
 
-			if(this._styleEditPopup.classList.contains("visible") && (i == this._editedRule_rank)) {
+			if(this._stylesheetTools.classList.contains("style-being-edited") && (i == this._editedRule_rank)) {
 				styleNode.classList.add("is-being-edited");
 				this._editedStyleLegend = styleNode;
 			}
@@ -1227,6 +1186,30 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._addStyleButton.addEventListener("click", this._onClickAddStyleButton.bind(this));
 		legendContent.appendChild(this._addStyleButton);
 
+		// add description area
+		this._stylesheetDescriptionArea = document.createElement("div");
+		this._stylesheetDescriptionArea.setAttribute("id", "stylesheet-description");
+		let description = stylesheet.automatically_generated?this._translateString("Default stylesheet generated automatically"):stylesheet.description;
+
+		if(description) {
+			this._stylesheetDescriptionArea.innerText = description;
+
+			if(this._stylesheetDescriptionArea.classList.contains("empty"))
+				this._stylesheetDescriptionArea.classList.remove("empty");
+		}
+		else {
+			this._stylesheetDescriptionArea.innerText = "";
+
+			if(!this._stylesheetDescriptionArea.classList.contains("empty"))
+				this._stylesheetDescriptionArea.classList.add("empty");
+		}
+
+		if(this._stylesheetTools.classList.contains("edit-mode"))
+			this._stylesheetDescriptionArea.setAttribute("contenteditable", "true");
+
+		this._stylesheetDescriptionArea.addEventListener("input", this._onInputStylesheetDescriptionArea.bind(this));
+		legendContent.appendChild(this._stylesheetDescriptionArea);
+
 		// replace the content of the legend
 		this._legend.innerHTML = "";
 		this._legend.appendChild(legendContent);
@@ -1235,32 +1218,32 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_onInputStylesheetDescriptionArea(event) {
+		if(this._stylesheetTools.classList.contains("edit-mode")) {
+			this._currentStylesheet.description = this._stylesheetDescriptionArea.innerText;
+			this._current_stylesheet_has_unsaved_modifications = true;
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onChangeStylesheetIdInput(event) {
+		if(this._stylesheetTools.classList.contains("edit-mode")) {
+			this._currentStylesheet.name = this._stylesheetIdInput.value;
+			this._current_stylesheet_has_unsaved_modifications = true;
+		}
+	}
+
+	/**
+	 * 
+	 */
 	_applyStyleSheet(stylesheet, emit_event = false) {
 		this._currentStylesheet = stylesheet;
-
-		for(let i = 0; i < this._styleSheets.length; i++)
-			if(this._styleSheets[i] == stylesheet) {
-				this._currentStylesheet_rank = i;
-				break;
-			}
-
+		this._stylesheetIdInput.setAttribute("value", stylesheet.name);
 
 		// rebuild the legend
 		this._rebuildLegend(stylesheet);
-
-		// update stylesheet selector if needed (i.e. the stylesheet has been changed, not from the selector, but from the "stylesheet" attribute)
-		if(stylesheet.name != this._styleSheetSelector.value) {
-			let selectorEntries = this._styleSheetSelector.options;
-			
-			for(let i = 0; i < selectorEntries.length; i++) {
-				let anEntry = selectorEntries[i];
-
-				if(anEntry.selected && (anEntry.innerText != stylesheet.name))
-					anEntry.selected = false;
-				else if(!anEntry.selected && (anEntry.innerText == stylesheet.name))
-					anEntry.selected = true;
-			}
-		}
 
 		if(stylesheet.automatically_generated) {
 			if(!this._currentStylesheetTools.classList.contains("stylesheet-automatically-generated"))

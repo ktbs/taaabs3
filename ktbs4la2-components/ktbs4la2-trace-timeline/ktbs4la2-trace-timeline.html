@@ -8,10 +8,13 @@
             <select id="slylesheet-selector" title="{translate: 'Stylesheet'}" disabled>
                 <option id="default" value="0" title="{translate: 'Default stylesheet generated automatically'}">{translate: 'Default'}</option>
             </select>
+
+            <ktbs4la2-resource-id-input tabindex="0" id="stylesheet-id-input" placeholder="&lt;id&gt;" required></ktbs4la2-resource-id-input>
         </form>
 
         <div id="legend">
             <button id="add-style-button" title="{translate: 'Add a new style'}">+</button>
+            <div id="stylesheet-description"></div>
         </div>
 
         <div id="current-stylesheet-tools">
