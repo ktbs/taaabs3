@@ -98,6 +98,43 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
     }
 
     /**
+     * Gets the value of property reserved_ids
+     * \return Array
+     * \public
+     */
+    get reserved_ids() {
+        if(this.hasAttribute("reserved-ids"))
+            return this.getAttribute("reserved-ids").split(" ").filter(Boolean);
+        else
+            return [];
+    }
+
+    /**
+     * Sets the value of property reserved_ids
+     * \param Array of string or null new_ids
+     * \throws TypeError thows a TypeError if value of parameter new_ids is not an instance of Array or null
+     * \public
+     */
+    set reserved_ids(new_ids) {
+        if(new_ids == null)
+            this.removeAttribute("reserved-ids");
+        else if(new_ids instanceof Array)
+            this.setAttribute("reserved-ids", new_ids.join(" "));
+        else
+            throw new TypeError("New value for property \"reserved_ids\" must be an instance of Array or null");
+    }
+
+    /**
+     * Checks if a given id string equals one of the currently reserved ids
+     * @param string candidate_id the id string we want to check if it is reserved
+     * \return boolean
+     * \public
+     */
+    _is_reserved_id(candidate_id) {
+        return this.reserved_ids.includes(candidate_id);
+    }
+
+    /**
 	 * 
 	 */
 	static get observedAttributes() {
@@ -258,10 +295,7 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
         if(this._idInput) {
             return ( 
                     this._idInput.checkValidity()
-                &&  (
-                            !this.getAttribute("reserved-ids")
-                        ||  !(this.getAttribute("reserved-ids").split(" ").filter(Boolean).includes(this.value))
-                )
+                &&  !this._is_reserved_id(this.value)
             );
         }
         else
