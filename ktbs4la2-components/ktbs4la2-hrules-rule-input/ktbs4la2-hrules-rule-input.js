@@ -136,6 +136,31 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
     }
 
     /**
+     * Gets the value of property reserved_ids
+     * \return Array
+     * \public
+     */
+    get reserved_ids() {
+        if(this.hasAttribute("reserved-ids"))
+            return this.getAttribute("reserved-ids").split(" ").filter(Boolean);
+        else
+            return [];
+    }
+
+    /**
+     * Sets the value of property reserved_ids
+     * \param Array of string or null new_ids
+     * \throws TypeError thows a TypeError if value of parameter new_ids is not an instance of Array or null
+     * \public
+     */
+    set reserved_ids(newValue) {
+        if(newValue != null)
+            this.setAttribute("reserved-ids", newValue);
+        else if(this.hasAttribute("reserved-ids"))
+            this.removeAttribute("reserved-ids");
+    }
+
+    /**
      * 
      */
     get model_uri() {
@@ -236,6 +261,7 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
         _observedAttributes.push("model-uri");
         _observedAttributes.push("value");
         _observedAttributes.push("required");
+        _observedAttributes.push("reserved-ids");
         return _observedAttributes;
     }
 
@@ -343,6 +369,15 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
                 else
                     if(this._idInput.hasAttribute("required"))
                         this._idInput.removeAttribute("required");
+            }).catch(() => {});
+        }
+        else if(name == "reserved-ids") {
+            this._componentReady.then(() => {
+                if(newValue != null)
+                    this._idInput.setAttribute("reserved-ids", newValue);
+                else
+                    if(this._idInput.hasAttribute("reserved-ids"))
+                        this._idInput.removeAttribute("reserved-ids");
             }).catch(() => {});
         }
     }
