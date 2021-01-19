@@ -193,6 +193,14 @@
 	background-image: url('{my-component-folder}/floppy_black.svg');
 }
 
+#current-stylesheet-tools.is-invalid #save-stylesheet-button {
+	cursor: default;
+}
+
+#current-stylesheet-tools.is-invalid #save-stylesheet-button:hover {
+	opacity: 0.3;
+}
+
 #cancel-stylesheet-modifications-button {
 	background-image: url('{my-component-folder}/cancel.svg');
 }
@@ -232,7 +240,7 @@
 	opacity: 0.3;
 }
 
-#current-stylesheet-tools.has-unsaved-modifications #save-stylesheet-button {
+#current-stylesheet-tools.has-unsaved-modifications:not(.is-invalid) #save-stylesheet-button {
 	background-image: url('{my-component-folder}/floppy_green.svg');
 }
 
