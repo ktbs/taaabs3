@@ -33,6 +33,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url, true, true);
 		this._obsels = new Array();
+		this._already_instanciated_obsels_ids = new Array();
 		this._resolveStylesheetsBuilded;
 
 		this._stylesheetsBuilded =  new Promise((resolve, reject) => {
@@ -205,6 +206,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._obselsLoadingAbortController = new AbortController();
 		this._timeline.innerHTML = "";
 		this._obsels = new Array();
+		this._already_instanciated_obsels_ids = new Array();
 		this._progressBar.style.width = "0%";
 		this._obselsLoadControlButton.setAttribute("title", this._translateString("Stop loading"));
 		this._loadingStatusIcon.setAttribute("title", this._translateString("Loading"));
@@ -408,12 +410,12 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 		for(let i = 0; i < knownObselTypes.length; i++) {
 			let obselTypeID = knownObselTypes[i];
-			let aRule = new HubbleRule();
+			let aRule = new HubbleRule({}, defaultStyleSheet);
 			aRule.id = obselTypeID;
 			aRule.symbol = new Object();
 			aRule.symbol.color = getDistinctColor(i, knownObselTypes.length);
 			aRule.symbol.shape = "duration-bar";
-			let aSubRule = new HubbleSubRule();
+			let aSubRule = new HubbleSubRule({}, aRule);
 			aSubRule.type = obselTypeID;
 			aRule.rules.push(aSubRule);
 			defaultStyleSheet.rules.push(aRule);
@@ -1468,41 +1470,69 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_obselIdIsAlreadyInstanciated(obsel_id) {
+		let start = 0;
+		let end = this._already_instanciated_obsels_ids.length - 1;
+
+		while (start <= end) {
+			let middle = Math.floor((start + end) / 2);
+
+			if(this._already_instanciated_obsels_ids[middle] == obsel_id) // found the obsel id
+				return true;
+			else if(this._already_instanciated_obsels_ids[middle] < obsel_id) // continue searching to the right
+				start = middle + 1;
+			else // search searching to the left
+				end = middle - 1;
+		}
+
+		// obsel wasn't found
+		return false;
+	}
+
+	/**
+	 * 
+	 */
 	_addObsels(obsels) {
 		let eventsFragment = document.createDocumentFragment();
 		
 		for(let i = 0; i < obsels.length; i++) {
 			let obsel = obsels[i];
-			let eventElement = document.createElement("ktbs4la2-timeline-event");
-			eventElement.setAttribute("begin", (obsel.begin + this._originTime));
-			eventElement.setAttribute("end", (obsel.end + this._originTime));
-			eventElement.setAttribute("id", obsel.id);
-			eventElement.setAttribute("title", this._getObselTitleHint(obsel));
-			eventElement.setAttribute("href", obsel.uri);
 
-			if(this._currentStylesheet) {
-				let matchedRule = this._currentStylesheet.getFirstRuleMatchedByObsel(obsel);
+			// we check for duplicates with previously instanciated obsels
+			if(!this._obselIdIsAlreadyInstanciated(obsel.id)) {
+				let eventElement = document.createElement("ktbs4la2-timeline-event");
+				eventElement.setAttribute("begin", (obsel.begin + this._originTime));
+				eventElement.setAttribute("end", (obsel.end + this._originTime));
+				eventElement.setAttribute("id", obsel.id);
+				eventElement.setAttribute("title", this._getObselTitleHint(obsel));
+				eventElement.setAttribute("href", obsel.uri);
 
-				if(matchedRule) {
-					if(matchedRule["symbol"].symbol)
-						eventElement.setAttribute("symbol", JSSpecialCharToHTMLHex(matchedRule["symbol"].symbol));
-					else if(matchedRule["symbol"].shape)
-						eventElement.setAttribute("shape", matchedRule["symbol"].shape);
+				if(this._currentStylesheet) {
+					let matchedRule = this._currentStylesheet.getFirstRuleMatchedByObsel(obsel);
 
-					if(matchedRule["symbol"].color)
-						eventElement.setAttribute("color", matchedRule["symbol"].color);
+					if(matchedRule) {
+						if(matchedRule["symbol"].symbol)
+							eventElement.setAttribute("symbol", JSSpecialCharToHTMLHex(matchedRule["symbol"].symbol));
+						else if(matchedRule["symbol"].shape)
+							eventElement.setAttribute("shape", matchedRule["symbol"].shape);
 
-					if(matchedRule["visible"] != undefined)
-						eventElement.setAttribute("visible", matchedRule["visible"]);
+						if(matchedRule["symbol"].color)
+							eventElement.setAttribute("color", matchedRule["symbol"].color);
+
+						if(matchedRule["visible"] != undefined)
+							eventElement.setAttribute("visible", matchedRule["visible"]);
+					}
+					else
+						eventElement.setAttribute("visible", false);
 				}
-				else
-					eventElement.setAttribute("visible", false);
-			}
 
-			eventsFragment.appendChild(eventElement);
+				eventsFragment.appendChild(eventElement);
+				this._already_instanciated_obsels_ids.push(obsel.id);
+				this._already_instanciated_obsels_ids.sort();
+				this._obsels.push(obsel);
+			}
 		}
 
-		this._obsels.push(...obsels);
 		this._timeline.appendChild(eventsFragment);
 	}
 
