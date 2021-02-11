@@ -163,12 +163,8 @@ export class Model extends Resource {
 		if(!this._label) {
 			let modelOwnGraph = this._get_model_own_graph();
 
-			if(modelOwnGraph) {
-				if(modelOwnGraph["label"])
-					this._label = modelOwnGraph["label"];
-				else
-					this._label = modelOwnGraph["http://www.w3.org/2000/01/rdf-schema#label"];
-			}
+			if(modelOwnGraph && modelOwnGraph["label"])
+				this._label = modelOwnGraph["label"];
 		}
 		
 		return this._label;
@@ -183,6 +179,26 @@ export class Model extends Resource {
 		let modelOwnGraphRank = this._get_model_own_graph_rank();
 		this._JSONData["@graph"][modelOwnGraphRank]["label"] = new_label;
 		this._label = new_label;
+	}
+
+	/**
+	 * Gets the labels translations array
+	 * \return Array
+	 * \public
+	 */
+	get label_translations() {
+		let modelOwnGraph = this._get_model_own_graph();
+		return modelOwnGraph["http://www.w3.org/2000/01/rdf-schema#label"];
+	}
+
+	/**
+	 * Sets the labels translations array
+	 * \param Array newValue
+	 * \public
+	 */
+	set label_translations(newValue) {
+		let modelOwnGraphRank = this._get_model_own_graph_rank();
+		this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#label"] = newValue;
 	}
 
 	/**
@@ -210,6 +226,64 @@ export class Model extends Resource {
 		let modelOwnGraphRank = this._get_model_own_graph_rank();
 		this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#comment"] = new_comment;
 		this._label = new_comment;
+	}
+
+	/**
+	 * Gets the label for a given language
+	 * \param string lang a short code for the language we want the label translated into
+	 * \return string the translated label, or the default label if no translated label has been found (which can be "undefined" if it hasn't been set)
+	 * \public
+	 */
+	get_translated_label(lang) {
+		let modelOwnGraph = this._get_model_own_graph();
+		let labelTranslations = modelOwnGraph["http://www.w3.org/2000/01/rdf-schema#label"];
+
+		if(labelTranslations instanceof Array) {
+			for(let i = 0; i < labelTranslations.length; i++) {
+				let aLabelTranslation = labelTranslations[i];
+
+				if((aLabelTranslation instanceof Object) && (aLabelTranslation["@language"] == lang))
+					return aLabelTranslation["@value"];
+			}
+		}
+		else if(
+				(labelTranslations instanceof Object)
+			&&	labelTranslations["@language"]
+			&&	labelTranslations["@value"]
+			&& 	(labelTranslations["@language"] == lang)
+		)
+			return labelTranslations["@value"];
+		
+		return undefined;
+	}
+
+	/**
+	 * Sets a translation for the label in a given language
+	 * \param string label the translated label
+	 * \param string lang a short code for the language the label is translated in
+	 * \public
+	 */
+	set_translated_label(label, lang) {
+		let modelOwnGraphRank = this._get_model_own_graph_rank();
+		let label_translations;
+
+		if(this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#label"])
+			label_translations = this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#label"];
+		else
+			label_translations = new Array();
+
+		let existing_translation_replaced = false;
+
+		for(let i = 0; !existing_translation_replaced && (i < label_translations.length); i++)
+			if(label_translations[i]["@language"] == lang) {
+				label_translations[i]["@value"] = label;
+				existing_translation_replaced = true;
+			}
+	
+		if(!existing_translation_replaced)
+			label_translations.push({"@value": label, "@language": lang})
+		
+		this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#label"] = label_translations;
 	}
 
 	/**

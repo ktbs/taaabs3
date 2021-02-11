@@ -1,0 +1,201 @@
+<h1 id="title">{translate: 'Store stylesheet rules in a method'}</h1>
+
+<form id="method-form">
+    <fieldset id="instance-fieldset">
+        <legend id="instance-fieldset-legend">{translate: 'Store into :'}</legend>
+
+        <p>
+            <input type="radio" name="method-instance" id="method-instance-new" value="new-method" tabIndex="1" checked />
+            <label id="method-instance-new-label" for="method-instance-new">{translate: 'A new method and model (create)'}</label>
+        </p>
+
+        <p>
+            <input type="radio" name="method-instance" id="method-instance-existing" value="existing-method" tabIndex="2" />
+            <label id="method-instance-existing-label" for="method-instance-existing">{translate: 'Already existing method and model (overwrite)'}</label>
+        </p>
+    </fieldset>
+
+    <section id="new">
+        <section id="new-method">
+            <h2 id="method-section-title">{translate: 'New method settings'}</h2>
+
+            <p>
+                <label id="new-method-id-label" for="new-method-id">
+                    <span id="new-method-id-label-label">{translate: 'ID'}</span><span class="required-field">*</span> : 
+                </label>
+
+                <ktbs4la2-resource-id-input
+                    id="new-method-id"
+                    name="new-method-id"
+                    placeholder="&lt;id&gt;"
+                    tabIndex="3" 
+                    required>
+                </ktbs4la2-resource-id-input>
+            </p>
+
+            <p>
+                <label for="new-method-label" id="new-method-label-label">{translate: 'Label'} : </label>
+
+                <ktbs4la2-multiple-translations-text-input 
+                    id="new-method-label" 
+                    name="new-method-label" 
+                    placeholder="{translate: 'Label'}"
+                    tabIndex="4">
+                </ktbs4la2-multiple-translations-text-input>
+            </p>
+
+            <fieldset id="new-method-parent-base">
+                <legend id="new-method-parent-base-legend">{translate: 'Create into :'}</legend>
+
+                <p>
+                    <input type="radio" name="new-method-parent-base-option" id="new-method-parent-base-option-default" value="default" tabIndex="5" checked />
+                    <label id="new-method-parent-base-option-default-label" for="new-method-parent-base-option-default">{translate: 'Same base as source trace'}</label>
+                </p>
+
+                <p class="resource-picker-container">
+                    <input type="radio" name="new-method-parent-base-option" id="new-method-parent-base-option-custom" value="custom" tabIndex="6" />
+                    <label id="new-method-parent-base-option-custom-label" for="new-method-parent-base-option-custom">{translate: 'Other...'}</label>
+                    
+                    <ktbs4la2-resource-picker 
+                        id="new-method-parent-base-custom-uri" 
+                        name="new-method-parent-base-custom-uri" 
+                        allowed-resource-types="Base"
+                        tabIndex="7" 
+                        class="hidden"
+                        required>
+                    </ktbs4la2-resource-picker>
+                </p>
+            </fieldset>
+        </section>
+
+        <section id="model">
+            <h2 id="model-section-title">{translate: 'New model settings'}</h2>
+
+            <p>
+                <label id="new-model-id-label" for="new-model-id">
+                    <span id="new-model-id-label-label">{translate: 'ID'}</span><span class="required-field">*</span> : 
+                </label>
+
+                <ktbs4la2-resource-id-input
+                    id="new-model-id"
+                    name="new-model-id"
+                    placeholder="&lt;id&gt;"
+                    tabIndex="8" 
+                    required>
+                </ktbs4la2-resource-id-input>
+            </p>
+
+            <p>
+                <label for="new-model-label" id="new-model-label-label">{translate: 'Label'} : </label>
+
+                <ktbs4la2-multiple-translations-text-input 
+                    id="new-model-label" 
+                    name="new-model-label" 
+                    placeholder="{translate: 'Label'}"
+                    tabIndex="9">
+                </ktbs4la2-multiple-translations-text-input>
+            </p>
+
+            <fieldset id="new-model-parent-base">
+                <legend id="new-model-parent-base-legend">{translate: 'Create into :'}</legend>
+
+                <p>
+                    <input type="radio" name="new-model-parent-base-option" id="new-model-parent-base-option-default" value="default" tabIndex="10" checked />
+                    <label id="new-model-parent-base-option-default-label" for="new-model-parent-base-option-default">{translate: 'Same base as source trace'}</label>
+                </p>
+
+                <p class="resource-picker-container">
+                    <input type="radio" name="new-model-parent-base-option" id="new-model-parent-base-option-custom" value="custom" tabIndex="11" />
+                    <label id="new-model-parent-base-option-custom-label" for="new-model-parent-base-option-custom">{translate: 'Other...'}</label>
+                    
+                    <ktbs4la2-resource-picker 
+                        id="new-model-parent-base-custom-uri" 
+                        name="new-model-parent-base-custom-uri" 
+                        allowed-resource-types="Base"
+                        tabIndex="12" 
+                        class="hidden"
+                        required>
+                    </ktbs4la2-resource-picker>
+                </p>
+            </fieldset>
+        </section>
+    </section>
+
+    <section id="existing" class="hidden">
+        <p class="resource-picker-container">
+            <label id="existing-method-uri-label" for="existing-method-uri">{translate: 'Method to overwrite :'}</label>
+
+            <ktbs4la2-resource-picker 
+                id="existing-method-uri"
+                name="existing-method-uri"
+                allowed-resource-types="Method"
+                allow-builtin-methods="false"
+                tabIndex="13"
+                required>
+            </ktbs4la2-resource-picker>
+        </p>
+    </section>
+
+    <p id="create-computed-trace-p">
+        <input type="checkbox" id="create-computed-trace" name="create-computed-trace" />
+        <label for="create-computed-trace" id="create-computed-trace-label">{translate: 'Also create a new computed trace based on the method and model'}</label>
+    </p>
+
+    <section id="computed-trace" class="hidden">
+        <h2 id="computed-trace-section-title">{translate: 'New computed trace settings'}</h2>
+
+        <p>
+            <label id="new-computed-trace-id-label" for="new-computed-trace-id">
+                <span id="new-computed-trace-id-label-label">{translate: 'ID'}</span><span class="required-field">*</span> : 
+            </label>
+
+            <ktbs4la2-resource-id-input
+                id="new-computed-trace-id"
+                name="new-computed-trace-id"
+                force-trailing-slash="true"
+                placeholder="&lt;id&gt;"
+                tabIndex="14" 
+                required>
+            </ktbs4la2-resource-id-input>
+        </p>
+
+        <p>
+            <label for="new-computed-trace-label" id="new-computed-trace-label-label">{translate: 'Label'} : </label>
+
+            <ktbs4la2-multiple-translations-text-input 
+                id="new-computed-trace-label" 
+                name="new-computed-trace-label" 
+                placeholder="{translate: 'Label'}"
+                tabIndex="15">
+            </ktbs4la2-multiple-translations-text-input>
+        </p>
+
+        <fieldset id="new-computed-trace-parent-base">
+            <legend id="new-computed-trace-parent-base-legend">{translate: 'Create into :'}</legend>
+
+            <p>
+                <input type="radio" name="new-computed-trace-parent-base-option" id="new-computed-trace-parent-base-option-default" value="default" tabIndex="16" checked />
+                <label id="new-computed-trace-parent-base-option-default-label" for="new-computed-trace-parent-base-option-default">{translate: 'Same base as source trace'}</label>
+            </p>
+
+            <p class="resource-picker-container">
+                <input type="radio" name="new-computed-trace-parent-base-option" id="new-computed-trace-parent-base-option-custom" value="custom" tabIndex="17" />
+                <label id="new-computed-trace-parent-base-option-custom-label" for="new-computed-trace-parent-base-option-custom">{translate: 'Other...'}</label>
+                
+                <ktbs4la2-resource-picker 
+                    id="new-computed-trace-parent-base-custom-uri" 
+                    name="new-computed-trace-parent-base-custom-uri" 
+                    allowed-resource-types="Base"
+                    tabIndex="18" 
+                    class="hidden" 
+                    required>
+                </ktbs4la2-resource-picker>
+            </p>
+        </fieldset>
+    </section>
+
+    <p id="buttons">
+        <button type="submit" id="ok" tabIndex="19" disabled>{translate: 'Store'}</button>
+        <button type="button" id="cancel" tabIndex="20">{translate: 'Cancel'}</button>
+    </p>
+</form>

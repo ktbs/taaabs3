@@ -209,9 +209,8 @@
 	background-image: url('{my-component-folder}/duplicate.svg');
 }
 
-#create-computed-trace-from-stylesheet-button {
-	background-image: url('{my-component-folder}/ComputedTrace.svg');
-	display: none;
+#create-method-from-stylesheet-button {
+	background-image: url('{my-component-folder}/Method.svg');
 }
 
 #delete-stylesheet-button {
@@ -224,7 +223,7 @@
 #stylesheet-tools.edit-mode #edit-stylesheet-button,
 #stylesheet-tools.edit-mode #duplicate-stylesheet-button,
 #stylesheet-tools.edit-mode #delete-stylesheet-button,
-#stylesheet-tools.edit-mode #create-computed-trace-from-stylesheet-button,
+#stylesheet-tools.edit-mode #create-method-from-stylesheet-button,
 #current-stylesheet-tools.stylesheet-automatically-generated #edit-stylesheet-button,
 #current-stylesheet-tools.stylesheet-automatically-generated #save-stylesheet-button,
 #current-stylesheet-tools.stylesheet-automatically-generated #cancel-stylesheet-modifications-button,
@@ -447,9 +446,14 @@
 	opacity: 1;
 }
 
+#style-edit-input {
+	margin-right: 20px;
+}
+
 #style-tools {
-	display: inline-block;
-	vertical-align: top;
+	position: absolute;
+	top: 5px;
+	right: 5px;
 }
 
 .style-tool {

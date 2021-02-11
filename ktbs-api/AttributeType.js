@@ -352,6 +352,20 @@ export class AttributeType {
 		else
 			throw new KtbsError("AttributeType POST data cannot be built before the AttributeType's parent model has been set");
 	}
+
+	/**
+	 * 
+	 */
+	clone() {
+		// we use this weird JSON.parse+JSON.stringify trick in order to easily make a deep copy of the data
+		const clonedJSONData = JSON.parse(JSON.stringify(this._JSONData));
+		
+		if(clonedJSONData["hasAttributeObselType"])
+			delete clonedJSONData["hasAttributeObselType"];
+
+		const clone = new AttributeType(null, clonedJSONData);
+        return clone;
+	}
 	
 	/**
 	 * Gets the list of the builtin attribute types

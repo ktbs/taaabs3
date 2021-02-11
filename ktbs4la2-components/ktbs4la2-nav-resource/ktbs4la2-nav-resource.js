@@ -87,6 +87,11 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 		else
 			this._unfoldButton.setAttribute("title", this._translateString("Fold child list"));
 
+		const label = this._ktbsResource.get_preferred_label(this._lang);
+		
+		if(label)
+			this._titleTag.innerText = label;
+
 		this._titleTag.setAttribute("title", this._getTitleHint());
 		this._childListSpinner.innerText = this._translateString("Pending...");
 		this._childListEmpty.innerText = this._translateString("Empty");
@@ -97,9 +102,9 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	 */
 	_onKtbsResourceSyncInSync() {
 		this._componentReady.then(() => {
-			const label = this._ktbsResource.label;
+			const label = this._ktbsResource.get_preferred_label(this._lang);
 			
-			if(label && !this.hasAttribute("label"))
+			if(label)
 				this._titleTag.innerText = label;
 
 			this._titleTag.title = this._getTitleHint();
@@ -340,8 +345,10 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 			newChildElement.setAttribute("resource-type", child.type);
 			newChildElement.setAttribute("uri", child.uri);
 
-			if(child.label)
-				newChildElement.setAttribute("label", child.label);
+			const child_label = child.get_preferred_label(this._lang);
+			
+			if(child_label)
+				newChildElement.setAttribute("label", child_label);
 
 			if(mark_as_new == true)
 				newChildElement.classList.add("new");

@@ -158,9 +158,9 @@ export class Method extends Resource {
 		if(!this._parameters) {
 			this._parameters = new Array();
 
-			if(this._JSONData.parameter && (this._JSONData.parameter instanceof array)) {
+			if(this._JSONData.parameter && (this._JSONData.parameter instanceof Array)) {
 				for(let i = 0; i < this._JSONData.parameter.length; i++) {
-					let parameterString = parameters[i];
+					let parameterString = this._JSONData.parameter[i];
 					let equalCharPos = parameterString.indexOf('=');
 
 					if(equalCharPos != -1) {

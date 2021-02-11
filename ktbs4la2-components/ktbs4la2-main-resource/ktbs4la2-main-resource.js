@@ -654,15 +654,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
     _onKtbsResourceSyncInSync() {
 		this._componentReady.then(() => {
             let resourceType = this.getAttribute("resource-type");
-        
-			if(!this.hasAttribute("label")) {
-				let label = this._ktbsResource.get_translated_label(this._lang);
-
-				if(label)
-                    this._titleTag.innerText = label;
-                else
-                    this._titleTag.innerText = Resource.extract_relative_id(this.getAttribute("uri"));
-            }
+            this._titleTag.innerText = this._ktbsResource.get_preferred_label(this._lang);
 
             // set translations input value
             let labels_translations = new Array();
@@ -684,6 +676,14 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                         labels_translations.push({value: aLabelTranslation, lang: "*"});
                 }
             }
+            else if(this._ktbsResource.label_translations instanceof Object) {
+                if(this._ktbsResource.label_translations["@value"] && this._ktbsResource.label_translations["@language"])
+                    labels_translations.push({value: this._ktbsResource.label_translations["@value"], lang: this._ktbsResource.label_translations["@language"]});
+                else if(aLabelTranslation["@value"])
+                    labels_translations.push({value: this._ktbsResource.label_translations["@value"], lang: "*"});
+            }
+            else if(this._ktbsResource.label_translations)
+                labels_translations.push({value: this._ktbsResource.label_translations, lang: "*"});
 
             if(labels_translations.length > 0)
                 this._editLabelInput.setAttribute("value", JSON.stringify(labels_translations));

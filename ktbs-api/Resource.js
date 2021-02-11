@@ -612,8 +612,15 @@ export class Resource {
 					return aLabelTranslation["@value"];
 			}
 		}
+		else if(
+				(labelTranslations instanceof Object)
+			&&	labelTranslations["@language"]
+			&&	labelTranslations["@value"]
+			&& 	(labelTranslations["@language"] == lang)
+		)
+			return labelTranslations["@value"];
 		
-		return this.label;
+		return undefined;
 	}
 
 	/**
@@ -642,6 +649,21 @@ export class Resource {
 			label_translations.push({"@value": label, "@language": lang})
 		
 		this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] = label_translations;
+	}
+
+	/**
+	 * 
+	 */
+	get_preferred_label(lang) {
+		let preferred_label = this.get_translated_label(lang);
+
+		if(!preferred_label)
+			preferred_label = this.label;
+
+		if(!preferred_label)
+			preferred_label = this.id;
+
+		return preferred_label;
 	}
 
 	/**

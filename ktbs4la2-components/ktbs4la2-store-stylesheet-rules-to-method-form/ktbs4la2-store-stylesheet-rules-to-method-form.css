@@ -1,0 +1,126 @@
+.hidden {
+    display: none;
+}
+
+h1 {
+    margin-block-start: 5px;
+    margin-block-end: 10px;
+    font-size: 16pt;
+}
+
+#method-form {
+    padding-bottom: 5px;
+}
+
+fieldset {
+    margin: 0px 1px;
+    border-width: 1px;
+    border-color: lightgray;
+    border-radius: 5px;
+    padding: 0 0;
+    margin-left: 144px;
+    position: relative;
+    border-style: solid;
+    width: 508px;
+}
+
+fieldset legend {
+    color: gray;
+    font-size: 10pt;
+    font-style: italic;
+    position: absolute;
+    left: -125px;
+    top: 20px;
+    width: 120px;
+    text-align: right;
+}
+
+p {
+    margin-block-start: 3px;
+    margin-block-end: 5px;
+}
+
+label {
+    color: gray;
+    font-size: 11pt;
+    font-style: italic;
+}
+
+section:not(#new) {
+    margin-block-start: 5px;
+    margin-block-end: 5px;
+}
+
+h2 {
+    margin-block-start: 10px;
+    margin-block-end: 15px;
+    font-size: 12pt;
+    font-style: italic;
+}
+
+ktbs4la2-multiple-translations-text-input {
+    width: 520px;
+}
+
+ktbs4la2-resource-picker:not(#existing-method-uri) {
+    width: 410px;
+}
+
+#existing-method-uri {
+    width: 510px;
+}
+
+.resource-picker-container input, .resource-picker-container label {
+    vertical-align: top;
+    position: relative;
+    top: 5px;
+    margin-bottom: 8px;
+}
+
+#new-method-id-label,
+#new-method-label-label,
+#new-model-id-label,
+#new-model-label-label,
+#existing-method-uri-label,
+#new-computed-trace-id-label,
+#new-computed-trace-label-label {
+    display: inline-block;
+    width: 140px;
+    text-align: right;
+}
+
+#create-computed-trace-p {
+    border-top: 1px solid gray;
+}
+
+#create-computed-trace {
+    position: relative;
+    top: 2px;
+}
+
+p#buttons {
+    padding-top: 10px;
+    margin-bottom: 0px;
+    text-align: center;
+    border-top: 1px solid gray;
+}
+
+#buttons button {
+    background-color: var(--color-main, cornflowerblue);
+	width: 90px;
+	height: 35px;
+	cursor: pointer;
+	margin-left: 10px;
+	margin-right: 10px;
+	color: white;
+	border: none;
+}
+
+#buttons button:hover, #buttons button:focus {
+    background-color: var(--color-highlight, royalblue);
+}
+
+#ok:disabled, #ok:disabled:hover {
+	cursor: default;
+	background-color: #CCC;
+}

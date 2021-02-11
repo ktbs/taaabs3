@@ -337,7 +337,7 @@ class TemplatedHTMLElement extends HTMLElement {
 	 * 
 	 */
 	_translateRegexMatch(match, p1, offset, string) {
-		return this._translateString(p1);
+		return this._translateString(p1.replace("\\'", "'"));
 	}
 
 	/**

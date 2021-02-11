@@ -8,5 +8,6 @@
     "Valid resource URL": "URL de ressource valide",
     "Pending...": "En attente...",
     "Resource doesn't match expected type(s)": "La ressource ne correspond pas au(x) type(s) attendu(s)",
-    "Known builtin method": "Méthode native connue"
+    "Known builtin method": "Méthode native connue",
+    "Builtin Methods not allowed": "Méthodes natives non autorisées"
 }

@@ -96,8 +96,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._cancelStylesheetModificationsButton.addEventListener("click", this._onClickCancelStylesheetModificationsButton.bind(this));
 		this._duplicateStylesheetButton = this.shadowRoot.querySelector("#duplicate-stylesheet-button");
 		this._duplicateStylesheetButton.addEventListener("click", this._onClickDuplicateStylesheetButton.bind(this));
-		this._createComputedTraceFromStylesheetButton = this.shadowRoot.querySelector("#create-computed-trace-from-stylesheet-button");
-		this._createComputedTraceFromStylesheetButton.addEventListener("click", this._onClickCreateComputedTraceFromStylesheetButton.bind(this));
+		this._createMethodFromStylesheetButton = this.shadowRoot.querySelector("#create-method-from-stylesheet-button");
+		this._createMethodFromStylesheetButton.addEventListener("click", this._onClickCreateMethodFromStylesheetButton.bind(this));
 		this._deleteStylesheetButton = this.shadowRoot.querySelector("#delete-stylesheet-button");
 		this._deleteStylesheetButton.addEventListener("click", this._onClickDeleteStylesheetButton.bind(this));
 		this._waitMessage = this.shadowRoot.querySelector("#wait-message");
@@ -910,8 +910,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onClickCreateComputedTraceFromStylesheetButton(event) {
-		// @TODO
+	_onClickCreateMethodFromStylesheetButton(event) {
+		this.dispatchEvent(new CustomEvent("request-create-method-from-stylesheet", {
+            bubbles: true, 
+            cancelable: true,
+            detail: {
+				"stylesheet-id": this._currentStylesheet.name,
+				"stylesheet-rules-data": this._currentStylesheet._JSONData["rules"],
+				"source-trace-uri": this._trace.uri
+            }
+        }));
 	}
 
 	/**
@@ -1612,7 +1620,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._saveStylesheetButton.setAttribute("title", this._translateString("Save this stylesheet"));
 		this._cancelStylesheetModificationsButton.setAttribute("title", this._translateString("Cancel modifications of this stylesheet"));
 		this._duplicateStylesheetButton.setAttribute("title", this._translateString("Duplicate this stylesheet"));
-		this._createComputedTraceFromStylesheetButton.setAttribute("title", this._translateString("Create a computed trace from this stylesheet"));
+		this._createMethodFromStylesheetButton.setAttribute("title", this._translateString("Store this stylesheet's rules in a method"));
 		this._deleteStylesheetButton.setAttribute("title", this._translateString("Delete this stylesheet"));
 		this._waitMessage.innerText = this._translateString("Waiting for server response...");
 		this._emptyMessage.innerText = this._translateString("No obsel to display");

@@ -68,6 +68,35 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
     }
 
     /**
+     * 
+     */
+    get allow_builtin_methods() {
+        return (
+            (
+                    !this.hasAttribute("allowed-resource-types")
+                ||  this.getAttribute("allowed-resource-types").split(" ").filter(Boolean).includes("Method")
+            )
+            &&  (
+                    !this.hasAttribute("allow-builtin-methods")
+                ||  (
+                        (this.getAttribute("allow-builtin-methods") != "0")
+                    &&  (this.getAttribute("allow-builtin-methods") != "false")
+                )
+            )
+        );
+    }
+
+    /**
+     * 
+     */
+    set allow_builtin_methods(newValue) {
+        if(newValue != null)
+            this.setAttribute("allow-builtin-methods", newValue);
+        else if(this.hasAttribute("allow-builtin-methods"))
+            this.removeAttribute("allow-builtin-methods");
+    }
+
+    /**
 	 * 
 	 */
 	onComponentReady() {
@@ -102,6 +131,7 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         _observedAttributes.push("root-label");
         _observedAttributes.push("browse-start-uri");
         _observedAttributes.push("allowed-resource-types");
+        _observedAttributes.push("allow-builtin-methods");
         _observedAttributes.push("required");
         _observedAttributes.push("value");
         return _observedAttributes;
@@ -120,6 +150,31 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         if(name == "allowed-resource-types")
             this._componentReady.then(() => {
                 this._uriInput.setAttribute("allowed-resource-types", newValue);
+                const navElement = this.shadowRoot.querySelector("ktbs4la2-nav-resource");
+
+                if(navElement) {
+                    if(this.allow_builtin_methods)
+                        navElement.setAttribute("show-builtin-methods", "true");
+                    else if(navElement.hasAttribute("show-builtin-methods"))
+                        navElement.removeAttribute("show-builtin-methods");
+                }
+            }).catch(() => {});
+
+        if(name == "allow-builtin-methods")
+            this._componentReady.then(() => {
+                if(newValue != null)
+                    this._uriInput.setAttribute("allow-builtin-methods", newValue);
+                else if(this._uriInput.hasAttribute("allow-builtin-methods"))
+                    this._uriInput.removeAttribute("allow-builtin-methods");
+
+                const navElement = this.shadowRoot.querySelector("ktbs4la2-nav-resource");
+
+                if(navElement) {
+                    if(this.allow_builtin_methods)
+                        navElement.setAttribute("show-builtin-methods", "true");
+                    else if(navElement.hasAttribute("show-builtin-methods"))
+                        navElement.removeAttribute("show-builtin-methods");
+                }
             }).catch(() => {});
             
         if((name == "root-uri") || (name == "root-label") || (name == "browse-start-uri") || (name == "allowed-resource-types"))
@@ -206,7 +261,7 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
             if(this.hasAttribute("allowed-resource-types"))
                 navElement.setAttribute("allow-select-types", this.getAttribute("allowed-resource-types"));
 
-            if(!this.hasAttribute("allowed-resource-types") || this.getAttribute("allowed-resource-types").split(" ").filter(Boolean).includes("Method"))
+            if(this.allow_builtin_methods)
                 navElement.setAttribute("show-builtin-methods", "true");
 
             this.appendChild(navElement);

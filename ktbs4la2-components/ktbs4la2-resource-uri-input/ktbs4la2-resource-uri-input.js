@@ -47,6 +47,35 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
     }
 
     /**
+     * 
+     */
+    get allow_builtin_methods() {
+        return (
+            (
+                    !this.hasAttribute("allowed-resource-types")
+                ||  this.getAttribute("allowed-resource-types").split(" ").filter(Boolean).includes("Method")
+            )
+            &&  (
+                    !this.hasAttribute("allow-builtin-methods")
+                ||  (
+                        (this.getAttribute("allow-builtin-methods") != "0")
+                    &&  (this.getAttribute("allow-builtin-methods") != "false")
+                )
+            )
+        );
+    }
+
+    /**
+     * 
+     */
+    set allow_builtin_methods(newValue) {
+        if(newValue != null)
+            this.setAttribute("allow-builtin-methods", newValue);
+        else if(this.hasAttribute("allow-builtin-methods"))
+            this.removeAttribute("allow-builtin-methods");
+    }
+
+    /**
 	 * 
 	 */
 	onComponentReady() {
@@ -191,9 +220,14 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                 this._showMessage(this._translateString("Pending..."), "pending");
             }
             catch(error) {
+                // the picked resource is a builtin method
                 if(Method.builtin_methods_ids.includes(this._uriInput.value)) {
-                    if(!this._allowed_resource_types || this._allowed_resource_types.includes("Method"))
-                        this._showMessage(this._translateString("Known builtin method"), "success");
+                    if(!this._allowed_resource_types || this._allowed_resource_types.includes("Method")) {
+                        if(this.allow_builtin_methods)
+                            this._showMessage(this._translateString("Known builtin method"), "success");
+                        else
+                            this._showMessage(this._translateString("Builtin Methods not allowed"), "error");
+                    }
                     else
                         this._showMessage(this._translateString("Resource doesn't match expected type(s)") + " (Builtin Method)", "error");
                 }

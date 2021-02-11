@@ -24,7 +24,7 @@
     "Save this stylesheet": "Enregistrer cette feuille de styles",
     "Cancel modifications of this stylesheet" : "Annuler les modifications apportées à cette feuille de styles",
     "Duplicate this stylesheet": "Dupliquer cette feuille de styles",
-    "Create a computed trace from this stylesheet" : "Créer une trace calculée d'après cette feuille de styles",
+    "Store this stylesheet's rules in a method" : "Enregistrer les règles de cette feuille de styles dans une méthode",
     "Delete this stylesheet": "Supprimer cette feuille de styles",
     "This stylesheet has unsaved modifications that will be lost.\nAre you sure ?": "Cette feuille de styles a des modifications non sauvegardées qui seront perdues.\nÊtes-vous sûr(e) ?",
     "An error occured while attempting to save the stylesheet in its model": "Une erreur est survenue lors de la tentative d'enregistrement de la feuille de styles dans son modèle",

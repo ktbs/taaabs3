@@ -27,6 +27,7 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	 * 
 	 */
 	_updateStringsTranslation() {
+		this.linkTag.innerText = this._ktbsResource.get_preferred_label(this._lang);
 		this.linkTag.title = this._getTitleHint();
 	}
 
@@ -41,8 +42,7 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 				if((this._ktbsResource.authentified) && (this._ktbsResource.hasOwnCredendtials) && (!this._containerDiv.classList.contains("access-granted")))
 					this._containerDiv.classList.add("access-granted");
 
-				if(!this.hasAttribute("label") && this._ktbsResource.label)
-					this.linkTag.innerText = this._ktbsResource.label;
+				this.linkTag.innerText = this._ktbsResource.get_preferred_label(this._lang);
 			}
 
 			this.linkTag.title = this._getTitleHint();

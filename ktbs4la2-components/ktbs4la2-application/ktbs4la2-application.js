@@ -10,14 +10,15 @@ import {Trace} from "../../ktbs-api/Trace.js";
 import {StoredTrace} from "../../ktbs-api/Trace.js";
 import {ComputedTrace} from "../../ktbs-api/Trace.js";
 
-
 import "../ktbs4la2-overlay/ktbs4la2-overlay.js";
 import "../ktbs4la2-root-form/ktbs4la2-root-form.js";
 import "../ktbs4la2-nav-resource/ktbs4la2-nav-resource.js";
 import "../ktbs4la2-main-documentation/ktbs4la2-main-documentation.js";
 import "../ktbs4la2-main-resource/ktbs4la2-main-resource.js";
 import "../ktbs4la2-create-resource-form/ktbs4la2-create-resource-form.js";
-
+import "../ktbs4la2-store-stylesheet-rules-to-method-form/ktbs4la2-store-stylesheet-rules-to-method-form.js";
+import {ObselType} from "../../ktbs-api/ObselType.js";
+import { KtbsError } from "../../ktbs-api/Errors.js";
 
 /**
  * 
@@ -59,6 +60,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.addEventListener("error", this.onErrorEvent.bind(this));
 		this.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
 		this.addEventListener("request-create-ktbs-resource", this._onRequestCreateKtbsResource.bind(this));
+		this.addEventListener("request-create-method-from-stylesheet", this._onRequestCreateMethodFromStylesheet.bind(this));
 		this.addEventListener("fold-header", this._onMainResourceFoldHeader.bind(this));
 		this.addEventListener("unfold-header", this._onMainResourceUnfoldHeader.bind(this));
 		this._navNodesObserver = new MutationObserver(this.onNavNodesMutation.bind(this));
@@ -315,6 +317,301 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			});
 		
 		return returnPromise;
+	}
+
+	/**
+	 * 
+	 */
+	_onRequestCreateMethodFromStylesheet(event) {
+		const stylesheet_id = event.detail["stylesheet-id"];
+		const stylesheet_rules_data = event.detail["stylesheet-rules-data"];
+		const source_trace_uri = event.detail["source-trace-uri"];
+		
+		if(stylesheet_id && stylesheet_rules_data && source_trace_uri) {
+			let formElement = document.createElement("ktbs4la2-store-stylesheet-rules-to-method-form");
+			formElement.setAttribute("stylesheet-id", stylesheet_id);
+			formElement.setAttribute("stylesheet-rules-data", JSON.stringify(stylesheet_rules_data));
+			formElement.setAttribute("source-trace-uri", source_trace_uri);
+			formElement.addEventListener("submit", this._onSubmitFormCreateMethodFromStylesheet.bind(this));
+			formElement.addEventListener("cancel", this.removeOverlay.bind(this));
+			this.setOverlay(formElement);
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onSubmitFormCreateMethodFromStylesheet(event) {
+		const formData = event.detail;
+		const sourceTrace = ResourceMultiton.get_resource(Trace, formData["source-trace-uri"]);
+
+		sourceTrace.get(this._abortController.signal)
+			.then(() => {
+				const sourceTraceModel = sourceTrace.model;
+			
+				sourceTraceModel.get(this._abortController.signal)
+					.then(() => {
+						// create a new method and model
+						if(formData["method-instance"] == "new") {
+							const newModel = new Model();
+							newModel.id = formData["model-id"];
+							const newModelLabelData = JSON.parse(formData["model-label"]);
+
+							for(let i = 0; i < newModelLabelData.length; i++) {
+								const aLabelData = newModelLabelData[i];
+
+								if(aLabelData.lang == "*")
+									newModel.label = aLabelData.value;
+								else
+									newModel.set_translated_label(aLabelData.value, aLabelData.lang);
+							}
+
+							// build the new model content ---
+							const newModelAttributesTypes = new Array();
+
+							for(let i = 0; i < sourceTraceModel.attribute_types.length; i++)
+								newModelAttributesTypes.push(sourceTraceModel.attribute_types[i].clone());
+
+							const newModelObselTypes = new Array();
+
+							for(let i = 0; i < formData["stylesheet-rules-data"].length; i++) {
+								const aRuleData = formData["stylesheet-rules-data"][i];
+
+								if((aRuleData.visible == undefined) || (aRuleData.visible != false)) {
+									const aNewObselType = new ObselType(newModel);
+									aNewObselType.id = aRuleData.id;
+									aNewObselType.attribute_types = newModelAttributesTypes;
+
+									if(aRuleData.symbol && aRuleData.symbol.color)
+										aNewObselType.suggestedColor = aRuleData.symbol.color;
+
+									if(aRuleData.symbol && aRuleData.symbol.symbol)
+										aNewObselType.suggestedSymbol = aRuleData.symbol.symbol;
+
+									newModelObselTypes.push(aNewObselType);
+								}
+							}
+
+							newModel.obsel_types = newModelObselTypes;
+							// --- done
+
+							const newModelParent = (formData["model-parent"] == "default")?sourceTrace.parent:ResourceMultiton.get_resource(Base, formData["model-parent-uri"]);
+							
+							newModelParent.post(newModel)
+								.then(() => {
+									const newMethod = new Method();
+									newMethod.id = formData["method-id"];
+									const newMethodLabelData = JSON.parse(formData["method-label"]);
+
+									for(let i = 0; i < newMethodLabelData.length; i++) {
+										const aLabelData = newMethodLabelData[i];
+
+										if(aLabelData.lang == "*")
+											newMethod.label = aLabelData.value;
+										else
+											newMethod.set_translated_label(aLabelData.value, aLabelData.lang);
+									}
+
+									newMethod.parent_method = Method.getBuiltinMethod("hrules");
+
+									// build the method parameters ---
+									const newMethodParameters = new Array();
+									newMethodParameters["model"] = newModel.uri;
+									newMethodParameters["rules"] = formData["stylesheet-rules-data"];
+									newMethod.parameters = newMethodParameters;
+									// --- done
+
+									const newMethodParent = (formData["method-parent"] == "default")?sourceTrace.parent:ResourceMultiton.get_resource(Base, formData["method-parent-uri"]);
+
+									newMethodParent.post(newMethod)
+										.then(() => {
+											if(formData["create-computed-trace"] == true) {
+												const newComputedTrace = new ComputedTrace();
+												newComputedTrace.id = formData["computed-trace-id"];
+												const newComputedTraceLabelData = JSON.parse(formData["computed-trace-label"]);
+
+												for(let i = 0; i < newComputedTraceLabelData.length; i++) {
+													const aLabelData = newComputedTraceLabelData[i];
+			
+													if(aLabelData.lang == "*")
+														newComputedTrace.label = aLabelData.value;
+													else
+														newComputedTrace.set_translated_label(aLabelData.value, aLabelData.lang);
+												}
+
+												newComputedTrace.source_traces = [sourceTrace];
+												newComputedTrace.method = newMethod;
+												const newComputedTraceParent = (formData["computed-trace-parent"] == "default")?sourceTrace.parent:ResourceMultiton.get_resource(Base, formData["computed-trace-parent-uri"]);
+
+												newComputedTraceParent.post(newComputedTrace)
+													.then(() => {
+														this.removeOverlay();
+													})
+													.catch((error) => {
+														this.emitErrorEvent(error);
+														console.error(error);
+														alert(error.name + " : " + error.message);
+													});
+											}	
+											else
+												this.removeOverlay();
+										})
+										.catch((error) => {
+											this.emitErrorEvent(error);
+											console.error(error);
+											alert(error.name + " : " + error.message);
+										});
+								})
+								.catch((error) => {
+									this.emitErrorEvent(error);
+									console.error(error);
+									alert(error.name + " : " + error.message);
+								});
+						}
+						// overwrite a method and its model
+						else {
+							const existingMethod = ResourceMultiton.get_resource(Method, formData["existing-method-uri"]);
+
+							existingMethod.get(this._abortController.signal)
+								.then(() => {
+									existingMethod.get_methods_hierarchy(this._abortController.signal)
+										.then((method_ancestor) => {
+											if(method_ancestor == Method.getBuiltinMethod("hrules")) {
+												const existingModel_uri = existingMethod.parameters["model"];
+												
+												if(existingModel_uri) {
+													const existingModel = ResourceMultiton.get_resource(Model, existingModel_uri);
+
+													existingModel.get(this._abortController.signal)
+														.then(() => {
+															// update the model
+															const existingModelAttributesTypes = new Array();
+
+															for(let i = 0; i < sourceTraceModel.attribute_types.length; i++)
+																existingModelAttributesTypes.push(sourceTraceModel.attribute_types[i].clone());
+
+															const existingModelObselTypes = new Array();
+
+															for(let i = 0; i < formData["stylesheet-rules-data"].length; i++) {
+																const aRuleData = formData["stylesheet-rules-data"][i];
+
+																if((aRuleData.visible == undefined) || (aRuleData.visible != false)) {
+																	const aNewObselType = new ObselType(existingModel);
+																	aNewObselType.id = aRuleData.id;
+																	aNewObselType.attribute_types = existingModelAttributesTypes;
+
+																	if(aRuleData.symbol && aRuleData.symbol.color)
+																		aNewObselType.suggestedColor = aRuleData.symbol.color;
+
+																	if(aRuleData.symbol && aRuleData.symbol.symbol)
+																		aNewObselType.suggestedSymbol = aRuleData.symbol.symbol;
+
+																	existingModelObselTypes.push(aNewObselType);
+																}
+															}
+
+															existingModel.obsel_types = existingModelObselTypes;
+
+															existingModel.put(this._abortController.signal)
+																.then(() => {
+																	// update the method
+																	existingMethod.parent_method = Method.getBuiltinMethod("hrules");
+
+																	// build the method parameters ---
+																	const existingMethodParameters = new Array();
+																	existingMethodParameters["model"] = existingModel.uri;
+																	existingMethodParameters["rules"] = formData["stylesheet-rules-data"];
+																	existingMethod.parameters = existingMethodParameters;
+
+																	existingMethod.put(this._abortController.signal)
+																		.then(() => {
+																			if(formData["create-computed-trace"] == true) {
+																				const newComputedTrace = new ComputedTrace();
+																				newComputedTrace.id = formData["computed-trace-id"];
+																				const newComputedTraceLabelData = JSON.parse(formData["computed-trace-label"]);
+
+																				for(let i = 0; i < newComputedTraceLabelData.length; i++) {
+																					const aLabelData = newComputedTraceLabelData[i];
+											
+																					if(aLabelData.lang == "*")
+																						newComputedTrace.label = aLabelData.value;
+																					else
+																						newComputedTrace.set_translated_label(aLabelData.value, aLabelData.lang);
+																				}
+
+																				newComputedTrace.source_traces = [sourceTrace];
+																				newComputedTrace.method = existingMethod;
+																				const newComputedTraceParent = (formData["computed-trace-parent"] == "default")?sourceTrace.parent:ResourceMultiton.get_resource(Base, formData["computed-trace-parent-uri"]);
+
+																				newComputedTraceParent.post(newComputedTrace)
+																					.then(() => {
+																						this.removeOverlay();
+																					})
+																					.catch((error) => {
+																						this.emitErrorEvent(error);
+																						console.error(error);
+																						alert(error.name + " : " + error.message);
+																					});
+																			}	
+																			else
+																				this.removeOverlay();
+																		})
+																		.catch((error) => {
+																			this.emitErrorEvent(error);
+																			console.error(error);
+																			alert(error.name + " : " + error.message);
+																		});
+																})
+																.catch((error) => {
+																	this.emitErrorEvent(error);
+																	console.error(error);
+																	alert(error.name + " : " + error.message);
+																});
+														})
+														.catch((error) => {
+															this.emitErrorEvent(error);
+															console.error(error);
+															alert(error.name + " : " + error.message);
+														});
+												}
+												else {
+													const error = new KtbsError("Custom Method to overwrite does not have an associated Model");
+													this.emitErrorEvent(error);
+													console.error(error);
+													alert(error.name + " : " + error.message);
+												}
+											}
+											else {
+												const error = new KtbsError("Custom Method to overwrite is not a descendant of hrules");
+												this.emitErrorEvent(error);
+												console.error(error);
+												alert(error.name + " : " + error.message);
+											}
+										})
+										.catch((error) => {
+											this.emitErrorEvent(error);
+											console.error(error);
+											alert(error.name + " : " + error.message);
+										});
+								})
+								.catch((error) => {
+									this.emitErrorEvent(error);
+									console.error(error);
+									alert(error.name + " : " + error.message);
+								});
+						}
+					})
+					.catch((error) => {
+						this.emitErrorEvent(error);
+						console.error(error);
+						alert(error.name + " : " + error.message);
+					});
+			})
+			.catch((error) => {
+				this.emitErrorEvent(error);
+				console.error(error);
+				alert(error.name + " : " + error.message);
+			});
 	}
 
 	/**

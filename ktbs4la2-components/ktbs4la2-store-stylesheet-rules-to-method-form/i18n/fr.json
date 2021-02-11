@@ -1,0 +1,21 @@
+{
+    "Store stylesheet rules in a method": "Enregistrer les règles de la feuille de styles dans une méthode",
+    "Store into :": "Enregister dans :",
+    "A new method and model (create)": "Une nouvelle méthode et un nouveau modèle (créer)",
+    "Already existing method and model (overwrite)": "Une méthode et un modèle existant déjà (écraser)",
+    "New method settings": "Paramètres de la nouvelle méthode",
+    "ID": "ID",
+    "Label": "Etiquette",
+    "Create into :": "Créer dans :",
+    "Same base as source trace": "Même base que la trace-source",
+    "Other...": "Autre...",
+    "New model settings": "Paramètres du nouveau modèle",
+    "Method to overwrite :": "Méthode à écraser :",
+    "Also create a new computed trace based on the method and model": "Créer également une nouvelle trace calculée basée sur la méthode et le modèle",
+    "New computed trace settings": "Paramètres de la nouvelle trace calculée",
+    "Store": "Enregistrer",
+    "Cancel": "Annuler",
+    "Method created from stylesheet": "Méthode crée d'après la feuille de styles",
+    "Model for": "Modèle pour",
+    "Computed trace created from stylesheet": "Trace calculée crée d'après la feuille de styles"
+}
