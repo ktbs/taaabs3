@@ -141,6 +141,28 @@ export class Resource {
 	}
 
 	/**
+	 * 
+	 */
+	_removeFromSharedCache() {
+		return new Promise((resolve, reject) => {
+			Resource.sharedCacheOpened
+				.then((sharedCache) => {
+					if(this._cachedGetRequest) {
+						sharedCache.delete(this._cachedGetRequest)
+							.then((response) => {
+								delete this._cachedGetRequest;
+								resolve();
+							})
+							.catch(reject);
+					}
+					else
+						resolve();
+				})
+				.catch(reject);
+		});
+	}
+
+	/**
 	 * Sets the synchronization status of the resource
 	 * \param string new_syncStatus the new synchronisation status for the resource
 	 * \throws TypeError if new_syncStatus is not a valid synchronization status
@@ -155,11 +177,14 @@ export class Resource {
 			||	(new_syncStatus == "needs_auth")
 			||	(new_syncStatus == "access_denied")
 		) {
-			const oldStatus = this._syncStatus;
+			const old_syncStatus = this._syncStatus;
 
-			if(new_syncStatus != oldStatus) {
+			if(new_syncStatus != old_syncStatus) {
+				if(old_syncStatus == "in_sync")
+					this._removeFromSharedCache();
+
 				this._syncStatus = new_syncStatus;
-				this._queueNotification("sync-status-change", oldStatus);
+				this._queueNotification("sync-status-change", old_syncStatus);
 			}
 		}
 		else
@@ -198,6 +223,9 @@ export class Resource {
 			)
 				throw new TypeError("Transition from lifecycle status \"" + this._lifecycleStatus + "\" to \"" + new_lifecycleStatus + "\" forbidden");
 			else {
+				if(new_lifecycleStatus == "deleted")
+					this._removeFromSharedCache();
+
 				const oldStatus = this._lifecycleStatus;
 				
 				if(new_lifecycleStatus != oldStatus) {
@@ -313,15 +341,20 @@ export class Resource {
 	 * \public
 	 */
 	_notifyObservers(notification_type, old_value, new_value) {
+		// build the list of observers whose subscribing criteras match this notification
 		let notified_observers = new Array();
 
+		// get the observers who subscribe to ALL notifications
 		if(this._observers["*"] instanceof Array)
 			notified_observers = notified_observers.concat(this._observers["*"]);
 
+		// get the observers who subscribe to notifications of the same type
 		if(this._observers[notification_type]) {
+			// get the observers who subscribe to notifications of the same type with ANY value
 			if(this._observers[notification_type]["*"] instanceof Array)
 				notified_observers = notified_observers.concat(this._observers[notification_type]["*"]);
 
+			// get the observers who subscribe to notifications of the same type with the same value
 			if(this._observers[notification_type][new_value] instanceof Array)
 				notified_observers = notified_observers.concat(this._observers[notification_type][new_value]);
 		}
@@ -329,6 +362,7 @@ export class Resource {
 		// filter duplicates to ensure we have only unique values
 		notified_observers = notified_observers.filter((v, i, a) => a.indexOf(v) === i);
 
+		// finally, send notifications (= call registered callbacks)
 		for(let i = 0; i < notified_observers.length; i++) {
 			const aCallback = notified_observers[i];
 
@@ -403,7 +437,7 @@ export class Resource {
 	set JSONData(new_JSONData) {
 		if(new_JSONData instanceof Object) {
 			this._JSONData = new_JSONData;
-			this._resetCachedData();
+			this._resetCalculatedData();
 		}
 		else
 			throw new TypeError("new JSONData must be an Object");
@@ -901,6 +935,45 @@ export class Resource {
 	}
 
 	/**
+	 * 
+	 */
+	_processGetResponse(response, credential_used) {
+		return new Promise((resolve, reject) => {
+			// if the HTTP request responded successfully
+			if(response.ok) {
+				if(response.headers.has("etag"))
+					this._etag = response.headers.get("etag");
+				else
+					this._etag = null;
+
+				// when the response content from the HTTP request has been successfully read
+				response.json()
+					.then((parsedJson) => {
+						this._authentified = credential_used;
+						this.JSONData = parsedJson;
+						this._error = null;
+						this.lifecycleStatus = "exists";
+						this.syncStatus = "in_sync";
+						resolve(response);
+					})
+					.catch(reject);
+			}
+			else {
+				let responseBody = null;
+
+				response.text()
+					.then((responseText) => {
+						responseBody = responseText;
+					})
+					.finally(() => {
+						const error = new RestError(response.status, response.statusText, responseBody);
+						reject(error);
+					});
+			}
+		});
+	}
+
+	/**
 	 * Attemps to asynchronously read an existing object's data from the REST service and returns a Promise.
 	 * \param AbortSignal abortSignal an optional AbortSignal allowing to stop the HTTP request
 	 * \param Object credentials an optional credentials object. If none is specified, the "credentials" property value of the resource will be used.
@@ -911,100 +984,131 @@ export class Resource {
 	get(abortSignal = null, credentials = null) {
 		if((this.lifecycleStatus == "exists") || (this.lifecycleStatus == "modified")) {
 			if((this.syncStatus != "in_sync") && (this.syncStatus != "pending")) {
+				this.syncStatus = "pending";
+				this.sendQueuedNotifications();
+
 				this._getPromise = new Promise((resolve, reject) => {
-					this.syncStatus = "pending";
-					this.sendQueuedNotifications();
-					this._currentGetRequestAbortController = new AbortController();
-					this._purgeClientGetAbortSignals();
+					Resource.sharedCacheOpened
+						.then((sharedCache) => {
+							this._currentGetRequestAbortController = new AbortController();
+							this._purgeClientGetAbortSignals();
 
-					let fetchParameters = {
-						method: "GET",
-						headers: new Headers({
-							"Accept": "application/json"/*,
-							"X-Requested-With": "XMLHttpRequest"*/
-						}),
-						cache: "default",
-						signal: this._currentGetRequestAbortController.signal
-					};
+							const getRequestHeaders = new Headers({
+								"Accept": "application/json",
+								"X-Requested-With": "XMLHttpRequest"
+							});
 
-					if(!credentials && this.credentials)
-						credentials = this.credentials;
+							if(!credentials && this.credentials)
+								credentials = this.credentials;
 
-					if(credentials && credentials.id && credentials.password)
-						fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
-					
-					if(this._etag)
-						fetchParameters.headers.append("If-None-Match", this._etag);
+							let credential_used = false;
 
-					this._registerClientGetAbortSignal(abortSignal);
+							if(credentials && credentials.id && credentials.password) {
+								getRequestHeaders.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
+								credential_used = true;
+							}
 
-					fetch(this._data_read_uri, fetchParameters)
-						.then((response) => {
-							// if the HTTP request responded successfully
-							if(response.ok) {
-								if(response.headers.has("etag"))
-									this._etag = response.headers.get("etag");
-								else
+							if(this._etag)
+								getRequestHeaders.append("If-None-Match", this._etag);
+
+							const getRequestParameters = {
+								method: "GET",
+								headers: getRequestHeaders,
+								cache: "no-store",
+								signal: this._currentGetRequestAbortController.signal
+							};
+
+							const getRequest = new Request(this._data_read_uri, getRequestParameters);
+							
+							sharedCache.match(getRequest)
+								.then((cacheMatchResponse) => {
+									if(cacheMatchResponse != undefined) {
+										this._processGetResponse(cacheMatchResponse, credential_used)
+											.then((processResponse) => {
+												resolve(processResponse);
+												this.sendQueuedNotifications();
+											})
+											.catch((processError) => {
+												reject(processError);
+											});
+									}
+									else {
+										this._registerClientGetAbortSignal(abortSignal);
+
+										fetch(getRequest)
+											.then((fetchResponse) => {
+												const responseClone = fetchResponse.clone();
+
+												this._processGetResponse(fetchResponse, credential_used)
+													.then((processResponse) => {
+														sharedCache.put(getRequest, responseClone)
+															.then((cachePutResponse) => {
+																this._cachedGetRequest = getRequest;
+																resolve(processResponse);
+																this.sendQueuedNotifications();
+															})
+															.catch((cachePutError) => {
+																this._etag = null;
+																this._authentified = false;
+																this._error = cachePutError;
+																this.syncStatus = "error";
+																reject(cachePutError);
+																this.sendQueuedNotifications();
+															});
+													})
+													.catch((processError) => {
+														this._etag = null;
+														this._authentified = false;
+														this._error = processError;
+
+														if(processError.name == "RestError") {
+															if(processError.statusCode == 401)
+																this.syncStatus = "needs_auth";
+															else if(processError.statusCode == 403)
+																this.syncStatus = "access_denied";
+															else
+																this.syncStatus = "error";
+														}
+														else
+															this.syncStatus = "error";
+
+														reject(processError);
+														this.sendQueuedNotifications();
+													});
+											})
+											.catch((fetchError) => {
+												this._etag = null;
+												this._authentified = false;
+
+												if((fetchError.name == "AbortError") && (this._currentGetRequestAbortController.signal.aborted)) {
+													this._error = null;
+													this.syncStatus = "needs_sync";
+												}
+												else {
+													this._error = fetchError;
+													this.syncStatus = "error";
+												}
+
+												reject(fetchError);
+												this.sendQueuedNotifications();
+											});
+									}
+								})
+								.catch((cacheMatchError) => {
 									this._etag = null;
-
-								// when the response content from the HTTP request has been successfully read
-								response.json()
-									.then((parsedJson) => {
-										this._authentified = ((credentials != null) && ((credentials.id != null) && (credentials.id != undefined)) && ((credentials.password != null) && (credentials.password != undefined)));
-										this.JSONData = parsedJson;
-										this._error = null;
-										this.lifecycleStatus = "exists";
-										this.syncStatus = "in_sync";
-										resolve(response);
-										this.sendQueuedNotifications();
-									})
-									.catch((error) => {
-										this._authentified = false;
-										this._error = error;
-										this.syncStatus = "error";
-										reject(error);
-										this.sendQueuedNotifications();
-									});
-							}
-							else {
-								this._etag = null;
-								this._authentified = false;
-								let responseBody = null;
-
-								response.text()
-									.then((responseText) => {
-										responseBody = responseText;
-									})
-									.finally(() => {
-										const error = new RestError(response.status, response.statusText, responseBody);
-										this._error = error;
-
-										if(response.status == 401)
-											this.syncStatus = "needs_auth";
-										else if(response.status == 403)
-											this.syncStatus = "access_denied";
-										else
-											this.syncStatus = "error";
-
-										reject(error);
-										this.sendQueuedNotifications();
-									});
-							}
+									this._authentified = false;
+									this._error = cacheMatchError;
+									this.syncStatus = "error";
+									reject(cacheMatchError);
+									this.sendQueuedNotifications();
+								});
 						})
-						.catch((error) => {
+						.catch((openSharedCacheError) => {
 							this._etag = null;
 							this._authentified = false;
-
-							if((error.name == "AbortError") && (this._currentGetRequestAbortController.signal.aborted)) {
-								this._error = null;
-								this.syncStatus = "needs_sync";
-							}
-							else {
-								this._error = error;
-								this.syncStatus = "error";
-							}
-
-							reject(error);
+							this._error = openSharedCacheError;
+							this.syncStatus = "error";
+							reject(openSharedCacheError);
 							this.sendQueuedNotifications();
 						});
 				});
@@ -1066,24 +1170,25 @@ export class Resource {
 	 */
 	force_state_refresh() {
 		this._etag = null;
-		this._label = null;
 		this.JSONData = new Object();
-		this._getPromise = null;
-
+		
 		if(this.uri)
 			this._lifecycleStatus = "exists";
 		else
 			this._lifecycleStatus = "new";
 
 		this.syncStatus = "needs_sync";
+		this._resetCalculatedData();
+		this._getPromise = null;
+		
 		this.sendQueuedNotifications();
 	}
 
 	/**
-	 * Resets all the resource cached data
+	 * Resets the calculated data temporarily stored in memory as instance variables. Descendant classes that add such variables should override this method, reset their own-level variables and then call super._resetCalculatedData()
 	 * \public
 	 */
-	_resetCachedData() {
+	_resetCalculatedData() {
 		if(this._label)
 			delete this._label;
 	}
@@ -1170,8 +1275,8 @@ export class Resource {
 					let fetchParameters = {
 						method: "POST",
 						headers: new Headers({
-							"content-type": "application/json"/*,
-							"X-Requested-With": "XMLHttpRequest"*/
+							"content-type": "application/json",
+							"X-Requested-With": "XMLHttpRequest"
 						}),
 						body: postBody
 					};
@@ -1297,8 +1402,8 @@ export class Resource {
 					headers: new Headers({
 						"Accept": "application/json",
 						"content-type": "application/json",
-						"If-Match": this._etag/*,
-						"X-Requested-With": "XMLHttpRequest"*/
+						"If-Match": this._etag,
+						"X-Requested-With": "XMLHttpRequest"
 					}),
 					body: JSON.stringify(this._getPutData())
 				};
@@ -1321,6 +1426,7 @@ export class Resource {
 							
 							this._authentified = ((credentials != null) && credentials.id && credentials.password);
 							this._error = null;
+							this._removeFromSharedCache();
 							this.lifecycleStatus = "exists";
 							this.syncStatus = "in_sync";
 							resolve();
@@ -1377,8 +1483,8 @@ export class Resource {
 				let fetchParameters = {
 					method: "DELETE",
 					headers: new Headers({
-						"Accept": "application/json"/*,
-						"X-Requested-With": "XMLHttpRequest"*/
+						"Accept": "application/json",
+						"X-Requested-With": "XMLHttpRequest"
 					}),
 				};
 
@@ -1398,8 +1504,8 @@ export class Resource {
 					.then((response) => {
 						if(response.ok) {
 							this._error = null;
-							this.syncStatus = "in_sync";
 							this.lifecycleStatus = "deleted";
+							this.syncStatus = "in_sync";
 							resolve();
 							this.sendQueuedNotifications();
 						}
@@ -1461,4 +1567,48 @@ export class Resource {
 	get children() {
 		return undefined;
 	}
+
+	/**
+     * A Promise that resolves when the shared cache has been successfully open
+	 * \return Promise
+	 * \public
+	 * \static
+     */
+    static get sharedCacheOpened() {
+        if(Resource._sharedCacheOpenedPromise == null) {
+            Resource._sharedCacheOpenedPromise = new Promise((resolve, reject) => {
+                caches.open('ktbs-api')
+                    .then((sharedCache) => {
+						const perfEntries = performance.getEntriesByType("navigation");
+
+						// test if the user is reloading the page
+						if(perfEntries[0] && perfEntries[0].type == "reload") {
+							sharedCache.keys()
+								.then((keys) => {
+									keys.forEach((request, index, array) => {
+										sharedCache.delete(request);
+									});
+
+									resolve(sharedCache);
+								});
+						}
+						else
+							resolve(sharedCache);
+					})
+                    .catch(reject);
+            });
+
+            return Resource._sharedCacheOpenedPromise;
+        }
+
+        return Resource._sharedCacheOpenedPromise;
+    }
 }
+
+/**
+ * A Promise that resolves when the shared cache has been successfully open
+ * \var Promise
+ * \protected
+ * \static
+ */
+Resource._sharedCacheOpenedPromise = null;

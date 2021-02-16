@@ -224,6 +224,8 @@ export class Ktbs extends Resource {
 
 		if(this._bases)
 			delete this._bases;
+
+		this._removeFromSharedCache();
 	}
 
 	/**
@@ -270,10 +272,10 @@ export class Ktbs extends Resource {
 	}
 
 	/**
-	 * Resets all the resource cached data
+	 * Resets the calculated data temporarily stored in memory as instance variables. Descendant classes that add such variables should override this method, reset their own-level variables and then call super._resetCalculatedData()
 	 * \public
 	 */
-	_resetCachedData() {
+	_resetCalculatedData() {
 		if(this._builtin_methods)
 			delete this._builtin_methods;
 

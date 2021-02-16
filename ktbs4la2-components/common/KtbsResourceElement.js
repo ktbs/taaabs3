@@ -118,7 +118,7 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 						break;
 					case "in_sync" :
 						setTimeout(() => {
-							if(this._onKtbsResourceSyncInSync)
+							if((this._ktbsResource.lifecycleStatus != "deleted") && (this._onKtbsResourceSyncInSync))
 								this._onKtbsResourceSyncInSync(old_value);
 						});
 

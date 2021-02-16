@@ -298,12 +298,10 @@ export class Obsel extends Resource {
     }
     
     /**
-	 * Resets all the resource cached data
+	 * Resets the calculated data temporarily stored in memory as instance variables. Descendant classes that add such variables should override this method, reset their own-level variables and then call super._resetCalculatedData()
 	 * \public
 	 */
-	_resetCachedData() {
-		super._resetCachedData();
-
+	_resetCalculatedData() {
 		if(this._type_id)
 			delete this._type_id;
 
@@ -324,5 +322,7 @@ export class Obsel extends Resource {
 
         if(this._attributes)
             delete this._attributes;
+            
+        super._resetCalculatedData();
     }
 }

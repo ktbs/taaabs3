@@ -302,12 +302,10 @@ export class Method extends Resource {
 	}
 
 	/**
-	 * Resets all the resource cached data
+	 * Resets the calculated data temporarily stored in memory as instance variables. Descendant classes that add such variables should override this method, reset their own-level variables and then call super._resetCalculatedData()
 	 * \public
 	 */
-	_resetCachedData() {
-		super._resetCachedData();
-
+	_resetCalculatedData() {
 		if(this._parent)
 			this._parent = undefined;
 
@@ -319,6 +317,8 @@ export class Method extends Resource {
 
 		if(this._parameters)
 			delete this._parameters;
+			
+		super._resetCalculatedData();
 	}
 
 	/**

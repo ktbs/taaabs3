@@ -167,10 +167,10 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                 let fetchParameters = {
                     method: "GET",
                     headers: new Headers({
-                        "Accept": "application/json"/*,
-                        "X-Requested-With": "XMLHttpRequest"*/
+                        "Accept": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
                     }),
-                    cache: "default",
+                    cache: "no-cache",
                     signal: this._abortTestQueryController.signal
                 };
 

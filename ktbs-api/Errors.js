@@ -29,7 +29,7 @@ export class RestError extends Error {
          * \var string
          * \public
          */
-        this.name = "REST error";
+        this.name = "RestError";
     }
 };
 

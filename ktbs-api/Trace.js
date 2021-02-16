@@ -52,8 +52,8 @@ export class Trace extends Resource {
 	 * \public
 	 */
 	get obsel_list() {
-		if(!this._obsel_list && this._JSONData.hasObselList)
-			this._obsel_list = ResourceMultiton.get_resource(ObselList, this.resolve_link_uri(this._JSONData.hasObselList));
+		if(!this._obsel_list)
+			this._obsel_list = new ObselList(this);
 
 		return this._obsel_list;
 	}
@@ -74,9 +74,7 @@ export class Trace extends Resource {
 	 * Resets all the resource cached data
 	 * \public
 	 */
-	_resetCachedData() {
-		super._resetCachedData();
-
+	_resetCalculatedData() {
 		if(this._parent)
 			this._parent = undefined;
 
@@ -88,6 +86,92 @@ export class Trace extends Resource {
 
 		if(this._stats)
 			delete this._stats;
+
+		super._resetCalculatedData();
+	}
+
+	/**
+	 * 
+	 */
+	_removeFromSharedCache() {
+		return new Promise((resolve, reject) => {
+			Resource.sharedCacheOpened
+				.then((sharedCache) => {
+					const deletePagesAndStatsFromCachePromises = [];
+
+					// remove trace's obsels lists pages from the resource cache
+					const obselPagesMatchRequestURL = new URL(this.uri + "@obsels");
+
+					const obselPagesMatchRequestHeaders = new Headers({
+						"Accept": "application/json",
+						"X-Requested-With": "XMLHttpRequest"
+					});
+
+					if(this.credentials && this.credentials.id && this.credentials.password)
+						obselPagesMatchRequestHeaders.append("Authorization", "Basic " + btoa(this.credentials.id + ":" + this.credentials.password));
+
+					const obselPagesMatchRequestParameters = {
+						method: "GET",
+						headers: obselPagesMatchRequestHeaders,
+						cache: "no-store"
+					};
+
+					const obselPagesMatchRequest = new Request(obselPagesMatchRequestURL, obselPagesMatchRequestParameters);
+
+					sharedCache.match(obselPagesMatchRequest, {ignoreSearch: true})
+						.then((match) => {
+							if(match)
+								deletePagesAndStatsFromCachePromises.push(sharedCache.delete(obselPagesMatchRequest, {ignoreSearch: true}));
+						});
+
+					// remove trace's stats from the resource cache
+					const statsMatchRequestURL = new URL(this.uri + "@obsels");
+
+					const statsMatchRequestHeaders = new Headers({
+						"Accept": "application/json",
+						"X-Requested-With": "XMLHttpRequest"
+					});
+
+					if(this.credentials && this.credentials.id && this.credentials.password)
+						statsMatchRequestHeaders.append("Authorization", "Basic " + btoa(this.credentials.id + ":" + this.credentials.password));
+
+					const statsMatchRequestParameters = {
+						method: "GET",
+						headers: statsMatchRequestHeaders,
+						cache: "no-store"
+					};
+
+					const statsMatchRequest = new Request(statsMatchRequestURL, statsMatchRequestParameters);
+
+					sharedCache.match(statsMatchRequest)
+						.then((match) => {
+							if(match)
+								deletePagesAndStatsFromCachePromises.push(sharedCache.delete(statsMatchRequest));
+						});
+
+					Promise.all(deletePagesAndStatsFromCachePromises)
+						.then(() => {
+							super._removeFromSharedCache()
+								.then(resolve)
+								.catch(reject);
+						})
+						.catch(reject);
+				})
+				.catch(reject);
+		});
+	}
+
+	/**
+	 * 
+	 */
+	force_state_refresh() {
+		if(this._obsel_list)
+			this._obsel_list.force_state_refresh();
+
+		if(this._stats)
+			this._stats.force_state_refresh();
+
+		super.force_state_refresh();
 	}
 }
 
@@ -379,8 +463,8 @@ export class ComputedTrace extends Trace {
 	 * Resets all the resource cached data
 	 * \public
 	 */
-	_resetCachedData() {
-		super._resetCachedData();
+	_resetCalculatedData() {
+		super._resetCalculatedData();
 
 		if(this._method)
 			this._method = undefined;

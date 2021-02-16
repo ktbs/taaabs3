@@ -1,5 +1,4 @@
 import {Resource} from "./Resource.js";
-import {ObselListPage} from "./ObselListPage.js";
 import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Trace} from "./Trace.js";
 import {Obsel} from "./Obsel.js";
@@ -7,85 +6,33 @@ import {Obsel} from "./Obsel.js";
 /**
  * Class to help reading obsels list from a Trace
  */
-export class ObselList extends Resource {
+export class ObselList {
 	
 	/**
 	 * Constructor
-	 * \param URL or string uri - the resource's URI
+	 * \param Trace parentTrace the parent Trace of the ObselList
+	 * \throws throws a TypeError if provided argument is not an instance of Trace
 	 * \public
 	 */
-	constructor(uri = null) {
-		super(uri);
+	constructor(parentTrace) {
+		if(parentTrace instanceof Trace) {
 
-		/**
-		 * Only obsels after this one will be returned
-		 * \var URL
-		 * \protected
-		 */
-		this._after = null;
+			/**
+			 * A reference to the parent trace owning the current ObselList
+			 * \var Trace
+			 * \protected
+			 */
+			this._parentTrace = parentTrace;
 
-		/**
-		 * Only obsels before this one will be returned
-		 * \var URL
-		 * \protected
-		 */
-		this._before = null;
-
-		/**
-		 * Only that many obsels (at most) will be returned
-		 * \var int
-		 * \protected
-		 */
-		this._limit = 5;
-
-		/**
-		 * The minimum begin value for returned obsels
-		 * \var int
-		 * \protected
-		 */
-		this._minb = null;
-
-		/**
-		 * The minimum end value for returned obsels
-		 * \var int
-		 * \protected
-		 */
-		this._mine = null;
-
-		/**
-		 * The maximum begin value for returned obsels
-		 * \var int
-		 * \protected
-		 */
-		this._maxb = null;
-
-		/**
-		 * The maximum end value for returned obsels
-		 * \var int
-		 * \protected
-		 */
-		this._maxe = null;
-
-		/**
-		 * Skip that many obsels
-		 * \var int
-		 * \protected
-		 */
-		this._offset = null;
-
-		/**
-		 * Reverse the order (see below)
-		 * \var boolean
-		 * \protected
-		 */
-		this._reverse = null;
-
-		/**
-		 * 
-		 * \var Object
-		 * \protected
-		 */
-		this._pages = {};
+			/**
+			 * An object storing all previously resolved Query promises, indexed by their URL
+			 * \var Object
+			 * \protected
+			 */
+			this._queryPromises = {};
+		}
+		else
+			throw new TypeError("Argument must be an instance of Trace");
 	}
 
 	/**
@@ -94,180 +41,241 @@ export class ObselList extends Resource {
 	 * \public
      */
     get parent() {
-		if(!this._parent) {
-			let parent_trace_uri = this.resolve_link_uri("./");
-			this._parent = ResourceMultiton.get_resource(Trace, parent_trace_uri);
-		}
-
-		return this._parent;
+		return this._parentTrace;
     }
 
 	/**
-	 * Gets the uri to query in order to read resource's data (For some resource types, this might be different from the resource URI, for instance if we need to add some query parameters. In such case, descending resource types must override this method)
-	 * \return URL
+	 * Processes the HTTP response of a Query
+	 * \param Object response a HTTP Response object returned from a fetch or read from a cache
+	 * \return Promise
 	 * \protected
 	 */
-	get _data_read_uri() {
-		let params = new Array();
+	_processQueryResponse(response) {
+		return new Promise((resolve, reject) => {
+			// if the HTTP request responded successfully
+			if(response.ok) {
+				let nextPageLinkAfter = null;
 
-		if(this._after && (this._after != ""))
-			params.push("after=" + this._after);
+				if(response.headers.has("link")) {
+					let linkResponseHeader = response.headers.get("link");
+					let links = linkResponseHeader.split(', ');
 
-		if(this._before && (this._before != ""))
-			params.push("before=" + this._before);
+					for(let i = 0; (!this._nextPageURI) && (i < links.length); i++) {
+						let aLinkData = links[i];
+						let aLinkParts = aLinkData.split(';');
 
-		if(this._limit && (this._limit != ""))
-			params.push("limit=" + this._limit);
-
-		if(this._minb && (this._minb != ""))
-			params.push("minb=" + this._minb);
-
-		if(this._mine && (this._mine != ""))
-			params.push("mine=" + this._mine);
-
-		if(this._maxb && (this._maxb != ""))
-			params.push("maxb=" + this._maxb);
-
-		if(this._maxe && (this._maxe != ""))
-			params.push("maxe=" + this._maxe);
-
-		if(this._offset && (this._offset != ""))
-			params.push("offset=" + this._offset);
-
-		if(this._reverse && (this._reverse != ""))
-			params.push("reverse=" + this._reverse);
-
-		let dataReadUri = this.uri.toString();
-
-		if(params.length > 0)
-			dataReadUri += "?" + params.join("&");
-
-		return new URL(dataReadUri);
-	}
-
-	/**
-	 * Builds and returns an URI to fetch the first Obsel page from the Trace
-	 * \param int limit - the maximum number of obsels to fetch for this page (default: 500)
-	 * \return URL
-	 * \protected
-	 */
-	_get_first_page_uri(limit = 500) {
-		let params = new Array();
-
-		if(this._after && (this._after != ""))
-			params.push("after=" + this._after);
-
-		if(this._before && (this._before != ""))
-			params.push("before=" + this._before);
-
-		params.push("limit=" + limit);
-
-		if(this._minb && (this._minb != ""))
-			params.push("minb=" + this._minb);
-
-		if(this._mine && (this._mine != ""))
-			params.push("mine=" + this._mine);
-
-		if(this._maxb && (this._maxb != ""))
-			params.push("maxb=" + this._maxb);
-
-		if(this._maxe && (this._maxe != ""))
-			params.push("maxe=" + this._maxe);
-
-		if(this._offset && (this._offset != ""))
-			params.push("offset=" + this._offset);
-
-		if(this._reverse && (this._reverse != ""))
-			params.push("reverse=" + this._reverse);
-
-		let first_page_uri_string = this.uri.toString();
-
-		if(params.length > 0)
-			first_page_uri_string += "?" + params.join("&");
-
-		return new URL(first_page_uri_string);
-	}
-
-	/**
-	 * Gets the data for the first page of the Obsel list and returns a Promise attached to the HTTP request
-	 * \param int limit - the maximum number of obsels to fetch for this page (default: 500)
-	 * \return ObselListPage
-	 * \protected
-	 */
-	get_first_page(limit = 500) {
-		if(!this._pages[limit]) {
-			let page_uri = this._get_first_page_uri(limit);
-			this._pages[limit] = ResourceMultiton.get_resource(ObselListPage, page_uri);
-		}
-
-		return this._pages[limit];
-	}
-
-	/**
-	 * Gets all the obsels of the obsel list
-	 * \return Array of Obsel
-	 * \public
-	 */
-	get obsels() {
-		if(!this._obsels) {
-			this._obsels = new Array();
-
-			if(this._JSONData.obsels instanceof Array) {
-				for(let i = 0; i < this._JSONData.obsels.length; i++) {
-					let obsel_data = this._JSONData.obsels[i];
-					let obsel_uri = this.resolve_link_uri(obsel_data["@id"]);
-					let obsel_is_known = ResourceMultiton.has_resource(Obsel, obsel_uri);
-					let obsel = ResourceMultiton.get_resource(Obsel, obsel_uri);
-
-					if(!obsel_is_known) {
-						obsel.JSONData = obsel_data;
-						obsel.context = this.context;
-						obsel.parent = this.parent;
-						obsel.syncStatus = "in_sync";
+						if((aLinkParts.length == 2) && (aLinkParts[1] == "rel=\"next\"")) {
+							const nextPageLink = new URL(aLinkParts[0].substring(1, aLinkParts[0].length - 1));
+							
+							if(nextPageLink.searchParams.has("after"))
+								nextPageLinkAfter = nextPageLink.searchParams.get("after");
+						}
 					}
-
-					this._obsels.push(obsel);
 				}
+
+				response.json()
+					.then((parsedJson) => {
+						// the JSON content from the HTTP response has been successfully read
+						let obsels = new Array();
+
+						if(parsedJson.obsels instanceof Array) {
+							for(let i = 0; i < parsedJson.obsels.length; i++) {
+								let obsel_data = parsedJson.obsels[i];
+								let obsel_uri = this.parent.resolve_link_uri(obsel_data["@id"]);
+								let obsel_is_known = ResourceMultiton.has_resource(Obsel, obsel_uri);
+								let obsel = ResourceMultiton.get_resource(Obsel, obsel_uri);
+
+								if(!obsel_is_known) {
+									obsel.JSONData = obsel_data;
+									obsel.context = parsedJson["@context"];
+									obsel.parent = this.parent;
+									obsel.syncStatus = "in_sync";
+								}
+
+								obsels.push(obsel);
+							}
+						}
+
+                        resolve({obsels: obsels, nextPageLinkAfter: nextPageLinkAfter});
+					})
+					.catch(reject);
 			}
+			else {
+				let responseBody = null;
+
+				response.text()
+					.then((responseText) => {
+						responseBody = responseText;
+					})
+					.finally(() => {
+						const error = new RestError(response.status, response.statusText, responseBody);
+						reject(error);
+					});
+			}
+		});
+	}
+
+	/**
+	 * Gets 
+	 * \param Object query_parameters
+	 * \return Promise
+	 * \public
+	 */
+	query(query_parameters = {}, abortSignal = null) {
+		const queryURL = new URL(this._parentTrace.uri + "@obsels");
+		const queryURLSearchParams = queryURL.searchParams;
+
+		if(query_parameters.after)
+			queryURLSearchParams.append("after", query_parameters.after);
+
+		if(query_parameters.before)
+			queryURLSearchParams.append("before", query_parameters.before);
+
+		if(query_parameters.limit)
+			queryURLSearchParams.append("limit", query_parameters.limit);
+
+		if(query_parameters.minb)
+			queryURLSearchParams.append("minb", query_parameters.minb);
+
+		if(query_parameters.mine)
+			queryURLSearchParams.append("mine", query_parameters.mine);
+
+		if(query_parameters.maxb)
+			queryURLSearchParams.append("maxb", query_parameters.maxb);
+
+		if(query_parameters.maxe)
+			queryURLSearchParams.append("maxe", query_parameters.maxe);
+
+		if(query_parameters.offset)
+			queryURLSearchParams.append("offset", query_parameters.offset);
+
+		if(query_parameters.reverse)
+			queryURLSearchParams.append("reverse", query_parameters.reverse);
+
+		if(this._queryPromises[queryURL.toString()])
+			return this._queryPromises[queryURL.toString()];
+		else {
+			const queryPromise = new Promise((resolve, reject) => {
+				Resource.sharedCacheOpened
+					.then((sharedCache) => {
+						const getRequestHeaders = new Headers({
+							"Accept": "application/json",
+							"X-Requested-With": "XMLHttpRequest"
+						});
+
+						if(this._parentTrace.credentials && this._parentTrace.credentials.id && this._parentTrace.credentials.password)
+							getRequestHeaders.append("Authorization", "Basic " + btoa(this._parentTrace.credentials.id + ":" + this._parentTrace.credentials.password));
+
+						const queryRequestParameters = {
+							method: "GET",
+							headers: getRequestHeaders,
+							cache: "no-store"
+						};
+
+						if(abortSignal)
+							queryRequestParameters.signal = abortSignal;
+
+						const queryRequest = new Request(queryURL, queryRequestParameters);
+						
+						sharedCache.match(queryRequest)
+							.then((cacheMatchResponse) => {
+								if(cacheMatchResponse != undefined) {
+									this._processQueryResponse(cacheMatchResponse)
+										.then(resolve)
+										.catch(reject);
+								}
+								else {
+									fetch(queryRequest)
+										.then((fetchResponse) => {
+											const responseClone = fetchResponse.clone();
+
+											this._processQueryResponse(fetchResponse)
+												.then((processResponse) => {
+													sharedCache.put(queryRequest, responseClone)
+														.then((cachePutResponse) => {
+															resolve(processResponse);
+														})
+														.catch(reject);
+												})
+												.catch(reject);
+										})
+										.catch((error) => {
+											if((error instanceof DOMException) && (error.name == "AbortError") && abortSignal && abortSignal.aborted)
+												delete this._queryPromises[queryURL.toString()];
+											
+											reject(error);
+										});
+								}
+							})
+							.catch(reject);
+					})
+					.catch(reject);
+			});
+
+			this._queryPromises[queryURL.toString()] = queryPromise;
+			return queryPromise;
 		}
-        return this._obsels;
 	}
 
 	/**
-	 * Stores a new resource as a child of the current resource
-	 * \throws KtbsError always throws a KtbsError when invoked for a ObselList as it is not a container resource
+	 * Resets the calculated data temporarily stored in memory as instance variables. Descendant classes that add such variables should override this method, reset their own-level variables and then call super._resetCalculatedData()
 	 * \public
 	 */
-	post(new_child_resource, abortSignal = null, credentials = null) {
-		throw new KtbsError("Only Ktbs roots, Bases and Traces can contain child resources");
+	_resetCalculatedData() {
+		this._queryPromises = {};
 	}
 
 	/**
-	 * Resets all the resource cached data
-	 * \public
+	 * 
 	 */
-	_resetCachedData() {
-		super._resetCachedData();
+	_removeFromSharedCache() {
+		return new Promise((resolve, reject) => {
+			Resource.sharedCacheOpened
+				.then((sharedCache) => {
+					const matchRequestURL = new URL(this._parentTrace.uri + "@obsels");
 
-		if(this._parent)
-			this._parent = undefined;
+					const matchRequestHeaders = new Headers({
+						"Accept": "application/json",
+						"X-Requested-With": "XMLHttpRequest"
+					});
 
-		if(this._obsels)
-			delete this._obsels;
+					if(this._parentTrace.credentials && this._parentTrace.credentials.id && this._parentTrace.credentials.password)
+						matchRequestHeaders.append("Authorization", "Basic " + btoa(this._parentTrace.credentials.id + ":" + this._parentTrace.credentials.password));
+
+					const matchRequestParameters = {
+						method: "GET",
+						headers: matchRequestHeaders,
+						cache: "no-store"
+					};
+
+					const matchRequest = new Request(matchRequestURL, matchRequestParameters);
+
+					sharedCache.match(matchRequest, {ignoreSearch: true})
+						.then((match) => {
+							if(match != undefined)
+								sharedCache.delete(matchRequest, {ignoreSearch: true})
+									.then(resolve)
+									.catch(reject);
+							else
+								resolve();
+						})
+						.catch(reject);
+				})
+				.catch(reject);
+		});
 	}
 
 	/**
-	 * Resets all the resource's source data
-	 * \public
+	 * 
 	 */
 	force_state_refresh() {
-		const page_keys = Object.keys(this._pages);
-
-		for(let i = 0; i < page_keys.length; i++) {
-			const key = page_keys[i];
-			this._pages[key].force_state_refresh();
-		}
-
-		super.force_state_refresh();
+		return new Promise((resolve, reject) => {
+			this._removeFromSharedCache()
+				.then((response) => {
+					this._resetCalculatedData();
+					resolve(response);
+				})
+				.catch(reject);
+		});
 	}
 }

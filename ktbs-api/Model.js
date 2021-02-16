@@ -530,12 +530,10 @@ export class Model extends Resource {
 	}
 
 	/**
-	 * Resets all the resource cached data
+	 * Resets the calculated data temporarily stored in memory as instance variables. Descendant classes that add such variables should override this method, reset their own-level variables and then call super._resetCalculatedData()
 	 * \public
 	 */
-	_resetCachedData() {
-		super._resetCachedData();
-
+	_resetCalculatedData() {
 		if(this._model_own_graph_rank)
 			this._model_own_graph_rank = null;
 
@@ -559,5 +557,7 @@ export class Model extends Resource {
 
 		if(this._styleSheets)
 			delete this._styleSheets;
+			
+		super._resetCalculatedData();
 	}
 }

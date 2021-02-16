@@ -967,22 +967,16 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 				this._tableBody.removeChild(this._tableBody.firstChild);
 		});
 
-		this._obselList = this._ktbsResource.obsel_list;
-
 		this._allObselsLoaded = new Promise((resolve, reject) => {
 			this._resolveAllObselsLoaded = resolve;
 			this._rejectAllObselsLoaded = reject;
 		});
 		
-		let firstObselPage = this._obselList.get_first_page(100);
-
-		firstObselPage.get(this._obselsLoadingAbortController.signal)
-			.then((response) => {
-				this._onObselListPageRead(firstObselPage);
-			})
+		this._ktbsResource.obsel_list.query({limit: 100}, this._obselsLoadingAbortController.signal)
+			.then(this._onObselListQueryResponse.bind(this))
 			.catch((error) => {
 				if((error.name != "AbortError") || !this._obselsLoadingAbortController.signal.aborted)
-					this._onObselListPageReadFailed(error);
+					this._onObselListQueryFailed(error);
 			});
 
 		this._allObselsLoaded
@@ -997,77 +991,71 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 					if(this._tableContainer.classList.contains("pending"))
 						this._tableContainer.classList.remove("pending");
 				});
-			});
+			})
+			.catch(() => {});
 	}
 
 	/**
 	 * 
 	 */
-	_onObselListPageRead(obselsListPage) {
-		if(!this._obselsLoadingAbortController.signal.aborted) {
-			this._componentReady.then(() => {
-				this._trace_model.get().finally(() => {
-					setTimeout(() => {
-						let obselRowsFragment = document.createDocumentFragment();
-						let obsels = obselsListPage.obsels;
-						this._obselsData = this._obselsData.concat(obsels);
-						let currentVisibleLinesCount = this._tableBody.querySelectorAll("tr:not(.overflow").length;
-						
-						for(let i = 0; i < obsels.length; i++) {
-							let anObsel = obsels[i];
-							let obselEntryIsOverflow = (currentVisibleLinesCount > this._maxVisibleRows);
-							let anObselFragment = this._getObselFragment(anObsel, ((i%2) == 0), obselEntryIsOverflow);
+	_onObselListQueryResponse(queryResponse) {
+		this._componentReady.then(() => {
+			this._trace_model.get().finally(() => {
+				setTimeout(() => {
+					let obselRowsFragment = document.createDocumentFragment();
+					let obsels = queryResponse.obsels;
+					this._obselsData = this._obselsData.concat(obsels);
+					let currentVisibleLinesCount = this._tableBody.querySelectorAll("tr:not(.overflow").length;
+					
+					for(let i = 0; i < obsels.length; i++) {
+						let anObsel = obsels[i];
+						let obselEntryIsOverflow = (currentVisibleLinesCount > this._maxVisibleRows);
+						let anObselFragment = this._getObselFragment(anObsel, ((i%2) == 0), obselEntryIsOverflow);
 
-							if(!obselEntryIsOverflow) {
-								if(this._firstUnhiddenRowIndex == null)
-									this._firstUnhiddenRowIndex
-							}
-
-							currentVisibleLinesCount += anObselFragment.querySelectorAll("tr:not(.overflow").length;
-							obselRowsFragment.appendChild(anObselFragment);
+						if(!obselEntryIsOverflow) {
+							if(this._firstUnhiddenRowIndex == null)
+								this._firstUnhiddenRowIndex
 						}
 
-						this._tableBody.appendChild(obselRowsFragment);
+						currentVisibleLinesCount += anObselFragment.querySelectorAll("tr:not(.overflow").length;
+						obselRowsFragment.appendChild(anObselFragment);
+					}
 
-						if(this._firstUnhiddenRowIndex == null)
-							this._firstUnhiddenRowIndex = 1;
+					this._tableBody.appendChild(obselRowsFragment);
 
-						if(this._lastUnhiddenRowIndex == null)
-							this._lastUnhiddenRowIndex = currentVisibleLinesCount;
+					if(this._firstUnhiddenRowIndex == null)
+						this._firstUnhiddenRowIndex = 1;
 
-						this._onTableViewChanged();
-					});
+					if(this._lastUnhiddenRowIndex == null)
+						this._lastUnhiddenRowIndex = currentVisibleLinesCount;
+
+					this._onTableViewChanged();
+
+					let nextPage = queryResponse.next_page;
+
+					if(!queryResponse.nextPageLinkAfter)
+						this._resolveAllObselsLoaded();
 				});
 			});
-			
-			let nextPage = obselsListPage.next_page;
-
-			if(!nextPage) {
-				setTimeout(() => {
-					this._resolveAllObselsLoaded();
-				});
-			}
-			else {
-				setTimeout(() => {
-					if(!this._obselsLoadingAbortController.signal.aborted)
-						nextPage.get(this._obselsLoadingAbortController.signal)
-							.then(() => {
-								if(!this._obselsLoadingAbortController.signal.aborted)
-									this._onObselListPageRead(nextPage);
-							})
-							.catch((error) => {
-								if(!(error instanceof DOMException) && (error.name !== "AbortError") && !this._obselsLoadingAbortController.signal.aborted)
-									this._onObselListPageReadFailed(error);
-							});
-				});
-			}
+		});
+		
+		if(queryResponse.nextPageLinkAfter) {
+			setTimeout(() => {
+				if(!this._obselsLoadingAbortController.signal.aborted)
+					this._ktbsResource.obsel_list.query({limit: 100, after: queryResponse.nextPageLinkAfter}, this._obselsLoadingAbortController.signal)
+						.then(this._onObselListQueryResponse.bind(this))
+						.catch((error) => {
+							if(!(error instanceof DOMException) && (error.name !== "AbortError") && !this._obselsLoadingAbortController.signal.aborted)
+								this._onObselListQueryFailed(error);
+						});
+			});
 		}
 	}
 
 	/**
 	 * 
 	 */
-	_onObselListPageReadFailed(error) {
+	_onObselListQueryFailed(error) {
 		this._obselsLoadingAbortController.abort();
 
 		this._componentReady.then(() => {
