@@ -568,26 +568,44 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onModelReady() {
 		this._componentReady.then(() => {
+			this._styleSheets = new Array();
+
+			const previousStylesheetChoices = this._styleSheetSelector.querySelectorAll("option:not(#default)");
+
+			for(let i = 0; i < previousStylesheetChoices.length; i++)
+				previousStylesheetChoices[i].remove();
+
 			let defaultStylesheetGeneratedFromModel = this._generateDefaultStylesheetFromModel();
 			
-			if(defaultStylesheetGeneratedFromModel != null) {
-				this._styleSheets.unshift(defaultStylesheetGeneratedFromModel);
+			if(defaultStylesheetGeneratedFromModel != null)
+				this._styleSheets.push(defaultStylesheetGeneratedFromModel);
 
-				if(!this.hasAttribute("stylesheet") || (this.getAttribute("stylesheet").toLowerCase() == "default"))
-					setTimeout(() => {
-						this._applyStyleSheet(defaultStylesheetGeneratedFromModel, false);
-					});
-			}
-
+			let stylesheetToApply;
 			let modelStyleSheets = this._model.stylesheets;
 
 			for(let i = 0; i < modelStyleSheets.length; i++) {
 				let aStyleSheet = modelStyleSheets[i];
 				this._styleSheets.push(aStyleSheet);
-				let styleSheetSelectorEntry = document.createElement("option");
-				styleSheetSelectorEntry.innerText = aStyleSheet.name;
-				styleSheetSelectorEntry.setAttribute("title", aStyleSheet.description);
-				this._styleSheetSelector.appendChild(styleSheetSelectorEntry);
+				let styleSheetSelectorOption = document.createElement("option");
+				styleSheetSelectorOption.innerText = aStyleSheet.name;
+				styleSheetSelectorOption.setAttribute("title", aStyleSheet.description);
+
+				if(
+					(
+							this._currentStylesheet 
+						&&	(this._currentStylesheet.name.toLowerCase() == aStyleSheet.name.toLowerCase())
+					)
+					|| (
+							!this._currentStylesheet
+						&&	this.hasAttribute("stylesheet")
+						&&	(this.getAttribute("stylesheet").toLowerCase() == aStyleSheet.name.toLowerCase())
+					)
+				) {
+					stylesheetToApply = aStyleSheet;
+					styleSheetSelectorOption.setAttribute("selected", true);
+				}
+
+				this._styleSheetSelector.appendChild(styleSheetSelectorOption);
 			}
 
 			if(this.allow_edit_stylesheets) {
@@ -601,6 +619,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 
 			if(((modelStyleSheets.length > 0) || this.allow_edit_stylesheets) && (this._allowChangeStylesheet) && (this._styleSheetSelector.hasAttribute("disabled")))
 				this._styleSheetSelector.removeAttribute("disabled");
+
+			if(!stylesheetToApply) {
+				stylesheetToApply = defaultStylesheetGeneratedFromModel;
+				this._styleSheetSelector.selectedIndex = 0;
+			}
+
+			if(stylesheetToApply)
+				setTimeout(() => {
+					this._applyStyleSheet(stylesheetToApply, false);
+				});
 
 			this._resolveStylesheetsBuilded();
 		});
@@ -649,9 +677,24 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		if(this._styleSheets && (this._styleSheets instanceof Array))
 			for(let i = 0; i < this._styleSheets.length; i++)
 				if(!this._styleSheets[i].automatically_generated && this._styleSheets[i].name && !stylesheets_ids.includes(this._styleSheets[i].name))
-					stylesheets_ids.push(this._styleSheets[i].name)
+					stylesheets_ids.push(this._styleSheets[i].name);
 
 		return stylesheets_ids;
+	}
+
+	/**
+	 * 
+	 */
+	_getStylesheetByName(stylesheet_name) {
+		let return_stylesheet = null;
+
+		for(let i = 0; i < this._styleSheets.length; i++)
+			if(this._styleSheets[i].name.toLowerCase() == stylesheet_name.toLowerCase()) {
+				return_stylesheet = this._styleSheets[i];
+				break;
+			}
+
+		return return_stylesheet;
 	}
 
 	/**
@@ -813,7 +856,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			&& 	!this._currentStylesheetTools.classList.contains("is-invalid") 
 			&& this._current_stylesheet_has_unsaved_modifications
 		) {
-			const model_copy = new Model(this._model.uri);
+			/*const model_copy = new Model(this._model.uri);
 
 			model_copy.get(this._abortController.signal)
 				.then(() => {
@@ -832,6 +875,34 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 							this._exitEditStylesheetMode();
 						})
 						.catch((error) => {
+							this.emitErrorEvent(error);
+							alert(this._translateString("An error occured while attempting to save the stylesheet in its model") + " : \n" + error.name + " : " + error.message);
+						});
+				})
+				.catch((error) => {
+					this.emitErrorEvent(error);
+					alert(this._translateString("An error occured while attempting to save the stylesheet in its model") + " : \n" + error.name + " : " + error.message);
+				});*/
+
+			this._model.get(this._abortController.signal)
+				.then(() => {
+					const stylesheets_backup_copy = this._model.stylesheets;
+					let stylesheets_working_copy = this._model.stylesheets;
+					// we have to withdraw 1 from this._currentStylesheet_rank because the model doesn't has the defaut stylesheet at index 0
+					stylesheets_working_copy[this._currentStylesheet_rank - 1] = this._currentStylesheet;
+					this._model.stylesheets = stylesheets_working_copy;
+
+					this._model.put()
+						.then(() => {
+							if(this._currentStylesheet.is_new === true)
+								delete this._currentStylesheet.is_new;
+
+							this._styleSheets[this._currentStylesheet_rank] = this._currentStylesheet;
+							this._styleSheetSelector.options[this._currentStylesheet_rank].innerText = this._currentStylesheet.name;
+							this._exitEditStylesheetMode();
+						})
+						.catch((error) => {
+							this._model.stylesheets = stylesheets_backup_copy;
 							this.emitErrorEvent(error);
 							alert(this._translateString("An error occured while attempting to save the stylesheet in its model") + " : \n" + error.name + " : " + error.message);
 						});
