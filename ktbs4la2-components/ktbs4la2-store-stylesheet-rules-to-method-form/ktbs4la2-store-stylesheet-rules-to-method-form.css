@@ -10,6 +10,8 @@ h1 {
 
 #method-form {
     padding-bottom: 5px;
+    min-width: 665px;
+    display: block;
 }
 
 fieldset {

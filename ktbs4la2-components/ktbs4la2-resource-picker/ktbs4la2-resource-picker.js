@@ -17,6 +17,8 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
 
         if(this.attachInternals)
             this._internals = this.attachInternals();
+
+        this._customValidity = "";
     }
 
     /**
@@ -59,10 +61,8 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
      * 
      */
     set required(newValue) {
-        if(newValue != null) {
-            if(this.getAttribute("required") != newValue)
-                this.setAttribute("required", newValue);
-        }
+        if(newValue != null)
+            this.setAttribute("required", newValue);
         else if(this.hasAttribute("required"))
             this.removeAttribute("required");
     }
@@ -443,19 +443,35 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
+        let isValid;
+
         if(this._uriInput) {
-            const valid = (
-                    this._uriInput.checkValidity()
-                &&  (!this.required || (this._uriInput.value != ""))
-            );
+            this._uriInput.setCustomValidity(this._customValidity);
+            isValid = this._uriInput.checkValidity();
 
-            /*if(!valid)
-                this.dispatchEvent(new Event("invalid"));*/
-
-            return valid;
+            if(!isValid)
+                this._uriInput.dispatchEvent(new Event("invalid"));
         }
         else
-            return false;
+            isValid = false;
+    
+        return isValid;
+    }
+
+    /**
+     * 
+     */
+    reportValidity() {
+        const isValid = this.checkValidity();
+        this._uriInput.reportValidity();
+        return isValid;
+	}
+
+    /**
+     * 
+     */
+    setCustomValidity(message) {
+        this._customValidity = message;
     }
 
     /**

@@ -19,7 +19,15 @@ class KTBS4LA2StoreStylesheetRulesToMethodForm extends TemplatedHTMLElement {
 	 */
 	constructor() {
         super(import.meta.url, true);
+
+        if(this.attachInternals)
+            this._internals = this.attachInternals();
     }
+
+    /**
+     * 
+     */
+    static formAssociated = true;
 
     /**
 	 * 
@@ -175,8 +183,8 @@ class KTBS4LA2StoreStylesheetRulesToMethodForm extends TemplatedHTMLElement {
         this._newMethodIdLabelLabel = this.shadowRoot.querySelector("#new-method-id-label-label");
         this._newMethodIdInput = this.shadowRoot.querySelector("#new-method-id");
         this._newMethodIdInput.setAttribute("lang", this._lang);
-        this._newMethodIdInput.addEventListener("change", this._updateSubmitButtonState.bind(this));
-        this._newMethodIdInput.addEventListener("input", this._updateSubmitButtonState.bind(this));
+        this._newMethodIdInput.addEventListener("change", this._onChangeNewMethodIdInput.bind(this));
+        this._newMethodIdInput.addEventListener("input", this._onChangeNewMethodIdInput.bind(this));
         this._newMethodLabelInputLabel = this.shadowRoot.querySelector("#new-method-label-label");
         this._newMethodLabelInput = this.shadowRoot.querySelector("#new-method-label");
         this._newMethodLabelInput.setAttribute("lang", this._lang);
@@ -195,8 +203,8 @@ class KTBS4LA2StoreStylesheetRulesToMethodForm extends TemplatedHTMLElement {
         this._newModelIdLabelLabel = this.shadowRoot.querySelector("#new-model-id-label-label");
         this._newModelIdInput = this.shadowRoot.querySelector("#new-model-id");
         this._newModelIdInput.setAttribute("lang", this._lang);
-        this._newModelIdInput.addEventListener("change", this._updateSubmitButtonState.bind(this));
-        this._newModelIdInput.addEventListener("input", this._updateSubmitButtonState.bind(this));
+        this._newModelIdInput.addEventListener("change", this._onChangeNewModelIdInput.bind(this));
+        this._newModelIdInput.addEventListener("input", this._onChangeNewModelIdInput.bind(this));
         this._newModelLabelInputLabel = this.shadowRoot.querySelector("#new-model-label-label");
         this._newModelLabelInput = this.shadowRoot.querySelector("#new-model-label");
         this._newModelLabelInput.setAttribute("lang", this._lang);
@@ -225,8 +233,8 @@ class KTBS4LA2StoreStylesheetRulesToMethodForm extends TemplatedHTMLElement {
         this._newComputedTraceIdLabelLabel = this.shadowRoot.querySelector("#new-computed-trace-id-label-label");
         this._newComputedTraceIdInput = this.shadowRoot.querySelector("#new-computed-trace-id");
         this._newComputedTraceIdInput.setAttribute("lang", this._lang);
-        this._newComputedTraceIdInput.addEventListener("change", this._updateSubmitButtonState.bind(this));
-        this._newComputedTraceIdInput.addEventListener("input", this._updateSubmitButtonState.bind(this));
+        this._newComputedTraceIdInput.addEventListener("change", this._onChangeNewComputedTraceIdInput.bind(this));
+        this._newComputedTraceIdInput.addEventListener("input", this._onChangeNewComputedTraceIdInput.bind(this));
         this._newComputedTraceLabelInputLabel = this.shadowRoot.querySelector("#new-computed-trace-label-label");
         this._newComputedTraceLabelInput = this.shadowRoot.querySelector("#new-computed-trace-label");
         this._newComputedTraceLabelInput.setAttribute("lang", this._lang);
@@ -388,6 +396,7 @@ class KTBS4LA2StoreStylesheetRulesToMethodForm extends TemplatedHTMLElement {
      */
     _onChangeNewMethodParentBaseCustomUriInput(event) {
         this._updateMethodCustomParentReservedIds();
+        this._newMethodParentBaseCustomUriInput.reportValidity();
         this._updateSubmitButtonState();
     }
 
@@ -422,6 +431,7 @@ class KTBS4LA2StoreStylesheetRulesToMethodForm extends TemplatedHTMLElement {
      */
     _onChangeNewModelParentBaseCustomUriInput(event) {
         this._updateModelCustomParentReservedIds();
+        this._newModelParentBaseCustomUriInput.reportValidity();
         this._updateSubmitButtonState();
     }
 
@@ -472,6 +482,7 @@ class KTBS4LA2StoreStylesheetRulesToMethodForm extends TemplatedHTMLElement {
      */
     _onChangeNewComputedTraceParentBaseCustomUriInput(event) {
         this._updateComputedTraceCustomParentReservedIds();
+        this._newComputedTraceParentBaseCustomUriInput.reportValidity();
         this._updateSubmitButtonState();
     }
 
@@ -485,46 +496,117 @@ class KTBS4LA2StoreStylesheetRulesToMethodForm extends TemplatedHTMLElement {
     /**
      * 
      */
-    _checkFormValidity() {
-        return (
-            (
-                (
-                        (this._form["method-instance"].value == "new-method")
-                    &&  this._newMethodIdInput.checkValidity()
-                    &&  (
-                                (this._form["new-method-parent-base-option"].value == "default")
-                            ||  this._newMethodParentBaseCustomUriInput.checkValidity()
-                    )
-                    &&  this._newModelIdInput.checkValidity()
-                    &&  (
-                                (this._form["new-model-parent-base-option"].value == "default")
-                            ||  this._newModelParentBaseCustomUriInput.checkValidity()
-                    )
-                    &&  (this._newMethodIdInput.value != this._newModelIdInput.value)
-                )
-                ||  (
-                        (this._form["method-instance"].value == "existing-method")
-                    &&  this._existingMethodUriInput.checkValidity()
-                )
+    checkValidity() {
+        let isValid;
+
+        if(this._form["method-instance"].value == "new-method") {
+            isValid = this._newMethodIdInput.checkValidity();
+
+            if(
+                    (this._form["new-method-parent-base-option"].value != "default") 
+                &&  !this._newMethodParentBaseCustomUriInput.checkValidity()
             )
-            &&  (
-                    !this._createComputedTraceCheckBox.checked
-                ||  (
-                        this._newComputedTraceIdInput.checkValidity()
-                    &&  (
-                                (this._form["new-computed-trace-parent-base-option"].value == "default")
-                            ||  this._newComputedTraceParentBaseCustomUriInput.checkValidity()
-                    )
-                )
+                isValid = false;
+
+            if(!this._newModelIdInput.checkValidity())
+                isValid = false;
+
+            if(
+                    (this._form["new-model-parent-base-option"].value != "default")
+                &&  !this._newModelParentBaseCustomUriInput.checkValidity()
             )
-        );
+                isValid = false;
+
+            if(this._newMethodIdInput.value == this._newModelIdInput.value) {
+                if(isValid)
+                    this._newModelIdInput.setCustomValidity(this._translateString("This ID is already used by another resource in the same parent. Please choose a different one."));
+
+                isValid = false;
+            }
+            else
+                this._newModelIdInput.setCustomValidity("");
+        }
+        else if(this._form["method-instance"].value == "existing-method")
+            isValid = this._existingMethodUriInput.checkValidity();
+        else
+            isValid = false;
+
+        if(this._createComputedTraceCheckBox.checked) {
+            if(!this._newComputedTraceIdInput.checkValidity())
+                isValid = false;
+
+            if(
+                    (this._form["new-computed-trace-parent-base-option"].value != "default")
+                &&  !this._newComputedTraceParentBaseCustomUriInput.checkValidity()
+            )
+                isValid = false;
+        }
+
+        if(!isValid)
+            this.dispatchEvent(new Event("invalid"), {bubbles: false, cancelable: true});
+
+        return isValid;
+    }
+
+    /**
+     * 
+     */
+    reportValidity() {
+        let isValid = this.checkValidity();
+
+        if(this._form["method-instance"].value == "new-method") {
+            this._newMethodIdInput.reportValidity();
+
+            if(this._form["new-method-parent-base-option"].value != "default") 
+                this._newMethodParentBaseCustomUriInput.reportValidity()
+            
+            this._newModelIdInput.reportValidity();
+
+            if(this._form["new-model-parent-base-option"].value != "default")
+                this._newModelParentBaseCustomUriInput.reportValidity();
+        }
+        else if(this._form["method-instance"].value == "existing-method")
+            this._existingMethodUriInput.reportValidity();
+
+        if(this._createComputedTraceCheckBox.checked) {
+            this._newComputedTraceIdInput.reportValidity();
+
+            if(this._form["new-computed-trace-parent-base-option"].value != "default")
+                this._newComputedTraceParentBaseCustomUriInput.reportValidity();
+        }
+        
+        return isValid;
+    }
+
+    /**
+     * 
+     */
+    _onChangeNewMethodIdInput(event) {
+        this._newMethodIdInput.reportValidity();
+        this._updateSubmitButtonState();
+    }
+
+    /**
+     * 
+     */
+    _onChangeNewModelIdInput(event) {
+        this._newModelIdInput.reportValidity();
+        this._updateSubmitButtonState();
+    }
+
+    /**
+     * 
+     */
+    _onChangeNewComputedTraceIdInput(event) {
+        this._newComputedTraceIdInput.reportValidity();
+        this._updateSubmitButtonState();
     }
 
     /**
      * 
      */
     _updateSubmitButtonState() {
-        if(this._checkFormValidity()) {
+        if(this.checkValidity()) {
             if(this._submitButton.hasAttribute("disabled"))
                 this._submitButton.removeAttribute("disabled");
         }

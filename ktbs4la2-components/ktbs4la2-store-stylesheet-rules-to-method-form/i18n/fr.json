@@ -17,5 +17,6 @@
     "Cancel": "Annuler",
     "Method created from stylesheet": "Méthode crée d'après la feuille de styles",
     "Model for": "Modèle pour",
-    "Computed trace created from stylesheet": "Trace calculée crée d'après la feuille de styles"
+    "Computed trace created from stylesheet": "Trace calculée crée d'après la feuille de styles",
+    "This ID is already used by another resource in the same parent. Please choose a different one.": "Cet identifiant est déjà utilisé par une autre ressource dans le même parent. Veuillez en choisir un autre."
 }

@@ -13,6 +13,8 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
 
         if(this.attachInternals)
             this._internals = this.attachInternals();
+
+        this._customValidity = "";
     }
 
     /**
@@ -292,15 +294,46 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
+        let isValid;
+
         if(this._idInput) {
-            return ( 
-                    this._idInput.checkValidity()
-                &&  !this._is_reserved_id(this.value)
-            );
+            this._idInput.setCustomValidity(this._customValidity);
+
+            if(this._idInput.checkValidity()) {
+                if(this._is_reserved_id(this.value)) {
+                    isValid = false;
+                    this._idInput.setCustomValidity(this._translateString("This ID is already used by another resource in the same parent. Please choose a different one."));
+                }
+                else
+                    isValid = true;
+            }
+            else
+                isValid = false;
+
+            if(!isValid)
+                this._idInput.dispatchEvent(new Event("invalid"), {bubbles: false, cancelable: true});
         }
         else
-            return false;
+            isValid = false;
+
+        return isValid;
 	}
+
+    /**
+     * 
+     */
+    reportValidity() {
+        const isValid = this.checkValidity();
+        this._idInput.reportValidity();
+        return isValid;
+	}
+
+    /**
+     * 
+     */
+    setCustomValidity(message) {
+        this._customValidity = message;
+    }
 }
 
 customElements.define('ktbs4la2-resource-id-input', KTBS4LA2ResourceIDInput);

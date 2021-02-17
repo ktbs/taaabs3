@@ -15,6 +15,8 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
 
         if(this.attachInternals)
             this._internals = this.attachInternals();
+
+        this._customValidity = "";
     }
 
     /**
@@ -336,29 +338,47 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
-        let valid = (
-                            (this._container)
-                        &&  (
-                                    (this._container.className == "success")
-                                ||  (this._container.className == "warning")
-                                ||  (
-                                            (this._uriInput)
-                                        &&  (this._uriInput.value == "") 
-                                        &&  (
-                                                    !this.hasAttribute("required")
-                                                ||  (
-                                                            (this.getAttribute("required") != "") 
-                                                        &&  (this.getAttribute("required") != "required")
-                                                )
-                                        )
-                                )
-                        )
-                );
+        let isValid;
 
-        if(!valid)
-            this.dispatchEvent(new Event("invalid"));
+        if(this._container && this._uriInput) {
+            this._uriInput.setCustomValidity(this._customValidity);
+
+            if(this._uriInput.checkValidity()) {
+                if(this._container.className == "error") {
+                    isValid = false;
+                    this._uriInput.setCustomValidity(this._messageArea.innerText);
+                }
+                else
+                    isValid = true;
+            }
+            else {
+                this._container.className = "error";
+                isValid = false;
+            }
+
+            if(!isValid)
+                this._uriInput.dispatchEvent(new Event("invalid"));
+        }
+        else
+            isValid = false;
     
-        return valid;
+        return isValid;
+    }
+
+    /**
+     * 
+     */
+    reportValidity() {
+        const isValid = this.checkValidity();
+        this._uriInput.reportValidity();
+        return isValid;
+	}
+
+    /**
+     * 
+     */
+    setCustomValidity(message) {
+        this._customValidity = message;
     }
 }
 

@@ -19,6 +19,10 @@
     color: black;
 }
 
+#id-input:invalid {
+    border: 1px solid red;
+}
+
 #id-input:not(:focus) {
     background-color: var(--background-color);
 }
