@@ -96,6 +96,7 @@
 	font-style: italic;
 	width: fit-content;
 	min-height: 10px;
+	width: -moz-fit-content;
 }
 
 #stylesheet-tools:not(.edit-mode) #stylesheet-description.empty {
