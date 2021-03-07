@@ -220,6 +220,8 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 		const currentLocalizedInputsCount = this._getLocalizedInputs().length;
 		const newLocalizedInputTabIndex = (currentLocalizedInputsCount > 0)?(2 * currentLocalizedInputsCount):1;
 		newLocalizedInput.setAttribute("tabIndex", newLocalizedInputTabIndex);
+		newLocalizedInput.addEventListener("input", this._onChildEvent.bind(this));
+		newLocalizedInput.addEventListener("change", this._onChildEvent.bind(this));
 
 		inputContainer.appendChild(newLocalizedInput);
 		newLocalizedInput.addEventListener("focus", this._onLocalizedInputFocus.bind(this));
@@ -238,6 +240,21 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 		this._localizedInputsDiv.appendChild(inputContainer);
 		return inputContainer;
 	}
+
+	/**
+     * 
+     */
+     _onChildEvent(event) {
+        event.stopPropagation();
+ 
+        const componentEvent = new Event(event.type, {
+            bubbles: true,
+            cancelable: false,
+            composed: event.composed
+        });
+
+        this.dispatchEvent(componentEvent);
+    }
 	
 	/**
 	 * 
@@ -250,6 +267,12 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 			localizedInputs[localizedInputs.length - 1]._componentReady.then(() => {
 				localizedInputs[localizedInputs.length - 1].focus();
 			});
+	
+		this.dispatchEvent(new Event("change", {
+			bubbles: true,
+			cancelable: false,
+			composed: true
+		}));
 	}
 
 	/**
@@ -264,6 +287,12 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 			if(parentContainer.classList.contains("localized-input-container")) {
 				parentContainer.remove();
 				this._reIndexTabNavigation();
+
+				this.dispatchEvent(new Event("change", {
+					bubbles: true,
+					cancelable: false,
+					composed: true
+				}));
 			}
 		}
 	}

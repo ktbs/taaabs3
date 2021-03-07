@@ -49,10 +49,28 @@ class KTBS4LA2LocalizedTextInput extends TemplatedHTMLElement {
 	 */
 	onComponentReady() {
         this._textInput = this.shadowRoot.querySelector("#text-input");
+        this._textInput.addEventListener("input", this._onChildEvent.bind(this));
+        this._textInput.addEventListener("change", this._onChildEvent.bind(this));
         this._languageSelect = this.shadowRoot.querySelector("#language-select");
+        this._languageSelect.addEventListener("change", this._onChildEvent.bind(this));
         this.addEventListener("focus", this._onFocus.bind(this));
         this._textInput.addEventListener("focus", this._onChildFormElementFocus.bind(this));
         this._languageSelect.addEventListener("focus", this._onChildFormElementFocus.bind(this));
+    }
+
+    /**
+     * 
+     */
+     _onChildEvent(event) {
+        event.stopPropagation();
+ 
+        const componentEvent = new Event(event.type, {
+            bubbles: true,
+            cancelable: false,
+            composed: event.composed
+        });
+
+        this.dispatchEvent(componentEvent);
     }
 
     /**
