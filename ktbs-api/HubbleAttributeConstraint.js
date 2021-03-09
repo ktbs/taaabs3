@@ -62,7 +62,7 @@ export class HubbleAttributeConstraint {
      * \public
      */
     set operator(new_operator) {
-        if(["==", "<", ">", "<=", ">="].includes(new_operator))
+        if(["==", "!=", "<", ">", "<=", ">="].includes(new_operator))
             this._JSONData["operator"] = new_operator;
         else
             throw new KtbsError("Invalid operator \"" + new_operator + "\". Valid operators are : \"==\", \"<\", \">\", \"<=\", or \">=\"");
@@ -96,6 +96,8 @@ export class HubbleAttributeConstraint {
         switch(this.operator) {
             case "==": 
                 return (obselAttribute.value == this.value);
+            case "!=": 
+                return (obselAttribute.value != this.value);
             case "<":
                 return (obselAttribute.value < this.value);
             case ">":

@@ -210,17 +210,20 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
                                     case "==" :
                                         this._operatorSelect.selectedIndex = 0;
                                         break;
-                                    case "<" :
+                                    case "!=" :
                                         this._operatorSelect.selectedIndex = 1;
                                         break;
-                                    case ">" :
+                                    case "<" :
                                         this._operatorSelect.selectedIndex = 2;
                                         break;
-                                    case "<=" :
+                                    case ">" :
                                         this._operatorSelect.selectedIndex = 3;
                                         break;
-                                    case ">=" :
+                                    case "<=" :
                                         this._operatorSelect.selectedIndex = 4;
+                                        break;
+                                    case ">=" :
+                                        this._operatorSelect.selectedIndex = 5;
                                         break;
                                     default: 
                                         this.emitErrorEvent("Unsupported operator \"" + valueObject.operator + "\"");
@@ -290,11 +293,12 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
         this._operatorSelect.addEventListener("focus", this._onChildElementFocus.bind(this));
         this._operatorSelect.addEventListener("change", this._onChildEvent.bind(this));
         this._operatorSelect.addEventListener("input", this._onChildEvent.bind(this));
-        this._equalsOperator = this.shadowRoot.querySelector("#operator-equals");
+        this._equalOperator = this.shadowRoot.querySelector("#operator-eq");
+        this._notEqualOperator = this.shadowRoot.querySelector("#operator-neq");
         this._lowerThanOperator = this.shadowRoot.querySelector("#operator-lt");
         this._greaterThanOperator = this.shadowRoot.querySelector("#operator-gt");
-        this._lowerThanOrEqualsOperator = this.shadowRoot.querySelector("#operator-lte");
-        this._greaterThanOrEqualsOperator = this.shadowRoot.querySelector("#operator-gte");
+        this._lowerThanOrEqualOperator = this.shadowRoot.querySelector("#operator-lte");
+        this._greaterThanOrEqualOperator = this.shadowRoot.querySelector("#operator-gte");
         this._valueInput = this.shadowRoot.querySelector("#value-input");
         this._valueInput.addEventListener("focus", this._onChildElementFocus.bind(this));
         this._valueInput.addEventListener("change", this._onChildEvent.bind(this));
@@ -307,11 +311,12 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
      */
     _updateStringsTranslation() {
         this._attributeTypeSelect.setAttribute("lang", this._lang);
-        this._equalsOperator.setAttribute("title", this._translateString("Strictly equals"));
+        this._equalOperator.setAttribute("title", this._translateString("Is equal to"));
+        this._notEqualOperator.setAttribute("title", this._translateString("Is not equal to"));
         this._lowerThanOperator.setAttribute("title", this._translateString("Is strictly inferior to"));
         this._greaterThanOperator.setAttribute("title", this._translateString("Is strictly superior to"));
-        this._lowerThanOrEqualsOperator.setAttribute("title", this._translateString("Is inferior to or equals"));
-        this._greaterThanOrEqualsOperator.setAttribute("title", this._translateString("Is superior to or equals"));
+        this._lowerThanOrEqualOperator.setAttribute("title", this._translateString("Is inferior or equal to"));
+        this._greaterThanOrEqualOperator.setAttribute("title", this._translateString("Is superior or equal to"));
         this._valueInput.setAttribute("placeholder", this._translateString("Value"));
     }
 
