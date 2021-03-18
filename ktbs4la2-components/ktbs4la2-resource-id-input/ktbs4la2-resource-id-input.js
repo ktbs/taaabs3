@@ -180,11 +180,16 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
                     inputValue = newValue;
                 
                 this._idInput.value = inputValue;
-                this._resolveLastSetValuePromise();
+
+                if(this._lastSetValuePromise)
+                    this._resolveLastSetValuePromise();
+
                 this._lastSetValuePromise = null;
                 this._adjustIdInputWidthForText(inputValue);
             }).catch((error) => {
-                this._rejectLastSetValuePromise(error);
+                if(this._lastSetValuePromise)
+                    this._rejectLastSetValuePromise(error);
+                
                 this._lastSetValuePromise = null;
             });
         }
