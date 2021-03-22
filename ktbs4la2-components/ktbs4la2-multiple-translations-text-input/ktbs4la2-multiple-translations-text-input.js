@@ -184,7 +184,10 @@ class KTBS4LA2MultipleTranslationsTextInput extends TemplatedHTMLElement {
 	 * 
 	 */
 	_getLocalizedInputs() {
-		return this._localizedInputsDiv.querySelectorAll("ktbs4la2-localized-text-input");
+		if(this._localizedInputsDiv)
+			return this._localizedInputsDiv.querySelectorAll("ktbs4la2-localized-text-input");
+		else
+			return [];
 	}
 
 	/**
