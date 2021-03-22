@@ -256,7 +256,7 @@ export class Obsel extends Resource {
         if(attributeType instanceof AttributeType) {
             let attribute = new Attribute(this, attributeType.uri, value);
             this.attributes.push(attribute);
-            this._JSONData[attributeType.id] = value;
+            this._JSONData[attributeType.uri] = value;
         }
         else
             throw new TypeError("First argument for Obsel::add_attribute() must be of type AttributeType");

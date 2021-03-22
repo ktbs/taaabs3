@@ -48,7 +48,7 @@ export class AttributeType {
 
     /**
      * Gets the relative id of the attribute type (relative to parent Model)
-	 * \return string
+	 * \return String
 	 * \public
      */
     get id() {
@@ -64,7 +64,7 @@ export class AttributeType {
 
     /**
      * Sets the relative id of the attribute type in it's parent Model
-     * \param string id - the new id for the attribute type
+     * \param String id - the new id for the attribute type
 	 * \public
      */
     set id(new_id) {
@@ -123,7 +123,7 @@ export class AttributeType {
 
     /**
 	 * Returns a user-friendly label
-	 * \return string
+	 * \return String
 	 * \public
 	 */
 	get label() {
@@ -139,8 +139,8 @@ export class AttributeType {
 
 	/**
 	 * Gets the label for a given language
-	 * \param string lang - a short code for the language we want the label translated into
-	 * \return string the translated label, or the default label if no translated label has been found, or undefined if no default label has been found
+	 * \param String lang - a short code for the language we want the label translated into
+	 * \return String the translated label, or the default label if no translated label has been found, or undefined if no default label has been found
 	 * \public
 	 */
 	get_translated_label(lang) {
@@ -160,7 +160,7 @@ export class AttributeType {
 
 	/**
 	 * Set a user-friendly label.
-	 * \param string new_label - the new label for the resource
+	 * \param String new_label - the new label for the resource
 	 * \public
 	 */
 	set label(new_label) {
@@ -170,29 +170,30 @@ export class AttributeType {
 
 	/**
 	 * Sets a translation for the label in a given language
-	 * \param string label - the translated label
-	 * \param string lang - a short code for the language the label is translated in
+	 * \param String label - the translated label
+	 * \param String lang - a short code for the language the label is translated in
 	 * \public
 	 */
 	set_translated_label(label, lang) {
 		let currentLabel = this.label;
 		let newLabel;
 
-		if(currentLabel instanceof string) {
+		if(currentLabel instanceof String) {
 			newLabel = new Array();
 			newLabel.push({"@language": "en", "@value": currentLabel});
 		}
-		else if(currentLabel instanceof Array) {
+		else if(currentLabel instanceof Array)
 			newLabel = currentLabel;
-		}
+		else
+			newLabel = new Array();
 
-		currentLabel.push({"@language": lang, "@value": label})
-		this.label = currentLabel;
+		newLabel.push({"@language": lang, "@value": label})
+		this.label = newLabel;
 	}
 
     /**
 	 * Gets the "comment" of the resource
-	 * \return string
+	 * \return String
 	 * \public
 	 */
 	get comment() {
@@ -201,7 +202,7 @@ export class AttributeType {
 
 	/**
 	 * Sets the "comment" of the resource
-	 * \param string comment - the new comment for the resource
+	 * \param String comment - the new comment for the resource
 	 * \public
 	 */
 	set comment(comment) {
@@ -298,7 +299,7 @@ export class AttributeType {
 
 	/**
 	 * Gets the data types allowed for this AttributeType
-	 * \return Array of string
+	 * \return Array of String
 	 * \public
 	 */
 	get data_types() {

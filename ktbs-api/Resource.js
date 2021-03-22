@@ -1263,7 +1263,7 @@ export class Resource {
 							throw new KtbsError("Can not post a new child resource with a lifecycle status different from \"new\"");
 						else {
 							new_child_resource[i].syncStatus = "pending";
-							new_child_resource[i]._sendQueuedNotifications();
+							new_child_resource[i].sendQueuedNotifications();
 							postBodyArray.push(new_child_resource[i]._getPostData());
 						}
 					}
@@ -1308,7 +1308,7 @@ export class Resource {
 												new_child_resource[i].lifecycleStatus = "exists";
 												new_child_resource[i].syncStatus = "needs_sync";
 												ResourceMultiton.register_resource(new_child_resource[i]);
-												new_child_resource[i]._sendQueuedNotifications();
+												new_child_resource[i].sendQueuedNotifications();
 											}
 										}
 
@@ -1325,7 +1325,7 @@ export class Resource {
 										else if(new_child_resource instanceof Array) {
 											for(let i = 0; i < new_child_resource.length; i++) {
 												new_child_resource[i].syncStatus = "error";
-												new_child_resource[i]._sendQueuedNotifications();
+												new_child_resource[i].sendQueuedNotifications();
 											}
 										}
 
@@ -1350,7 +1350,7 @@ export class Resource {
 										else if(new_child_resource instanceof Array) {
 											for(let i = 0; i < new_child_resource.length; i++) {
 												new_child_resource[i].syncStatus = "needs_sync";
-												new_child_resource[i]._sendQueuedNotifications();
+												new_child_resource[i].sendQueuedNotifications();
 											}
 										}
 
@@ -1549,13 +1549,15 @@ export class Resource {
 	 * \param Resource or Array of Resource new_children
 	 */
 	_registerNewChildren(new_children) {
-		if(new_children instanceof Array) {
-			for(let i = 0; i < new_children.length; i++)
-				this._registerNewChild(new_children[i]);
+		if(this._registerNewChild) {
+			if(new_children instanceof Array) {
+				for(let i = 0; i < new_children.length; i++)
+					this._registerNewChild(new_children[i]);
+			}
+			else
+				this._registerNewChild(new_children);
 		}
-		else
-			this._registerNewChild(new_children);
-
+		
 		this._queueNotification("children-add", this.children);
 	}
 

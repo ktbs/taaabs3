@@ -31,7 +31,7 @@ export class ObselType {
 
     /**
      * Gets the relative ID of the obsel type (relative to the Model it is described in)
-     * \return string
+     * \return String
      * \public
      */
     get id() {
@@ -43,7 +43,7 @@ export class ObselType {
 
     /**
      * Sets the relative ID of the obsel type (relative to the Model it is described in)
-     * \param string id - the new relative ID for the obsel type
+     * \param String id - the new relative ID for the obsel type
      * \public
      */
     set id(new_id) {
@@ -147,7 +147,7 @@ export class ObselType {
 
     /**
      * Gets the default color (if defined) to use for representing Obsels of the current type
-     * \return string
+     * \return String
      * \public
      */
     get suggestedColor() {
@@ -156,7 +156,7 @@ export class ObselType {
 
     /**
      * Sets the default color to use for representing Obsels of the current type
-     * \param string new_suggestedColor - the new default color as a valid HTML/CSS color (hexadecimal, color name etc ...)
+     * \param String new_suggestedColor - the new default color as a valid HTML/CSS color (hexadecimal, color name etc ...)
      * \public
      */
     set suggestedColor(new_suggestedColor) {
@@ -165,7 +165,7 @@ export class ObselType {
 
     /**
      * Gets the default symbol tu use for representing Obsels of the current type
-     * \return string
+     * \return String
      * \public
      */
     get suggestedSymbol() {
@@ -174,7 +174,7 @@ export class ObselType {
 
     /**
      * Sets the default symbol tu use for representing Obsels of the current type
-     * \param string suggestedSymbol the new default symbol as a character (Unicode supported)
+     * \param String suggestedSymbol the new default symbol as a character (Unicode supported)
      * \public
      */
     set suggestedSymbol(new_suggestedSymbol) {
@@ -183,7 +183,7 @@ export class ObselType {
 
     /**
 	 * Returns a user-friendly label
-	 * \return string
+	 * \return String
      * \public
 	 */
 	get label() {
@@ -199,8 +199,8 @@ export class ObselType {
 
 	/**
 	 * Gets the label for a given language, or the default label if no translated label has been found, or undefined if no default label has been found
-	 * \param string lang - a short code for the language we want the label translated into
-	 * \return string
+	 * \param String lang - a short code for the language we want the label translated into
+	 * \return String
      * \public
 	 */
 	get_translated_label(lang) {
@@ -220,7 +220,7 @@ export class ObselType {
 
 	/**
 	 * Set a user-friendly label.
-	 * \param string label - The new label for the resource
+	 * \param String label - The new label for the resource
      * \public
 	 */
 	set label(new_label) {
@@ -230,29 +230,30 @@ export class ObselType {
 
 	/**
 	 * Sets a translation for the label in a given language
-	 * \param string label - the translated label
-	 * \param string lang - a short code for the language the label is translated in
+	 * \param String label - the translated label
+	 * \param String lang - a short code for the language the label is translated in
      * \public
 	 */
 	set_translated_label(label, lang) {
 		let currentLabel = this.label;
 		let newLabel;
 
-		if(currentLabel instanceof string) {
+		if(currentLabel instanceof String) {
 			newLabel = new Array();
 			newLabel.push({"@language": "en", "@value": currentLabel});
 		}
-		else if(currentLabel instanceof Array) {
+		else if(currentLabel instanceof Array)
 			newLabel = currentLabel;
-		}
+		else
+            newLabel = new Array();
 
-		currentLabel.push({"@language": lang, "@value": label})
-		this.label = currentLabel;
+        newLabel.push({"@language": lang, "@value": label})
+		this.label = newLabel;
 	}
 
     /**
 	 * Gets the "comment" of the resource
-	 * \return string
+	 * \return String
      * \public
 	 */
 	get comment() {
@@ -261,7 +262,7 @@ export class ObselType {
 
 	/**
 	 * Sets the "comment" of the resource
-	 * \param string comment - the new comment for the resource
+	 * \param String comment - the new comment for the resource
      * \public
 	 */
 	set comment(comment) {
