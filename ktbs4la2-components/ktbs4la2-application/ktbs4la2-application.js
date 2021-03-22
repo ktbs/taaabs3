@@ -17,6 +17,7 @@ import "../ktbs4la2-main-documentation/ktbs4la2-main-documentation.js";
 import "../ktbs4la2-main-resource/ktbs4la2-main-resource.js";
 import "../ktbs4la2-create-resource-form/ktbs4la2-create-resource-form.js";
 import "../ktbs4la2-store-stylesheet-rules-to-method-form/ktbs4la2-store-stylesheet-rules-to-method-form.js";
+import "../ktbs4la2-csv-trace-import/ktbs4la2-csv-trace-import.js";
 import {ObselType} from "../../ktbs-api/ObselType.js";
 import { KtbsError } from "../../ktbs-api/Errors.js";
 
@@ -624,13 +625,24 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		if(parentType && parentUri) {
 			const createType = event.detail["create-type"];
 
-			let formElement = document.createElement("ktbs4la2-create-resource-form");
-			formElement.setAttribute("parent-type", parentType);
-			formElement.setAttribute("parent-uri", parentUri);
-			formElement.setAttribute("create-type", createType);
-			formElement.addEventListener("submit", this._onSubmitFormCreateResource.bind(this));
-			formElement.addEventListener("cancel", this.removeOverlay.bind(this));
-			this.setOverlay(formElement);
+			if(createType == "StoredTrace") {
+
+				// TODO : demander si import CSV ou créer vide
+
+
+				const csvImportElement = document.createElement("ktbs4la2-csv-trace-import");
+				csvImportElement.setAttribute("parent-uri", parentUri);
+				this.setOverlay(csvImportElement);
+			}
+			else {
+				let formElement = document.createElement("ktbs4la2-create-resource-form");
+				formElement.setAttribute("parent-type", parentType);
+				formElement.setAttribute("parent-uri", parentUri);
+				formElement.setAttribute("create-type", createType);
+				formElement.addEventListener("submit", this._onSubmitFormCreateResource.bind(this));
+				formElement.addEventListener("cancel", this.removeOverlay.bind(this));
+				this.setOverlay(formElement);
+			}
 		}
 	}
 
