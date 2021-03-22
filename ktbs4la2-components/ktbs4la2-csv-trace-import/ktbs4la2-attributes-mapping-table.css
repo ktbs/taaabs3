@@ -1,0 +1,36 @@
+table {
+    border-collapse: collapse;
+    margin-bottom: 5px;
+    position: relative;
+}
+
+#discriminating-column-label, #value-label {
+    font-weight: bold;
+}
+
+table thead, table thead tr, table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+table th {
+    background-color: honeydew;
+    color: black;
+    text-align: center;
+    border: 1px solid gray;
+    padding: 5px 5px;
+    font-weight: normal;
+    font-size: 10pt;
+}
+
+table th .new-attribute-parameters.hidden {
+    display: none;
+}
+
+table td {
+    background-color: white;
+    color: black;
+    border: 1px solid gray;
+    padding: 5px 5px;
+}

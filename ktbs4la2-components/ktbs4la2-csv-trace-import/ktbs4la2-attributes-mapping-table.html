@@ -1,0 +1,58 @@
+<template id="table-header-template">
+    <th>
+        <select class="mapping-type-select">
+            <option value="&lt;do-not-import&gt;">{translate: 'Don't import'}</option>
+            <option value="id">{translate: 'Id'}</option>
+            <option value="begin">{translate: 'Begin'}</option>
+            <option value="beginDT">{translate: 'Begin date and time'}</option>
+            <option value="end">{translate: 'End'}</option>
+            <option value="endDT">{translate: 'End date and time'}</option>
+            <option value="subject">{translate: 'Subject'}</option>
+            <option value="&lt;new&gt;">{translate: '+ New attribute (create)'}</option>
+        </select>
+
+        <div class="new-attribute-parameters hidden">
+            <p>
+                <label class="new-attribute-id-label-label">
+                    <span class="new-attribute-id-label">{translate: 'New attribute ID :'}</span>
+                </label>
+            </p>
+
+            <p>
+                <label class="new-attribute-label-label">
+                    <span class="new-attribute-label-label-span">{translate: 'New attribute label :'}</span>
+                    
+                    <br />
+                </label>
+            </p>
+
+            <p>
+                <label>
+                    <span class="new-attribute-data-type">{translate: 'New attribute data type :'}</span>
+
+                    <br />
+
+                    <select class="attribute-data-type-select">
+                        <option value="xsd:string">{translate: 'String'}</option>
+                        <option value="xsd:integer">{translate: 'Integer'}</option>
+                        <option value="xsd:float">{translate: 'Float'}</option>
+                        <option value="xsd:dateTime">{translate: 'Date and time'}</option>
+                        <option value="xsd:boolean">{translate: 'Boolean'}</option>
+                    </select>
+                </label>
+            </p>
+        </div>
+    </th>
+</template>
+
+<style id="do-not-import-cols"></style>
+
+<table>
+    <caption><span id="caption-label-1">{translate: 'Attribute mapping for lines whose value for column'}</span> <span id="discriminating-column-label"></span> <span id="caption-label-2">{translate: 'equals'}</span> &quot;<span id="value-label"></span>&quot;</caption>
+    
+    <thead>
+        <tr></tr>
+    </thead>
+
+    <tbody></tbody>
+</table>

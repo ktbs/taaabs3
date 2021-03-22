@@ -1,0 +1,352 @@
+<style id="preview-table-hovered-col"></style>
+
+<style id="preview-table-selected-col"></style>
+
+<main id="main" class="step-choose-file">
+    <aside id="import-steps-nav">
+        <ol id="import-steps-nav-list">
+            <li id="step-choose-file-nav-item">{translate: 'CSV file selection'}</li>
+            <li id="step-load-profile-nav-item">{translate: 'Import profile'}</li>
+            <li id="step-csv-parsing-nav-item">{translate: 'CSV parsing parameters'}</li>
+            <li id="step-choose-model-nav-item">{translate: 'Choose model'}</li>
+            <li id="step-define-obsel-types-nav-item">{translate: 'Define obsel types'}</li>
+
+            <li id="step-attributes-mapping-nav-item">
+                <span id="step-attributes-mapping-nav-label">{translate: 'Attributes mapping'}</span>
+                <ol id="step-attributes-mapping-nav-sub"></ol>
+            </li>
+
+            <li id="step-save-profile-nav-item">{translate: 'Save import profile'}</li>
+            <li id="step-import-nav-item">{translate: 'Import'}</li>
+        </ol>
+    </aside>
+
+    <article id="main-content">
+        <section class="import-step" id="step-choose-file">
+            <h1 id="step-choose-file-title">{translate: 'CSV file selection'}</h1>
+
+            <form id="step-choose-file-form">
+                <div>
+                    <input type="file" id="import-file" accept=".csv,.tsv" tabindex="1" required />
+                    <label id="import-file-label" for="import-file">{translate: 'Choose a file...'}</label>
+                </div>
+
+                <div id="import-file-details" class="no-file">
+                    <div id="import-file-details-no-file">{translate: 'No file selected'}</div>
+
+                    <div id="import-file-details-file">
+                        <div class="import-file-details-line">
+                            <span class="import-file-details-line-title" id="import-file-details-name-title">{translate: 'File name'}</span> : <span id="import-file-details-name-value"></span>
+                        </div>
+                        
+                        <div class="import-file-details-line">
+                            <span class="import-file-details-line-title" id="import-file-details-size-title">{translate: 'Size'}</span> : <span id="import-file-details-size-value"></span>
+                        </div>
+                        
+                        <div class="import-file-details-line">
+                            <span class="import-file-details-line-title" id="import-file-details-lastmodified-title">{translate: 'Last modified'}</span> : <span id="import-file-details-lastmodified-value"></span>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <section class="import-step" id="step-load-profile">
+            <h1 id="step-load-profile-title">{translate: 'Import profile'}</h1>
+
+            <form id="step-load-profile-form">
+                <p>
+                    <input type="radio" name="load-profile" id="load-profile-no" value="no" checked />
+                    <label id="load-profile-no-label" for="load-profile-no">{translate: "Do not use an import profile"}</label>
+                </p>
+
+                <p>
+                    <input type="radio" name="load-profile" id="load-profile-yes" value="yes" disabled />
+                    <label id="load-profile-yes-label" for="load-profile-yes">{translate: "Use the import profile specified below :"}</label>
+
+                    <select id="import-profile" disabled>
+                        <option id="import-profile-no-profile-available-option" value="no-profile-available">{translate: "No profile available yet"}</option>
+                    </select>
+                </p>
+            </form>
+        </section>
+
+        <section class="import-step" id="step-csv-parsing">
+            <h1 id="step-csv-parsing-title">{translate: 'CSV parsing parameters'}</h1>
+
+            <form id="step-csv-parsing-form">
+                <p>
+                    <label for="charset" id="charset-label">{translate: 'Character set'} :</label>
+
+                    <select id="charset">
+                        <option value="iso-8859-6">Arabic (ISO-8859-6)</option>
+                        <option value="windows-1256">Arabic (Windows-1256)</option>
+                        <option value="iso-8859-13">Baltic (ISO-8859-13/Latin 7)</option>
+                        <option value="windows-1257">Baltic (Windows-1257)</option>
+                        <option value="iso-8859-14">Celtic (ISO-8859-14/Latin 8)</option>
+                        <option value="gbk">Simplified Chinese (GBK)</option>
+                        <option value="gb18030">Simplified Chinese (GB 18030)</option>
+                        <option value="big5">Traditional Chinese (Big-5)</option>
+                        <option value="iso-8859-5">Cyrillic (ISO-8859-5)</option>
+                        <option value="ibm866">Cyrillic (DOS/OS2-866/Russian)</option>
+                        <option value="windows-1251">Cyrillic (Windows-1251)</option>
+                        <option value="x-mac-cyrillic">Mac OS Cyrillic (x-mac-cyrillic)</option>
+                        <option value="iso-8859-2">Eastern Europe (ISO-8859-2)</option>
+                        <option value="windows-1250">Eastern Europe (Windows-1250/Latin 2)</option>
+                        <option value="iso-8859-4">Northern Europe (ISO-8859-4/Latin 4)</option>
+                        <option value="iso-8859-3">Southern Europe (ISO-8859-3/Latin 3)</option>
+                        <option value="iso-8859-15">Western Europe (ISO-8859-15/Latin 9)</option>
+                        <option value="windows-1252">Western Europe (ISO-8859-1/Windows-1252/WinLatin 1)</option>
+                        <option value="iso-8859-7">Greek (ISO-8859-7)</option>
+                        <option value="windows-1253">Greek (Windows-1253)</option>
+                        <option value="iso-8859-8">Hebrew (ISO-8859-8)</option>
+                        <option value="windows-1255">Hebrew (Windows-1255)</option>
+                        <option value="euc-jp">Japanese (EUC-JP)</option>
+                        <option value="shift-jis">Japanese (Shift-JIS/Windows-31j)</option>
+                        <option value="euc-kr">Korean (EUC-KR/Windows-949)</option>
+                        <option value="macintosh">Mac OS Roman (Macintosh)</option>
+                        <option value="iso-8859-10">Nordic (ISO-8859-10/Latin 6)</option>
+                        <option value="iso-8859-16">Romanian (ISO-8859-16/Latin 10)</option>
+                        <option value="koi8-r">Russian (KOI8-R)</option>
+                        <option value="windows-874">Thai (ISO-8859-11/Windows-874)</option>
+                        <option value="windows-1254">Turkish (ISO-8859-9/Windows-1254)</option>
+                        <option value="koi8-u">Ukranian (KOI8-U)</option>
+                        <option value="utf-8" selected>Unicode (UTF-8)</option>
+                        <option value="utf-16be">Unicode (UTF-16-be)</option>
+                        <option value="utf-16le">Unicode (UTF-16-le)</option>
+                        <option value="windows-1258">Vietnamese (Windows-1258)</option>
+                    </select>
+                </p>
+
+                <p>
+                    <label id="separator-label" for="separator">{translate: 'Separator'}</label>
+
+                    <select id="separator">
+                        <option id="separator-comma-option" value="comma">{translate: 'Comma (,)'}</option>
+                        <option id="separator-semicolon-option" value="semicolon">{translate: 'Semicolon (;)'}</option>
+                        <option id="separator-tab-option" value="tab">{translate: 'Tabulation (\t)'}</option>
+                        <option id="separator-space-option" value="space">{translate: 'Space ( )'}</option>
+                        <option id="separator-custom-option" value="custom">{translate: 'Custom...'}</option>
+                    </select>
+
+                    <input type="text" id="separator-custom-input" size="5" class="hidden" required />
+                </p>
+
+                <p>
+                    <input type="checkbox" id="first-line-is-header" />
+                    <label id="first-line-is-header-label" for="first-line-is-header">{translate: 'First line is the header'}</label>
+                </p>
+
+                <p>
+                    <h2 id="parsing-preview-title">{translate: 'Preview'}</h2>
+
+                    <div id="parsing-preview-container">
+                        <table id="parsing-preview"></table>
+                        <span id="loading-preview-message">{translate: 'Loading...'}</span>
+                    </div>
+                </p>
+            </form>
+        </section>
+
+        <section class="import-step" id="step-choose-model">
+            <h1 id="step-choose-model-title">{translate: 'Choose model'}</h1>
+
+            <form id="step-choose-model-form" class="model-choice-new">
+                <fieldset>
+                    <p>
+                        <input type="radio" name="model-choice" id="model-choice-new" tabindex="1" checked />
+                        <label id="model-choice-new-label" for="model-choice-new">{translate: 'Create a new model for the imported trace'}</label>
+                    </p>
+
+                    <p>
+                        <input type="radio" name="model-choice" id="model-choice-existing" tabindex="2" />
+                        <label id="model-choice-existing-label" for="model-choice-existing">{translate: 'Attach imported trace to an existing model'}</label>    
+                    </p>
+                </fieldset>
+
+                <div id="new-model-container">
+                    <p>
+                        <label for="new-model-id"><span id="new-model-id-label">{translate: 'New model ID :'}</span> <span id="new-model-base-uri"></span></label>
+
+                        <ktbs4la2-resource-id-input
+                            id="new-model-id"
+                            placeholder="&lt;id&gt;"
+                            tabindex="3" 
+                            required>
+                        </ktbs4la2-resource-id-input>
+                    </p>
+
+                    <p>
+                        <label id="new-model-label-label" for="new-model-label">{translate: 'New model label :'}</label>
+
+                        <ktbs4la2-multiple-translations-text-input
+                            id="new-model-label"
+                            tabindex="4">
+                        </ktbs4la2-multiple-translations-text-input>
+                    </p>
+
+                    <p>
+                        <label id="new-model-parent-label" for="new-model-parent">{translate: 'Create into :'}</label>
+
+                        <ktbs4la2-resource-picker
+                            id="new-model-parent"
+                            allowed-resource-types="Base"
+                            tabindex="5"
+                            required>
+                        </ktbs4la2-resource-picker>
+                    </p>
+                </div>
+
+                <div id="existing-model-container">
+                    <p>
+                        <label id="existing-model-label" for="existing-model">{translate: 'Existing model :'}</label>
+
+                        <ktbs4la2-resource-picker
+                            id="existing-model"
+                            allowed-resource-types="Model"
+                            tabindex="6"
+                            required>
+                        </ktbs4la2-resource-picker>
+                    </p>
+                </div>
+            </form>
+        </section>
+
+        <section class="import-step" id="step-define-obsel-types">
+            <h1 id="step-define-obsel-types-title">{translate: 'Define obsel types'}</h1>
+
+            <form id="step-define-obsel-types-form" class="obsel-types-number-multiple">
+                <fieldset>
+                    <legend id="obsel-types-number-legend">{translate: 'How do rows map to obsel type(s) ?'}</legend>
+
+                    <p>
+                        <input id="obsel-types-number-multiple" type="radio" name="obsel-types-number" value="multiple" tabindex="1" checked />
+                        <label id="obsel-types-number-multiple-label" for="obsel-types-number-multiple">{translate: 'Rows map to different obsel types depending on a column's value'}</label>
+                    </p>
+
+                    <p>
+                        <input id="obsel-types-number-unique" type="radio" name="obsel-types-number" value="unique" tabindex="2" />
+                        <label id="obsel-types-number-unique-label" for="obsel-types-number-unique">{translate: 'All rows map to the same obsel type'}</label>
+                    </p>
+                </fieldset>
+
+                <div id="unique-obsel-type-parameters">
+                    <p id="existing-model-unique-obsel-type-container">
+                        <label id="existing-model-unique-obsel-type-label" for="existing-model-unique-obsel-type">{translate: 'Map rows to the obsel type :'}</label>
+
+                        <ktbs4la2-obsel-type-select
+                            id="existing-model-unique-obsel-type"
+                            tabindex="3" 
+                            required>
+                        </ktbs4la2-obsel-type-select>
+                    </p>
+
+                    <div id="new-model-unique-obsel-type-container">
+                        <p>
+                            <label id="new-model-unique-obsel-type-id-label" for="new-model-unique-obsel-type-id">{translate: 'New obsel type ID :"}</label>
+                            
+                            <ktbs4la2-resource-id-input 
+                                id="new-model-unique-obsel-type-id"
+                                tabindex="3" 
+                                placeholder="&lt;id&gt;"
+                                required>
+                            </ktbs4la2-resource-id-input>
+                        </p>
+
+                        <p>
+                            <label id="new-model-unique-obsel-type-label-label" for="new-model-unique-obsel-type-label">{translate: 'New obsel type label :"}</label>
+                            
+                            <ktbs4la2-multiple-translations-text-input
+                                id="new-model-unique-obsel-type-label"
+                                tabindex="4">
+                            </ktbs4la2-multiple-translations-text-input>
+                        </p>
+                    </div>
+                </div>
+
+                <div id="multiple-obsel-types-parameters">
+                    <h2 id="choose-obsel-type-column-title">{translate: 'Which column allows to determinate obsel type in each row ?'}</h2>
+
+                    <h2 id="obsel-types-mapping-title">{translate: 'Obsel type mapping for each distinct value in this column :'}</h2>
+
+                    <table id="obsel-types-mapping">
+                        <thead>
+                            <tr>
+                                <th id="obsel-types-mapping-header-for">{translate: 'For value :'}</th>
+                                <th id="obsel-types-mapping-header-map">{translate: 'Map to :'}</th>
+                                <th id="obsel-types-mapping-header-id">{translate: 'Obsel type ID'}</th>
+                                <th id="obsel-types-mapping-header-label">{translate: 'Obsel type label'}</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr id="obsel-types-mapping-empty-row">
+                                <td id="obsel-types-mapping-empty-cell" colspan="4">{translate: 'Please choose a non-empty column in the table above'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </section>
+
+        <section class="import-step" id="step-attributes-mapping">
+            <h1 id="step-attributes-mapping-title">{translate: 'Attributes mapping'}</h1>
+
+            <div id="attributes-mapping-tables-container"></div>
+        </section>
+
+        <section class="import-step" id="step-save-profile">
+            <h1 id="step-save-profile-title">{translate: 'Save import profile'}</h1>
+
+            <form id="step-save-profile-form">
+
+            </form>
+        </section>
+
+        <section class="import-step" id="step-import">
+            <h1 id="step-import-title">{translate: 'Import'}</h1>
+
+            <form id="step-import-form">
+                <h2 id="step-import-subtitle">{translate: 'Please set parameters for the new trace'}</h2>
+
+                <p>
+                    <label for="trace-id"><span id="trace-id-label">{translate: 'New trace ID :'}</span> <span id="trace-id-parent-path"></span></label>
+
+                    <ktbs4la2-resource-id-input
+                        id="trace-id"
+                        placeholder="&lt;id&gt;"
+                        tabindex="1"
+                        force-trailing-slash
+                        required>
+                    </ktbs4la2-resource-id-input>
+                </p>
+
+                <p>
+                    <label for="trace-label" id="trace-label-label">{translate: 'New trace label :'}</label>
+
+                    <ktbs4la2-multiple-translations-text-input
+                        id="trace-label"
+                        placeholder="{translate: 'Label'}"
+                        tabindex="2">
+                    </ktbs4la2-multiple-translations-text-input>
+                </p>
+
+                <p>
+                    <label for="trace-origin" id="trace-origin-label">{translate: 'Origin :'}</label>
+                    <input type="text" id="trace-origin" value="1970-01-01T00:00:00Z" />
+                </p>
+
+                <div id="progress-bar-container" class="hidden">
+                    <div id="progress-bar" style="width: 0%;"></div>
+                </div>
+
+                <button id="start-import-button" tabindex="3" disabled>{translate: 'Start import !'}</button>
+            </form>
+        </section>
+
+        <div id="step-navigation">
+            <button id="previous-step-button">{translate: '< Previous step'}</button>
+            <button id="next-step-button" disabled>{translate: 'Next step >'}</button>
+        </div>
+    </article>
+</main>
