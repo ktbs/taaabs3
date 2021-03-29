@@ -4,6 +4,14 @@ table {
     position: relative;
 }
 
+table caption {
+    text-align: left;
+}
+
+table caption.hidden {
+    display: none;
+}
+
 #discriminating-column-label, #value-label {
     font-weight: bold;
 }
@@ -24,7 +32,20 @@ table th {
     font-size: 10pt;
 }
 
-table th .new-attribute-parameters.hidden {
+:host([allow-create-new = "0"]) .mapping-type-select option[value = "<new>"],
+:host([allow-create-new = "false"]) .mapping-type-select option[value = "<new>"] {
+    display: none;
+}
+
+.new-attribute-parameters {
+    display: none;
+}
+
+:host(:not([allow-create-new = "0"]):not([allow-create-new = "false"])) .new-attribute-parameters:not(.hidden) {
+    display: block;
+}
+
+table tr.hidden {
     display: none;
 }
 
@@ -33,4 +54,21 @@ table td {
     color: black;
     border: 1px solid gray;
     padding: 5px 5px;
+}
+
+#loading-preview-message {
+    background-image: url('{my-component-folder}/blue-spinner.svg');
+	background-repeat: no-repeat;
+    padding: 3px 5px 2px 20px;
+    background-color: lightgray;
+    border-radius: 5px 5px;
+    font-style: italic;
+    font-size: 8pt;
+    opacity: 0.5;
+    display: inline-block;
+    visibility: hidden;
+}
+
+:host(.loading) #loading-preview-message {
+    visibility: visible;
 }

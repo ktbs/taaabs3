@@ -232,6 +232,13 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
         this._stepAttributesMappingTitle = this.shadowRoot.querySelector("#step-attributes-mapping-title");
         this._attributesMappingTablesContainer = this.shadowRoot.querySelector("#attributes-mapping-tables-container");
 
+        this._attributesMappingTablesContainerIntersectionObserver = new IntersectionObserver(
+            this._onAttributesMappingTablesContainerIntersection.bind(this), 
+            {
+                root: this._attributesMappingTablesContainer
+            }
+        );
+
         /* --- Step save profile --- */
         this._stepSaveProfileSection = this.shadowRoot.querySelector("#step-save-profile");
         this._stepSaveProfileTitle = this.shadowRoot.querySelector("#step-save-profile-title");
@@ -651,6 +658,11 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                     break;
                 case "step-define-obsel-types" :
                     if(this._importParameters.model_mode == "new") {
+                        let guessedColumnsDataTypes = new Array();
+
+                        for(let colIndex = 0; colIndex < this._parsed_CSV_data_columns_count; colIndex++)
+                            guessedColumnsDataTypes[colIndex] = this._guessColumnDataType(colIndex);
+
                         if(this._obselTypesNumberUniqueRadioButton.checked) {
                             this._importParameters.obsel_types_mapping_mode = "unique";
 
@@ -667,7 +679,43 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
 
                             const aMappingTable = document.createElement("ktbs4la2-attributes-mapping-table");
                             aMappingTable.setAttribute("lang", this._lang);
-                            aMappingTable.setBodyContent(this._getDataRowsMatchingColValue());
+                            aMappingTable.addEventListener("change", this._onChangeAttributeMappingTable.bind(this));
+
+                            const tableValue = new Array();
+
+                            for(let colIndex = 0; colIndex < this._parsed_CSV_data_columns_count; colIndex++) {
+                                const aMapping = {};
+
+                                if(this._dataColumnIsEmpty(colIndex))
+                                    aMapping.mapping_type = "<do-not-import>";
+                                else
+                                    aMapping.mapping_type = "<new>";
+
+                                if(
+                                        this._importParameters.has_header
+                                    &&  (this._parsed_CSV_data[0] instanceof Array)
+                                    &&  this._parsed_CSV_data[0][colIndex]
+                                    &&  (this._parsed_CSV_data[0][colIndex] != "")
+                                )
+                                    aMapping.attribute_id = this._parsed_CSV_data[0][colIndex];
+
+                                aMapping.attribute_data_type = guessedColumnsDataTypes[colIndex];
+                                tableValue.push(aMapping);
+                            }
+
+                            aMappingTable.set_value(tableValue)
+                                .then(() => {
+                                    aMappingTable.dispatchEvent(new Event("change", {bubbles: true, cancelable: false, composed: false}));
+                                });
+
+                            aMappingTable.addBodyContent(this._getDataRowsMatchingColValue("*", "*", this._importParameters.has_header?1:0, 50))
+                                .then(() => {
+                                    const mappingTableLastRow = aMappingTable.last_data_row;
+
+                                    if(mappingTableLastRow)
+                                        this._attributesMappingTablesContainerIntersectionObserver.observe(mappingTableLastRow);
+                                });
+
                             this._attributesMappingTablesContainer.appendChild(aMappingTable);
                         }
                         else {
@@ -709,51 +757,52 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
 
                                     const aMappingTable = document.createElement("ktbs4la2-attributes-mapping-table");
                                     aMappingTable.setAttribute("lang", this._lang);
+                                    aMappingTable.addEventListener("change", this._onChangeAttributeMappingTable.bind(this));
+                                    aMappingTable.discriminatingColumnIndex = this._importParameters.obseltype_column_index;
 
-                                    let discriminating_column_label;
-
-                                    if(this._importParameters.has_header) {
-                                        if(this._parsed_CSV_data[0] && (this._parsed_CSV_data[0][this._importParameters.obseltype_column_index] != undefined))
-                                            discriminating_column_label = new String(this._parsed_CSV_data[0][this._importParameters.obseltype_column_index]);
-
-                                        if(!(discriminating_column_label instanceof String) || !(discriminating_column_label.length > 0))
-                                            discriminating_column_label = new String(this._importParameters.obseltype_column_index);
-                                    }
-                                    else
-                                        discriminating_column_label = new String(this._importParameters.obseltype_column_index);
-
-                                    aMappingTable.discriminatingColumnLabel = discriminating_column_label;
+                                    if(this._parsed_CSV_data[0] && (this._parsed_CSV_data[0][this._importParameters.obseltype_column_index] != undefined))
+                                        aMappingTable.discriminatingColumnLabel = new String(this._parsed_CSV_data[0][this._importParameters.obseltype_column_index]);
+                                    
                                     aMappingTable.discriminatingValue = aMappingValue;
 
-                                    if(this._importParameters.has_header && (this._parsed_CSV_data[0] instanceof Array)) {
-                                        if(i == 0) {
-                                            const firstTableValue = new Array();
+                                    if(i == 0) {
+                                        const tableValue = new Array();
 
-                                            for(let j = 0; j < this._parsed_CSV_data[0].length; j++)
-                                                firstTableValue.push({attribute_id: this._parsed_CSV_data[0][j]});
+                                        for(let colIndex = 0; colIndex < this._parsed_CSV_data_columns_count; colIndex++) {
+                                            const aMapping = {};
 
-                                            aMappingTable.value = firstTableValue;
+                                            if(this._dataColumnIsEmpty(colIndex))
+                                                aMapping.mapping_type = "<do-not-import>";
+                                            else
+                                                aMapping.mapping_type = "<new>";
+
+                                            if(
+                                                    this._importParameters.has_header
+                                                &&  (this._parsed_CSV_data[0] instanceof Array)
+                                                &&  this._parsed_CSV_data[0][colIndex]
+                                                &&  (this._parsed_CSV_data[0][colIndex] != "")
+                                            )
+                                                aMapping.attribute_id = this._parsed_CSV_data[0][colIndex];
+
+                                            aMapping.attribute_data_type = guessedColumnsDataTypes[colIndex];
+                                            tableValue.push(aMapping);
                                         }
-                                        else {
-                                            const followingTableValue = new Array();
 
-                                            for(let j = 0; j < this._parsed_CSV_data[0].length; j++)
-                                                followingTableValue.push({mapping_type: "<existing>", attribute_id: this._parsed_CSV_data[0][j]});
-
-                                            aMappingTable.value = followingTableValue;
-                                        }
-                                    }
-                                    
-                                    aMappingTable.setBodyContent(this._getDataRowsMatchingColValue(this._importParameters.obseltype_column_index, aMappingValue))
-                                        .then(() => {
-                                            if(i == 0)
+                                        aMappingTable.set_value(tableValue)
+                                            .then(() => {
                                                 aMappingTable.dispatchEvent(new Event("change", {bubbles: true, cancelable: false, composed: false}));
-                                        });
-
-                                    aMappingTable.addEventListener("change", this._onChangeAttributeMappingTable.bind(this));
-
-                                    if(i > 0)
+                                            });
+                                    }
+                                    else
                                         aMappingTable.classList.add("hidden");
+
+                                    aMappingTable.addBodyContent(this._getDataRowsMatchingColValue(this._importParameters.obseltype_column_index, aMappingValue, (this._importParameters.has_header)?1:0, 50))
+                                        .then(() => {
+                                            const mappingTableLastRow = aMappingTable.last_data_row;
+
+                                            if(mappingTableLastRow)
+                                                this._attributesMappingTablesContainerIntersectionObserver.observe(mappingTableLastRow);
+                                        });
 
                                     this._attributesMappingTablesContainer.appendChild(aMappingTable);
                                 }
@@ -772,10 +821,84 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
 
                             const obsel_type_uri = new URL(this._existingModelUniqueObselTypeSelect.value);
                             this._importParameters.obsel_type_id = obsel_type_uri.hash.substring(1);
+                            
+                            // ----------------------
 
                             const aMappingTable = document.createElement("ktbs4la2-attributes-mapping-table");
                             aMappingTable.setAttribute("lang", this._lang);
-                            aMappingTable.setBodyContent(this._getDataRowsMatchingColValue());
+                            aMappingTable.setAttribute("allow-create-new", false);
+                            aMappingTable.addEventListener("change", this._onChangeAttributeMappingTable.bind(this));
+
+                            const obselType = this._model.get_obsel_type(this._importParameters.obsel_type_id);
+
+                            if(obselType) {
+                                const tableValue = new Array();
+
+                                for(let colIndex = 0; colIndex < this._parsed_CSV_data_columns_count; colIndex++) {
+                                    const aMapping = {};
+
+                                    if(this._dataColumnIsEmpty(colIndex))
+                                        aMapping.mapping_type = "<do-not-import>";
+                                    else {
+                                        if(
+                                                this._importParameters.has_header
+                                            &&  (this._parsed_CSV_data[0] instanceof Array)
+                                            &&  this._parsed_CSV_data[0][colIndex]
+                                            &&  (this._parsed_CSV_data[0][colIndex] != "")
+                                            
+                                        ) {
+                                            const attributeType = this._model.get_attribute_type(this._parsed_CSV_data[0][colIndex]);
+
+                                            if(
+                                                    attributeType
+                                                &&  attributeType.isAssignedToObselType(obselType)
+                                            ) {
+                                                aMapping.mapping_type = "<existing>";
+                                                aMapping.attribute_id = this._parsed_CSV_data[0][colIndex];
+                                            }
+                                        }
+                                    }
+
+                                    tableValue.push(aMapping);
+                                }
+
+                                const allAdditionalAttributeTypes = new Array();
+                                const obselTypeAttributeTypes = obselType.attribute_types;
+
+                                for(let i = 0; i < obselTypeAttributeTypes.length; i++) {
+                                    const attributeType = obselTypeAttributeTypes[i];
+                                    const anAdditionalAttributeType = {id: attributeType.id};
+
+                                    // --- find what label we should use ---
+                                    let preferred_label = attributeType.get_translated_label(this._lang);
+                                    
+                                    if(!preferred_label)
+                                        preferred_label = attributeType.label;
+
+                                    if(preferred_label)
+                                        anAdditionalAttributeType.label = preferred_label;
+                                    // --- done ---
+
+                                    allAdditionalAttributeTypes.push(anAdditionalAttributeType);
+                                }
+
+                                if(allAdditionalAttributeTypes.length > 0)
+                                    aMappingTable.setAdditionalAttributeTypes(allAdditionalAttributeTypes);
+
+                                aMappingTable.set_value(tableValue)
+                                    .then(() => {
+                                        aMappingTable.dispatchEvent(new Event("change", {bubbles: true, cancelable: false, composed: false}));
+                                    });
+                            }
+
+                            aMappingTable.addBodyContent(this._getDataRowsMatchingColValue("*", "*", this._importParameters.has_header?1:0, 50))
+                                .then(() => {
+                                    const mappingTableLastRow = aMappingTable.last_data_row;
+
+                                    if(mappingTableLastRow)
+                                        this._attributesMappingTablesContainerIntersectionObserver.observe(mappingTableLastRow);
+                                });
+
                             this._attributesMappingTablesContainer.appendChild(aMappingTable);
                         }
                         else {
@@ -792,18 +915,99 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
 
                             for(let i = 0; i < mappingRows.length; i++) {
                                 const aMappingRow = mappingRows[i];
-                                const aMappingValue = aMappingRow.querySelector("td").innerText;
+                                const aMappingValue = aMappingRow.querySelector("td").innerText.trim();
                                 const aMappingSelect = aMappingRow.querySelector("select");
-
+                                
                                 if(aMappingSelect.value != "do-not-import") {
+                                    const obselTypeId = aMappingSelect.value.substring(9);
+
                                     this._importParameters.obsel_types_mapping.push({
                                         value: aMappingValue,
-                                        obsel_type_id: aMappingSelect.value.substring(9)
+                                        obsel_type_id: obselTypeId
                                     });
 
                                     const aMappingTable = document.createElement("ktbs4la2-attributes-mapping-table");
                                     aMappingTable.setAttribute("lang", this._lang);
-                                    aMappingTable.setBodyContent(this._getDataRowsMatchingColValue(this._importParameters.obseltype_column_index, aMappingValue));
+                                    aMappingTable.setAttribute("allow-create-new", false);
+                                    aMappingTable.addEventListener("change", this._onChangeAttributeMappingTable.bind(this));
+                                    aMappingTable.discriminatingColumnIndex = this._importParameters.obseltype_column_index;
+
+                                    if(this._parsed_CSV_data[0] && (this._parsed_CSV_data[0][this._importParameters.obseltype_column_index] != undefined))
+                                        aMappingTable.discriminatingColumnLabel = new String(this._parsed_CSV_data[0][this._importParameters.obseltype_column_index]);
+                                    
+                                    aMappingTable.discriminatingValue = aMappingValue;
+
+                                    const obselType = this._model.get_obsel_type(obselTypeId);
+                                
+                                    if(obselType) {
+                                        const allAdditionalAttributeTypes = new Array();
+                                        const obselTypeAttributeTypes = obselType.attribute_types;
+        
+                                        for(let i = 0; i < obselTypeAttributeTypes.length; i++) {
+                                            const attributeType = obselTypeAttributeTypes[i];
+                                            const anAdditionalAttributeType = {id: attributeType.id};
+        
+                                            // --- find what label we should use ---
+                                            let preferred_label = attributeType.get_translated_label(this._lang);
+                                            
+                                            if(!preferred_label)
+                                                preferred_label = attributeType.label;
+        
+                                            if(preferred_label)
+                                                anAdditionalAttributeType.label = preferred_label;
+                                            // --- done ---
+        
+                                            allAdditionalAttributeTypes.push(anAdditionalAttributeType);
+                                        }
+        
+                                        if(allAdditionalAttributeTypes.length > 0)
+                                            aMappingTable.setAdditionalAttributeTypes(allAdditionalAttributeTypes);
+        
+                                        if(i == 0) {
+                                            const tableValue = new Array();
+        
+                                            for(let colIndex = 0; colIndex < this._parsed_CSV_data_columns_count; colIndex++) {
+                                                const aMapping = {};
+            
+                                                if(this._dataColumnIsEmpty(colIndex))
+                                                    aMapping.mapping_type = "<do-not-import>";
+                                                else {
+                                                    if(
+                                                            this._importParameters.has_header
+                                                        &&  (this._parsed_CSV_data[0] instanceof Array)
+                                                        &&  this._parsed_CSV_data[0][colIndex]
+                                                        &&  (this._parsed_CSV_data[0][colIndex] != "")
+                                                        
+                                                    ) {
+                                                        const attributeType = this._model.get_attribute_type(this._parsed_CSV_data[0][colIndex]);
+            
+                                                        if(
+                                                                attributeType
+                                                            &&  attributeType.isAssignedToObselType(obselType)
+                                                        ) {
+                                                            aMapping.mapping_type = "<existing>";
+                                                            aMapping.attribute_id = this._parsed_CSV_data[0][colIndex];
+                                                        }
+                                                    }
+                                                }
+            
+                                                tableValue.push(aMapping);
+                                            }
+                                            
+                                            aMappingTable.set_value(tableValue)
+                                                .then(() => {
+                                                    aMappingTable.dispatchEvent(new Event("change", {bubbles: true, cancelable: false, composed: false}));
+                                                });
+                                        }
+                                    }
+
+                                    aMappingTable.addBodyContent(this._getDataRowsMatchingColValue(this._importParameters.obseltype_column_index, aMappingValue, this._importParameters.has_header?1:0, 50))
+                                        .then(() => {
+                                            const mappingTableLastRow = aMappingTable.last_data_row;
+
+                                            if(mappingTableLastRow)
+                                                this._attributesMappingTablesContainerIntersectionObserver.observe(mappingTableLastRow);
+                                        });
 
                                     if(i > 0)
                                         aMappingTable.classList.add("hidden");
@@ -849,59 +1053,14 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                     break;
             }
 
-        console.log("this._importParameters = ");
-        console.log(this._importParameters);
+        /*console.log("this._importParameters = ");
+        console.log(this._importParameters);*/
     }
 
     /**
      * 
      */
     _onChangeAttributeMappingTable(event) {
-        const allAdditionalAttributeTypes = [];
-        const allMappingTables = this._attributesMappingTablesContainer.querySelectorAll("ktbs4la2-attributes-mapping-table");
-
-        for(let i = 0; i < allMappingTables.length; i++) {
-            const aMappingTable = allMappingTables[i];
-            const aMappingTable_value = aMappingTable.value;
-
-            if(aMappingTable_value instanceof Array)
-                for(let j = 0; j < aMappingTable_value.length; j++) {
-                    const aMapping = aMappingTable_value[j];
-
-                    if(aMapping.mapping_type == "<new>") {
-                        const anAdditionalAttributeType = {id: aMapping.attribute_id};
-
-                        // --- find what label we should use ---
-                        let preferred_label = null;
-                        const labels = aMapping.attribute_label
-
-                        if(labels instanceof Array) {
-                            for(let i = 0; i < labels.length; i++)
-                                if(labels[i].lang == this._lang) {
-                                    preferred_label = labels[i].value;
-                                    break;
-                                }
-
-                            if(preferred_label == null)
-                                for(let i = 0; i < labels.length; i++)
-                                    if(labels[i].lang == "*") {
-                                        preferred_label = labels[i].value;
-                                        break;
-                                    }
-                        }
-
-                        if(preferred_label != null)
-                            anAdditionalAttributeType.label = preferred_label;
-                        // --- done ---
-
-                        allAdditionalAttributeTypes.push(anAdditionalAttributeType);
-                    }
-                }
-        }
-
-        for(let i = 0; i < allMappingTables.length; i++)
-            allMappingTables[i].setAdditionalAttributeTypes(allAdditionalAttributeTypes);
-
         const changedTable = event.target;
         const mappingCopy = JSON.parse(JSON.stringify(changedTable.value));
 
@@ -916,60 +1075,127 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                     delete mappingCopy[j].attribute_data_type;
             }
         }
-        
-        for(let i = 0; i < allMappingTables.length; i++)
-            if(allMappingTables[i] == changedTable) {
-                for(let j = i + 1; j < allMappingTables.length; j++)
-                    allMappingTables[j].value = mappingCopy;
 
-                break;
+        const allMappingTables = this._attributesMappingTablesContainer.querySelectorAll("ktbs4la2-attributes-mapping-table");
+
+        if(this._importParameters.model_mode == "new") {
+            const allAdditionalAttributeTypes = [];
+
+            for(let i = 0; i < allMappingTables.length; i++) {
+                const aMappingTable = allMappingTables[i];
+                const aMappingTable_value = aMappingTable.value;
+
+                if(aMappingTable_value instanceof Array)
+                    for(let j = 0; j < aMappingTable_value.length; j++) {
+                        const aMapping = aMappingTable_value[j];
+
+                        if((aMapping.mapping_type == "<new>") && (aMapping.attribute_id)) {
+                            const anAdditionalAttributeType = {id: aMapping.attribute_id};
+
+                            // --- find what label we should use ---
+                            let preferred_label = null;
+                            const labels = aMapping.attribute_label
+
+                            if(labels instanceof Array) {
+                                for(let i = 0; i < labels.length; i++)
+                                    if(labels[i].lang == this._lang) {
+                                        preferred_label = labels[i].value;
+                                        break;
+                                    }
+
+                                if(preferred_label == null)
+                                    for(let i = 0; i < labels.length; i++)
+                                        if(labels[i].lang == "*") {
+                                            preferred_label = labels[i].value;
+                                            break;
+                                        }
+                            }
+
+                            if(preferred_label != null)
+                                anAdditionalAttributeType.label = preferred_label;
+                            // --- done ---
+
+                            allAdditionalAttributeTypes.push(anAdditionalAttributeType);
+                        }
+                    }
             }
 
-        this._updateNextStepButton();
+            const allTablesAdditionalAttributeTypesSetPromises = new Array();
+
+            for(let i = 0; i < allMappingTables.length; i++)
+                allTablesAdditionalAttributeTypesSetPromises.push(allMappingTables[i].setAdditionalAttributeTypes(allAdditionalAttributeTypes));
+
+            Promise.all(allTablesAdditionalAttributeTypesSetPromises)
+                .then(() => {
+                    for(let i = 0; i < allMappingTables.length; i++)
+                        if(allMappingTables[i] == changedTable) {
+                            for(let j = i + 1; j < allMappingTables.length; j++)
+                                allMappingTables[j].set_value(mappingCopy);
+            
+                            break;
+                        }
+            
+                    this._updateNextStepButton();
+                });
+        }
+        else {
+            for(let i = 0; i < allMappingTables.length; i++)
+                if(allMappingTables[i] == changedTable) {
+                    for(let j = i + 1; j < allMappingTables.length; j++)
+                        allMappingTables[j].set_value(mappingCopy);
+    
+                    break;
+                }
+    
+            this._updateNextStepButton();
+        }
     }
 
     /**
      * 
      */
-    _getDataRowsMatchingColValue(col_index = "*", col_value = "*") {
+    _getDataRowsMatchingColValue(col_index = "*", col_value = "*", startIndex = 0, max_rows = 50) {
         const dataRows = document.createDocumentFragment();
-
+        
         if(this._parsed_CSV_data) {
-            const startIndex = this._importParameters.has_header?1:0;
+            let createdRowsCount = 0;
 
-            for(let i = startIndex; i < this._parsed_CSV_data.length; i++) {
-                const aDataLine = this._parsed_CSV_data[i];
+            for(let lineIndex = startIndex; (createdRowsCount < max_rows) && (lineIndex < this._parsed_CSV_data.length); lineIndex++) {
+                const aDataLine = this._parsed_CSV_data[lineIndex];
 
                 if(
                         (col_value == "*")
+                    ||  ((col_index != "*") &&  (aDataLine[col_index] == col_value))
                     ||  ((col_index == "*") && (aDataLine.includes(col_value)))
-                    ||  (aDataLine[col_index] && (aDataLine[col_index] == col_value))
+                    
                 ) {
-                    const tableLine = document.createElement("tr");
+                    const newRow = document.createElement("tr");
+                    newRow.setAttribute("x-data-lineindex", lineIndex);
 
-                    for(let colIndex = 0; colIndex < aDataLine.length; colIndex++) {
-                        const tableCell = document.createElement("td");
+                    for(let cellIndex = 0; cellIndex < aDataLine.length; cellIndex++) {
+                        const newCell = document.createElement("td");
 
-                        if(aDataLine[colIndex])
-                            tableCell.innerText = aDataLine[colIndex];
+                        if(aDataLine[cellIndex])
+                            newCell.innerText = aDataLine[cellIndex];
                         else
-                            tableCell.innerHTML = "&nbsp;";
+                            newCell.innerHTML = "&nbsp;";
 
-                        tableCell.addEventListener("mouseover", this._onMouseOverParsingPreviewTableCell.bind(this));
-                        tableCell.addEventListener("click", this._onClickParsingPreviewTableCell.bind(this));
-                        tableLine.appendChild(tableCell);
+                        newCell.addEventListener("mouseover", this._onMouseOverParsingPreviewTableCell.bind(this));
+                        newCell.addEventListener("click", this._onClickParsingPreviewTableCell.bind(this));
+                        newRow.appendChild(newCell);
                     }
 
                     // add empty table cells at the end if needed, so each line has the same width
-                    for(let i = aDataLine.length; i < this._parsed_CSV_data_columns_count; i++) {
-                        const emptyTableCell = document.createElement("td");
-                        emptyTableCell.innerHTML = "&nbsp;";
-                        emptyTableCell.addEventListener("mouseover", this._onMouseOverParsingPreviewTableCell.bind(this));
-                        emptyTableCell.addEventListener("click", this._onClickParsingPreviewTableCell.bind(this));
-                        tableLine.appendChild(emptyTableCell);
+                    for(let cellIndex = aDataLine.length; cellIndex < this._parsed_CSV_data_columns_count; cellIndex++) {
+                        const newEmptyCell = document.createElement("td");
+                        newEmptyCell.innerHTML = "&nbsp;";
+                        newEmptyCell.addEventListener("mouseover", this._onMouseOverParsingPreviewTableCell.bind(this));
+                        newEmptyCell.addEventListener("click", this._onClickParsingPreviewTableCell.bind(this));
+                        newRow.appendChild(newEmptyCell);
                     }
 
-                    dataRows.appendChild(tableLine);
+                    dataRows.appendChild(newRow);
+                    createdRowsCount++;
                 }
             }
         }
@@ -1082,16 +1308,16 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
         const idInputsValuesSetPromises = new Array();
 
         for(let i = 0; i < distinctValues.length; i++) {
-            const aValue = distinctValues[i];
+            const aDistinctValue = distinctValues[i];
             const valueRow = document.createElement("tr");
 
             if(this._importParameters.model_mode == "new")
                 valueRow.className = "new-obsel-type";
-            else
-                valueRow.className = "do-not-import";
+            /*else
+                valueRow.className = "do-not-import";*/
 
             const valueForCell = document.createElement("td");
-            valueForCell.innerText = aValue;
+            valueForCell.innerText = aDistinctValue;
             valueRow.appendChild(valueForCell);
 
             const valueMapCell = document.createElement("td");
@@ -1133,11 +1359,20 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                         obselTypeLabel = anExistingObselType.id;
 
                     valueMapToExistingObselTypeOption.innerText = obselTypeLabel;
+
+                    if(aDistinctValue == anExistingObselType.id)
+                        valueMapToExistingObselTypeOption.setAttribute("selected", true);
+
                     valueMapSelect.appendChild(valueMapToExistingObselTypeOption);
                     valueMapSelect.addEventListener("change", this._onChangeObselTypeMappingSelect.bind(this));
                     valueMapCell.appendChild(valueMapSelect);
                     valueRow.appendChild(valueMapCell);
                 }
+
+                if(valueMapSelect.querySelector("option[selected]"))
+                    valueRow.className = "existing-obsel-type";
+                else
+                    valueRow.className = "do-not-import";
             }
 
             const obselTypeIdCell = document.createElement("td");
@@ -1153,20 +1388,21 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
             obselTypeIdCell.appendChild(obselTypeIdCellInput);
             valueRow.appendChild(obselTypeIdCell);
 
-            const anIdInputValueSetPromise = obselTypeIdCellInput.setAttribute("value", aValue);
+            const anIdInputValueSetPromise = obselTypeIdCellInput.setAttribute("value", aDistinctValue);
             idInputsValuesSetPromises.push(anIdInputValueSetPromise);
             
-            anIdInputValueSetPromise.then(() => {
-                obselTypeIdCellInput.dispatchEvent(
-                    new Event(
-                        "change", {
-                            bubbles: true,
-                            cancelable: false,
-                            composed: false
-                        }
-                    )
-                );
-            })
+            //if(this._importParameters.model_mode == "new")
+                anIdInputValueSetPromise.then(() => {
+                    obselTypeIdCellInput.dispatchEvent(
+                        new Event(
+                            "change", {
+                                bubbles: true,
+                                cancelable: false,
+                                composed: false
+                            }
+                        )
+                    );
+                });
 
             const obselTypeLabelCell = document.createElement("td");
             obselTypeLabelCell.classList.add("obsel-type-label");
@@ -1241,73 +1477,75 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
      * 
      */
     _onChangeObselTypeIdCellInput(event) {
-        const idInput = event.target;
-        const currentRow = event.target.closest("tr");
-        const mappingSelects = this._obselTypesMappingTableBody.querySelectorAll("select");
-        const currentRowSelect = currentRow.querySelector("select");
+        if(this._importParameters.model_mode == "new") {
+            const idInput = event.target;
+            const currentRow = event.target.closest("tr");
+            const mappingSelects = this._obselTypesMappingTableBody.querySelectorAll("select");
+            const currentRowSelect = currentRow.querySelector("select");
 
-        // --- find what label we should use for the new option ---
-        const labelInput = currentRow.querySelector("td.obsel-type-label ktbs4la2-multiple-translations-text-input");
-        const labels = JSON.parse(labelInput.value);
-        let preferred_label = null;
+            // --- find what label we should use for the new option ---
+            const labelInput = currentRow.querySelector("td.obsel-type-label ktbs4la2-multiple-translations-text-input");
+            const labels = JSON.parse(labelInput.value);
+            let preferred_label = null;
 
-        for(let i = 0; i < labels.length; i++)
-            if(labels[i].lang == this._lang) {
-                preferred_label = labels[i].value;
-                break;
-            }
-
-        if(preferred_label == null)
             for(let i = 0; i < labels.length; i++)
-                if(labels[i].lang == "*") {
+                if(labels[i].lang == this._lang) {
                     preferred_label = labels[i].value;
                     break;
                 }
-        
-        if(preferred_label == null)
-            preferred_label = idInput.value;
-        // --- done ---
 
-        if(idInput.old_value != undefined) {
-            // update options in the selects
-            for(let i = 0; i < mappingSelects.length; i++) {
-                if(mappingSelects[i] != currentRowSelect) {
-                    const anOtherMappingSelect = mappingSelects[i];
-                    const anOtherMappingSelect_value = anOtherMappingSelect.value;
-                    const anOtherMappingSameobseltypeOption = anOtherMappingSelect.querySelector("option[value = \"existing-" + CSS.escape(idInput.old_value) + "\"]");
-                    
-                    if(idInput.checkValidity())
-                        anOtherMappingSameobseltypeOption.setAttribute("value", "existing-" + idInput.value);
-
-                    anOtherMappingSameobseltypeOption.innerText = preferred_label;
-
-                    if(anOtherMappingSelect_value == ("existing-" + idInput.old_value)) {
-                        // update spans
-                        const anOtherMappingRow = anOtherMappingSelect.closest("tr");
-                        const anOtherMappingIdSpan = anOtherMappingRow.querySelector("td.obsel-type-id span");
-                        anOtherMappingIdSpan.innerText = idInput.value;
-                        const anOtherMappingLabelSpan = anOtherMappingRow.querySelector("td.obsel-type-label span");
-                        anOtherMappingLabelSpan.innerText = preferred_label;
+            if(preferred_label == null)
+                for(let i = 0; i < labels.length; i++)
+                    if(labels[i].lang == "*") {
+                        preferred_label = labels[i].value;
+                        break;
                     }
-                }
-            }
-        }
+            
+            if(preferred_label == null)
+                preferred_label = idInput.value;
+            // --- done ---
 
-        if(idInput.checkValidity()) {
-            if(idInput.old_value == undefined) {
-                // create new options in the selects
+            if(idInput.old_value != undefined) {
+                // update options in the selects
                 for(let i = 0; i < mappingSelects.length; i++) {
                     if(mappingSelects[i] != currentRowSelect) {
                         const anOtherMappingSelect = mappingSelects[i];
-                        const newOption = document.createElement("option");
-                        newOption.setAttribute("value", "existing-" + idInput.value);
-                        newOption.innerText = preferred_label;
-                        anOtherMappingSelect.insertBefore(newOption, anOtherMappingSelect.options[anOtherMappingSelect.options.length - 1]);
+                        const anOtherMappingSelect_value = anOtherMappingSelect.value;
+                        const anOtherMappingSameobseltypeOption = anOtherMappingSelect.querySelector("option[value = \"existing-" + CSS.escape(idInput.old_value) + "\"]");
+                        
+                        if(idInput.checkValidity())
+                            anOtherMappingSameobseltypeOption.setAttribute("value", "existing-" + idInput.value);
+
+                        anOtherMappingSameobseltypeOption.innerText = preferred_label;
+
+                        if(anOtherMappingSelect_value == ("existing-" + idInput.old_value)) {
+                            // update spans
+                            const anOtherMappingRow = anOtherMappingSelect.closest("tr");
+                            const anOtherMappingIdSpan = anOtherMappingRow.querySelector("td.obsel-type-id span");
+                            anOtherMappingIdSpan.innerText = idInput.value;
+                            const anOtherMappingLabelSpan = anOtherMappingRow.querySelector("td.obsel-type-label span");
+                            anOtherMappingLabelSpan.innerText = preferred_label;
+                        }
                     }
                 }
             }
 
-            idInput.old_value = idInput.value;
+            if(idInput.checkValidity()) {
+                if(idInput.old_value == undefined) {
+                    // create new options in the selects
+                    for(let i = 0; i < mappingSelects.length; i++) {
+                        if(mappingSelects[i] != currentRowSelect) {
+                            const anOtherMappingSelect = mappingSelects[i];
+                            const newOption = document.createElement("option");
+                            newOption.setAttribute("value", "existing-" + idInput.value);
+                            newOption.innerText = preferred_label;
+                            anOtherMappingSelect.insertBefore(newOption, anOtherMappingSelect.options[anOtherMappingSelect.options.length - 1]);
+                        }
+                    }
+                }
+
+                idInput.old_value = idInput.value;
+            }
         }
 
         this._updateNextStepButton();
@@ -1906,6 +2144,52 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
     /**
      * 
      */
+    _onAttributesMappingTablesContainerIntersection(entries, observer) {
+        if(
+                entries[0] 
+            &&  entries[0].isIntersecting
+        )
+        {
+            const targetRow = entries[0].target;
+            const mappingTable = targetRow.getRootNode().host;
+
+            if(
+                    mappingTable
+                &&  !mappingTable.classList.contains("loading")
+                &&  !mappingTable.classList.contains("loaded")
+            ) {
+                mappingTable.classList.add("loading");
+
+                setTimeout(() => {
+                    this._attributesMappingTablesContainerIntersectionObserver.unobserve(targetRow);
+                    const col_index = (mappingTable.discriminatingColumnIndex != undefined)?mappingTable.discriminatingColumnIndex:"*";
+                    const col_value = (mappingTable.discriminatingValue != undefined)?mappingTable.discriminatingValue:"*";
+                    const startIndex = parseInt(targetRow.getAttribute("x-data-lineindex"));
+                    const newRows = this._getDataRowsMatchingColValue(col_index, col_value, startIndex, 50);
+                    const newRowsCount = newRows.querySelectorAll("tr").length;
+
+                    if(newRowsCount > 0) {
+                        mappingTable.addBodyContent(newRows)
+                            .then(() => {
+                                this._attributesMappingTablesContainerIntersectionObserver.observe(mappingTable.last_data_row);
+                                mappingTable.classList.remove("loading");
+                            });
+
+                        if(newRowsCount < 50)
+                            mappingTable.classList.add("loaded");
+                    }
+                    else {
+                        mappingTable.classList.remove("loading");
+                        mappingTable.classList.add("loaded");
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * 
+     */
     _onChangeFirstLineIsHeaderCheckbox(event) {
         this._importParameters.has_header = this._firstLineIsHeaderCheckbox.checked;
 
@@ -2345,6 +2629,112 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
             if(!this._startImportButton.hasAttribute("disabled"))
                 this._startImportButton.setAttribute("disabled", true);
         }
+    }
+
+    /**
+     * 
+     */
+    _dataColumnIsEmpty(checked_col_index, dicriminating_col_index = "*", dicriminating_col_value = "*") {
+        for(let lineIndex = this._importParameters.has_header?1:0; lineIndex < this._parsed_CSV_data.length; lineIndex++) {
+            const aDataLine = this._parsed_CSV_data[lineIndex];
+
+            if(
+                (
+                        (dicriminating_col_value == "*")
+                    ||  ((dicriminating_col_index != "*") &&  (aDataLine[dicriminating_col_index] == dicriminating_col_value))
+                    ||  ((dicriminating_col_index == "*") && (aDataLine.includes(dicriminating_col_value)))
+                    
+                )
+                &&  aDataLine[checked_col_index]
+                &&  (aDataLine[checked_col_index] != "")
+            )
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 
+     */
+     _dataColumnMatchesBoolean(col_index) {
+        for(let lineIndex = this._importParameters.has_header?1:0; lineIndex < this._parsed_CSV_data.length; lineIndex++) {
+            const aDataLine = this._parsed_CSV_data[lineIndex];
+            const aDataValue = aDataLine[col_index];
+
+            if(
+                    (aDataValue != "1")
+                &&  (aDataValue != "true")
+                &&  (aDataValue != "0")
+                &&  (aDataValue != "false")
+            )
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 
+     */
+    _dataColumnMatchesInteger(col_index) {
+        for(let lineIndex = this._importParameters.has_header?1:0; lineIndex < this._parsed_CSV_data.length; lineIndex++) {
+            const aDataLine = this._parsed_CSV_data[lineIndex];
+            const aDataValue = aDataLine[col_index];
+
+            if(!(/^[-+]?(\d+)$/.test(aDataValue)))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 
+     */
+    _dataColumnMatchesFloat(col_index) {
+        for(let lineIndex = this._importParameters.has_header?1:0; lineIndex < this._parsed_CSV_data.length; lineIndex++) {
+            const aDataLine = this._parsed_CSV_data[lineIndex];
+            const aDataValue = aDataLine[col_index];
+
+            if(!(/^[-+]?(\d*[.])?\d+$/.test(aDataValue)))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 
+     */
+    _dataColumnMatchesDatetime(col_index) {
+        for(let lineIndex = this._importParameters.has_header?1:0; lineIndex < this._parsed_CSV_data.length; lineIndex++) {
+            const aDataLine = this._parsed_CSV_data[lineIndex];
+            const aDataValue = aDataLine[col_index];
+
+            if(isNaN(Date.parse(aDataValue)))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 
+     */
+    _guessColumnDataType(col_index) {
+        if(!this._dataColumnIsEmpty(col_index)) {
+            if(this._dataColumnMatchesBoolean(col_index))
+                return "xsd:boolean";
+            else if(this._dataColumnMatchesInteger(col_index))
+                return "xsd:integer";
+            else if(this._dataColumnMatchesFloat(col_index))
+                return "xsd:float";
+            else if(this._dataColumnMatchesDatetime(col_index))
+                return "xsd:dateTime";
+        }
+
+        return "xsd:string";
     }
 }
 
