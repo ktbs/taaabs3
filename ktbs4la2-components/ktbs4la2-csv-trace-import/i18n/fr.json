@@ -82,5 +82,6 @@
     "Import complete": "Import terminé",
     "error(s)": "erreur(s)",
     "<< Undo import": "<< Annuler l'import",
-    "WARNING: this will delete the newly created trace !\nIf you created a new model during this import, it will be deleted too.\nAre you sure ?": "ATTENTION: cela supprimera la trace nouvellement crée.\nSi vous avez créé un nouveau modèle au cours de cet import, il sera supprimé également.\nÊtes-vous sûr(e) ?"
+    "WARNING: this will delete the newly created trace !\nIf you created a new model during this import, it will be deleted too.\nAre you sure ?": "ATTENTION: cela supprimera la trace nouvellement crée.\nSi vous avez créé un nouveau modèle au cours de cet import, il sera supprimé également.\nÊtes-vous sûr(e) ?",
+    "Some data has not been saved yet. Are you sure you want to leave ?": "Des données n'ont pas encore été enregistrées. Êtes-vous sûre(e) de vouloir quitter ?"
 }

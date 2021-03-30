@@ -352,7 +352,20 @@
             <h1 id="step-save-profile-title">{translate: 'Save import profile'}</h1>
 
             <form id="step-save-profile-form">
+                <p>
+                    <label id="profile-name-label" for="profile-name">{translate: 'Profile name :'}</label>
+                    <input type="text" id="profile-name" placeholder="" />
+                </p>
 
+                <p>
+                    <label id="profile-description-label" for="profile-description">{translate: 'Description :'}</label>
+                    <textarea id="profile-description"></textarea>
+                </p>
+
+                <p>
+                    <button id="save-profile-button">{translate: 'Save'}</button>
+                    <button id="close-button" disabled>{translate: 'Close'}</button>
+                </p>
             </form>
         </section>
 

@@ -25,7 +25,13 @@ class KTBS4LA2Overlay extends TemplatedHTMLElement {
 	 * 
 	 */
 	_requestClose(event) {
-		this.dispatchEvent(new CustomEvent('closerequest'));
+		let removePrevented = false;
+
+		for(let i = 0; !removePrevented && (i < this.childNodes.length); i++)
+			removePrevented = !this.childNodes[i].dispatchEvent(new CustomEvent("beforeremove", {cancelable: true, composed: true, bubbles: false}));
+
+		if(!removePrevented)
+			this.dispatchEvent(new CustomEvent('closerequest', {cancelable: true, composed: true, bubbles: true}));
 	}
 
 	/**

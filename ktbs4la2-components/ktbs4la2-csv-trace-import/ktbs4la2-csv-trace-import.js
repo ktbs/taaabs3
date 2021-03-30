@@ -39,6 +39,9 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
          * \protected
          */
         this._previewChunkSize = 50;
+
+        this._bindedOnBeforeUnloadWindowMethod = this._onBeforeUnloadWindow.bind(this);
+        this._bindedOnBeforeRemoveMethod = this._onBeforeRemove.bind(this);
 	}
 
     /**
@@ -85,6 +88,8 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
 	 */
 	onComponentReady() {
         /* --- Common --- */
+        window.addEventListener("beforeunload", this._bindedOnBeforeUnloadWindowMethod);
+        this.addEventListener("beforeremove", this._bindedOnBeforeRemoveMethod);
         this._previewTableHoveredColStyle = this.shadowRoot.styleSheets[1];
         this._previewTableClickedColStyle = this.shadowRoot.styleSheets[2];
         this._main = this.shadowRoot.querySelector("#main");
@@ -2622,11 +2627,6 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                                             });
                                         });
 
-                                        /*anObselPacketTreatedPromise
-                                            .catch((error) => {
-                                                this._importErrors.push(error);
-                                            });*/
-
                                         allObselPacketTreatedPromises.push(anObselPacketTreatedPromise);
                                     }
 
@@ -2865,6 +2865,33 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
         }
 
         return "xsd:string";
+    }
+
+    /**
+     * 
+     */
+    _onBeforeUnloadWindow(event) {
+        event.preventDefault();
+        const confirmMessage = this._translateString("Some data has not been saved yet. Are you sure you want to leave ?");
+        event.returnValue = confirmMessage;
+        return confirmMessage;
+    }
+        
+    /**
+     * 
+     */
+    _onBeforeRemove(event) {
+        if(!confirm(this._translateString("Some data has not been saved yet. Are you sure you want to leave ?")))
+            event.preventDefault();
+    }
+
+    /**
+     * 
+     */
+     disconnectedCallback() {
+        window.removeEventListener("beforeunload", this._bindedOnBeforeUnloadWindowMethod);
+        this.removeEventListener("beforeremove", this._bindedOnBeforeRemoveMethod);
+        super.disconnectedCallback();
     }
 }
 
