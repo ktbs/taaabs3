@@ -239,15 +239,7 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
             }
         );
 
-        /* --- Step save profile --- */
-        this._stepSaveProfileSection = this.shadowRoot.querySelector("#step-save-profile");
-        this._stepSaveProfileTitle = this.shadowRoot.querySelector("#step-save-profile-title");
-        this._stepSaveProfileForm = this.shadowRoot.querySelector("#step-save-profile-form");
-
-        /* --- Step import ---*/
-        this._stepImportSection = this.shadowRoot.querySelector("#step-import");
-        this._stepImportTitle = this.shadowRoot.querySelector("#step-import-title");
-        this._stepImportSubtitle = this.shadowRoot.querySelector("#step-import-subtitle");
+        /* --- Step trace parameters --- */
         this._traceIdLabel = this.shadowRoot.querySelector("#trace-id-label");
         this._traceIdParentPathSpan = this.shadowRoot.querySelector("#trace-id-parent-path");
         this._traceIdInput = this.shadowRoot.querySelector("#trace-id");
@@ -257,9 +249,23 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
         this._traceLabelInput = this.shadowRoot.querySelector("#trace-label");
         this._traceOriginLabel = this.shadowRoot.querySelector("#trace-origin-label");
         this._traceOriginInput = this.shadowRoot.querySelector("#trace-origin");
-        this._progressBar = this.shadowRoot.querySelector("#progress-bar");
         this._startImportButton = this.shadowRoot.querySelector("#start-import-button");
         this._startImportButton.addEventListener("click", this._onClickStartImportButton.bind(this));
+
+        /* --- Step import ---*/
+        this._stepImportSection = this.shadowRoot.querySelector("#step-import");
+        this._stepImportTitle = this.shadowRoot.querySelector("#step-import-title");
+        this._progressBar = this.shadowRoot.querySelector("#progress-bar");
+        this._importMessageDiv = this.shadowRoot.querySelector("#import-message");
+        this._errorsCountDiv = this.shadowRoot.querySelector("#errors-count");
+        this._importErrorsList = this.shadowRoot.querySelector("#import-errors");
+        this._undoImportButton = this.shadowRoot.querySelector("#undo-import-button");
+        this._undoImportButton.addEventListener("click", this._onClickUndoImportButton.bind(this));
+
+        /* --- Step save profile --- */
+        this._stepSaveProfileSection = this.shadowRoot.querySelector("#step-save-profile");
+        this._stepSaveProfileTitle = this.shadowRoot.querySelector("#step-save-profile-title");
+        this._stepSaveProfileForm = this.shadowRoot.querySelector("#step-save-profile-form");
     }
 
     /**
@@ -436,6 +442,9 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                     isValid = false;
 
                 break;
+            case "step-import" :
+                isValid = !this._stepImportSection.classList.contains("importing");
+                break;
             default:
                 isValid = false;
         }
@@ -444,6 +453,20 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
             this._currentStepForm.dispatchEvent(new Event("invalid", {bubbles: false, cancelable: true}));
 
         return isValid;
+    }
+
+    /**
+     * 
+     */
+    _onChangeTraceIdInput() {
+        if(this._traceIdInput.checkValidity()) {
+            if(this._startImportButton.hasAttribute("disabled"))
+                this._startImportButton.removeAttribute("disabled");
+        }
+        else {
+            if(!this._startImportButton.hasAttribute("disabled"))
+                this._startImportButton.setAttribute("disabled", true);
+        }
     }
 
     /**
@@ -822,8 +845,6 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                             const obsel_type_uri = new URL(this._existingModelUniqueObselTypeSelect.value);
                             this._importParameters.obsel_type_id = obsel_type_uri.hash.substring(1);
                             
-                            // ----------------------
-
                             const aMappingTable = document.createElement("ktbs4la2-attributes-mapping-table");
                             aMappingTable.setAttribute("lang", this._lang);
                             aMappingTable.setAttribute("allow-create-new", false);
@@ -1046,10 +1067,16 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                                 mapping_parameters: allMappingTables[i].value
                             });
 
-                        this._switchToNextStep("step-import");
+                        this._switchToNextStep("step-trace-parameters");
                         this._traceIdInput.focus();
                     }
 
+                    break;
+                case "step-trace-parameters":
+                    this._switchToNextStep("step-import");
+                    break;
+                case "step-import":
+                    this._switchToNextStep("step-save-profile");
                     break;
             }
 
@@ -1962,10 +1989,14 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                 }
 
                 break;
+            case "step-trace-parameters" :
+                this._switchToPreviousStep();
+                break;
             case "step-import" :
                 this._switchToPreviousStep();
-                this._attributesMappingTablesContainer.scrollTop = 0;
-                this._attributesMappingTablesContainer.scrollLeft = 0;
+                break;
+            case "step-save-profile" :
+                this._switchToPreviousStep();
                 break;
         }
     }
@@ -2253,10 +2284,22 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
     _onClickStartImportButton(event) {
         event.preventDefault();
         event.stopPropagation();
-        this._startImportButton.setAttribute("disabled", true);
-        this._previousStepButton.remove();
-        this._traceIdInput.setAttribute("disabled", true);
-        this._traceLabelInput.setAttribute("disabled", true);
+
+        if(!this._stepImportSection.classList.contains("importing"))
+            this._stepImportSection.classList.add("importing");
+
+        this._progressBar.style.width = "0px";
+        this._importMessageDiv.innerText = this._translateString("Import in progress, be carefull not close until completion");
+
+        const errorLogs = this._importErrorsList.querySelectorAll("li");
+
+        for(let i = 0; i < errorLogs.length; i++)
+            errorLogs[i].remove();
+
+        if(this._stepImportSection.classList.contains("has-errors"))
+            this._stepImportSection.classList.remove("has-errors");
+
+        this._switchToNextStep("step-import");
 
         let importModel, importModelReady;
         let uniqueObselType;
@@ -2441,14 +2484,113 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
 
         importModelReady
             .then(() => {
+                // build the obsels
+                this._newObsels = new Array();
+                let csvLineStartIndex = this._importParameters.has_header?1:0;
+
+                // browse the CSV data
+                for(let csvLineIndex = csvLineStartIndex; csvLineIndex < this._parsed_CSV_data.length; csvLineIndex++) {
+                    const aDataLine = this._parsed_CSV_data[csvLineIndex];
+                    const obselMappingValue = aDataLine[this._importParameters.obseltype_column_index];
+
+                    // determine the obsel type for this line
+                    let mappedObselType;
+
+                    if(this._importParameters.obsel_types_mapping_mode == "multiple") {
+                        for(let i = 0; !mappedObselType && (i < this._importParameters.obsel_types_mapping.length); i++) {
+                            const anObselTypeMapping = this._importParameters.obsel_types_mapping[i];
+
+                            if(anObselTypeMapping.value == obselMappingValue) {
+                                let mappedObselType_id;
+
+                                if(anObselTypeMapping.obsel_type_id)
+                                    mappedObselType_id = anObselTypeMapping.obsel_type_id;
+                                else if(anObselTypeMapping.obsel_type && anObselTypeMapping.obsel_type.id)
+                                    mappedObselType_id = anObselTypeMapping.obsel_type.id;
+
+                                if(mappedObselType_id)
+                                    mappedObselType = importModel.get_obsel_type(mappedObselType_id);
+                            }
+                        }
+                    }
+                    else
+                        mappedObselType = uniqueObselType;
+                    // done
+
+                    if(mappedObselType) {
+                        // Find the attributes mapping parameters
+                        let attributesMappingParameters;
+
+                        if(this._importParameters.obsel_types_mapping_mode == "multiple") {
+                            for(let i = 0; !attributesMappingParameters && (i < this._importParameters.attributes_mapping.length); i++) {
+                                const anAttributeMapping = this._importParameters.attributes_mapping[i];
+
+                                if(anAttributeMapping.value == obselMappingValue)
+                                    attributesMappingParameters = anAttributeMapping.mapping_parameters;
+                            }
+                        }
+                        else
+                            if(this._importParameters.attributes_mapping[0])
+                                attributesMappingParameters = this._importParameters.attributes_mapping[0].mapping_parameters;
+                        // done
+                            
+                        if(attributesMappingParameters) {
+                            const newObsel = new Obsel();
+                            newObsel.type = mappedObselType;
+
+                            // build obsel's attributes
+                            for(let colIndex = 0; colIndex < aDataLine.length; colIndex++) {
+                                const cellValue = aDataLine[colIndex];
+                                const cellMappingParameters = attributesMappingParameters[colIndex];
+
+                                if(cellMappingParameters) {
+                                    if(cellMappingParameters.mapping_type != "<do-not-import>") {
+                                        if(cellMappingParameters.attribute_id != "id") {
+                                            let cellAttributeType;
+
+                                            if(AttributeType.builtin_attribute_types_ids.includes(cellMappingParameters.attribute_id))
+                                                cellAttributeType = AttributeType.get_builtin_attribute_type(cellMappingParameters.attribute_id);
+                                            else
+                                                cellAttributeType = importModel.get_attribute_type(cellMappingParameters.attribute_id);
+
+                                            if(cellAttributeType) {
+                                                let importValue = cellValue;
+
+                                                if(
+                                                        (cellAttributeType.id == "begin")
+                                                    ||  (cellAttributeType.id == "end")
+                                                )
+                                                    importValue = parseInt(cellValue);
+
+                                                newObsel.add_attribute(cellAttributeType, importValue);
+                                            }
+                                            else
+                                                throw new Error("Cannot find attribute type for this cell");
+                                        }
+                                        else
+                                            newObsel.id = cellValue;
+                                    }
+                                }
+                                else
+                                    throw new Error("Cannot find attribute mapping parameter for this cell");
+                            }
+                            // done
+
+                            this._newObsels.push(newObsel);
+                        }
+                        else
+                            throw new Error("Cannot find attributes mapping parameters for this line");
+                    }
+                }
+
                 const traceParentBase = ResourceMultiton.get_resource(Base, this.getAttribute("parent-uri"));
 
                 traceParentBase.get(this._abortController.signal)
                     .then(() => {
-                        const newTrace = new StoredTrace();
-                        newTrace.model = importModel;
-                        newTrace.id = this._traceIdInput.value;
-                        newTrace.origin = this._traceOriginInput.value;
+                        this._newTrace = new StoredTrace();
+                        this._newTrace.model = importModel;
+                        this._newTrace.id = this._traceIdInput.value;
+                        this._newTrace.origin = this._traceOriginInput.value;
                         const trace_labels = JSON.parse(this._traceLabelInput.value);
 
                         if(trace_labels instanceof Array) {
@@ -2456,144 +2598,62 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                                 const aLabel = trace_labels[i];
 
                                 if(aLabel.lang == "*")
-                                    newTrace.label = aLabel.value;
+                                    this._newTrace.label = aLabel.value;
                                 else
-                                    newTrace.set_translated_label(aLabel.value, aLabel.lang);
+                                    this._newTrace.set_translated_label(aLabel.value, aLabel.lang);
                             }
                         }
 
-                        traceParentBase.post(newTrace, this._abortController.signal)
+                        traceParentBase.post(this._newTrace, this._abortController.signal)
                             .then(() => {
-                                // build the obsels
-                                const newTrace_obsels = new Array();
-                                let startIndex = this._importParameters.has_header?1:0;
-
-                                for(let lineIndex = startIndex; lineIndex < this._parsed_CSV_data.length; lineIndex++) {
-                                    const aDataLine = this._parsed_CSV_data[lineIndex];
-                                    const obselMappingValue = aDataLine[this._importParameters.obseltype_column_index];
-
-                                    // determine the obsel type for this line
-                                    let mappedObselType;
-
-                                    if(this._importParameters.obsel_types_mapping_mode == "multiple") {
-                                        for(let i = 0; !mappedObselType && (i < this._importParameters.obsel_types_mapping.length); i++) {
-                                            const anObselTypeMapping = this._importParameters.obsel_types_mapping[i];
-                    
-                                            if(anObselTypeMapping.value == obselMappingValue) {
-                                                let mappedObselType_id;
-                    
-                                                if(anObselTypeMapping.obsel_type_id)
-                                                    mappedObselType_id = anObselTypeMapping.obsel_type_id;
-                                                else if(anObselTypeMapping.obsel_type && anObselTypeMapping.obsel_type.id)
-                                                    mappedObselType_id = anObselTypeMapping.obsel_type.id;
-                    
-                                                if(mappedObselType_id)
-                                                    mappedObselType = importModel.get_obsel_type(mappedObselType_id);
-                                            }
-                                        }
-                                    }
-                                    else
-                                        mappedObselType = uniqueObselType;
-                                    
-                                    // done
-
-                                    if(mappedObselType) {
-                                        // Find the attributes mapping parameters
-                                        let attributesMappingParameters;
-
-                                        if(this._importParameters.obsel_types_mapping_mode == "multiple") {
-                                            for(let i = 0; !attributesMappingParameters && (i < this._importParameters.attributes_mapping.length); i++) {
-                                                const anAttributeMapping = this._importParameters.attributes_mapping[i];
-
-                                                if(anAttributeMapping.value == obselMappingValue)
-                                                    attributesMappingParameters = anAttributeMapping.mapping_parameters;
-                                            }
-                                        }
-                                        else
-                                            if(this._importParameters.attributes_mapping[0])
-                                                attributesMappingParameters = this._importParameters.attributes_mapping[0].mapping_parameters;
-                                        // done
-                                            
-                                        if(attributesMappingParameters) {
-                                            const newObsel = new Obsel();
-                                            newObsel.type = mappedObselType;
-
-                                            // build obsel's attributes
-                                            for(let colIndex = 0; colIndex < aDataLine.length; colIndex++) {
-                                                const cellValue = aDataLine[colIndex];
-                                                const cellMappingParameters = attributesMappingParameters[colIndex];
-
-                                                if(cellMappingParameters) {
-                                                    if(cellMappingParameters.mapping_type != "<do-not-import>") {
-                                                        let cellAttributeType;
-
-                                                        if(AttributeType.builtin_attribute_types_ids.includes(cellMappingParameters.attribute_id))
-                                                            cellAttributeType = AttributeType.get_builtin_attribute_type(cellMappingParameters.attribute_id);
-                                                        else
-                                                            cellAttributeType = importModel.get_attribute_type(cellMappingParameters.attribute_id);
-
-                                                        if(cellAttributeType) {
-                                                            let importValue = cellValue;
-
-                                                            if(
-                                                                    (cellAttributeType.id == "begin")
-                                                                ||  (cellAttributeType.id == "end")
-                                                            ) {
-                                                                importValue = Date.parse(cellValue);
-
-                                                                if(isNaN(importValue))
-                                                                    importValue = parseInt(cellValue);
-                                                            }
-
-                                                            newObsel.add_attribute(cellAttributeType, importValue);
-                                                        }
-                                                        else
-                                                            throw new Error("Cannot find attribute type for this cell");
-                                                    }
-                                                }
-                                                else
-                                                    throw new Error("Cannot find attribute mapping parameter for this cell");
-                                            }
-                                            // done
-
-                                            newTrace_obsels.push(newObsel);
-                                        }
-                                        else
-                                            throw new Error("Cannot find attributes mapping parameters for this line");
-                                    }
-                                }
-
-                                if(newTrace_obsels.length > 0) {
+                                if(this._newObsels.length > 0) {
+                                    const allObselPacketTreatedPromises = new Array();
+                                    this._allObselPacketTreatedPromisesCallbacks = new Array();
+                                    this._importErrors = new Array();
+                                    this._nextImportObselPacketIndex = 0;
                                     const packetSize = 50;
-                                    const packetCounts = Math.ceil(newTrace_obsels.length / packetSize);
-                                    let treatedObselsCount = 0;
-                                    let allPacketTreatedPromises = new Array();
+                                    const packetCounts = Math.ceil(this._newObsels.length / packetSize);
 
                                     for(let i = 0; i < packetCounts; i++) {
-                                        const anObselPacket = newTrace_obsels.slice(i * packetSize, (i + 1) * packetSize);
-
-                                        const anObselTreatedPromise = newTrace.post(anObselPacket, this._abortController.signal)
-                                            .then(() => {
-                                                treatedObselsCount = treatedObselsCount + anObselPacket.length;
-                                                const treatedPercentage = (treatedObselsCount / newTrace_obsels.length) * 100;
-                                                this._progressBar.style.width = treatedPercentage + "%";
+                                        const anObselPacketTreatedPromise = new Promise((resolve, reject) => {
+                                            this._allObselPacketTreatedPromisesCallbacks.push({
+                                                resolve: resolve,
+                                                reject: reject
                                             });
+                                        });
 
-                                        anObselTreatedPromise
+                                        /*anObselPacketTreatedPromise
                                             .catch((error) => {
-                                                console.error(error);
-                                                this.emitErrorEvent(error);
-                                                alert(error.name + " : " + error.message);
-                                            });
+                                                this._importErrors.push(error);
+                                            });*/
 
-                                        allPacketTreatedPromises.push(anObselTreatedPromise);
+                                        allObselPacketTreatedPromises.push(anObselPacketTreatedPromise);
                                     }
 
-                                    Promise.all(allPacketTreatedPromises).finally(() => {
-                                        setTimeout(() => {
-                                            alert("import terminé");
+                                    Promise.all(allObselPacketTreatedPromises)
+                                        .finally(() => {
+                                            this._importMessageDiv.innerText = this._translateString("Import complete");
+                                            this._errorsCountDiv.innerText = this._importErrors.length + " " + this._translateString("error(s)");
+
+                                            if(this._importErrors.length > 0) {
+                                                for(let i = 0; i < this._importErrors.length; i++) {
+                                                    const anError = this._importErrors[i];
+                                                    const anErrorLog = document.createElement("li");
+                                                    anErrorLog.innerText = anError.name + " : " + anError.message;
+                                                    this._importErrorsList.appendChild(anErrorLog);
+                                                }
+
+                                                if(!this._stepImportSection.classList.contains("has-errors"))
+                                                    this._stepImportSection.classList.add("has-errors");
+                                            }
+
+                                            if(this._stepImportSection.classList.contains("importing"))
+                                                this._stepImportSection.classList.remove("importing");
+
+                                            this._updateNextStepButton();
                                         });
-                                    });
+
+                                    this._importNextObselPacket();
                                 }
                                 else
                                     throw new Error("No obsel to import !");
@@ -2620,15 +2680,85 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
     /**
      * 
      */
-    _onChangeTraceIdInput() {
-        if(this._traceIdInput.checkValidity()) {
-            if(this._startImportButton.hasAttribute("disabled"))
-                this._startImportButton.removeAttribute("disabled");
+    _onClickUndoImportButton(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if(confirm(this._translateString("WARNING: this will delete the newly created trace !\nIf you created a new model during this import, it will be deleted too.\nAre you sure ?"))) {
+            const newlyCreatedTrace = ResourceMultiton.get_resource(StoredTrace, this._newTrace.uri);
+            
+            newlyCreatedTrace.get(this._abortController.signal)
+                .then(() => {
+                    const traceModel = this._newTrace.model;
+
+                    this._newTrace.delete(this._abortController.signal)
+                        .then(() => {
+                            if(this._importParameters.model_mode == "new") {
+                                traceModel.get(this._abortController.signal)
+                                    .then(() => {
+                                        traceModel.delete(this._abortController.signal)
+                                            .then(() => {
+                                                const traceParametersStep = this._fulfilledSteps.pop();
+                                                this._main.className = traceParametersStep;
+                                                this._updateNextStepButton();
+                                            })
+                                            .catch((error) => {
+                                                console.error(error);
+                                                this.emitErrorEvent(error);
+                                                alert(error.name + " : " + error.message);
+                                            });
+                                    })
+                                    .catch((error) => {
+                                        console.error(error);
+                                        this.emitErrorEvent(error);
+                                        alert(error.name + " : " + error.message);
+                                    });
+                            }
+                            else {
+                                const traceParametersStep = this._fulfilledSteps.pop();
+                                this._main.className = traceParametersStep;
+                                this._updateNextStepButton();
+                            }
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                            this.emitErrorEvent(error);
+                            alert(error.name + " : " + error.message);
+                        });
+                })
+                .catch((error) => {
+                    console.error(error);
+                    this.emitErrorEvent(error);
+                    alert(error.name + " : " + error.message);
+                });
         }
-        else {
-            if(!this._startImportButton.hasAttribute("disabled"))
-                this._startImportButton.setAttribute("disabled", true);
-        }
+    }
+
+    /**
+     * 
+     */
+    _importNextObselPacket() {
+        const packetSize = 50;
+        const obselPacket = this._newObsels.slice(this._nextImportObselPacketIndex * packetSize, (this._nextImportObselPacketIndex + 1) * packetSize);
+
+        this._newTrace.post(obselPacket, this._abortController.signal)
+            .then(this._allObselPacketTreatedPromisesCallbacks[this._nextImportObselPacketIndex].resolve)
+            .catch((error) => {
+                this._importErrors.push(error);
+                this._allObselPacketTreatedPromisesCallbacks[this._nextImportObselPacketIndex].reject();
+            })
+            .finally(() => {
+                const packetCounts = Math.ceil(this._newObsels.length / packetSize);
+                this._nextImportObselPacketIndex++;
+                const treatedPercentage = (this._nextImportObselPacketIndex / packetCounts) * 100;
+                this._progressBar.style.width = treatedPercentage + "%";
+
+                if(this._nextImportObselPacketIndex < packetCounts)
+                    setTimeout(() => {
+                        if(!this._abortController.signal.aborted)
+                            this._importNextObselPacket();
+                    });
+            });
     }
 
     /**

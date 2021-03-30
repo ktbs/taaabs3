@@ -53,16 +53,20 @@ export class ObselType {
 
     /**
      * Gets the uri of the obsel type
-     * \return URL
+     * \return URL or undefined if the parent model is new or deleted 
      * \public
      */
     get uri() {
-        if(!this._uri) {
-            let rawID = this._JSONData["@id"];
-            this._uri = this.parent_model.resolve_link_uri(rawID);
-        }
+        if((this.parent_model.lifecycleStatus == "exists") || (this.parent_model.lifecycleStatus == "modified")) {
+            if(!this._uri) {
+                let rawID = this._JSONData["@id"];
+                this._uri = this.parent_model.resolve_link_uri(rawID);
+            }
 
-        return this._uri;
+            return this._uri;
+        }
+        else
+            return undefined;
     }
 
     /**

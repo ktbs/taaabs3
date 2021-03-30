@@ -62,9 +62,9 @@ export class Obsel extends Resource {
      */
     set type(newType) {
         if(newType instanceof ObselType) {
-            this._JSONData["@type"] = newType.uri.toString();
-            this._type_id = null;
-            this._type = null;
+            this._JSONData["@type"] = "m:" + newType.id;
+            this._type_id = newType.id;
+            this._type = newType;
         }
         else
             throw new TypeError("New value for property \"type\" mus be an instance of ObselType");
@@ -89,10 +89,8 @@ export class Obsel extends Resource {
      * \public
      */
     set parent(new_parent) {
-        if(new_parent instanceof Trace) {
+        if(new_parent instanceof Trace)
             this._parent = new_parent;
-            this._JSONData.hasTrace = new_parent.uri.toString();
-        }
         else
             throw new TypeError("Obsel's parent must be of type Trace");
     }
@@ -175,7 +173,7 @@ export class Obsel extends Resource {
     }
 
     /**
-     * Gets the attributes of the Obsel, including builtin attributes
+     * Gets the attributes of the Obsel, including builtin attributes (except @id, which is accessible through Obsel's property "id")
      * \return Array of Attribute
      * \public
      */
@@ -185,8 +183,18 @@ export class Obsel extends Resource {
 
             for(let attribute_type_link in this._JSONData) {
                 if(!AttributeType.system_types_ids.includes(attribute_type_link)) {
+                    let attributeType;
+
+                    if(AttributeType.builtin_attribute_types_ids.includes(attribute_type_link))
+                        attributeType = AttributeType.get_builtin_attribute_type(attribute_type_link);
+                    else {
+                        const attributeType_uri = this.resolve_link_uri(attribute_type_link);
+                        const attributeType_id = attributeType_uri.hash.substring(1);
+                        attributeType = this.parent.model.get_attribute_type(attributeType_id);
+                    }
+
                     let attribute_value = this._JSONData[attribute_type_link];
-                    let attribute = new Attribute(this, attribute_type_link, attribute_value);
+                    let attribute = new Attribute(this, attributeType, attribute_value);
                     this._attributes.push(attribute);
                 }
             }
@@ -206,8 +214,11 @@ export class Obsel extends Resource {
 
             for(let attribute_type_link in this._JSONData) {
                 if((!AttributeType.system_types_ids.includes(attribute_type_link)) && (!AttributeType.builtin_attribute_types_ids.includes(attribute_type_link))) {
+                    const attributeType_uri = this.resolve_link_uri(attribute_type_link);
+                    const attributeType_id = attributeType_uri.hash.substring(1);
+                    const attributeType = this.parent.model.get_attribute_type(attributeType_id);
                     let attribute_value = this._JSONData[attribute_type_link];
-                    let attribute = new Attribute(this, attribute_type_link, attribute_value);
+                    let attribute = new Attribute(this, attributeType, attribute_value);
                     this._attributes.push(attribute);
                 }
             }
@@ -232,14 +243,14 @@ export class Obsel extends Resource {
         }
         
         // then, we remove previous non-system attributes
-        for(let previous_attribute_type_link in this._JSONData)
-            if(!AttributeType.system_types_ids.includes(previous_attribute_type_link))
-                delete this._JSONData[previous_attribute_type_link];
+        for(let previous_attribute_type_id in this._JSONData)
+            if(!AttributeType.system_types_ids.includes(previous_attribute_type_id))
+                delete this._JSONData[previous_attribute_type_id];
 
         // finally, we add the new attributes
         for(let i = 0; i < newAttributes.length; i++) {
             let new_attribute = newAttributes[i];
-            this._JSONData[new_attribute.type_id] = new_attribute.value;
+            this._JSONData[new_attribute.type.id] = new_attribute.value;
         }
 
         this._attributes = null;
@@ -254,39 +265,17 @@ export class Obsel extends Resource {
      */
     add_attribute(attributeType, value) {
         if(attributeType instanceof AttributeType) {
-            let attribute = new Attribute(this, attributeType.uri, value);
+            let attribute = new Attribute(this, attributeType, value);
             this.attributes.push(attribute);
-            this._JSONData[attributeType.uri] = value;
+
+            if(attributeType.is_builtin)
+                this._JSONData[attributeType.id] = value;
+            else
+                this._JSONData["m:" + attributeType.id] = value;
         }
         else
             throw new TypeError("First argument for Obsel::add_attribute() must be of type AttributeType");
     }
-
-    /**
-	 * Gets the data to be send in a POST query
-	 * \return Object
-     * \protected
-	 */
-	_getPostData() {
-        let postData = this._JSONData;
-        
-        for(let attribute_type_link in postData) {
-            if(!AttributeType.system_types_ids.includes(attribute_type_link)) {
-                let attribute_value = postData[attribute_type_link];
-                delete postData[attribute_type_link];
-                let attribute_post_key;
-
-                if(AttributeType.builtin_attribute_types_ids.includes(attribute_type_link))
-                    attribute_post_key = this.parent.model.uri.toString() + "#" + attribute_type_link;
-                else
-                    attribute_post_key = attribute_type_link;
-
-                postData[attribute_post_key] = attribute_value;
-            }
-        }
-
-        return postData;
-	}
 
     /**
 	 * Stores a new resource as a child of the current resource

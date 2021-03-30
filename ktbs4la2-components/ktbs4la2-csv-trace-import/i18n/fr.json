@@ -6,7 +6,7 @@
     "Define obsel types": "Définition des types d'obsel",
     "Attributes mapping": "Mise en correspondance des attributs",
     "Save import profile": "Sauvegarder le profil d'import",
-    "Import": "Importer",
+    "Import": "Import",
     "< Previous step": "< Etape précédente",
     "Next step >": "Etape suivante >",
     "Choose a file...": "Choisir un fichier...",
@@ -73,9 +73,14 @@
     "Float": "Nombre décimal",
     "Date and time": "Date et heure",
     "Boolean": "Booléen",
-    "Please set parameters for the new trace": "Veuillez définir les paramètres pour la nouvelle trace",
+    "New trace parameters": "Paramètres de la nouvelle trace",
     "New trace ID :": "ID de la nouvelle trace :",
     "New trace label :": "Etiquette de la nouvelle trace :",
     "Start import !": "Lancer l'import !",
-    "Origin :": "Origine :"
+    "Origin :": "Origine :",
+    "Import in progress, be carefull not close until completion": "Import en cours, prenez garde à ne pas fermer avant la fin",
+    "Import complete": "Import terminé",
+    "error(s)": "erreur(s)",
+    "<< Undo import": "<< Annuler l'import",
+    "WARNING: this will delete the newly created trace !\nIf you created a new model during this import, it will be deleted too.\nAre you sure ?": "ATTENTION: cela supprimera la trace nouvellement crée.\nSi vous avez créé un nouveau modèle au cours de cet import, il sera supprimé également.\nÊtes-vous sûr(e) ?"
 }

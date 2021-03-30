@@ -29,8 +29,9 @@
 #main.step-choose-model #step-choose-model-nav-item,
 #main.step-define-obsel-types #step-define-obsel-types-nav-item,
 #main.step-attributes-mapping #step-attributes-mapping-nav-item,
-#main.step-save-profile #step-save-profile-nav-item,
-#main.step-import #step-import-nav-item {
+#main.step-trace-parameters #step-trace-parameters-nav-item,
+#main.step-import #step-import-nav-item,
+#main.step-save-profile #step-save-profile-nav-item {
     font-weight: bold;
     color: royalblue;
 }
@@ -52,8 +53,9 @@
 #main.step-choose-model #step-choose-model,
 #main.step-define-obsel-types #step-define-obsel-types,
 #main.step-attributes-mapping #step-attributes-mapping,
-#main.step-save-profile #step-save-profile,
-#main.step-import #step-import {
+#main.step-trace-parameters #step-trace-parameters,
+#main.step-import #step-import,
+#main.step-save-profile #step-save-profile {
     display: block;
 }
 
@@ -371,27 +373,7 @@ ktbs4la2-attributes-mapping-table.hidden {
     display: none;
 }
 
-/* --- Step import --- */
-
-#main.step-import #next-step-button {
-    display: none;
-}
-
-#trace-id-parent-path {
-    font-size: 11pt;
-    color: gray;
-    font-style: italic;
-}
-
-#progress-bar-container {
-    height: 20px;
-    border: 1px solid lightgray;
-}
-
-#progress-bar {
-    background-color: green;
-    height: 100%;
-}
+/* --- Step trace parameters --- */
 
 #start-import-button {
     background-color: green;
@@ -413,4 +395,81 @@ ktbs4la2-attributes-mapping-table.hidden {
 #start-import-button:disabled, #start-import-button:disabled:hover {
     cursor: default;
     background-color: #CCC;
+}
+
+/* --- Step import --- */
+
+#main.step-trace-parameters #next-step-button,
+#main.step-import #previous-step-button,
+#main.step-import.importing #next-step-button,
+#main.step-save-profile #next-step-button {
+    display: none;
+}
+
+#trace-id-parent-path {
+    font-size: 11pt;
+    color: gray;
+    font-style: italic;
+}
+
+#progress-bar-container {
+    height: 20px;
+    border: 1px solid lightgray;
+    min-width: 500px;
+}
+
+#progress-bar {
+    background-color: green;
+    height: 100%;
+}
+
+#import-message {
+    color: gray;
+    font-style: italic;
+}
+
+#import-errors {
+    color: red;
+    font-style: italic;
+}
+
+#step-import.importing #import-result,
+#step-import:not(.has-errors) #import-errors {
+    display: none;
+}
+
+#step-import:not(.has-errors) #errors-count {
+    color: green;
+}
+
+#step-import.has-errors #errors-count {
+    color: red;
+}
+
+#undo-import-button {
+    background-color: #D00;
+    width: 150px;
+    height: 30px;
+    cursor: pointer;
+    color: white;
+    border: none;
+    position: relative;
+    outline: none;
+    opacity: 0.3;
+    bottom: -20px;
+    float: left;
+    background-image: url('{my-component-folder}/trash_white.svg');
+    background-repeat: no-repeat;
+    background-position-x: calc(100% - 3px);
+    background-position-y: 3px;
+    padding-right: 15px;
+    background-size: 20px;
+}
+
+#undo-import-button:hover, #undo-import-button:focus {
+    opacity: 1;
+}
+
+#step-import.importing #undo-import-button {
+    display: none;
 }

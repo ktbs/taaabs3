@@ -74,18 +74,22 @@ export class AttributeType {
 
     /**
      * Gets the uri of the attribute type
-     * \return URL
+     * \return URL or undefined if the parent model is new or deleted 
 	 * \public
      */
     get uri() {
-		if(!this._uri) {
-			if(this.is_builtin)
-				this._uri = new URL(AttributeType.builtin_attribute_types_prefix + this._JSONData["real_id"]);
-			else
-				this._uri = this.parent_model.resolve_link_uri(this._JSONData["@id"]);
-		}
+		if((this.parent_model.lifecycleStatus == "exists") || (this.parent_model.lifecycleStatus == "modified")) {
+			if(!this._uri) {
+				if(this.is_builtin)
+					this._uri = new URL(AttributeType.builtin_attribute_types_prefix + this._JSONData["real_id"]);
+				else
+					this._uri = this.parent_model.resolve_link_uri(this._JSONData["@id"]);
+			}
 
-		return this._uri;
+			return this._uri;
+		}
+		else
+			return undefined;
 	}
 	
 	/**

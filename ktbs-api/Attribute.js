@@ -7,12 +7,12 @@ export class Attribute {
 
     /**
      * Constructor
-     * \param Obsel parentObsel - the obsel the attribute belongs to
-     * \param string type_link - a link to the AttributeType (may be a relative link from the parent Obsel)
-     * \param string value - the value for the attribute
+     * \param Obsel parentObsel the obsel the attribute belongs to
+     * \param AttributeType attributeType the type of the attribute
+     * \param string value the value for the attribute
      * \public
      */
-    constructor(parentObsel, type_link, value) {
+    constructor(parentObsel, attributeType, value) {
 
         /**
          * The obsel the attribute belongs to
@@ -22,11 +22,11 @@ export class Attribute {
         this._parentObsel = parentObsel;
 
         /**
-         * A link to the AttributeType (may be a relative link from the parent Obsel)
-         * \var string
+         * The attribute's type
+         * \var AttributeType
          * \protected
          */
-        this._type_link = type_link;
+        this._type = attributeType;
 
         /**
          * The value for the attribute
@@ -42,20 +42,10 @@ export class Attribute {
      * \public
      */
     get type_id() {
-        if(!this._type_id) {
-            if(AttributeType.builtin_attribute_types_ids.includes(this._type_link))
-                this._type_id = this._type_link;
-            else {
-                let type_uri = this._parentObsel.uri?this._parentObsel.resolve_link_uri(this._type_link):this._type_link;
-
-                if(type_uri.hash)
-                    this._type_id = decodeURIComponent(type_uri.hash.substring(1));
-                else
-                    this._type_id = decodeURIComponent(this._type_link);
-            }
-        }
-
-        return this._type_id;
+        if(this._type)
+            return this._type.id;
+        else
+            return undefined;
     }
 
     /**
@@ -64,13 +54,6 @@ export class Attribute {
      * \public
      */
     get type() {
-        if(!this._type) {
-            if(AttributeType.builtin_attribute_types_ids.includes(this.type_id))
-                this._type = AttributeType.get_builtin_attribute_type(this.type_id);
-            else if(this._parentObsel.parent && this._parentObsel.parent.model)
-                this._type = this._parentObsel.parent.model.get_attribute_type(this.type_id);
-        }
-
         return this._type;
     }
 

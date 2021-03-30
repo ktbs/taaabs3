@@ -16,8 +16,9 @@
                 <ol id="step-attributes-mapping-nav-sub"></ol>
             </li>
 
-            <li id="step-save-profile-nav-item">{translate: 'Save import profile'}</li>
+            <li id="step-trace-parameters-nav-item">{translate: 'New trace parameters'}</li>
             <li id="step-import-nav-item">{translate: 'Import'}</li>
+            <li id="step-save-profile-nav-item">{translate: 'Save import profile'}</li>
         </ol>
     </aside>
 
@@ -295,20 +296,10 @@
             <div id="attributes-mapping-tables-container"></div>
         </section>
 
-        <section class="import-step" id="step-save-profile">
-            <h1 id="step-save-profile-title">{translate: 'Save import profile'}</h1>
+        <section class="import-step" id="step-trace-parameters">
+            <h1 id="step-save-profile-title">{translate: 'New trace parameters'}</h1>
 
             <form id="step-save-profile-form">
-
-            </form>
-        </section>
-
-        <section class="import-step" id="step-import">
-            <h1 id="step-import-title">{translate: 'Import'}</h1>
-
-            <form id="step-import-form">
-                <h2 id="step-import-subtitle">{translate: 'Please set parameters for the new trace'}</h2>
-
                 <p>
                     <label for="trace-id"><span id="trace-id-label">{translate: 'New trace ID :'}</span> <span id="trace-id-parent-path"></span></label>
 
@@ -336,11 +327,32 @@
                     <input type="text" id="trace-origin" value="1970-01-01T00:00:00Z" />
                 </p>
 
-                <div id="progress-bar-container" class="hidden">
-                    <div id="progress-bar" style="width: 0%;"></div>
-                </div>
-
                 <button id="start-import-button" tabindex="3" disabled>{translate: 'Start import !'}</button>
+            </form>
+        </section>
+
+        <section class="import-step importing" id="step-import">
+            <h1 id="step-import-title">{translate: 'Import'}</h1>
+
+            <div id="progress-bar-container" class="hidden">
+                <div id="progress-bar" style="width: 0%;"></div>
+            </div>
+
+            <div id="import-message">{translate: 'Import in progress, be carefull not close until completion'}</div>
+
+            <div id="import-result">
+                <div id="errors-count"></div>
+                <ol id="import-errors"></ol>
+            </div>
+
+            <button id="undo-import-button">{translate: '<< Undo import'}</button>
+        </section>
+
+        <section class="import-step" id="step-save-profile">
+            <h1 id="step-save-profile-title">{translate: 'Save import profile'}</h1>
+
+            <form id="step-save-profile-form">
+
             </form>
         </section>
 

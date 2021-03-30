@@ -2,6 +2,7 @@ import {Resource} from "./Resource.js";
 import {ResourceMultiton} from "./ResourceMultiton.js";
 import {Trace} from "./Trace.js";
 import {Obsel} from "./Obsel.js";
+import {RestError} from "./Errors.js";
 
 /**
  * Class to help reading obsels list from a Trace
