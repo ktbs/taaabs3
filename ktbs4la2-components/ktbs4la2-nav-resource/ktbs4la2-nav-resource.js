@@ -26,6 +26,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	static get observedAttributes() {
 		let observedAttributes = super.observedAttributes;
 		observedAttributes.push("preload-children");
+		observedAttributes.push("expand");
 		return observedAttributes;
 	}
 
@@ -54,6 +55,30 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 			})
 			.catch((error) => {});
 		}
+		else if(attributeName == "expand") {
+			if(
+					(newValue === true)
+				||	(newValue == "true")
+				||	(newValue == 1)
+			) {
+				this._componentReady.then(() => {
+					if(this._containerDiv.classList.contains("folded"))
+						this._containerDiv.classList.remove("folded");
+
+					if(!this._containerDiv.classList.contains("unfolded"))
+						this._containerDiv.classList.add("unfolded");
+				});
+			}
+			else {
+				this._componentReady.then(() => {
+					if(this._containerDiv.classList.contains("unfolded"))
+						this._containerDiv.classList.remove("unfolded");
+
+					if(!this._containerDiv.classList.contains("folded"))
+						this._containerDiv.classList.add("folded");
+				});	
+			}
+		}
 	}
 
 	/**
@@ -69,7 +94,10 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 		this._childListSpinner = this.shadowRoot.querySelector("#childlist-spinner");
 		this._childListEmpty = this.shadowRoot.querySelector("#childlist-empty");
 
-		if(this.hasAttribute("expand-until-uri") && this.getAttribute("expand-until-uri").startsWith(this.getAttribute("uri"))) {
+		if(
+				this.hasAttribute("expand-until-uri") 
+			&&	this.getAttribute("expand-until-uri").startsWith(this.getAttribute("uri"))
+		) {
 			this._containerDiv.classList.remove("folded");
 			this._containerDiv.classList.add("unfolded");
 		}
@@ -322,6 +350,8 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 						this._ktbsResource.get(this._abortController.signal).then(() => {
 							this._instanciateChildren();
 						});
+
+					this.dispatchEvent(new CustomEvent("nav-unfold", {bubbles: true, composed: true, cancelable: false}));
 				}
 				else {
 					if(this._containerDiv.classList.contains("unfolded"))
@@ -329,6 +359,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 
 					this._containerDiv.classList.add("folded");
 					this._unfoldButton.title = this._translateString("Unfold child list");
+					this.dispatchEvent(new CustomEvent("nav-fold", {bubbles: true, composed: true, cancelable: false}));
 				}
 			});
 		}

@@ -19,7 +19,7 @@ import "../ktbs4la2-create-resource-form/ktbs4la2-create-resource-form.js";
 import "../ktbs4la2-store-stylesheet-rules-to-method-form/ktbs4la2-store-stylesheet-rules-to-method-form.js";
 import "../ktbs4la2-csv-trace-import/ktbs4la2-csv-trace-import.js";
 import {ObselType} from "../../ktbs-api/ObselType.js";
-import { KtbsError } from "../../ktbs-api/Errors.js";
+import {KtbsError} from "../../ktbs-api/Errors.js";
 
 /**
  * 
@@ -37,12 +37,17 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._selectedNavElement = null;
 		this._bindedResizeFunction = this.resize.bind(this);
 		this._bindedStopresizingFunction = this.stopResizing.bind(this);
+		this._rootElementsMutationObserver = new MutationObserver(this._onRootElementsMutation.bind(this));
+		this._userScrolled = false;
+		this._ignoreNextScrollEvents = false;
 	}
 
 	/**
 	 * 
 	 */
 	onComponentReady() {
+		this._navContentDiv = this.shadowRoot.querySelector("#nav-content");
+		this._navContentDiv.addEventListener("scroll", this._onScrollNavContentDiv.bind(this));
 		this.homeLink = this.shadowRoot.querySelector("#home-link");
 		this.homeLink.setAttribute("href", window.location);
 		this.homeLink.addEventListener("click", this.onClickHomeLink.bind(this));
@@ -67,6 +72,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._navNodesObserver = new MutationObserver(this.onNavNodesMutation.bind(this));
 		this._navNodesObserver.observe(this, { childList: true, subtree: true });
 		this.loadStoredRoots();
+
 		this.loadMainObjectFromWindowLocation();
 		window.addEventListener("popstate", this.onWindowPopState.bind(this));
 
@@ -75,6 +81,30 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		for(let i = 0; i < this._langButtons.length; i++) {
 			let aLangButton = this._langButtons[i];
 			aLangButton.addEventListener("click", this._onClickLangButton.bind(this));
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onScrollNavContentDiv(event) {
+		if(!this._ignoreNextScrollEvents) {
+			if(this._navContentDiv.scrollTop != this._lastNavScroll) {
+				this._userScrolled = true;
+				this._lastNavScroll = this._navContentDiv.scrollTop;
+
+				if(this._processNavContentScrollID)
+					clearTimeout(this._processNavContentScrollID);
+
+				this._processNavContentScrollID = setTimeout(() => {
+					window.sessionStorage.setItem("nav-scroll", this._navContentDiv.scrollTop);
+					delete this._processNavContentScrollID;
+				});
+			}
+		}
+		else {
+			this._lastNavScroll = this._navContentDiv.scrollTop;
+			this._ignoreNextScrollEvents = false
 		}
 	}
 
@@ -228,6 +258,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		const uri = target.getAttribute("uri");
 		let label = target.getAttribute("label");
 
+
 		if(resourceTypeString == "Ktbs") {
 			if(!label)
 				label = uri;
@@ -253,6 +284,25 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 						oldRootElement.remove();
 
 					this.setMainObject("documentation");
+
+					setTimeout(() => {
+						const navUnfoldedResources_string = window.sessionStorage.getItem("nav-unfolded-resources");
+
+						if(navUnfoldedResources_string != null) {
+							const navUnfoldedResources = JSON.parse(navUnfoldedResources_string);
+
+							if(navUnfoldedResources instanceof Array) {
+								for(let i = navUnfoldedResources.length - 1; i >= 0; i--) {
+									const unfolded_resource_uri = navUnfoldedResources[i];
+
+									if(unfolded_resource_uri.startsWith(uri))
+										navUnfoldedResources.splice(i, 1);
+								}
+
+								window.sessionStorage.setItem("nav-unfolded-resources", JSON.stringify(navUnfoldedResources));
+							}
+						}
+					});
 				}
 				else
 					this.emitErrorEvent(new Error("Could not find Ktbs Root with uri " + oldRootUri + " in local cache"));
@@ -274,6 +324,25 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					})
 					.catch((error) => {
 						alert(error.name + " : " + error.statusText);
+					});
+
+					setTimeout(() => {
+						const navUnfoldedResources_string = window.sessionStorage.getItem("nav-unfolded-resources");
+
+						if(navUnfoldedResources_string != null) {
+							const navUnfoldedResources = JSON.parse(navUnfoldedResources_string);
+
+							if(navUnfoldedResources instanceof Array) {
+								for(let i = navUnfoldedResources.length - 1; i >= 0; i--) {
+									const unfolded_resource_uri = navUnfoldedResources[i];
+
+									if(unfolded_resource_uri.startsWith(uri))
+										navUnfoldedResources.splice(i, 1);
+								}
+
+								window.sessionStorage.setItem("nav-unfolded-resources", JSON.stringify(navUnfoldedResources));
+							}
+						}
 					});
 			}
 		}
@@ -1100,7 +1169,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	toggleLeftPanelHidden(event) {
 		if(this.leftPanel.className == "unfolded") {
 			this._resizing_initial_width = this.leftPanel.offsetWidth;
-			this._nav_initial_scroll = this.shadowRoot.querySelector("#nav-content").scrollTop;
+			this._nav_initial_scroll = this._navContentDiv.scrollTop;
 			this.leftPanel.className = "folded";				
 			this.leftPanel.style.width = "20px";
 			this.foldButton.title = this._translateString("Show navigation panel");
@@ -1111,7 +1180,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 			if(this._resizing_initial_width > 0) {
 				this.leftPanel.style.width = this._resizing_initial_width + "px";
-				this.shadowRoot.querySelector("#nav-content").scrollTop = this._nav_initial_scroll;
+				this._ignoreNextScrollEvents = true;
+				this._navContentDiv.scrollTop = this._nav_initial_scroll;
 			}
 			else
 				this.leftPanel.style.width = "250px";
@@ -1125,7 +1195,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._is_resizing = true;
 		this._resizing_origin_x = event.clientX;
 		this._resizing_initial_width = this.leftPanel.offsetWidth;
-		this._nav_initial_scroll = this.shadowRoot.querySelector("#nav-content").scrollTop;
+		this._nav_initial_scroll = this._navContentDiv.scrollTop;
 		window.addEventListener("mousemove", this._bindedResizeFunction, true);
 		window.addEventListener("mouseup", this._bindedStopresizingFunction, true);
 		event.preventDefault();
@@ -1239,6 +1309,19 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			newRootElement.setAttribute("label", newRootLabel);
 			newRootElement.setAttribute("resource-type", "Ktbs");
 			newRootElement.setAttribute("slot", "nav-ktbs-roots");
+			newRootElement.addEventListener("nav-fold", this._onFoldNavItem.bind(this));
+			newRootElement.addEventListener("nav-unfold", this._onUnfoldNavItem.bind(this));
+
+			const navUnfoldedResources_string = window.sessionStorage.getItem("nav-unfolded-resources");
+
+			if(navUnfoldedResources_string != null) {
+				const navUnfoldedResources = JSON.parse(navUnfoldedResources_string);
+
+				if((navUnfoldedResources instanceof Array) && navUnfoldedResources.includes(newRootUri))
+					newRootElement.setAttribute("expand", "true");
+			}
+
+			this._rootElementsMutationObserver.observe(newRootElement, {childList: true, subtree: true, attributes: false});
 
 			if(mark_as_new)
 				newRootElement.classList.add("new");
@@ -1253,6 +1336,119 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		}
 		else
 			throw new Error("Cannot instanciate root item with empty URI");
+	}
+
+	/**
+	 * 
+	 */
+	_onRootElementsMutation(mutationRecords, observer) {
+		setTimeout(() => {
+			let added_new_nav_element = false;
+
+			for(let i = 0; i < mutationRecords.length; i++) {
+				const currentMutationRecord = mutationRecords[i];
+
+				if(currentMutationRecord.type == "childList") {
+					let navUnfoldedResources;
+					const navUnfoldedResources_string = window.sessionStorage.getItem("nav-unfolded-resources");
+
+					if(navUnfoldedResources_string != null)
+						navUnfoldedResources = JSON.parse(navUnfoldedResources_string);
+
+					for(let j = 0; j < currentMutationRecord.addedNodes.length; j++) {
+						let newChildNode = currentMutationRecord.addedNodes[j];
+						
+						if(newChildNode.localName == "ktbs4la2-nav-resource") {
+							const newNavElement_uri = newChildNode.getAttribute("uri");
+
+							if((navUnfoldedResources instanceof Array) && navUnfoldedResources.includes(newNavElement_uri))
+								newChildNode.setAttribute("expand", "true");
+
+							
+							added_new_nav_element = true;
+						}
+					}
+				}
+			}
+
+			if(added_new_nav_element && !this._userScrolled) {
+				const navScroll = window.sessionStorage.getItem("nav-scroll");
+				const scrollTopBefore = this._navContentDiv.scrollTop;
+				
+				if(navScroll != scrollTopBefore) {
+					this._navContentDiv.scrollTop = navScroll;
+					
+					if(this._navContentDiv.scrollTop != scrollTopBefore)
+						this._ignoreNextScrollEvents = true;
+				}
+			}
+		});
+	}
+
+	/**
+	 * 
+	 */
+	_onFoldNavItem(event) {
+		const navItem = event.target;
+		const navItem_uri = navItem.getAttribute("uri");
+
+		try {
+			const navUnfoldedResources_string = window.sessionStorage.getItem("nav-unfolded-resources");
+			let navUnfoldedResources;
+
+			if(navUnfoldedResources_string != null)
+				navUnfoldedResources = JSON.parse(navUnfoldedResources_string);
+			else
+				navUnfoldedResources = new Array();
+
+			if(navUnfoldedResources instanceof Array) {
+				const navItem_uri_index = navUnfoldedResources.indexOf(navItem_uri);
+
+				if(navItem_uri_index != -1)
+					navUnfoldedResources.splice(navItem_uri_index, 1);
+
+				window.sessionStorage.setItem("nav-unfolded-resources", JSON.stringify(navUnfoldedResources));
+			}
+			else
+				throw new Error("Session storage item \"nav-unfolded-resources\" exists but does not contain a valid JSON representation of an Array");
+		}
+		catch(error) {
+			if(this.debug)
+				console.error(error);
+		}
+	}
+
+	/**
+	 * 
+	 */
+	 _onUnfoldNavItem(event) {
+		const navItem = event.target;
+		const navItem_uri = navItem.getAttribute("uri");
+
+		try {
+			const navUnfoldedResources_string = window.sessionStorage.getItem("nav-unfolded-resources");
+			let navUnfoldedResources;
+
+			if(navUnfoldedResources_string != null)
+				navUnfoldedResources = JSON.parse(navUnfoldedResources_string);
+			else
+				navUnfoldedResources = new Array();
+
+			if(navUnfoldedResources instanceof Array) {
+				const navItem_uri_index = navUnfoldedResources.indexOf(navItem_uri);
+
+				if(navItem_uri_index == -1)
+					navUnfoldedResources.push(navItem_uri);
+
+				window.sessionStorage.setItem("nav-unfolded-resources", JSON.stringify(navUnfoldedResources));
+			}
+			else
+				throw new Error("Session storage item \"nav-unfolded-resources\" exists but does not contain a valid JSON representation of an Array");
+		}
+		catch(error) {
+			if(this.debug)
+				console.error(error);
+		}
 	}
 
 	/**
@@ -1331,6 +1527,14 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		else
 			this.ktbsRoots = new Array();
 	}
+
+	/**
+	 * 
+	 */
+	 disconnectedCallback() {
+		super.disconnectedCallback();
+		this._rootElementsMutationObserver.disconnect();
+	 }
 }
 
 customElements.define('ktbs4la2-application', KTBS4LA2Application);
