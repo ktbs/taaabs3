@@ -83,5 +83,11 @@
     "error(s)": "erreur(s)",
     "<< Undo import": "<< Annuler l'import",
     "WARNING: this will delete the newly created trace !\nIf you created a new model during this import, it will be deleted too.\nAre you sure ?": "ATTENTION: cela supprimera la trace nouvellement crée.\nSi vous avez créé un nouveau modèle au cours de cet import, il sera supprimé également.\nÊtes-vous sûr(e) ?",
-    "Some data has not been saved yet. Are you sure you want to leave ?": "Des données n'ont pas encore été enregistrées. Êtes-vous sûre(e) de vouloir quitter ?"
+    "Some data has not been saved yet. Are you sure you want to leave ?": "Des données n'ont pas encore été enregistrées. Êtes-vous sûre(e) de vouloir quitter ?",
+    "Profile name :": "Nom du profil :",
+    "Description :": "Description :",
+    "Save profile": "Enregistrer le profil",
+    "Close": "Fermer",
+    "You can save your import parameters as an import profile in order to speed up further imports (optional).": "Vous pouvez enregistrer vos paramètres d'import en tant que profil d'import afin d'accélerer les imports ultérieurs (facultatif)",
+    "Import profile saved": "Profil d'import enregistré"
 }

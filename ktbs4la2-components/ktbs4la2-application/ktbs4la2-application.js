@@ -632,6 +632,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 				const csvImportElement = document.createElement("ktbs4la2-csv-trace-import");
 				csvImportElement.setAttribute("parent-uri", parentUri);
+				csvImportElement.addEventListener("close", this.removeOverlay.bind(this));
 				this.setOverlay(csvImportElement);
 			}
 			else {

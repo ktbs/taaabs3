@@ -93,6 +93,7 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
         this._previewTableHoveredColStyle = this.shadowRoot.styleSheets[1];
         this._previewTableClickedColStyle = this.shadowRoot.styleSheets[2];
         this._main = this.shadowRoot.querySelector("#main");
+        this._importStepsNavList = this.shadowRoot.querySelector("#import-steps-nav-list");
         this._stepChooseFileNavItem = this.shadowRoot.querySelector("#step-choose-file-nav-item");
         this._stepLoadProfileNavItem = this.shadowRoot.querySelector("#step-load-profile-nav-item");
         this._stepCsvParsingNavItem = this.shadowRoot.querySelector("#step-csv-parsing-nav-item");
@@ -129,8 +130,10 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
         this._stepLoadProfileTitle = this.shadowRoot.querySelector("#step-load-profile-title");
         this._stepLoadProfileForm = this.shadowRoot.querySelector("#step-load-profile-form");
         this._loadProfileNoRadioButton = this.shadowRoot.querySelector("#load-profile-no");
+        this._loadProfileNoRadioButton.addEventListener("change", this._onChangeProfileChoice.bind(this));
         this._loadProfileNoLabel = this.shadowRoot.querySelector("#load-profile-no-label");
         this._loadProfileYesRadioButton = this.shadowRoot.querySelector("#load-profile-yes");
+        this._loadProfileYesRadioButton.addEventListener("change", this._onChangeProfileChoice.bind(this));
         this._loadProfileYesLabel = this.shadowRoot.querySelector("#load-profile-yes-label");
         this._importProfileSelect = this.shadowRoot.querySelector("#import-profile");
         this._importProfileNoProfileAvailableOption = this.shadowRoot.querySelector("#import-profile-no-profile-available-option");
@@ -271,6 +274,17 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
         this._stepSaveProfileSection = this.shadowRoot.querySelector("#step-save-profile");
         this._stepSaveProfileTitle = this.shadowRoot.querySelector("#step-save-profile-title");
         this._stepSaveProfileForm = this.shadowRoot.querySelector("#step-save-profile-form");
+        this._saveProfileExplanationP = this.shadowRoot.querySelector("#save-profile-explanation");
+        this._profileNameLabel = this.shadowRoot.querySelector("#profile-name-label");
+        this._profileNameInput = this.shadowRoot.querySelector("#profile-name");
+        this._profileNameInput.addEventListener("change", this._onChangeProfileNameInput.bind(this));
+        this._profileNameInput.addEventListener("input", this._onChangeProfileNameInput.bind(this));
+        this._profileDescriptionLabel = this.shadowRoot.querySelector("#profile-description-label");
+        this._profileDescriptionTextarea = this.shadowRoot.querySelector("#profile-description");
+        this._saveProfileButton = this.shadowRoot.querySelector("#save-profile-button");
+        this._saveProfileButton.addEventListener("click", this._onClickSaveProfileButton.bind(this));
+        this._closeButton = this.shadowRoot.querySelector("#close-button");
+        this._closeButton.addEventListener("click", this._onClickCloseButton.bind(this));
     }
 
     /**
@@ -581,15 +595,92 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                     });
 
                     fileReader.readAsArrayBuffer(this._import_file);
+
+                    // rebuild the profiles list, in case it was already builded previously and now outdated
+                    const oldProfilesOptions = this._importProfileSelect.querySelectorAll("option:not(#import-profile-no-profile-available-option)");
+
+                    for(let i = 0; i < oldProfilesOptions.length; i++)
+                        oldProfilesOptions[i].remove();
+
+                    try {
+                        const currentProfilesString = window.localStorage.getItem("import-profiles");
+                        
+                        if(currentProfilesString != null) {
+                            const currentProfiles = JSON.parse(currentProfilesString);
+
+                            if((currentProfiles instanceof Array) && (currentProfiles.length > 0)) {
+                                for(let i = 0; i < currentProfiles.length; i++) {
+                                    const profileOption = document.createElement("option");
+                                    profileOption.innerText = currentProfiles[i].name;
+
+                                    if(currentProfiles[i].description && (currentProfiles[i].description != ""))
+                                        profileOption.setAttribute("title", currentProfiles[i].description);
+
+                                    this._importProfileSelect.appendChild(profileOption);
+                                }
+
+                                this._importProfileSelect.selectedIndex = 1;
+
+                                if(this._loadProfileYesRadioButton.hasAttribute("disabled"))
+                                    this._loadProfileYesRadioButton.removeAttribute("disabled");
+                            }
+                            else {
+                                if(!this._loadProfileYesRadioButton.hasAttribute("disabled"))
+                                    this._loadProfileYesRadioButton.setAttribute("disabled", true);
+                            }
+                        }
+                        else {
+                            if(!this._loadProfileYesRadioButton.hasAttribute("disabled"))
+                                this._loadProfileYesRadioButton.setAttribute("disabled", true);
+                        }
+                    }
+                    catch(error) {
+                        console.error(error);
+                        this.emitErrorEvent(error);
+                        alert(error.name + " : " + error.message);
+                    }
+                    // done rebuilding the profiles list
+
                     break;
                 case "step-load-profile" :
                     const use_profile = (this._stepLoadProfileForm["load-profile"].value == "yes");
 
                     if(use_profile) {
-                        const profile_id = this._importProfileSelect.value;
-                        // @TODO : retrouver et parser le profil dans le applicationStorage, 
-                        // puis l'affecter à this._importParameters
-                        this._switchToNextStep("step-import");
+                        const selected_profile_id = this._importProfileSelect.value;
+                    
+                        try {
+                            let selectedProfile;
+                            const currentProfilesString = window.localStorage.getItem("import-profiles");
+                            
+                            if(currentProfilesString != null) {
+                                const currentProfiles = JSON.parse(currentProfilesString);
+    
+                                if(currentProfiles instanceof Array) {
+                                    for(let i = 0; i < currentProfiles.length; i++) {
+                                        if(currentProfiles[i].name == selected_profile_id) {
+                                            selectedProfile = currentProfiles[i];
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(selectedProfile) {
+                                this._importParameters = selectedProfile.parameters;
+                                const textDecoder = new TextDecoder(this._importParameters.charset);
+                                this._decoded_file_content = textDecoder.decode(this._raw_file_content);
+                                this._parsed_CSV_data = KTBS4LA2CsvTraceImport._parseCSV(this._decoded_file_content, this._importParameters.separator);
+                                this._parsed_CSV_data_columns_count = this._getColumnsCount(this._parsed_CSV_data);
+                                this._switchToNextStep("step-trace-parameters");
+                            }
+                            else
+                                throw new Error("Could not retrieve profile \"" + selected_profile_id + "\" from local storage");
+                        }
+                        catch(error) {
+                            console.error(error);
+                            this.emitErrorEvent(error);
+                            alert(error.name + " : " + error.message);
+                        }
                     }
                     else {
                         this._importParameters = {};
@@ -1084,9 +1175,6 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                     this._switchToNextStep("step-save-profile");
                     break;
             }
-
-        /*console.log("this._importParameters = ");
-        console.log(this._importParameters);*/
     }
 
     /**
@@ -2266,21 +2354,47 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
      */
     _onChangeModelChoice(event) {
         if(this._modelChoiceNewCheckbox.checked) {
-        if(this._stepChooseModelForm.classList.contains("model-choice-existing"))
-            this._stepChooseModelForm.classList.remove("model-choice-existing");
+            if(this._stepChooseModelForm.classList.contains("model-choice-existing"))
+                this._stepChooseModelForm.classList.remove("model-choice-existing");
 
-        if(!this._stepChooseModelForm.classList.contains("model-choice-new"))
-            this._stepChooseModelForm.classList.add("model-choice-new");
-        }
-        else {
-        if(this._stepChooseModelForm.classList.contains("model-choice-new"))
-            this._stepChooseModelForm.classList.remove("model-choice-new");
+            if(!this._stepChooseModelForm.classList.contains("model-choice-new"))
+                this._stepChooseModelForm.classList.add("model-choice-new");
+            }
+            else {
+            if(this._stepChooseModelForm.classList.contains("model-choice-new"))
+                this._stepChooseModelForm.classList.remove("model-choice-new");
 
-        if(!this._stepChooseModelForm.classList.contains("model-choice-existing"))
-            this._stepChooseModelForm.classList.add("model-choice-existing");
+            if(!this._stepChooseModelForm.classList.contains("model-choice-existing"))
+                this._stepChooseModelForm.classList.add("model-choice-existing");
         }
 
         this._updateNextStepButton();
+    }
+
+    /**
+     * 
+     */
+    _onChangeProfileChoice(event) {
+        if(this._loadProfileYesRadioButton.checked) {
+            if(this._importProfileSelect.hasAttribute("disabled"))
+                this._importProfileSelect.removeAttribute("disabled");
+
+            if(!this._mainContent.classList.contains("with-import-profile"))
+                this._mainContent.classList.add("with-import-profile");
+
+            if(!this._importStepsNavList.classList.contains("with-import-profile"))
+                this._importStepsNavList.classList.add("with-import-profile");
+        }
+        else {
+            if(!this._importProfileSelect.hasAttribute("disabled"))
+                this._importProfileSelect.setAttribute("disabled", true);
+
+            if(this._mainContent.classList.contains("with-import-profile"))
+                this._mainContent.classList.remove("with-import-profile");
+
+            if(this._importStepsNavList.classList.contains("with-import-profile"))
+                this._importStepsNavList.classList.remove("with-import-profile");
+        }
     }
 
     /**
@@ -2892,6 +3006,113 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
         window.removeEventListener("beforeunload", this._bindedOnBeforeUnloadWindowMethod);
         this.removeEventListener("beforeremove", this._bindedOnBeforeRemoveMethod);
         super.disconnectedCallback();
+    }
+
+    /**
+     * 
+     */
+    _onChangeProfileNameInput(event) {
+        if(this._profileNameInput.value != "") {
+            if(this._saveProfileButton.hasAttribute("disabled"))
+                this._saveProfileButton.removeAttribute("disabled");
+        }
+        else {
+            if(!this._saveProfileButton.hasAttribute("disabled"))
+                this._saveProfileButton.setAttribute("disabled", true);
+        }
+    }
+
+    /**
+     * 
+     */
+    _onClickSaveProfileButton(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const currentProfilesString = window.localStorage.getItem("import-profiles");
+        
+        try {
+            let currentProfiles;
+
+            if(currentProfilesString != null)
+                currentProfiles = JSON.parse(currentProfilesString);
+            else
+                currentProfiles = new Array();
+
+            if(currentProfiles instanceof Array) {
+                const profileObject = {
+                    name: this._profileNameInput.value,
+                    description: this._profileDescriptionTextarea.value
+                };
+
+                const profileParameters = JSON.parse(JSON.stringify(this._importParameters));
+                
+                // alter import parameters to link to the model that is now existing
+                if(profileParameters.model_mode == "new") {
+                    profileParameters.model_mode = "existing";
+                    delete profileParameters.model;
+                    profileParameters.model_uri = this._newTrace.model.uri.toString();
+
+                    if(profileParameters.obsel_types_mapping_mode == "unique") {
+                        profileParameters.obsel_type_id = profileParameters.obsel_type.id;
+                        delete profileParameters.obsel_type;
+                    }
+                    else {
+                        for(let i = 0; i < profileParameters.obsel_types_mapping.length; i++) {
+                            if(profileParameters.obsel_types_mapping[i].obsel_type) {
+                                profileParameters.obsel_types_mapping[i].obsel_type_id = profileParameters.obsel_types_mapping[i].obsel_type.id;
+                                delete profileParameters.obsel_types_mapping[i].obsel_type;
+                            }
+                        }
+                    }
+
+                    for(let i =0; i < profileParameters.attributes_mapping.length; i++) {
+                        for(let j = 0; j < profileParameters.attributes_mapping[i].mapping_parameters.length; j++) {
+                            if(profileParameters.attributes_mapping[i].mapping_parameters[j].mapping_type == "<new>") {
+                                profileParameters.attributes_mapping[i].mapping_parameters[j].mapping_type = "<existing>";
+
+                                if(profileParameters.attributes_mapping[i].mapping_parameters[j].attribute_label)
+                                    delete profileParameters.attributes_mapping[i].mapping_parameters[j].attribute_label;
+
+                                if(profileParameters.attributes_mapping[i].mapping_parameters[j].attribute_data_type)
+                                    delete profileParameters.attributes_mapping[i].mapping_parameters[j].attribute_data_type;
+                            }
+                        }
+                    }
+                }
+                // ---
+
+                profileObject.parameters = profileParameters;
+                currentProfiles.push(profileObject);
+                window.localStorage.setItem("import-profiles", JSON.stringify(currentProfiles));
+                alert(this._translateString("Import profile saved"));
+                this._requestClose();
+            }
+            else
+                throw new TypeError("Existing JSON data in local storage at key 'import-profile' does not represent an Array");
+        }
+        catch(error) {
+            console.error(error);
+            this.emitErrorEvent(error);
+            alert(error.name + " : " + error.message);
+        }
+    }
+
+    /**
+     * 
+     */
+    _onClickCloseButton(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        this._requestClose();
+    }
+
+    /**
+     * 
+     */
+    _requestClose() {
+        window.removeEventListener("beforeunload", this._bindedOnBeforeUnloadWindowMethod);
+        this.removeEventListener("beforeremove", this._bindedOnBeforeRemoveMethod);
+        this.dispatchEvent(new CustomEvent("close", {bubbles: true, composed: true, cancelable: false}));
     }
 }
 

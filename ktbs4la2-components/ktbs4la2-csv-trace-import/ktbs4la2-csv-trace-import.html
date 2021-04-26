@@ -7,18 +7,18 @@
         <ol id="import-steps-nav-list">
             <li id="step-choose-file-nav-item">{translate: 'CSV file selection'}</li>
             <li id="step-load-profile-nav-item">{translate: 'Import profile'}</li>
-            <li id="step-csv-parsing-nav-item">{translate: 'CSV parsing parameters'}</li>
-            <li id="step-choose-model-nav-item">{translate: 'Choose model'}</li>
-            <li id="step-define-obsel-types-nav-item">{translate: 'Define obsel types'}</li>
+            <li id="step-csv-parsing-nav-item" class="no-import-profile">{translate: 'CSV parsing parameters'}</li>
+            <li id="step-choose-model-nav-item" class="no-import-profile">{translate: 'Choose model'}</li>
+            <li id="step-define-obsel-types-nav-item" class="no-import-profile">{translate: 'Define obsel types'}</li>
 
-            <li id="step-attributes-mapping-nav-item">
+            <li id="step-attributes-mapping-nav-item" class="no-import-profile">
                 <span id="step-attributes-mapping-nav-label">{translate: 'Attributes mapping'}</span>
                 <ol id="step-attributes-mapping-nav-sub"></ol>
             </li>
 
             <li id="step-trace-parameters-nav-item">{translate: 'New trace parameters'}</li>
             <li id="step-import-nav-item">{translate: 'Import'}</li>
-            <li id="step-save-profile-nav-item">{translate: 'Save import profile'}</li>
+            <li id="step-save-profile-nav-item" class="no-import-profile">{translate: 'Save import profile'}</li>
         </ol>
     </aside>
 
@@ -63,7 +63,7 @@
 
                 <p>
                     <input type="radio" name="load-profile" id="load-profile-yes" value="yes" disabled />
-                    <label id="load-profile-yes-label" for="load-profile-yes">{translate: "Use the import profile specified below :"}</label>
+                    <label id="load-profile-yes-label" for="load-profile-yes">{translate: "Use import profile :"}</label>
 
                     <select id="import-profile" disabled>
                         <option id="import-profile-no-profile-available-option" value="no-profile-available">{translate: "No profile available yet"}</option>
@@ -352,26 +352,30 @@
             <h1 id="step-save-profile-title">{translate: 'Save import profile'}</h1>
 
             <form id="step-save-profile-form">
-                <p>
-                    <label id="profile-name-label" for="profile-name">{translate: 'Profile name :'}</label>
-                    <input type="text" id="profile-name" placeholder="" />
-                </p>
+                <p id="save-profile-explanation">{translate: 'You can save your import parameters as an import profile in order to speed up further imports (optional).'}</p>
+                
+                <fieldset>
+                    <p>
+                        <label id="profile-name-label" for="profile-name">{translate: 'Profile name :'}</label>
+                        <input type="text" id="profile-name" placeholder="{translate: 'Profile name :'}" />
+                    </p>
 
-                <p>
-                    <label id="profile-description-label" for="profile-description">{translate: 'Description :'}</label>
-                    <textarea id="profile-description"></textarea>
-                </p>
+                    <p>
+                        <label id="profile-description-label" for="profile-description">{translate: 'Description :'}</label>
+                        <textarea id="profile-description"></textarea>
+                    </p>
 
-                <p>
-                    <button id="save-profile-button">{translate: 'Save'}</button>
-                    <button id="close-button" disabled>{translate: 'Close'}</button>
-                </p>
+                    <p>
+                        <button id="save-profile-button" disabled>{translate: 'Save profile'}</button>
+                    </p>
+                </fieldset>
             </form>
         </section>
 
         <div id="step-navigation">
             <button id="previous-step-button">{translate: '< Previous step'}</button>
             <button id="next-step-button" disabled>{translate: 'Next step >'}</button>
+            <button id="close-button">{translate: 'Close'}</button>
         </div>
     </article>
 </main>

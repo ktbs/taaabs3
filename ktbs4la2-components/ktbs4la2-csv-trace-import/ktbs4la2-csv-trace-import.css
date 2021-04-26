@@ -23,6 +23,10 @@
     margin-block-start: 0px;
 }
 
+#import-steps-nav-list.with-import-profile li.no-import-profile {
+    display: none;
+}
+
 #main.step-choose-file #step-choose-file-nav-item,
 #main.step-load-profile #step-load-profile-nav-item,
 #main.step-csv-parsing #step-csv-parsing-nav-item,
@@ -102,8 +106,12 @@
     left: 0px;
 }
 
-#next-step-button {
+#next-step-button, #close-button {
     right: 0px;
+}
+
+#close-button {
+    display: none;
 }
 
 /* --- Step choose file --- */
@@ -201,6 +209,10 @@
 #load-profile-yes:disabled + #load-profile-yes-label {
     color: gray;
     font-style: italic;
+}
+
+#import-profile-no-profile-available-option:not(:only-child) {
+    display: none;
 }
 
 /* --- Step CSV parsing --- */
@@ -472,4 +484,47 @@ ktbs4la2-attributes-mapping-table.hidden {
 
 #step-import.importing #undo-import-button {
     display: none;
+}
+
+#main.step-import #main-content.with-import-profile #step-import:not(.importing) ~ #step-navigation #close-button {
+    display: block;
+}
+
+#main.step-import #step-import.importing ~ #step-navigation #next-step-button, 
+#main.step-import #main-content.with-import-profile #next-step-button {
+    display: none;
+}
+
+/* --- Step save profile --- */
+
+#main.step-save-profile #close-button {
+    display: block;
+}
+
+#save-profile-button {
+    background-color: green;
+    width: 150px;
+    height: 30px;
+    cursor: pointer;
+    color: white;
+    border: none;
+    outline: none;
+    bottom: -20px;
+    float: left;
+    background-image: url('{my-component-folder}/floppy_white.svg');
+    background-repeat: no-repeat;
+    background-position-x: 5px;
+    background-position-y: 5px;
+    padding-left: 30px;
+    background-size: 20px;
+}
+
+#save-profile-button:hover, #save-profile-button:focus {
+    background-color: #1fc71f;
+}
+
+#save-profile-button:disabled, #save-profile-button:disabled:hover {
+    cursor: default;
+    background-color: #CCC;
+    font-style: italic;
 }
