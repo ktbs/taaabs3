@@ -82,6 +82,38 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			let aLangButton = this._langButtons[i];
 			aLangButton.addEventListener("click", this._onClickLangButton.bind(this));
 		}
+
+		try {
+			const navWidth_string = window.sessionStorage.getItem("nav-width");
+			let navWidth;
+
+			if(navWidth_string != null)
+				navWidth = parseFloat(navWidth_string);
+				
+			const nav_hidden = (window.sessionStorage.getItem("nav-hidden") == "true");
+
+			if(nav_hidden) {
+				this.leftPanel.className = "folded";				
+				this.leftPanel.style.width = "20px";
+				this.foldButton.title = this._translateString("Show navigation panel");
+				this._nav_initial_scroll = this._navContentDiv.scrollTop;
+
+				if((navWidth != undefined) && !isNaN(navWidth))
+					this._resizing_initial_width = navWidth;
+				else
+					this._resizing_initial_width = this.leftPanel.offsetWidth;
+			}
+			else {
+				if((navWidth != undefined) && !isNaN(navWidth))
+					this.leftPanel.style.width = navWidth + "px";
+			}
+		}
+		catch(error) {
+			this.emitErrorEvent(error);
+
+			if(this.debug)
+				console.error(error);
+		}
 	}
 
 	/**
@@ -1186,6 +1218,24 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			else
 				this.leftPanel.style.width = "250px";
 		}
+
+		if(this._saveNavStateTaskID)
+				clearTimeout(this._saveNavStateTaskID);
+
+			this._saveNavStateTaskID = setTimeout(() => {
+				try {
+					window.sessionStorage.setItem("nav-hidden", !(this.leftPanel.className == "unfolded"));
+				}
+				catch(error) {
+					this.emitErrorEvent(error);
+
+					if(this.debug)
+						console.error(error);
+				}
+				finally {
+					delete this._saveNavStateTaskID;
+				}
+			});
 	}
 
 	/**
@@ -1220,6 +1270,25 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					this.leftPanel.className = "folded";
 
 			this.leftPanel.style.width = newNavWidth + "px";
+
+			if(this._saveNavWidthTaskID)
+				clearTimeout(this._saveNavWidthTaskID);
+
+			this._saveNavWidthTaskID = setTimeout(() => {
+				try {
+					window.sessionStorage.setItem("nav-width", newNavWidth);
+				}
+				catch(error) {
+					this.emitErrorEvent(error);
+
+					if(this.debug)
+						console.error(error);
+				}
+				finally {
+					delete this._saveNavWidthTaskID;
+				}
+			});
+
 			event.preventDefault();
 		}
 	}
