@@ -11,14 +11,22 @@
 	background-color: var(--nav-background-color, var(--color-main, cornflowerblue));
 	display: table-cell;
 	vertical-align: top;
-}
-
-#left-panel.unfolded {
 	width: 250px;
 }
 
 #left-panel.folded {
 	width: 20px;
+	position: absolute;
+    z-index: 3;
+	transition: left 0.1s;
+}
+
+#left-panel.folded.masked {
+	left: -20px;
+}
+
+#left-panel.folded:not(.masked) {
+	left: 0px;
 }
 
 #nav-content {
@@ -101,7 +109,7 @@
 	opacity: 1;
 }
 
-#left-panel.unfolded #fold-button {
+#left-panel:not(.folded) #fold-button {
 	background-image: url('{my-component-folder}/left-oriented-triangle.svg');
 }
 
@@ -160,11 +168,19 @@
 	background-position: 0 50%;
 }
 
+#left-panel.folded ~ #separator {
+	display: none;
+}
+
 #main-panel {
 	display: table-cell;
 	vertical-align: top;
 	padding: 0;
 	margin: 0;
+}
+
+#left-panel.folded ~ #main-panel {
+	display: block;
 }
 
 #main-scrollable {

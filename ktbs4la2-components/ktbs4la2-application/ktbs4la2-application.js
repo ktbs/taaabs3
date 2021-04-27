@@ -37,6 +37,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._selectedNavElement = null;
 		this._bindedResizeFunction = this.resize.bind(this);
 		this._bindedStopresizingFunction = this.stopResizing.bind(this);
+		this._bindedOnMouseMoveFunction = this._onMouseMove.bind(this);
 		this._rootElementsMutationObserver = new MutationObserver(this._onRootElementsMutation.bind(this));
 		this._userScrolled = false;
 		this._ignoreNextScrollEvents = false;
@@ -93,7 +94,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			const nav_hidden = (window.sessionStorage.getItem("nav-hidden") == "true");
 
 			if(nav_hidden) {
-				this.leftPanel.className = "folded";				
+				this.leftPanel.classList.add("folded");				
 				this.leftPanel.style.width = "20px";
 				this.foldButton.title = this._translateString("Show navigation panel");
 				this._nav_initial_scroll = this._navContentDiv.scrollTop;
@@ -102,6 +103,15 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					this._resizing_initial_width = navWidth;
 				else
 					this._resizing_initial_width = this.leftPanel.offsetWidth;
+
+				window.addEventListener("mousemove", this._bindedOnMouseMoveFunction, true);
+
+				this._maskLeftPanelTaskID = setTimeout(() => {
+					if(!this.leftPanel.classList.contains("masked"))
+						this.leftPanel.classList.add("masked");
+
+					delete this._maskLeftPanelTaskID;
+				}, 3000);
 			}
 			else {
 				if((navWidth != undefined) && !isNaN(navWidth))
@@ -1199,16 +1209,31 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 * 
 	 */
 	toggleLeftPanelHidden(event) {
-		if(this.leftPanel.className == "unfolded") {
+		if(!this.leftPanel.classList.contains("folded")) {
 			this._resizing_initial_width = this.leftPanel.offsetWidth;
 			this._nav_initial_scroll = this._navContentDiv.scrollTop;
-			this.leftPanel.className = "folded";				
+			this.leftPanel.classList.add("folded");
+			
+			if(this.leftPanel.classList.contains("masked"))
+				this.leftPanel.classList.remove("masked");
+
 			this.leftPanel.style.width = "20px";
 			this.foldButton.title = this._translateString("Show navigation panel");
+			window.addEventListener("mousemove", this._bindedOnMouseMoveFunction, true);
+
+			this._maskLeftPanelTaskID = setTimeout(() => {
+				if(!this.leftPanel.classList.contains("masked"))
+					this.leftPanel.classList.add("masked");
+
+				delete this._maskLeftPanelTaskID;
+			}, 3000);
 		}
 		else {
 			this.foldButton.title = this._translateString("Hide navigation panel");
-			this.leftPanel.className = "unfolded";
+			this.leftPanel.classList.remove("folded");
+
+			if(this.leftPanel.classList.contains("masked"))
+				this.leftPanel.classList.remove("masked");
 
 			if(this._resizing_initial_width > 0) {
 				this.leftPanel.style.width = this._resizing_initial_width + "px";
@@ -1217,6 +1242,13 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			}
 			else
 				this.leftPanel.style.width = "250px";
+
+			if(this._maskLeftPanelTaskID) {
+				clearTimeout(this._maskLeftPanelTaskID);
+				delete this._maskLeftPanelTaskID;
+			}
+
+			window.removeEventListener("mousemove", this._bindedOnMouseMoveFunction, true);
 		}
 
 		if(this._saveNavStateTaskID)
@@ -1236,6 +1268,26 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					delete this._saveNavStateTaskID;
 				}
 			});
+	}
+
+	/**
+	 *
+	 */
+	_onMouseMove(event) {
+		if(event.clientX < 50) {
+			if(this.leftPanel.classList.contains("masked"))
+				this.leftPanel.classList.remove("masked");
+
+			if(this._maskLeftPanelTaskID)
+				clearTimeout(this._maskLeftPanelTaskID);
+
+			this._maskLeftPanelTaskID = setTimeout(() => {
+				if(!this.leftPanel.classList.contains("masked"))
+					this.leftPanel.classList.add("masked");
+
+				delete this._maskLeftPanelTaskID;
+			}, 3000);
+		}
 	}
 
 	/**
