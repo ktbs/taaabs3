@@ -50,7 +50,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._navContentDiv = this.shadowRoot.querySelector("#nav-content");
 		this._navContentDiv.addEventListener("scroll", this._onScrollNavContentDiv.bind(this));
 		this.homeLink = this.shadowRoot.querySelector("#home-link");
-		this.homeLink.setAttribute("href", window.location);
+		this.homeLink.setAttribute("href", window.location.origin + window.location.pathname);
 		this.homeLink.addEventListener("click", this.onClickHomeLink.bind(this));
 		this.leftPanel = this.shadowRoot.querySelector("#left-panel");
 		this.foldButton = this.shadowRoot.querySelector("#fold-button");
