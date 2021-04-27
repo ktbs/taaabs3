@@ -160,7 +160,7 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 		
 		if(attributeName == "uri") {
 			this._componentReady.then(() => {
-				this.linkTag.href = newValue;
+				this.linkTag.href = window.location.origin + window.location.pathname + "#type=" + encodeURIComponent(this.getAttribute("resource-type")) + "&uri=" + encodeURIComponent(newValue);
 
 				if(!this.hasAttribute("label"))
 					this.linkTag.innerText = Resource.extract_relative_id(newValue);

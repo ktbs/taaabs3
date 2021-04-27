@@ -3,7 +3,6 @@ import {Resource} from "../../ktbs-api/Resource.js";
 import {Ktbs} from "../../ktbs-api/Ktbs.js";
 import {Base} from "../../ktbs-api/Base.js";
 import {Method} from "../../ktbs-api/Method.js";
-//import * as KTBSErrors from "../../ktbs-api/Errors.js";
 
 /**
  * 
@@ -47,7 +46,7 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 		}
 		else if(attributeName == "uri") {
 			this._componentReady.then(() => {
-				this._titleTag.href = newValue;
+				this._titleTag.href = window.location.origin + window.location.pathname + "#type=" + encodeURIComponent(this.getAttribute("resource-type")) + "&uri=" + encodeURIComponent(newValue);
 				this._titleTag.title = this._getTitleHint();
 
 				if(!this.hasAttribute("label"))
