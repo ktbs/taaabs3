@@ -117,7 +117,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 						this.leftPanel.classList.add("masked");
 
 					delete this._maskLeftPanelTaskID;
-				}, 3000);
+				}, 1000);
 			}
 			else {
 				if((navWidth != undefined) && !isNaN(navWidth))
@@ -1254,7 +1254,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					this.leftPanel.classList.add("masked");
 
 				delete this._maskLeftPanelTaskID;
-			}, 3000);
+			}, 1000);
 		}
 		else {
 			this.foldButton.title = this._translateString("Hide navigation panel");
@@ -1302,7 +1302,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 *
 	 */
 	_onMouseMove(event) {
-		if(event.clientX < 50) {
+		if(event.clientX < 20) {
 			if(this.leftPanel.classList.contains("masked"))
 				this.leftPanel.classList.remove("masked");
 
@@ -1314,7 +1314,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					this.leftPanel.classList.add("masked");
 
 				delete this._maskLeftPanelTaskID;
-			}, 3000);
+			}, 1000);
 		}
 	}
 

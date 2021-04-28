@@ -18,7 +18,7 @@
 	width: 20px;
 	position: absolute;
     z-index: 3;
-	transition: left 0.1s;
+	transition: left 0.25s;
 	opacity: 0.5;
 }
 
@@ -26,7 +26,7 @@
 	opacity: 1;
 }
 
-#left-panel.folded.masked {
+#left-panel.folded.masked:not(:hover) {
 	left: -20px;
 }
 
@@ -46,10 +46,6 @@
 
 #left-panel.folded #nav-content * {
 	display: none;
-}
-
-#left-panel.folded #fold-button {
-	display: block;
 }
 
 #fold-button {
@@ -120,6 +116,13 @@
 
 #left-panel.folded #fold-button {
 	background-image: url('{my-component-folder}/right-oriented-triangle.svg');
+	display: block;
+	width: 100%;
+	height: 100%;
+	background-position-y: center;
+	background-position-x: 5px;
+	top: 0px;
+	margin-right: 0px;
 }
 
 #home-link {
