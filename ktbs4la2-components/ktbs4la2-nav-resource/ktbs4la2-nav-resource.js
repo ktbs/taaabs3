@@ -114,10 +114,12 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 		else
 			this._unfoldButton.setAttribute("title", this._translateString("Fold child list"));
 
-		const label = this._ktbsResource.get_preferred_label(this._lang);
-		
-		if(label)
-			this._titleTag.innerText = label;
+		if(!this.hasAttribute("label")) {
+			const label = this._ktbsResource.get_preferred_label(this._lang);
+			
+			if(label)
+				this._titleTag.innerText = label;
+		}
 
 		this._titleTag.setAttribute("title", this._getTitleHint());
 		this._childListSpinner.innerText = this._translateString("Pending...");
@@ -129,10 +131,12 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	 */
 	_onKtbsResourceSyncInSync() {
 		this._componentReady.then(() => {
-			const label = this._ktbsResource.get_preferred_label(this._lang);
-			
-			if(label)
-				this._titleTag.innerText = label;
+			if(!this.hasAttribute("label")) {
+				const label = this._ktbsResource.get_preferred_label(this._lang);
+				
+				if(label)
+					this._titleTag.innerText = label;
+			}
 
 			this._titleTag.title = this._getTitleHint();
 
