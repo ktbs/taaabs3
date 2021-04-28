@@ -58,6 +58,12 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.foldButton.addEventListener("click", this.toggleLeftPanelHidden.bind(this));
 		this.myKtbsRootSubtitle = this.shadowRoot.querySelector("#my-ktbs-roots-subtitle");
 		//this.myDashboardsSubtitle = this.shadowRoot.querySelector("#my-dashboards-subtitle");
+		this._rootList = this.shadowRoot.querySelector("#root-list");
+		this._rootList.addEventListener("selectelement", this.onSelectNavElement.bind(this));
+		this._rootList.addEventListener("fold-header", this._onNavFoldHeader.bind(this));
+		this._rootList.addEventListener("unfold-header", this._onNavUnfoldHeader.bind(this));
+		this._navNodesObserver = new MutationObserver(this.onNavNodesMutation.bind(this));
+		this._navNodesObserver.observe(this._rootList, { childList: true, subtree: true });
 		this.separatorDiv = this.shadowRoot.querySelector("#separator");
 		this.separatorDiv.addEventListener("mousedown", this.startResizing.bind(this), true);
 		this._mainContentDiv = this.shadowRoot.querySelector("#main-content");
@@ -67,12 +73,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._mainContentDiv.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
 		this._mainContentDiv.addEventListener("request-create-ktbs-resource", this._onRequestCreateKtbsResource.bind(this));
 		this._mainContentDiv.addEventListener("request-create-method-from-stylesheet", this._onRequestCreateMethodFromStylesheet.bind(this));
-
-		this.addEventListener("selectelement", this.onSelectNavElement.bind(this));
-		this.addEventListener("fold-header", this._onMainResourceFoldHeader.bind(this));
-		this.addEventListener("unfold-header", this._onMainResourceUnfoldHeader.bind(this));
-		this._navNodesObserver = new MutationObserver(this.onNavNodesMutation.bind(this));
-		this._navNodesObserver.observe(this, { childList: true, subtree: true });
 
 		this._overlayDiv = this.shadowRoot.querySelector("#overlay");
 
@@ -181,14 +181,14 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onMainResourceFoldHeader(event) {
+	_onNavFoldHeader(event) {
 		this.mainHeaderFolded = true;
 	}
 
 	/**
 	 * 
 	 */
-	_onMainResourceUnfoldHeader(event) {
+	_onNavUnfoldHeader(event) {
 		this.mainHeaderFolded = false;
 	}
 
@@ -329,7 +329,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					this.ktbsRoots.splice(i,1);
 					window.localStorage.setItem("ktbs-roots", JSON.stringify(this.ktbsRoots));
 					
-					const oldRootElement = this.querySelector("ktbs4la2-nav-resource[resource-type = Ktbs][uri = " + CSS.escape(uri) + "]");
+					const oldRootElement = this.shadowRoot.querySelector("#root-list ktbs4la2-nav-resource[resource-type = Ktbs][uri = " + CSS.escape(uri) + "]");
 					
 					if(oldRootElement)
 						oldRootElement.remove();
@@ -1018,7 +1018,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			if((this._selectedNavElement != null) && this._selectedNavElement.classList.contains("selected"))
 				this._selectedNavElement.classList.remove("selected");
 
-			let previousSelectedParents =  this.querySelectorAll("[slot = \"nav-ktbs-roots\"].parent-of-selected, [slot = \"nav-ktbs-roots\"] .parent-of-selected");
+			let previousSelectedParents = this.shadowRoot.querySelectorAll("#lists .parent-of-selected");
 
 			for(let i = 0; i < previousSelectedParents.length; i++)
 				previousSelectedParents[i].classList.remove("parent-of-selected");
@@ -1080,8 +1080,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					historyLabel += " (" + ktbs_type + ")";
 
 					// select the corresponding element in navigation panel
-					let queryString = "[slot = \"nav-ktbs-roots\"][uri = \"" + CSS.escape(main_id) + "\"], [slot = \"nav-ktbs-roots\"] [uri = \"" + CSS.escape(main_id) + "\"]";
-					let newSelectedNavElement = this.querySelector(queryString);
+					let queryString = "#root-list [uri = \"" + CSS.escape(main_id) + "\"]";
+					let newSelectedNavElement = this.shadowRoot.querySelector(queryString);
 
 					if(newSelectedNavElement) {
 						newSelectedNavElement.classList.add("selected");
@@ -1131,7 +1131,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 * 
 	 */
 	_highlightSelectedNavElementParents(selected_element_uri) {
-		const previousHighlightedParents = this.querySelectorAll(".parent-of-selected");
+		const previousHighlightedParents = this.shadowRoot.querySelectorAll("#lists .parent-of-selected");
 		const selectedNavParents = [];
 		const uri_parts = selected_element_uri.split("/");
 
@@ -1140,8 +1140,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			const parent_uri = parent_uri_parts.join("/") + "/";
 
 			if(parent_uri != selected_element_uri) {
-				const parents_query_string = "[slot=\"nav-ktbs-roots\"][uri=\"" + CSS.escape(parent_uri) + "\"], [slot=\"nav-ktbs-roots\"] [uri=\"" + CSS.escape(parent_uri) + "\"]";
-				const parents = this.querySelectorAll(parents_query_string);
+				const parents_query_string = "#root-list [uri=\"" + CSS.escape(parent_uri) + "\"]";
+				const parents = this.shadowRoot.querySelectorAll(parents_query_string);
 				
 				for(let j = 0; j < parents.length; j++) {
 					if(!parents[j].classList.contains("parent-of-selected"))
@@ -1445,7 +1445,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			this.ktbsRoots[i].uri = newRootUri;
 			this.ktbsRoots[i].label = newRootLabel;
 			window.localStorage.setItem("ktbs-roots", JSON.stringify(this.ktbsRoots));
-			let rootElements = this.querySelectorAll("[resource-type = \"Ktbs\"][uri = \"" + oldRootUri + "\"]");
+			let rootElements = this.shadowRoot.querySelectorAll("#root-list [resource-type = \"Ktbs\"][uri = \"" + oldRootUri + "\"]");
 			
 			for(let i = 0; i < rootElements.length; i++) {
 				let element = rootElements[i];
@@ -1471,7 +1471,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			newRootElement.setAttribute("uri", newRootUri);
 			newRootElement.setAttribute("label", newRootLabel);
 			newRootElement.setAttribute("resource-type", "Ktbs");
-			newRootElement.setAttribute("slot", "nav-ktbs-roots");
 			newRootElement.addEventListener("nav-fold", this._onFoldNavItem.bind(this));
 			newRootElement.addEventListener("nav-unfold", this._onUnfoldNavItem.bind(this));
 
@@ -1489,7 +1488,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			if(mark_as_new)
 				newRootElement.classList.add("new");
 
-			this.appendChild(newRootElement);
+			this._rootList.appendChild(newRootElement);
 
 			if(mark_as_new)
 				setTimeout(() => {
