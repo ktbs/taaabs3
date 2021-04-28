@@ -1,8 +1,5 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 
-import {ResourceMultiton} from "../../ktbs-api/ResourceMultiton.js";
-import {Ktbs} from "../../ktbs-api/Ktbs.js";
-
 import "../ktbs4la2-main-subsection/ktbs4la2-main-subsection.js";
 import "../ktbs4la2-main-related-resource/ktbs4la2-main-related-resource.js";
 
@@ -45,13 +42,12 @@ class KTBS4LA2MainHome extends TemplatedHTMLElement {
 					let aRootData = ktbsRoots[i];
 					const aRootLink = document.createElement("ktbs4la2-main-related-resource");
 					aRootLink.setAttribute("resource-type", "Ktbs");
-					aRootLink.setAttribute("slot", "roots");
 					aRootLink.setAttribute("uri", aRootData.uri);
 
 					if(aRootData.label)
 						aRootLink.setAttribute("label", aRootData.label);
 
-					this.appendChild(aRootLink);
+					this._roots.insertBefore(aRootLink, this._addRootButton);
 				}
 			}
 			catch(error) {
@@ -135,14 +131,13 @@ class KTBS4LA2MainHome extends TemplatedHTMLElement {
 		if(event.detail && event.detail.uri) {
 			const newRootElement = document.createElement("ktbs4la2-main-related-resource");
 			newRootElement.setAttribute("resource-type", "Ktbs");
-			newRootElement.setAttribute("slot", "roots");
 			newRootElement.setAttribute("uri", event.detail.uri);
 			newRootElement.classList.add("new");
 
 			if(event.detail.label)
 				newRootElement.setAttribute("label", event.detail.label);
 
-			this.appendChild(newRootElement);
+			this._roots.insertBefore(newRootElement, this._addRootButton);
 		}
 	}
 }

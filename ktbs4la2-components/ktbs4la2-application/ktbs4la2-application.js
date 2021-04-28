@@ -60,13 +60,19 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		//this.myDashboardsSubtitle = this.shadowRoot.querySelector("#my-dashboards-subtitle");
 		this.separatorDiv = this.shadowRoot.querySelector("#separator");
 		this.separatorDiv.addEventListener("mousedown", this.startResizing.bind(this), true);
-		this.addEventListener("selectelement", this.onSelectNavElement.bind(this));
+		this._mainContentDiv = this.shadowRoot.querySelector("#main-content");
+		this._mainContentDiv.addEventListener("request-navigate-to-ktbs-resource", this._onRequestNavigateToKtbsResource.bind(this));
 		this.addEventListener("request-documentation-page", this._onRequestDocumentationPage.bind(this));
-		this.addEventListener("error", this.onErrorEvent.bind(this));
 		this.addEventListener("request-add-ktbs-root", this._onRequestAddKtbsRoot.bind(this));
 		this.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
 		this.addEventListener("request-create-ktbs-resource", this._onRequestCreateKtbsResource.bind(this));
 		this.addEventListener("request-create-method-from-stylesheet", this._onRequestCreateMethodFromStylesheet.bind(this));
+
+		this.addEventListener("selectelement", this.onSelectNavElement.bind(this));
+		
+		
+		this.addEventListener("error", this.onErrorEvent.bind(this));
+		
 		this.addEventListener("fold-header", this._onMainResourceFoldHeader.bind(this));
 		this.addEventListener("unfold-header", this._onMainResourceUnfoldHeader.bind(this));
 		this._navNodesObserver = new MutationObserver(this.onNavNodesMutation.bind(this));
@@ -261,13 +267,18 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.myKtbsRootSubtitle.innerText = this._translateString("My kTBS roots");
 		//this.myDashBoardsSubtitle.innerText = this._translateString("My dashboards");
 		this.separatorDiv.setAttribute("title", this._translateString("Resize navigation panel"));
+
+		const mainElement = this.shadowRoot.querySelector("#main-content > *");
+
+		if(mainElement)
+			mainElement.setAttribute("lang", this._lang);
 	}
 
 	/**
 	 * 
 	 */
 	onNavNodesMutation(mutationRecord, observer) {
-		let mainElement = this.querySelector("[slot = \"main\"]");
+		let mainElement = this.shadowRoot.querySelector("#main-content > *");
 
 		if((this._selectedNavElement == null) && (mainElement != null)) {
 			for(let i = 0; i < mutationRecord.length; i++) {
@@ -989,7 +1000,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 */
 	setMainObject(main_type = "home", main_id = null, ktbs_type = null, ktbs_label = null, skipHistoryPush = false) {
 		// remove previous main content
-		let mainElements = this.querySelectorAll("[slot = \"main\"]");
+		let mainElements = this.shadowRoot.querySelectorAll("#main-content > *");
 		let previousMainElementPreventsRemoval = false;
 
 		for(let i = 0; !previousMainElementPreventsRemoval && (i < mainElements.length); i++) {
@@ -1099,8 +1110,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			}
 
 			// add new content to main
-			mainContentChildrenTag.setAttribute("slot", "main");
-			this.appendChild(mainContentChildrenTag);
+			mainContentChildrenTag.setAttribute("lang", this._lang);
+			this._mainContentDiv.appendChild(mainContentChildrenTag);
 
 			// reset main area scrollbar
 			this.shadowRoot.querySelector("#main-scrollable").scrollTop = 0;
@@ -1150,7 +1161,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 * 
 	 */
 	_resourceUriIsParentOfSelected(uri) {
-		let mainElement = this.querySelector("[slot = \"main\"]");
+		let mainElement = this.shadowRoot.querySelector("#main-content > *");
 
 		if(mainElement && mainElement.hasAttribute("uri"))
 			return (mainElement.getAttribute("uri").startsWith(uri.toString()));
@@ -1179,7 +1190,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 */
 	onClickHomeLink(event) {
 		event.preventDefault();
-		let mainElement = this.querySelector("[slot = \"main\"]");
+		let mainElement = this.shadowRoot.querySelector("#main-content > *");
 
 		if(!mainElement || (mainElement.localName != "ktbs4la2-main-home"))
 			this.setMainObject("home");
@@ -1203,6 +1214,14 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 		if((this._selectedNavElement == null) || (this._selectedNavElement.getAttribute("uri") != newSelectedElement.getAttribute("uri")))
 			this.setMainObject("ktbs-resource", newSelectedElement.getAttribute("uri"), newSelectedElement.getAttribute("resource-type"), newSelectedElement.getAttribute("label"));
+	}
+
+	/**
+	 * 
+	 */
+	_onRequestNavigateToKtbsResource(event) {
+		if(event.detail)
+			this.setMainObject("ktbs-resource", event.detail.uri, event.detail.resource_type, event.detail.label);
 	}
 
 	/**
@@ -1385,7 +1404,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			this.addRootItem(newRootUri, newRootLabel, true);
 			this.removeOverlay();
 
-			let mainElement = this.querySelector("[slot = \"main\"]");
+			let mainElement = this.shadowRoot.querySelector("#main-content > *");
 
 			if(mainElement && mainElement.localName == "ktbs4la2-main-home") {
 				mainElement.dispatchEvent(new CustomEvent("added-ktbs-root", {

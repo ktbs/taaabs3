@@ -96,10 +96,23 @@ class KTBS4LA2MainRelatedResource extends KtbsResourceElement {
 	onClickLink(event) {
 		event.preventDefault();
 
-		if(!this._containerDiv.classList.contains("inactive") && !((this.getAttribute("inactive") == "1") || (this.getAttribute("inactive") == "true"))) {
-			let select_event = new CustomEvent("selectelement", {bubbles: true});
-			this.dispatchEvent(select_event);
-		}
+		if(
+				!this._containerDiv.classList.contains("inactive") 
+			&& 	!(
+						(this.getAttribute("inactive") == "1") 
+					|| 	(this.getAttribute("inactive") == "true")
+			)
+		)
+			this.dispatchEvent(new CustomEvent("request-navigate-to-ktbs-resource", {
+				bubbles: true, 
+				cancelable: true, 
+				composed: true,
+				detail: {
+					resource_type: this.getAttribute("resource-type"),
+					uri: this.getAttribute("uri"),
+					label: this.linkTag.innerText
+				}
+			}));
 	}
 
 	/**
