@@ -294,14 +294,8 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         let resourceType = this.getAttribute("resource-type");
         this._resourceTypeLabel.innerText = this._translateString(KTBS4LA2MainResource._getResourceTypeLabel(resourceType));
         
-        if(!this.hasAttribute("label")) {
-            let label = this._ktbsResource.get_translated_label(this._lang);
-
-            if(label)
-                this._titleTag.innerText = label;
-            else
-                this._titleTag.innerText = Resource.extract_relative_id(this.getAttribute("uri"));
-        }
+        if(!this.hasAttribute("label"))
+            this._titleTag.innerText = this._ktbsResource.get_preferred_label(this._lang);
         
         this._editLabelInput.setAttribute("lang", this._lang);
         this._editLabelInput.setAttribute("placeholder", this._translateString("Label"));
@@ -359,23 +353,6 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         this._addMethodButton.setAttribute("title", this._translateString("Create a new method"));
         this._addComputedTraceButton.setAttribute("title", this._translateString("Create a new computed trace"));
 	}
-
-	/**
-	 * 
-	 */
-	/*connectedCallback() {
-		super.connectedCallback();
-
-		this._componentReady.then(() => {
-			if(this.getAttribute("label"))
-				this._titleTag.innerText = this.getAttribute("label");
-			else
-				this._titleTag.innerText = this._ktbsResource.id;
-
-			this._linkTag.href = this.getAttribute("uri");
-			this._linkTag.innerText = this.getAttribute("uri");
-		});
-    }*/
 
     /**
      * 
@@ -654,7 +631,9 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
     _onKtbsResourceSyncInSync() {
 		this._componentReady.then(() => {
             let resourceType = this.getAttribute("resource-type");
-            this._titleTag.innerText = this._ktbsResource.get_preferred_label(this._lang);
+
+            if(!this.hasAttribute("label"))
+                this._titleTag.innerText = this._ktbsResource.get_preferred_label(this._lang);
 
             // set translations input value
             let labels_translations = new Array();
