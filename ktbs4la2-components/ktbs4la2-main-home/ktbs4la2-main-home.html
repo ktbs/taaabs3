@@ -1,0 +1,61 @@
+<article>
+    <header>
+        <h1 id="main-title">KTBS4LA2</h1>
+        <p id="main-subtitle">{translate: 'A user interface for kTBS'}</p>
+    </header>
+
+    <ktbs4la2-main-subsection 
+        id="roots"
+        title="{translate: 'My kTBS roots'}"
+        foldable="true"
+        expanded="true"
+        class="autoexpand-subsection">
+            <slot name="roots"></slot>
+            <button class="add-resource-button" id="add-root-button" title="{translate: 'Add new kTBS root'}">+</button>
+    </ktbs4la2-main-subsection>
+
+    <!--
+    <ktbs4la2-main-subsection 
+        id="dashboards"
+        title="{translate: 'My dashboards'}"
+        foldable="true"
+        expanded="true"
+        class="autoexpand-subsection">
+            <slot name="dashboards"></slot>
+            <button class="add-resource-button" id="add-dashboard-button" title="{translate: 'Add new dashboard'}">+</button>
+    </ktbs4la2-main-subsection>
+    -->
+
+    <ktbs4la2-main-subsection 
+        id="help"
+        foldable="false">
+        <nav>
+            <a id="getting-started" href="#doc=getting-started.html">
+                <div class="help-entry-icon">!</div>
+
+                <div class="help-entry-text">
+                    <h2 id="getting-started-title">{translate: 'Getting started'}</h2>
+                    <p id="getting-started-description">{translate: 'A quick introduction tutorial to KTBS4LA2'}</p>
+                </div>
+            </a>
+
+            <a id="faq" href="#doc=faq.html">
+                <div class="help-entry-icon">?</div>
+
+                <div class="help-entry-text">
+                    <h2 id="faq-title">{translate: 'F.A.Q.'}</h2>
+                    <p id="faq-description">{translate: 'Frequently asked questions'}</p>
+                </div>
+            </a>
+
+            <a id="ktbs-doc" href="https://ktbs.readthedocs.io/en/latest/" target="_blank">
+                <img src="{my-component-folder}/readthedocs-logo.png" class="help-entry-icon"/>
+
+                <div class="help-entry-text">
+                    <h2 id="ktbs-doc-title">{translate: 'kTBS Documentation'}</h2>
+                    <p id="ktbs-doc-description">{translate: 'Learn more about kTBS on readthedocs.io'}</p>
+                </div>
+            </a>
+        </nav>
+    </ktbs4la2-main-subsection>
+</article>

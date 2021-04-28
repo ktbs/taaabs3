@@ -19,6 +19,11 @@
 	position: absolute;
     z-index: 3;
 	transition: left 0.1s;
+	opacity: 0.5;
+}
+
+#left-panel.folded:hover {
+	opacity: 1;
 }
 
 #left-panel.folded.masked {

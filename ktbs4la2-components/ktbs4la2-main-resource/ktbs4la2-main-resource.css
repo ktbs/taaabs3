@@ -2,7 +2,7 @@
 	position: sticky;
 	top: 0px;
 	background-color: white;
-	padding-left: 25px;
+	padding-left: var(--main-padding, 10px);
 	padding-right: var(--main-padding, 10px);
 	padding-top: var(--main-padding, 10px);
 	padding-bottom: var(--main-padding, 10px);
@@ -492,7 +492,7 @@
 }
 
 #resource-contents {
-	padding-left: 25px;
+	padding-left: var(--main-padding, 10px);
 	padding-right: var(--main-padding, 10px);
 	z-index: 1;
 	position: relative;

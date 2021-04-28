@@ -1,6 +1,6 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
-import {ResourceMultiton} from "../../ktbs-api/ResourceMultiton.js";
 
+import {ResourceMultiton} from "../../ktbs-api/ResourceMultiton.js";
 import {Resource} from "../../ktbs-api/Resource.js";
 import {Ktbs} from "../../ktbs-api/Ktbs.js";
 import {Base} from "../../ktbs-api/Base.js";
@@ -14,6 +14,7 @@ import "../ktbs4la2-overlay/ktbs4la2-overlay.js";
 import "../ktbs4la2-root-form/ktbs4la2-root-form.js";
 import "../ktbs4la2-nav-resource/ktbs4la2-nav-resource.js";
 import "../ktbs4la2-main-documentation/ktbs4la2-main-documentation.js";
+import "../ktbs4la2-main-home/ktbs4la2-main-home.js";
 import "../ktbs4la2-main-resource/ktbs4la2-main-resource.js";
 import "../ktbs4la2-create-resource-form/ktbs4la2-create-resource-form.js";
 import "../ktbs4la2-store-stylesheet-rules-to-method-form/ktbs4la2-store-stylesheet-rules-to-method-form.js";
@@ -56,15 +57,13 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.foldButton = this.shadowRoot.querySelector("#fold-button");
 		this.foldButton.addEventListener("click", this.toggleLeftPanelHidden.bind(this));
 		this.myKtbsRootSubtitle = this.shadowRoot.querySelector("#my-ktbs-roots-subtitle");
-		this.addRootButton = this.shadowRoot.querySelector("#add-root-button");
-		this.addRootButton.addEventListener("click", this.onClickAddRootButton.bind(this));
-		/*BoardsSubtitle = this.shadowRoot.querySelector("#my-dashboards-subtitle");
-		this.addDashboardButton = this.shadowRoot.querySelector("#add-dashboard-button");
-		this.addDashboardButton.addEventListener("click", this.onClickAddDashboardButton.bind(this));*/
+		//this.myDashboardsSubtitle = this.shadowRoot.querySelector("#my-dashboards-subtitle");
 		this.separatorDiv = this.shadowRoot.querySelector("#separator");
 		this.separatorDiv.addEventListener("mousedown", this.startResizing.bind(this), true);
 		this.addEventListener("selectelement", this.onSelectNavElement.bind(this));
+		this.addEventListener("request-documentation-page", this._onRequestDocumentationPage.bind(this));
 		this.addEventListener("error", this.onErrorEvent.bind(this));
+		this.addEventListener("request-add-ktbs-root", this._onRequestAddKtbsRoot.bind(this));
 		this.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
 		this.addEventListener("request-create-ktbs-resource", this._onRequestCreateKtbsResource.bind(this));
 		this.addEventListener("request-create-method-from-stylesheet", this._onRequestCreateMethodFromStylesheet.bind(this));
@@ -260,9 +259,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 		this.homeLink.setAttribute("title", this._translateString("Home"));
 		this.myKtbsRootSubtitle.innerText = this._translateString("My kTBS roots");
-		this.addRootButton.setAttribute("title", this._translateString("Add new kTBS root"));
-		/*this.myDashBoardsSubtitle.innerText = this._translateString("My dashboards");
-		this.addDashboardButton.setAttribute("title", this._translateString("Add new dashboard"));*/
+		//this.myDashBoardsSubtitle.innerText = this._translateString("My dashboards");
 		this.separatorDiv.setAttribute("title", this._translateString("Resize navigation panel"));
 	}
 
@@ -325,7 +322,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					if(oldRootElement)
 						oldRootElement.remove();
 
-					this.setMainObject("documentation");
+					this.setMainObject("home");
 
 					setTimeout(() => {
 						const navUnfoldedResources_string = window.sessionStorage.getItem("nav-unfolded-resources");
@@ -927,17 +924,15 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 				main_type = "dashboard";
 				main_id = queryParameters["dashboard"];
 			}
-			else {
+			else if(queryParameters["doc"]) {
 				main_type = "documentation";
-
-				if(queryParameters["doc"])
-					main_id = queryParameters["doc"];
+				main_id = queryParameters["doc"];
 			}
-
+			
 			this.setMainObject(main_type, main_id, ktbs_type, ktbs_label, true);
 		}
 		else
-			this.setMainObject("documentation", null, null, null, true);
+			this.setMainObject("home", null, null, null, true);
 	}
 
 	/**	
@@ -948,8 +943,10 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		let main_id, ktbs_type, ktbs_label = null;
 
 		switch(main_type) {
+			case "home":
+				break;
 			case "documentation":
-				main_id = event.state.doc_path;
+				main_id = event.state.page;
 				break;
 			case "ktbs-resource":
 				main_id = event.state.ktbs_resource_uri;
@@ -990,7 +987,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	setMainObject(main_type = "documentation", main_id = null, ktbs_type = null, ktbs_label = null, skipHistoryPush = false) {
+	setMainObject(main_type = "home", main_id = null, ktbs_type = null, ktbs_label = null, skipHistoryPush = false) {
 		// remove previous main content
 		let mainElements = this.querySelectorAll("[slot = \"main\"]");
 		let previousMainElementPreventsRemoval = false;
@@ -1025,19 +1022,21 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			let historyLabel = "KTBS4LA2 - ";
 
 			switch(main_type) {
+				case "home":
+					historyState = {main_type: "home"};
+					mainContentChildrenTag = document.createElement("ktbs4la2-main-home");
+					historyLabel += this._translateString("Home");
+					historyURL = window.location.pathname;
+					break;
 				case "documentation":
 					let doc_path = "/";
 					historyURL = window.location.pathname;
 
-					if(main_id) {
-						doc_path += main_id;
-						historyURL += "#" + encodeURIComponent(main_id);
-						historyLabel += this._translateString("Documentation");
-					}
-					else
-						historyLabel += this._translateString("Home");
+					doc_path += main_id;
+					historyURL += "#doc=" + encodeURIComponent(main_id);
+					historyLabel += this._translateString("Documentation");
 
-					historyState = {main_type: "documentation", documentation_path: doc_path};
+					historyState = {main_type: "documentation", page: main_id};
 					mainContentChildrenTag = document.createElement("ktbs4la2-main-documentation");
 
 					// build the url of the "documentation" path
@@ -1109,6 +1108,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			// push new entry to navigation history
 			if(!skipHistoryPush)
 				history.pushState(historyState, historyLabel, historyURL);
+			else
+				history.replaceState(historyState, historyLabel, historyURL);
 
 			window.document.title = historyLabel;
 		}
@@ -1178,12 +1179,11 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	 */
 	onClickHomeLink(event) {
 		event.preventDefault();
+		let mainElement = this.querySelector("[slot = \"main\"]");
 
-		let mainElements = this.querySelectorAll("[slot = \"main\"]");
-
-		if(!mainElements[0] || (mainElements[0].localName != "ktbs4la2-main-documentation"))
-			this.setMainObject("documentation");
-		else {
+		if(!mainElement || (mainElement.localName != "ktbs4la2-main-home"))
+			this.setMainObject("home");
+		/*else {
 			mainElements[0].setAttribute("page", "");
 			let historyState = {main_type: "documentation", doc_path: ""}
 			let newTitle = "KTBS4LA2 - " + this._translateString("Home");
@@ -1192,7 +1192,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 			// reset main area scrollbar
 			this.shadowRoot.querySelector("#main-scrollable").scrollTop = 0;
-		}
+		}*/
 	}
 
 	/**
@@ -1203,6 +1203,14 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 		if((this._selectedNavElement == null) || (this._selectedNavElement.getAttribute("uri") != newSelectedElement.getAttribute("uri")))
 			this.setMainObject("ktbs-resource", newSelectedElement.getAttribute("uri"), newSelectedElement.getAttribute("resource-type"), newSelectedElement.getAttribute("label"));
+	}
+
+	/**
+	 * 
+	 */
+	_onRequestDocumentationPage(event) {
+		if(event.detail && event.detail.page)
+			this.setMainObject("documentation", event.detail.page);
 	}
 
 	/**
@@ -1358,7 +1366,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	onClickAddRootButton(event) {
+	_onRequestAddKtbsRoot(event) {
 		let formElement = document.createElement("ktbs4la2-root-form");
 		formElement.addEventListener("submit", this.onSubmitAddRootForm.bind(this));
 		formElement.addEventListener("cancel", this.removeOverlay.bind(this));
@@ -1376,6 +1384,20 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			this.storeNewRoot(newRootUri, newRootLabel);
 			this.addRootItem(newRootUri, newRootLabel, true);
 			this.removeOverlay();
+
+			let mainElement = this.querySelector("[slot = \"main\"]");
+
+			if(mainElement && mainElement.localName == "ktbs4la2-main-home") {
+				mainElement.dispatchEvent(new CustomEvent("added-ktbs-root", {
+					bubbles: false, 
+					composed: false, 
+					cancelable: false, 
+					detail: {
+						uri: newRootUri,
+						label: newRootLabel
+					}
+				}));
+			}
 		}
 		catch(error) {
 			alert(error.name + " " + error.message);

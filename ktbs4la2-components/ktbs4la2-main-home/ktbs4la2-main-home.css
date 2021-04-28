@@ -1,0 +1,128 @@
+:host > article {
+	padding-left: var(--main-padding, 10px);
+	padding-right: var(--main-padding, 10px);
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+}
+
+header {
+	text-align: center;
+}
+
+h1{
+	text-decoration-line: underline overline;
+	font-size: 32pt;
+	margin-block-start: 10px;
+    margin-block-end: 5px;
+}
+
+header p {
+	font-size: 10pt;
+	font-style: italic;
+	color: royalblue;
+	max-width: 600px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-block-start: 0;
+}
+
+.autoexpand-subsection {
+	flex: auto;
+	overflow-y: auto;
+	min-height: 45px;
+}
+
+.autoexpand-subsection[expanded = "true"] {
+	min-height: 110px;
+}
+
+.add-resource-button {
+	display: inline-block;
+	vertical-align: middle;
+	text-decoration-line: none;
+	padding-left: 16px;
+	padding-right: 16px;
+	max-width: 90%;
+	padding-top: 8px;
+	padding-bottom: 8px;
+	color: green;
+	font-size: 16pt;
+	margin-left: 10px;
+	margin-right: 10px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	border-radius: 10px;
+	cursor: pointer;
+	text-align: center;
+	background-color: none;
+	outline: none;
+	border: none;
+}
+
+.add-resource-button:hover {
+	background-color: green;
+	color: white;
+	box-shadow: 0px 0px 4px 2px #888;
+}
+
+#help {
+	text-align: center;
+}
+
+#help a {
+	text-align: left;
+	padding: 5px;
+	padding-right: 10px;
+	margin-left: 5px;
+	margin-right: 5px;
+	display: inline-block;
+	color: black;
+	text-decoration: none;
+	outline: none;
+	background-color: cornflowerblue;
+	cursor: pointer;
+	border-radius: 8px;
+	height: 45px;
+	vertical-align: bottom;
+	white-space: nowrap;
+}
+
+#help a:hover {
+	background-color: royalblue;
+	box-shadow: 3px 3px 10px black;
+}
+
+.help-entry-icon, .help-entry-text {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.help-entry-icon {
+	font-size: 30pt;
+	font-weight: bolder;
+	width: 40px;
+	text-align: center;
+	text-shadow: 5px 5px 2px black;
+}
+
+#getting-started .help-entry-icon {
+	color: orange;
+}
+
+#faq .help-entry-icon {
+	color: green;
+}
+
+.help-entry-text h2 {
+	margin-top: 0;
+	margin-bottom: 0;
+	font-size: 1em;
+}
+
+.help-entry-text p {
+	font-style: italic;
+	margin-top: 0px;
+	margin-bottom: 0;
+	font-size: 0.7em;
+}
