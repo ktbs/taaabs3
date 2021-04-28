@@ -120,7 +120,8 @@ class KTBS4LA2MainHome extends TemplatedHTMLElement {
 	_onClickAddRootButton() {
         this.dispatchEvent(new Event("request-add-ktbs-root", {
             bubbles: true, 
-            cancelable: true
+            cancelable: true,
+			composed: true
         }));
     }
 

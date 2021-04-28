@@ -62,21 +62,22 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this.separatorDiv.addEventListener("mousedown", this.startResizing.bind(this), true);
 		this._mainContentDiv = this.shadowRoot.querySelector("#main-content");
 		this._mainContentDiv.addEventListener("request-navigate-to-ktbs-resource", this._onRequestNavigateToKtbsResource.bind(this));
-		this.addEventListener("request-documentation-page", this._onRequestDocumentationPage.bind(this));
-		this.addEventListener("request-add-ktbs-root", this._onRequestAddKtbsRoot.bind(this));
-		this.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
-		this.addEventListener("request-create-ktbs-resource", this._onRequestCreateKtbsResource.bind(this));
-		this.addEventListener("request-create-method-from-stylesheet", this._onRequestCreateMethodFromStylesheet.bind(this));
+		this._mainContentDiv.addEventListener("request-documentation-page", this._onRequestDocumentationPage.bind(this));
+		this._mainContentDiv.addEventListener("request-add-ktbs-root", this._onRequestAddKtbsRoot.bind(this));
+		this._mainContentDiv.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
+		this._mainContentDiv.addEventListener("request-create-ktbs-resource", this._onRequestCreateKtbsResource.bind(this));
+		this._mainContentDiv.addEventListener("request-create-method-from-stylesheet", this._onRequestCreateMethodFromStylesheet.bind(this));
 
 		this.addEventListener("selectelement", this.onSelectNavElement.bind(this));
-		
-		
-		this.addEventListener("error", this.onErrorEvent.bind(this));
-		
 		this.addEventListener("fold-header", this._onMainResourceFoldHeader.bind(this));
 		this.addEventListener("unfold-header", this._onMainResourceUnfoldHeader.bind(this));
 		this._navNodesObserver = new MutationObserver(this.onNavNodesMutation.bind(this));
 		this._navNodesObserver.observe(this, { childList: true, subtree: true });
+
+		this._overlayDiv = this.shadowRoot.querySelector("#overlay");
+
+		this.addEventListener("error", this.onErrorEvent.bind(this));
+
 		this.loadStoredRoots();
 
 		this.loadMainObjectFromWindowLocation();
@@ -1622,12 +1623,10 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 		this.currentOverlay = document.createElement("ktbs4la2-overlay");
 		this.currentOverlay.appendChild(childContentElement);
-		this.currentOverlay.setAttribute("slot", "overlay");
-
 		this.currentOverlay.addEventListener("closerequest", this.removeOverlay.bind(this));
 
-		this.shadowRoot.querySelector("#overlay").style.display = "block";
-		this.appendChild(this.currentOverlay);
+		this._overlayDiv.appendChild(this.currentOverlay);
+		this._overlayDiv.style.display = "block";
 	}
 
 	/**
