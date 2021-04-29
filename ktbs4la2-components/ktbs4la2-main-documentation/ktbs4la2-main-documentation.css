@@ -1,3 +1,4 @@
-ktbs4la2-iframe {
-	pointer-events: none;
+#content {
+    padding-left: var(--main-padding, 10px);
+    padding-right: var(--main-padding, 10px);
 }
