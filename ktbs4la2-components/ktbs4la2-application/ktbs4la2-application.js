@@ -279,6 +279,9 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 		if(mainElement)
 			mainElement.setAttribute("lang", this._lang);
+
+		if(this.currentOverlay)
+			this.currentOverlay.setAttribute("lang", this._lang);
 	}
 
 	/**
@@ -1628,6 +1631,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			this.currentOverlay.remove();
 
 		this.currentOverlay = document.createElement("ktbs4la2-overlay");
+		this.currentOverlay.setAttribute("lang", this._lang);
 		this.currentOverlay.appendChild(childContentElement);
 		this.currentOverlay.addEventListener("closerequest", this.removeOverlay.bind(this));
 
