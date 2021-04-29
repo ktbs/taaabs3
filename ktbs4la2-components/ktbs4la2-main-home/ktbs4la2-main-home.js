@@ -18,9 +18,11 @@ class KTBS4LA2MainHome extends TemplatedHTMLElement {
 	onComponentReady() {
 		this._mainSubtitle = this.shadowRoot.querySelector("#main-subtitle");
 		this._roots = this.shadowRoot.querySelector("#roots");
+		this._roots.setAttribute("lang", this._lang);
 		this._addRootButton = this.shadowRoot.querySelector("#add-root-button");
 		this._addRootButton.addEventListener("click", this._onClickAddRootButton.bind(this));
 		//this._dashboards = this.shadowRoot.querySelector("#dashboards");
+		//this._dashboards.setAttribute("lang", this._lang);
 		//this._addDashboardButton = this.shadowRoot.querySelector("#add-dashboard-button");
 		//this._addDashboardButton.addEventListener("click", this._onClickAddDashboardButton.bind(this));
 		this._gettingStartedLink = this.shadowRoot.querySelector("#getting-started");
@@ -64,8 +66,16 @@ class KTBS4LA2MainHome extends TemplatedHTMLElement {
 	_updateStringsTranslation() {
 		this._mainSubtitle.innerText = this._translateString("A user interface for kTBS");
 		this._roots.setAttribute("title", this._translateString("My kTBS roots"));
+		this._roots.setAttribute("lang", this._lang);
+		
+		const rootLinks = this._roots.querySelectorAll("scope > ktbs4la2-main-related-resource");
+
+		for(let i = 0; i < rootLinks.length; i++)
+			rootLinks[i].setAttribute("lang", this._lang);
+		
 		this._addRootButton.setAttribute("title", this._translateString("Add new kTBS root"));
 		//this._dashboards.setAttribute("title", this._translateString("My dashboards"));
+		//this._dashboards.setAttribute("lang", this._lang);
 		//this._addDashboardButton.setAttribute("title", this._translateString("Add new dashboard"));
 		this._gettingStartedTitle.innerText = this._translateString("Getting started");
 		this._gettingStartedDescription.innerText = this._translateString("A quick introduction tutorial to KTBS4LA2");
