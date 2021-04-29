@@ -46,8 +46,10 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 	attributeChangedCallback(attributeName, oldValue, newValue) {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
 
-		if(attributeName == "title")
+		if(attributeName == "title") {
 			this._chartOptions.title = newValue;
+			this._updatePie();
+		}
 		else if (attributeName == "width") {
 			this._chartOptions.width = parseInt(newValue);
 			this._updatePie();
