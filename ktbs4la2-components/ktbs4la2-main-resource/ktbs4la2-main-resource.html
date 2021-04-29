@@ -1,8 +1,6 @@
 <article id="container" class="pending view">
 	<header id="header">
-		<ul id="breadcrumbs">
-			<slot name="breadcrumbs"></slot>
-		</ul>
+		<ul id="breadcrumbs"></ul>
 
 		<div id="resource-description-container">
 			<div id="resource-type-description">
@@ -58,34 +56,27 @@
 	</header>
 
 	<section id="resource-contents">
-        <section id="resource-head-content">
-            <slot name="head-content"></slot>
-        </section>
+        <section id="resource-head-content"></section>
 
 		<!-- Childs resources (KtbsRoot & Base) -->
 
 		<ktbs4la2-main-subsection id="child-bases" title="{translate: 'Bases'} :" foldable="true" expanded="true" class="view">
-			<slot name="bases"></slot>
 			<button class="add-resource-button" id="add-base-button" title="{translate: 'Create a new base'}">+</button>
 		</ktbs4la2-main-subsection>
 
 		<ktbs4la2-main-subsection id="child-models" title="{translate: 'Models'} :" foldable="true" expanded="true" class="view">
-			<slot name="models"></slot>
 			<button class="add-resource-button" id="add-model-button" title="{translate: 'Create a new model'}">+</button>
 		</ktbs4la2-main-subsection>
 
 		<ktbs4la2-main-subsection id="child-stored-traces" title="{translate: 'Stored traces'} :" foldable="true" expanded="true" class="view">
-			<slot name="stored-traces"></slot>
 			<button class="add-resource-button" id="add-storedtrace-button" title="{translate: 'Create a new stored trace'}">+</button>
 		</ktbs4la2-main-subsection>
 
 		<ktbs4la2-main-subsection id="child-methods" title="{translate: 'Methods'} :" foldable="true" expanded="true" class="view">
-			<slot name="methods"></slot>
 			<button class="add-resource-button" id="add-method-button" title="{translate: 'Create a new method'}">+</button>
 		</ktbs4la2-main-subsection>
 
 		<ktbs4la2-main-subsection id="child-computed-traces" title="{translate: 'Computed traces'} :" foldable="true" expanded="true" class="view">
-			<slot name="computed-traces"></slot>
 			<button class="add-resource-button" id="add-computedtrace-button" title="{translate: 'Create a new computed trace'}">+</button>
 		</ktbs4la2-main-subsection>
 
@@ -95,7 +86,7 @@
 			<p id="parent-method">
 				<label id="parent-method-label" for="parent-method-picker">{translate: 'Parent method'} :</label>
 				
-				<slot name="parent-method" class="view"></slot>
+				<span id="parent-method-link-container" class="view"></span>
 
 				<ktbs4la2-resource-picker
 					id="parent-method-picker"
@@ -110,7 +101,7 @@
 			<p id="model">
 				<label id="model-label" for="model-picker">{translate: 'Model'} :</label>
 
-				<slot name="model" class="view"></slot>
+				<span id="model-link-container" class="view"></span>
 
 				<ktbs4la2-resource-picker
 					id="model-picker"
@@ -131,7 +122,7 @@
 			<p id="method">
 				<label id="method-label" for="method-picker">{translate: 'Method'}  :</label>
 
-				<slot name="method" class="view"></slot>
+				<span id="method-link-container" class="view"></span>
 
 				<ktbs4la2-resource-picker
 					id="method-picker"
@@ -147,7 +138,7 @@
 				<label id="single-source-trace-label" for="single-source-trace-picker">{translate: 'Source trace'}  :</label>
 				<label id="multiple-source-traces-label" for="multiple-source-traces-picker">{translate: 'Source traces'}  :</label>
 
-				<slot name="source-trace" class="view"></slot>
+				<span id="source-trace-link-container" class="view"></span>
 
 				<span id="source-trace-method-not-set-message">{translate: "You have to choose a method first."}</span>
 
@@ -173,7 +164,7 @@
 			<p id="parameters">
 				<label id="parameters-label" for="parameters-input">{translate: 'Parameters'} :</label>
 
-				<slot name="parameters" class="view"></slot>
+				<span id="parameters-container" class="view"></span>
 
 				<ktbs4la2-method-parameters-input
 					id="parameters-input"
@@ -186,19 +177,12 @@
 
 		<ktbs4la2-main-subsection id="obsels" title="{translate: 'Obsels'} :" foldable="true" expanded="true" class="view">
 			<ktbs4la2-icon-tabs-group>
-				<ktbs4la2-icon-tab id="timeline-tab" title="{translate: 'Timeline view'}" icon="{my-component-folder}/timeline.svg">
-					<slot name="obsels-timeline"></slot>
-				</ktbs4la2-icon-tab>
-
-				<ktbs4la2-icon-tab id="table-tab" title="{translate: 'Table view'}" icon="{my-component-folder}/table.svg">
-					<slot name="obsels-table"></slot>
-				</ktbs4la2-icon-tab>
+				<ktbs4la2-icon-tab id="timeline-tab" title="{translate: 'Timeline view'}" icon="{my-component-folder}/timeline.svg"></ktbs4la2-icon-tab>
+				<ktbs4la2-icon-tab id="table-tab" title="{translate: 'Table view'}" icon="{my-component-folder}/table.svg"></ktbs4la2-icon-tab>
 			</ktbs4la2-icon-tabs-group>
 		</ktbs4la2-main-subsection>
 
-		<ktbs4la2-main-subsection id="stats" title="{translate: 'Statistics'} :" foldable="true" expanded="true" class="view">
-			<slot name="stats"></slot>
-		</ktbs4la2-main-subsection>
+		<ktbs4la2-main-subsection id="stats" title="{translate: 'Statistics'} :" foldable="true" expanded="true" class="view"></ktbs4la2-main-subsection>
 	</section>
 
 	<section id="authentication">

@@ -34,6 +34,22 @@
 	display: none;
 }
 
+#breadcrumbs ktbs4la2-main-related-resource {
+    display: inline-block;
+    position: relative;
+}
+
+#breadcrumbs ktbs4la2-main-related-resource::after {
+    content: "›";
+    display: inline-block;
+    position: absolute;
+    right: -7px;
+    top: -8px;
+    color: #DDD;
+    font-stretch: 10%;
+    font-size: 30pt;
+}
+
 #header:not(.condensed) #resource-description-container {
 	display: table;
 }

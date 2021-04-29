@@ -39,12 +39,8 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 	 */
 	onComponentReady() {
         this._containerDiv = this.shadowRoot.querySelector("#container");
-        let breadcrumbsStylesheetURL = import.meta.url.substr(0, import.meta.url.lastIndexOf('/')) + '/breadcrumbs.css';
-		let breadcrumbsStyleLink = document.createElement("link");
-		breadcrumbsStyleLink.setAttribute("rel", "stylesheet");
-		breadcrumbsStyleLink.setAttribute("href", breadcrumbsStylesheetURL);
-		this.appendChild(breadcrumbsStyleLink);
         this._header = this.shadowRoot.querySelector("#header");
+        this._breadcrumbsContainer = this.shadowRoot.querySelector("#breadcrumbs");
         this._titleTag = this.shadowRoot.querySelector("#title");
         this._editLabelInput = this.shadowRoot.querySelector("#edit-label-input");
         this._editLabelInput.setAttribute("lang", this._lang);
@@ -74,6 +70,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         this._toggleAboutVisibilityButton.addEventListener("click", this._onClickToggleAboutVisibilityButton.bind(this));
         this._versionLabel = this.shadowRoot.querySelector("#version-label");
         this._rootBuilinMethodsHeader = this.shadowRoot.querySelector("#root-builin-methods-header");
+        this._resourceHeadContent = this.shadowRoot.querySelector("#resource-head-content");
         this._childBasesSubsection = this.shadowRoot.querySelector("#child-bases");
         this._childModelsSubsection = this.shadowRoot.querySelector("#child-models");
 		this._childStoredTracesSubsection = this.shadowRoot.querySelector("#child-stored-traces");
@@ -81,6 +78,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         this._childComputedTracesSubsection = this.shadowRoot.querySelector("#child-computed-traces");
         this._resourceDataSubsection = this.shadowRoot.querySelector("#resource-data");
         this._parentMethodLabel = this.shadowRoot.querySelector("#parent-method-label");
+        this._parentMethodLinkContainer = this.shadowRoot.querySelector("#parent-method-link-container");
         this._parentMethodPicker = this.shadowRoot.querySelector("#parent-method-picker");
         this._parentMethodPicker.setAttribute("lang", this._lang);
         this._parentMethodPicker.addEventListener("input", this._updateSaveButtonState.bind(this));
@@ -88,6 +86,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         this._parentMethodPicker.addEventListener("input", this._onParentMethodPickerChange.bind(this));
 		this._parentMethodPicker.addEventListener("change", this._onParentMethodPickerChange.bind(this));
         this._modelLabel = this.shadowRoot.querySelector("#model-label");
+        this._modelLinkContainer = this.shadowRoot.querySelector("#model-link-container");
         this._modelPicker = this.shadowRoot.querySelector("#model-picker");
         this._modelPicker.setAttribute("lang", this._lang);
         this._modelPicker.addEventListener("input", this._updateSaveButtonState.bind(this));
@@ -98,6 +97,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         this._originInput.addEventListener("input", this._updateSaveButtonState.bind(this));
 		this._originInput.addEventListener("change", this._updateSaveButtonState.bind(this));
         this._methodLabel = this.shadowRoot.querySelector("#method-label");
+        this._methodLinkContainer = this.shadowRoot.querySelector("#method-link-container");
         this._methodPicker = this.shadowRoot.querySelector("#method-picker");
         this._methodPicker.setAttribute("lang", this._lang);
         this._methodPicker.addEventListener("input", this._onMethodChange.bind(this));
@@ -111,6 +111,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 		this._singleSourceTracePicker.addEventListener("input", this._onSingleSourceTracePickerEvent.bind(this));
 		this._singleSourceTracePicker.addEventListener("change", this._onSingleSourceTracePickerEvent.bind(this));
         this._multipleSourceTracesLabel = this.shadowRoot.querySelector("#multiple-source-traces-label");
+        this._sourceTraceLinkContainer = this.shadowRoot.querySelector("#source-trace-link-container");
         this._multipleSourceTracesPicker = this.shadowRoot.querySelector("#multiple-source-traces-picker");
         this._multipleSourceTracesPicker.setAttribute("lang", this._lang);
         this._multipleSourceTracesPicker.addEventListener("input", this._updateParametersMultipleModel.bind(this));
@@ -231,20 +232,17 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 if((newValue == "ComputedTrace") || (newValue == "StoredTrace")) {
                     let obselsTimelineElement = document.createElement("ktbs4la2-trace-timeline");
                     obselsTimelineElement.setAttribute("uri", this.getAttribute("uri"));
-                    obselsTimelineElement.setAttribute("slot", "obsels-timeline");
                     obselsTimelineElement.style.height = "400px";
-                    this.appendChild(obselsTimelineElement);
+                    this._timelineTab.appendChild(obselsTimelineElement);
 
                     let obselsTableElement = document.createElement("ktbs4la2-trace-table");
                     obselsTableElement.setAttribute("uri", this.getAttribute("uri"));
-                    obselsTableElement.setAttribute("slot", "obsels-table");
                     obselsTableElement.style.height = "400px";
-                    this.appendChild(obselsTableElement);
+                    this._tableTab.appendChild(obselsTableElement);
 
                     let statsElement = document.createElement("ktbs4la2-trace-stats");
                     statsElement.setAttribute("uri", this.getAttribute("uri"));
-                    statsElement.setAttribute("slot", "stats");
-                    this.appendChild(statsElement);
+                    this._statsSubsection.appendChild(statsElement);
                 }
             });
         }
@@ -374,31 +372,30 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         if(child_resource.label)
             childElement.setAttribute("label", child_resource.label);
 
-        let slot;
-
-        switch(child_resource.type) {
-            case "Base" :
-                slot = "bases";
-                break;
-            case "Model":
-                slot = "models";
-                break;
-            case "StoredTrace":
-                slot = "stored-traces";
-                break;
-            case "Method":
-                slot = "methods";
-                break;
-            case "ComputedTrace":
-                slot = "computed-traces";
-                break;
-        }
-
         if(mark_as_new == true)
             childElement.classList.add("new");
 
-        childElement.setAttribute("slot", slot);
-        this.appendChild(childElement);
+        let childContainer;
+
+        switch(child_resource.type) {
+            case "Base" :
+                childContainer = this._childBasesSubsection;
+                break;
+            case "Model":
+                childContainer = this._childModelsSubsection;
+                break;
+            case "StoredTrace":
+                childContainer = this._childStoredTracesSubsection;
+                break;
+            case "Method":
+                childContainer = this._childMethodsSubsection;
+                break;
+            case "ComputedTrace":
+                childContainer = this._childComputedTracesSubsection;
+                break;
+        }
+
+        childContainer.insertBefore(childElement, childContainer.querySelector(".add-resource-button"));
 
         setTimeout(() => {
             if(childElement.classList.contains("new"))
@@ -671,7 +668,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             let parentResource = this._ktbsResource.parent;
 
             if(parentResource) {
-                const breadCrumbsItems = this.querySelectorAll("[slot = breadcrumbs]");
+                const breadCrumbsItems = this.querySelectorAll("#breadcrumbs > *");
 
                 for(let i = 0; i < breadCrumbsItems.length; i++)
                     breadCrumbsItems[i].remove();
@@ -739,23 +736,22 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
             if(resourceType == "Model") {
                 // remove previously instanciated head-content child elements
-                let childHeadContentElements = this.querySelectorAll("[slot = head-content]");
+                let childHeadContentElements = this._resourceHeadContent.childNodes;
 
                 for(let i = 0; i < childHeadContentElements.length; i++) {
                     let aChildHeadContentElement = childHeadContentElements[i];
-                    this.removeChild(aChildHeadContentElement);
+                    aChildHeadContentElement.remove();
                 }
                 // ---
 
                 let diagram = document.createElement("ktbs4la2-model-diagram");
-                diagram.setAttribute("slot", "head-content");
                 diagram.setAttribute("uri", this.getAttribute("uri"));
-                this.appendChild(diagram);
+                this._resourceHeadContent.appendChild(diagram);
             }
 
             if(resourceType == "Method") {
                 // remove previously instanciated parent-method child elements
-                let childParentMethodElements = this.querySelectorAll("[slot = parent-method]");
+                let childParentMethodElements = this._parentMethodLinkContainer.childNodes;
 
                 for(let i = 0; i < childParentMethodElements.length; i++) {
                     let aChildParentMethodElement = childParentMethodElements[i];
@@ -774,8 +770,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     if(parentMethod.label)
                         methodElement.setAttribute("label", parentMethod.label);
                     
-                    methodElement.setAttribute("slot", "parent-method");
-                    this.appendChild(methodElement);
+                    this._parentMethodLinkContainer.appendChild(methodElement);
                 }
 
                 this._parentMethodPicker.setAttribute("browse-start-uri", this._ktbsResource.uri);
@@ -806,7 +801,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     this._originInput.value = origin;
 
                 // remove previously instanciated model child elements
-                let childModelElements = this.querySelectorAll("[slot = model]");
+                let childModelElements = this._modelLinkContainer.childNodes;
 
                 for(let i = 0; i < childModelElements.length; i++) {
                     let aChildModelElement = childModelElements[i];
@@ -825,8 +820,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     if(model.label)
                         modelElement.setAttribute("label", model.label);
 
-                    modelElement.setAttribute("slot", "model");
-                    this.appendChild(modelElement);
+                    this._modelLinkContainer.appendChild(modelElement);
 
                     if(resourceType == "StoredTrace") {
                         this._modelPicker.setAttribute("browse-start-uri", this._ktbsResource.uri);
@@ -844,7 +838,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
             if(resourceType == "ComputedTrace") {
                 // remove previously instanciated source trace child elements
-                let childSourceTraceElements = this.querySelectorAll("[slot = source-trace]");
+                let childSourceTraceElements = this._sourceTraceLinkContainer.childNodes;
 
                 for(let i = 0; i < childSourceTraceElements.length; i++) {
                     let aChildSourceTraceElement = childSourceTraceElements[i];
@@ -865,8 +859,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     if(this._ktbsResource.source_traces[i].label)
                         sourceTraceElement.setAttribute("label", this._ktbsResource.source_traces[i].label);
 
-                    sourceTraceElement.setAttribute("slot", "source-trace");
-                    this.appendChild(sourceTraceElement);
+                    this._sourceTraceLinkContainer.appendChild(sourceTraceElement);
                 }
 
                 this._singleSourceTracePicker.setAttribute("browse-start-uri", this._ktbsResource.uri);
@@ -900,7 +893,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     });
 
                 // remove previously instanciated method child elements
-                let childMethodElements = this.querySelectorAll("[slot = method]");
+                let childMethodElements = this._methodLinkContainer.childNodes;
 
                 for(let i = 0; i < childMethodElements.length; i++) {
                     let aChildMethodElement = childMethodElements[i];
@@ -916,8 +909,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 if(this._ktbsResource.method.label)
                     methodElement.setAttribute("label", this._ktbsResource.method.label);
 
-                methodElement.setAttribute("slot", "method");
-                this.appendChild(methodElement);
+                this._methodLinkContainer.appendChild(methodElement);
 
                 this._methodPicker.setAttribute("browse-start-uri", this._ktbsResource.uri);
 
@@ -1006,7 +998,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 	_onKtbsResourceChildrenAdd() {
 		for(let i = 0; i < this._ktbsResource.children.length; i++) {
 			const aChild = this._ktbsResource.children[i];
-			const queryString = "ktbs4la2-main-related-resource[resource-type = " + CSS.escape(aChild.type) + "][uri = " + CSS.escape(aChild.uri) + "]:not([slot = breadcrumbs])";
+			const queryString = "ktbs4la2-main-related-resource[resource-type = " + CSS.escape(aChild.type) + "][uri = " + CSS.escape(aChild.uri) + "])";
 			const childElement = this.querySelector(queryString);
 				
 			if(!childElement)
@@ -1023,7 +1015,6 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             let breadcrumbItemElement = document.createElement("ktbs4la2-main-related-resource");
             breadcrumbItemElement.setAttribute("resource-type", resource.constructor.name);
             breadcrumbItemElement.setAttribute("uri", resource.uri);
-            breadcrumbItemElement.setAttribute("slot", "breadcrumbs");
             breadcrumbItemElement.setAttribute("scale", "0.7");
             
             let label = resource.label;
@@ -1045,7 +1036,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     breadcrumbItemElement.setAttribute("label", rootLabel);
             }
 
-            this.insertBefore(breadcrumbItemElement, this.firstChild);
+            this._breadcrumbsContainer.insertBefore(breadcrumbItemElement, this._breadcrumbsContainer.firstChild);
 
             let resourceParent = resource.parent;
 
