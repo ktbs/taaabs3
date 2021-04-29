@@ -1,5 +1,7 @@
 import {TemplatedHTMLElement} from '../common/TemplatedHTMLElement.js';
 
+import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
+
 /**
  * 
  */
