@@ -19,6 +19,8 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
             this._internals = this.attachInternals();
 
         this._customValidity = "";
+
+        this._resourceExplorerElementsMutationObserver = new MutationObserver(this._onResourceExplorerElementsMutation.bind(this));
     }
 
     /**
@@ -106,6 +108,7 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         this._resourcesExplorer = this.shadowRoot.querySelector("#resources-explorer");
         this._resourcesExplorer.addEventListener("focus", this._onResourceExplorerFocus.bind(this));
         this._resourcesExplorer.addEventListener("keydown", this._onResourceExplorerKeyDown.bind(this));
+        this._resourcesExplorer.addEventListener("selectelement", this._onSelectExplorerElement.bind(this));
         this._uriInput = this.shadowRoot.querySelector("#uri-input");
         this._uriInput.setAttribute("lang", this._lang);
         this._uriInput.addEventListener("input", this._onURIInputEvent.bind(this));
@@ -115,7 +118,6 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         if(!this.getAttribute("browse-scope-uris"))
             this.emitErrorEvent("Required attribute \"browse-scope-uris\" is missing");
 
-        this.addEventListener("selectelement", this._onSelectExplorerElement.bind(this));
         this._browseButton.addEventListener("click", this._onClickBrowseButton.bind(this));
         this._browseButton.addEventListener("focus", this._onChildElementFocus.bind(this));
         this.addEventListener("focus", this._onFocus.bind(this));
@@ -242,12 +244,13 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
      */
     _initResourceExplorer() {
         this._componentReady.then(() => {
-            const previousNavElements = this.querySelectorAll(":scope > ktbs4la2-nav-resource");
+            const previousNavElements = this._resourcesExplorer.querySelectorAll("ktbs4la2-nav-resource");
 
             for(let i = 0; i < previousNavElements.length; i++)
                 previousNavElements[i].remove();
-
+            
             const navElement = document.createElement("ktbs4la2-nav-resource");
+            navElement.setAttribute("lang", this._lang);
             navElement.setAttribute("uri", this.getAttribute("root-uri"));
             navElement.setAttribute("resource-type", "Ktbs");
             navElement.setAttribute("tabindex", "-1");
@@ -264,9 +267,43 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
             if(this.allow_builtin_methods)
                 navElement.setAttribute("show-builtin-methods", "true");
 
-            this.appendChild(navElement);
+            this._resourceExplorerElementsMutationObserver.observe(navElement, {childList: true, subtree: true, attributes: false});
+            this._resourcesExplorer.appendChild(navElement);
         }).catch(() => {});
     }
+
+    /**
+     * 
+     */
+    _onResourceExplorerElementsMutation(mutationRecords, observer) {
+		setTimeout(() => {
+			for(let i = 0; i < mutationRecords.length; i++) {
+				const currentMutationRecord = mutationRecords[i];
+
+				if(currentMutationRecord.type == "childList") {
+					for(let j = 0; j < currentMutationRecord.addedNodes.length; j++) {
+						let newChildNode = currentMutationRecord.addedNodes[j];
+						
+						if(
+                                (this._uriInput.value != "")
+                            &&  (newChildNode.localName == "ktbs4la2-nav-resource")
+                            &&  (
+                                        (this._uriInput.value == newChildNode.getAttribute("uri"))
+                                    ||  (
+                                            newChildNode.getAttribute("uri").startsWith(Method.builtin_methods_prefix)
+                                        &&  (this._uriInput.value == newChildNode.getAttribute("uri").substring(Method.builtin_methods_prefix.length))
+                                    )
+                            )
+                            &&  !newChildNode.classList.contains("selected")
+                         ) {
+                            newChildNode.classList.add("selected");
+                            break;
+						}
+					}
+				}
+			}
+        });
+	}
 
     /**
      * 
@@ -323,14 +360,14 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
             newlySelectedElementQuery = "[uri = \"" + CSS.escape(this._uriInput.value) + "\"]";
         }
 
-        const previouslySelectedElements = this.querySelectorAll(previouslySelectedElementsQuery);
+        const previouslySelectedElements = this._resourcesExplorer.querySelectorAll(previouslySelectedElementsQuery);
 
         for(let i = 0; i < previouslySelectedElements.length; i++)
                 if(previouslySelectedElements[i].classList.contains("selected"))
                     previouslySelectedElements[i].classList.remove("selected");
 
         if(this._uriInput.checkValidity()) {
-            const newlySelectedElement = this.querySelector(newlySelectedElementQuery);
+            const newlySelectedElement = this._resourcesExplorer.querySelector(newlySelectedElementQuery);
 
             if(newlySelectedElement && !newlySelectedElement.classList.contains("selected"))
                 newlySelectedElement.classList.add("selected");
@@ -355,14 +392,14 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         for(let i = 0; i < pickable_types.length; i++)
             queryParts.push("[resource-type = \"" + CSS.escape(pickable_types[i]) + "\"]");
 
-        return this.querySelectorAll(queryParts.join(", "));
+        return this._resourcesExplorer.querySelectorAll(queryParts.join(", "));
     }
 
     /**
      *  
      */
     _selectElement(element) {
-        const previouslySelectedElements = this.querySelectorAll(".selected");
+        const previouslySelectedElements = this._resourcesExplorer.querySelectorAll(".selected");
 
         for(let i = 0; i < previouslySelectedElements.length; i++)
             if(previouslySelectedElements[i] != element)
@@ -389,7 +426,7 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
      */
     _onResourceExplorerFocus(event) {
         event.stopPropagation();
-        const selectedElement = this.querySelector(".selected");
+        const selectedElement = this._resourcesExplorer.querySelector(".selected");
 
         if(!selectedElement) {
             let firstSelectableElement;
@@ -400,8 +437,8 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
                 if(selectableElements.length > 0)
                     firstSelectableElement = selectableElements[0];
             }
-            else if(this.hasChildNodes())
-                firstSelectableElement = this.childNodes[0];
+            else if(this._resourcesExplorer.hasChildNodes())
+                firstSelectableElement = this._resourcesExplorer.childNodes[0];
         
             if(firstSelectableElement)
                 this._selectElement(firstSelectableElement);
@@ -415,7 +452,7 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         if((event.keyCode == 38) || (event.keyCode == 40)) {
             event.preventDefault();
             event.stopPropagation();
-            const selectedElement = this.querySelector(".selected");
+            const selectedElement = this._resourcesExplorer.querySelector(".selected");
 
             if(selectedElement) {
                 const selectableElements = Array.from(this._getExplorerSelectableElements());
@@ -480,6 +517,11 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
     _updateStringsTranslation() {
         this._uriInput.setAttribute("lang", this._lang);
         this._browseButtonLabel.innerText = this._translateString("Browse");
+
+        const resourceExplorerRoots = this._resourcesExplorer.querySelectorAll(":scope > ktbs4la2-nav-resource");
+
+        for(let i = 0; i < resourceExplorerRoots.length; i++)
+            resourceExplorerRoots[i].setAttribute("lang", this._lang);
     }
 }
 
