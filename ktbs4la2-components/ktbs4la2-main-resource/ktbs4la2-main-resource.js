@@ -231,16 +231,19 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
                 if((newValue == "ComputedTrace") || (newValue == "StoredTrace")) {
                     let obselsTimelineElement = document.createElement("ktbs4la2-trace-timeline");
+                    obselsTimelineElement.setAttribute("lang", this._lang);
                     obselsTimelineElement.setAttribute("uri", this.getAttribute("uri"));
                     obselsTimelineElement.style.height = "400px";
                     this._timelineTab.appendChild(obselsTimelineElement);
 
                     let obselsTableElement = document.createElement("ktbs4la2-trace-table");
+                    obselsTableElement.setAttribute("lang", this._lang);
                     obselsTableElement.setAttribute("uri", this.getAttribute("uri"));
                     obselsTableElement.style.height = "400px";
                     this._tableTab.appendChild(obselsTableElement);
 
                     let statsElement = document.createElement("ktbs4la2-trace-stats");
+                    statsElement.setAttribute("lang", this._lang);
                     statsElement.setAttribute("uri", this.getAttribute("uri"));
                     this._statsSubsection.appendChild(statsElement);
                 }
@@ -350,6 +353,26 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         this._addStoredTraceButton.setAttribute("title", this._translateString("Create a new stored trace"));
         this._addMethodButton.setAttribute("title", this._translateString("Create a new method"));
         this._addComputedTraceButton.setAttribute("title", this._translateString("Create a new computed trace"));
+
+        const timeLine = this._timelineTab.querySelector("ktbs4la2-trace-timeline");
+
+        if(timeLine)
+            timeLine.setAttribute("lang", this._lang);
+
+        const obselTable = this._tableTab.querySelector("ktbs4la2-trace-table");
+
+        if(obselTable)
+            obselTable.setAttribute("lang", this._lang);
+
+        const stats = this._statsSubsection.querySelector("ktbs4la2-trace-stats");
+
+        if(stats)
+            stats.setAttribute("lang", this._lang);
+
+        const relatedResourcesLinks = this.shadowRoot.querySelectorAll("ktbs4la2-main-related-resource");
+
+        for(let i = 0; i < relatedResourcesLinks.length; i++)
+            relatedResourcesLinks[i].setAttribute("lang", this._lang);
 	}
 
     /**
@@ -368,6 +391,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         let childElement = document.createElement("ktbs4la2-main-related-resource");
         childElement.setAttribute("resource-type", child_resource.type);
         childElement.setAttribute("uri", child_resource.uri);
+        childElement.setAttribute("lang", this._lang);
 
         if(child_resource.label)
             childElement.setAttribute("label", child_resource.label);
@@ -746,6 +770,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
                 let diagram = document.createElement("ktbs4la2-model-diagram");
                 diagram.setAttribute("uri", this.getAttribute("uri"));
+                diagram.setAttribute("lang", this._lang);
                 this._resourceHeadContent.appendChild(diagram);
             }
 
@@ -763,6 +788,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
                 if(parentMethod) {
                     let methodElement = document.createElement("ktbs4la2-main-related-resource");
+                    methodElement.setAttribute("lang", this._lang);
                     methodElement.setAttribute("resource-type", "Method");
                     methodElement.setAttribute("uri", parentMethod.uri);
                     methodElement.setAttribute("scale", "0.7");
@@ -813,6 +839,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 
                 if(model) {
                     let modelElement = document.createElement("ktbs4la2-main-related-resource");
+                    modelElement.setAttribute("lang", this._lang);
                     modelElement.setAttribute("resource-type", "Model");
                     modelElement.setAttribute("uri", model.uri);
                     modelElement.setAttribute("scale", "0.7");
@@ -848,6 +875,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
                 for(let i = 0; i < this._ktbsResource.source_traces.length; i++) {
                     let sourceTraceElement = document.createElement("ktbs4la2-main-related-resource");
+                    sourceTraceElement.setAttribute("lang", this._lang);
                     sourceTraceElement.setAttribute("uri", this._ktbsResource.source_traces[i].uri);
                     sourceTraceElement.setAttribute("scale", "0.7");
 
@@ -902,6 +930,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 // ---
 
                 let methodElement = document.createElement("ktbs4la2-main-related-resource");
+                methodElement.setAttribute("lang", this._lang);
                 methodElement.setAttribute("resource-type", "Method");
                 methodElement.setAttribute("uri", this._ktbsResource.method.uri);
                 methodElement.setAttribute("scale", "0.7");
@@ -1013,6 +1042,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
     _addBreadcrumb(resource) {
         resource.get(this._abortController.signal).then(() => {
             let breadcrumbItemElement = document.createElement("ktbs4la2-main-related-resource");
+            breadcrumbItemElement.setAttribute("lang", this._lang);
             breadcrumbItemElement.setAttribute("resource-type", resource.constructor.name);
             breadcrumbItemElement.setAttribute("uri", resource.uri);
             breadcrumbItemElement.setAttribute("scale", "0.7");
