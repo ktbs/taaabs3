@@ -266,6 +266,12 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 
 		this.homeLink.setAttribute("title", this._translateString("Home"));
 		this.myKtbsRootSubtitle.innerText = this._translateString("My kTBS roots");
+
+		const rootNavItems = this._rootList.querySelectorAll(":scope > ktbs4la2-nav-resource");
+
+		for(let i = 0; i < rootNavItems.length; i++)
+			rootNavItems[i].setAttribute("lang", this._lang);
+
 		//this.myDashBoardsSubtitle.innerText = this._translateString("My dashboards");
 		this.separatorDiv.setAttribute("title", this._translateString("Resize navigation panel"));
 
@@ -1471,6 +1477,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			newRootElement.setAttribute("uri", newRootUri);
 			newRootElement.setAttribute("label", newRootLabel);
 			newRootElement.setAttribute("resource-type", "Ktbs");
+			newRootElement.setAttribute("lang", this._lang);
 			newRootElement.addEventListener("nav-fold", this._onFoldNavItem.bind(this));
 			newRootElement.addEventListener("nav-unfold", this._onUnfoldNavItem.bind(this));
 
@@ -1489,7 +1496,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 				newRootElement.classList.add("new");
 
 			this._rootList.appendChild(newRootElement);
-
+			
 			if(mark_as_new)
 				setTimeout(() => {
 					if(newRootElement.classList.contains("new"))
