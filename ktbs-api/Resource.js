@@ -1541,7 +1541,65 @@ export class Resource {
 			return deletePromise;
 		}
 		else
-		throw new KtbsError("Resource lifecycle status \"" + this.lifecycleStatus + "\" and/or sync status \"" + this.syncStatus + "\" not suitable for DELETE operation");
+			throw new KtbsError("Resource lifecycle status \"" + this.lifecycleStatus + "\" and/or sync status \"" + this.syncStatus + "\" not suitable for DELETE operation");
+	}
+
+	/**
+	 * POSTs a SPARQL query to the resource, and returns a Promise that resolves with a JSON object containing data returned by the query
+	 * \param string sparqlQuery 
+	 * \param AbortSignal abortSignal 
+	 * \param Object credentials 
+	 * \return Promise
+	 * \Public
+	 */
+	 SPARQLQuery(sparqlQuery, abortSignal = null, credentials = null) {
+		const sparqlQueryPromise = new Promise((resolve, reject) => {
+			let fetchParameters = {
+				method: "POST",
+				headers: new Headers({
+					"content-type": "application/sparql-query",
+					"Accept": "application/sparql-results+json",
+					"X-Requested-With": "XMLHttpRequest"
+				}),
+				body: sparqlQuery
+			};
+
+			if(this._etag)
+				fetchParameters.headers.append("If-Match", this._etag);
+
+			if(!credentials && this.credentials)
+				credentials = this.credentials;
+
+			if(credentials && credentials.id && credentials.password)
+				fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
+
+			if(abortSignal)
+				fetchParameters.signal = abortSignal;
+			
+			fetch(this.uri, fetchParameters)
+				.then((response) => {
+					if(response.ok) {
+						response.json()
+							.then(resolve)
+							.catch(reject);
+					}
+					else {
+						let responseBody = null;
+
+						response.text()
+							.then((responseText) => {
+								responseBody = responseText;
+							})
+							.finally(() => {
+								const error = new RestError(response.status, response.statusText, responseBody);
+								reject(error);
+							});
+					}
+				})
+				.catch(reject);
+		});
+
+		return sparqlQueryPromise;
 	}
 
 	/**

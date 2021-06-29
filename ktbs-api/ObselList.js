@@ -46,6 +46,18 @@ export class ObselList {
     }
 
 	/**
+	 * Gets the URI of the obsel list
+	 * \return URL
+	 * \public
+	 */
+	get uri() {
+		if(!this._uri)
+			this._uri = new URL(this._parentTrace.uri + "@obsels");
+
+		return this._uri;
+	}
+
+	/**
 	 * Processes the HTTP response of a Query
 	 * \param Object response a HTTP Response object returned from a fetch or read from a cache
 	 * \return Promise
@@ -123,7 +135,7 @@ export class ObselList {
 	 * \public
 	 */
 	query(query_parameters = {}, abortSignal = null) {
-		const queryURL = new URL(this._parentTrace.uri + "@obsels");
+		const queryURL = new URL(this.uri);
 		const queryURLSearchParams = queryURL.searchParams;
 
 		if(query_parameters.after)
@@ -233,8 +245,6 @@ export class ObselList {
 		return new Promise((resolve, reject) => {
 			Resource.sharedCacheOpened
 				.then((sharedCache) => {
-					const matchRequestURL = new URL(this._parentTrace.uri + "@obsels");
-
 					const matchRequestHeaders = new Headers({
 						"Accept": "application/json",
 						"X-Requested-With": "XMLHttpRequest"
@@ -249,7 +259,7 @@ export class ObselList {
 						cache: "no-store"
 					};
 
-					const matchRequest = new Request(matchRequestURL, matchRequestParameters);
+					const matchRequest = new Request(this.uri, matchRequestParameters);
 
 					sharedCache.match(matchRequest, {ignoreSearch: true})
 						.then((match) => {
@@ -264,6 +274,92 @@ export class ObselList {
 				})
 				.catch(reject);
 		});
+	}
+
+	/**
+	 * POSTs a SPARQL query to the obsel list, and returns a Promise that resolves with a JSON object containing data returned by the query
+	 * \param string sparqlQuery 
+	 * \param AbortSignal abortSignal 
+	 * \param Object credentials 
+	 * \return Promise
+	 * \Public
+	 */
+	SPARQLQuery(sparqlQuery, abortSignal = null, credentials = null) {
+		const sparqlQueryPromise = new Promise((resolve, reject) => {
+			let fetchParameters = {
+				method: "POST",
+				headers: new Headers({
+					"content-type": "application/sparql-query",
+					"Accept": "application/sparql-results+json",
+					"X-Requested-With": "XMLHttpRequest"
+				}),
+				body: sparqlQuery
+			};
+
+			if(this._etag)
+				fetchParameters.headers.append("If-Match", this._etag);
+
+			if(!credentials && this.credentials)
+				credentials = this.credentials;
+
+			if(credentials && credentials.id && credentials.password)
+				fetchParameters.headers.append("Authorization", "Basic " + btoa(credentials.id + ":" + credentials.password));
+
+			if(abortSignal)
+				fetchParameters.signal = abortSignal;
+			
+			fetch(this.uri, fetchParameters)
+				.then((response) => {
+					if(response.ok) {
+						response.json()
+							.then(resolve)
+							.catch(reject);
+					}
+					else {
+						let responseBody = null;
+
+						response.text()
+							.then((responseText) => {
+								responseBody = responseText;
+							})
+							.finally(() => {
+								const error = new RestError(response.status, response.statusText, responseBody);
+								reject(error);
+							});
+					}
+				})
+				.catch(reject);
+		});
+
+		return sparqlQueryPromise;
+	}
+
+	/**
+	 * Performs a SPARQL Query in order to list all distinct values in the obsels for a given attribute type, and returns a Promise that resolves with an Array containing the distinct values
+	 * \param AttributeType attributeType the attribute type we want to list distinct values
+	 * \return Promise
+	 * \Public
+	 */
+	list_attribute_type_distinct_values(attributeType, abortSignal = null, credentials = null) {
+		const sparqlQuery = "PREFIX m: <" + attributeType.parent_model.uri + "#>\n\nSELECT DISTINCT ?val {?obs m:" + attributeType.id + " ?val}";
+		
+		const listPromise = new Promise((resolve, reject) => {
+			this.SPARQLQuery(sparqlQuery)
+				.then((JSONData) => {
+					const distinctValuesArray = new Array();
+
+					if(JSONData.results.bindings && (JSONData.results.bindings instanceof Array)) {
+						for(let i = 0; i < JSONData.results.bindings.length; i++)
+							if(JSONData.results.bindings[i].val && JSONData.results.bindings[i].val.value)
+								distinctValuesArray.push(JSONData.results.bindings[i].val.value);
+					}
+
+					resolve(distinctValuesArray);
+				})
+				.catch(reject);
+		});
+
+		return listPromise;
 	}
 
 	/**
