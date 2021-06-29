@@ -60,8 +60,6 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		//this.myDashboardsSubtitle = this.shadowRoot.querySelector("#my-dashboards-subtitle");
 		this._rootList = this.shadowRoot.querySelector("#root-list");
 		this._rootList.addEventListener("selectelement", this.onSelectNavElement.bind(this));
-		this._rootList.addEventListener("fold-header", this._onNavFoldHeader.bind(this));
-		this._rootList.addEventListener("unfold-header", this._onNavUnfoldHeader.bind(this));
 		this._navNodesObserver = new MutationObserver(this.onNavNodesMutation.bind(this));
 		this._navNodesObserver.observe(this._rootList, { childList: true, subtree: true });
 		this.separatorDiv = this.shadowRoot.querySelector("#separator");
@@ -73,6 +71,8 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._mainContentDiv.addEventListener("request-delete-ktbs-resource", this.onRequestDeleteKtbsResource.bind(this));
 		this._mainContentDiv.addEventListener("request-create-ktbs-resource", this._onRequestCreateKtbsResource.bind(this));
 		this._mainContentDiv.addEventListener("request-create-method-from-stylesheet", this._onRequestCreateMethodFromStylesheet.bind(this));
+		this._mainContentDiv.addEventListener("fold-header", this._onFoldMainHeader.bind(this));
+		this._mainContentDiv.addEventListener("unfold-header", this._onUnfoldMainHeader.bind(this));
 
 		this._overlayDiv = this.shadowRoot.querySelector("#overlay");
 
@@ -181,14 +181,14 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onNavFoldHeader(event) {
+	_onFoldMainHeader(event) {
 		this.mainHeaderFolded = true;
 	}
 
 	/**
 	 * 
 	 */
-	_onNavUnfoldHeader(event) {
+	_onUnfoldMainHeader(event) {
 		this.mainHeaderFolded = false;
 	}
 

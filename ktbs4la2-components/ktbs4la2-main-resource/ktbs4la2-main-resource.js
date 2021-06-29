@@ -1227,7 +1227,8 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
             this.dispatchEvent(new CustomEvent("unfold-header" , {
                 bubbles: true,
-                cancelable: false
+                cancelable: false,
+                composed: true
             }));
         }
         else {
@@ -1236,7 +1237,8 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
             this.dispatchEvent(new CustomEvent("fold-header" , {
                 bubbles: true,
-                cancelable: false
+                cancelable: false,
+                composed: true
             }));
         }
     }
