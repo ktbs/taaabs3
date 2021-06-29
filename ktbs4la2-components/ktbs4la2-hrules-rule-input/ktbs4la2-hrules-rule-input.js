@@ -201,6 +201,13 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
     /**
      * 
      */
+    get suggestions_source_trace_uri() {
+        return this.getAttribute("suggestions-source-trace-uri");
+    }
+
+    /**
+     * 
+     */
     checkValidity() {
         if(this._idInput && this._subrulesInput) {
             return (
@@ -262,6 +269,7 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
         _observedAttributes.push("value");
         _observedAttributes.push("required");
         _observedAttributes.push("reserved-ids");
+        _observedAttributes.push("suggestions-source-trace-uri");
         return _observedAttributes;
     }
 
@@ -378,6 +386,11 @@ class KTBS4LA2HrulesRuleInput extends TemplatedHTMLElement {
                 else
                     if(this._idInput.hasAttribute("reserved-ids"))
                         this._idInput.removeAttribute("reserved-ids");
+            }).catch(() => {});
+        }
+        if(name == "suggestions-source-trace-uri") {
+            this._componentReady.then(() => {
+                this._subrulesInput.setAttribute("suggestions-source-trace-uri", newValue);
             }).catch(() => {});
         }
     }

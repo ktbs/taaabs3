@@ -140,6 +140,13 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
     /**
      * 
      */
+    get suggestions_source_trace_uri() {
+        return this.getAttribute("suggestions-source-trace-uri");
+    }
+
+    /**
+     * 
+     */
     checkValidity() {
         return (
                 !this.required
@@ -178,6 +185,7 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
         let _observedAttributes = super.observedAttributes;
         _observedAttributes.push("model-uri");
         _observedAttributes.push("value");
+        _observedAttributes.push("suggestions-source-trace-uri");
         return _observedAttributes;
     }
 
@@ -257,6 +265,11 @@ class KTBS4LA2HrulesSubruleInput extends TemplatedHTMLElement {
             this._componentReady.then(() => {
                 this._obselTypeSelect.setAttribute("model-uri", newValue);
                 this._attributeConstraints.setAttribute("model-uri", newValue);
+            }).catch(() => {});
+        }
+        else if(name == "suggestions-source-trace-uri") {
+            this._componentReady.then(() => {
+                this._attributeConstraints.setAttribute("suggestions-source-trace-uri", newValue);
             }).catch(() => {});
         }
     }

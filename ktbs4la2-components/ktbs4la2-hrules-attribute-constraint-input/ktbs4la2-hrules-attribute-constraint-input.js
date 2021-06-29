@@ -1,3 +1,6 @@
+import {Model} from '../../ktbs-api/Model.js';
+import {Trace} from '../../ktbs-api/Trace.js';
+import {ResourceMultiton} from '../../ktbs-api/ResourceMultiton.js';
 import {TemplatedHTMLElement} from '../common/TemplatedHTMLElement.js';
 import "../ktbs4la2-attribute-type-select/ktbs4la2-attribute-type-select.js";
 
@@ -159,6 +162,13 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
     /**
      * 
      */
+    get suggestions_source_trace_uri() {
+        return this.getAttribute("suggestions-source-trace-uri");
+    }
+
+    /**
+     * 
+     */
     checkValidity() {
         return ((this._operatorSelect.value == "==") || this._valueInput.value);
     }
@@ -171,6 +181,7 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
         _observedAttributes.push("model-uri");
         _observedAttributes.push("obsel-type");
         _observedAttributes.push("value");
+        _observedAttributes.push("suggestions-source-trace-uri");
         return _observedAttributes;
     }
 
@@ -240,6 +251,9 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
                                         .then(() => {
                                             this._resolveLastSetValuePromise();
                                             this._lastSetValuePromise = null;
+
+                                            if(this.hasAttributes("suggestions-source-trace-uri"))
+                                                this._updateValueSuggestions();
                                         })
                                         .catch((error) => {
                                             this._rejectLastSetValuePromise(error);
@@ -278,6 +292,11 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
                 this._lastSetValuePromise = null;
             }
         }
+        else if(name == "suggestions-source-trace-uri") {
+            this._componentReady.then(() => {
+                this._updateValueSuggestions();
+            }).catch(() => {});
+        }
     }
 
     /**
@@ -289,6 +308,8 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
         this._attributeTypeSelect.addEventListener("focus", this._onChildElementFocus.bind(this));
         this._attributeTypeSelect.addEventListener("change", this._onChildEvent.bind(this));
         this._attributeTypeSelect.addEventListener("input", this._onChildEvent.bind(this));
+        this._attributeTypeSelect.addEventListener("change", this._onChangeAttributeTypeSelect.bind(this));
+        this._attributeTypeSelect.addEventListener("input", this._onChangeAttributeTypeSelect.bind(this));
         this._operatorSelect = this.shadowRoot.querySelector("#operator-select");
         this._operatorSelect.addEventListener("focus", this._onChildElementFocus.bind(this));
         this._operatorSelect.addEventListener("change", this._onChildEvent.bind(this));
@@ -303,6 +324,7 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
         this._valueInput.addEventListener("focus", this._onChildElementFocus.bind(this));
         this._valueInput.addEventListener("change", this._onChildEvent.bind(this));
         this._valueInput.addEventListener("input", this._onChildEvent.bind(this));
+        this._valueSuggestionsList = this.shadowRoot.querySelector("#value-suggestions");
         this.addEventListener("focus", this._onFocus.bind(this));
     }
 
@@ -356,6 +378,54 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
 
             this.dispatchEvent(componentEvent);
         }
+    }
+
+    /**
+     * 
+     */
+    _updateValueSuggestions() {
+        while(this._valueSuggestionsList.hasChildNodes())
+            this._valueSuggestionsList.firstChild.remove();
+
+        if(this.model_uri && this.suggestions_source_trace_uri) {
+            const attribute_type_uri = this._attributeTypeSelect.value;
+
+            if(attribute_type_uri.startsWith(this.model_uri + "#")) {
+                const attribute_type_id = attribute_type_uri.substring(this.model_uri.length + 1);
+                const model = ResourceMultiton.get_resource(Model, this.model_uri);
+
+                model.get(this._abortController.signal)
+                    .then(() => {
+                        const attributeType = model.get_attribute_type(attribute_type_id);
+                        
+                        if(!attributeType.is_builtin) {
+                            const sourceTrace = ResourceMultiton.get_resource(Trace, this.suggestions_source_trace_uri);
+                            const sourceTraceObselList = sourceTrace.obsel_list;
+
+                            sourceTraceObselList.list_attribute_type_distinct_values(attributeType, this._abortController.signal)
+                                .then((distinct_values) => {
+                                    while(this._valueSuggestionsList.hasChildNodes())
+                                        this._valueSuggestionsList.firstChild.remove();
+
+                                    for(let i = 0; i < distinct_values.length; i++) {
+                                        const aSuggestion = document.createElement("option");
+                                        aSuggestion.setAttribute("value", distinct_values[i]);
+                                        this._valueSuggestionsList.appendChild(aSuggestion);
+                                    }
+                                })
+                                .catch(this.emitErrorEvent);
+                        }
+                    })
+                    .catch(this.emitErrorEvent);
+            }
+        }
+    }
+
+    /**
+     * 
+     */
+    _onChangeAttributeTypeSelect(event) {
+        this._updateValueSuggestions();
     }
 }
 

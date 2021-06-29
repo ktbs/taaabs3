@@ -133,6 +133,13 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
     /**
      * 
      */
+    get suggestions_source_trace_uri() {
+        return this.getAttribute("suggestions-source-trace-uri");
+    }
+
+    /**
+     * 
+     */
     checkValidity() {
         return (
                 !this.required
@@ -165,6 +172,7 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
         _observedAttributes.push("value");
         _observedAttributes.push("required");
         _observedAttributes.push("model-uri");
+        _observedAttributes.push("suggestions-source-trace-uri");
         return _observedAttributes;
     }
 
@@ -288,6 +296,14 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
                     subrulesInputs[i].setAttribute("model-uri", newValue);
             }).catch(() => {});
         }
+        else if(name == "suggestions-source-trace-uri") {
+            this._componentReady.then(() => {
+                const subrulesInputs = this._getSubrulesInputs();
+
+                for(let i = 0; i < subrulesInputs.length; i++)
+                    subrulesInputs[i].setAttribute("suggestions-source-trace-uri", newValue);
+            }).catch(() => {});
+        }
     }
 
     /**
@@ -374,6 +390,9 @@ class KTBS4LA2MultipleHrulesSubrulesInput extends TemplatedHTMLElement {
             
         if(this.hasAttribute("model-uri"))
             newSubruleInput.setAttribute("model-uri", this.getAttribute("model-uri"));
+
+        if(this.hasAttribute("suggestions-source-trace-uri"))
+            newSubruleInput.setAttribute("suggestions-source-trace-uri", this.getAttribute("suggestions-source-trace-uri"));
 
         const currentSubrulesInputsCount = this._getSubrulesInputs().length;
         

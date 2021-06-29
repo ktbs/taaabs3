@@ -152,6 +152,13 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
     /**
      * 
      */
+    get suggestions_source_trace_uri() {
+        return this.getAttribute("suggestions-source-trace-uri");
+    }
+
+    /**
+     * 
+     */
     checkValidity() {
         let valid = true;
         const attributeConstraintInputs = this._getAttributeConstraintInputs();
@@ -188,6 +195,7 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
         _observedAttributes.push("required");
         _observedAttributes.push("model-uri");
         _observedAttributes.push("obsel-type");
+        _observedAttributes.push("suggestions-source-trace-uri");
         return _observedAttributes;
     }
 
@@ -324,6 +332,14 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
                         attributeConstraintInputs[i].removeAttribute("obsel-type");
             }).catch(() => {});
         }
+        else if(name == "suggestions-source-trace-uri") {
+            this._componentReady.then(() => {
+                const attributeConstraintInputs = this._getAttributeConstraintInputs();
+
+                for(let i = 0; i < attributeConstraintInputs.length; i++)
+                    attributeConstraintInputs[i].setAttribute("suggestions-source-trace-uri", newValue);
+            })
+        }
     }
 
     /**
@@ -413,6 +429,9 @@ class KTBS4LA2MultipleHrulesAttributeConstraintsInput extends TemplatedHTMLEleme
 
         if(this.hasAttribute("obsel-type"))
             newAttributeConstraintInput.setAttribute("obsel-type", this.getAttribute("obsel-type"));
+
+        if(this.hasAttribute("suggestions-source-trace-uri"))
+            newAttributeConstraintInput.setAttribute("suggestions-source-trace-uri", this.getAttribute("suggestions-source-trace-uri"));
 
         const currentAttributeConstraintInputsCount = this._getAttributeConstraintInputs().length;
         

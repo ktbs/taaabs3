@@ -284,6 +284,10 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 						this._trace = ResourceMultiton.get_resource(Trace, trace_uri);
 						this._trace.registerObserver(this._onTraceNotification.bind(this), "sync-status-change");
 						this._onTraceNotification(this._trace, "sync-status-change");
+
+						this._componentReady.then(() => {
+							this._styleEditInput.setAttribute("suggestions-source-trace-uri", newValue);
+						}).catch(() => {});
 					}
 					catch(error) {
 						this._setError(error);
