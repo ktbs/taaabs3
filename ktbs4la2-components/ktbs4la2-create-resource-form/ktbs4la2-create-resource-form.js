@@ -276,7 +276,7 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 			if(this._sourceTraceDiv.className == "single")
 				formData["source-trace"] = this._singleSourceTracePicker.value;
 			else if(this._sourceTraceDiv.className == "multiple")
-				formData["source-trace"] = JSON.parse(this._multipleSourceTracesPicker.value);
+				formData["source-trace"] = this._multipleSourceTracesPicker.value.split(" ");
 		}
 
 		if((createType == "Method") || (createType == "ComputedTrace"))
