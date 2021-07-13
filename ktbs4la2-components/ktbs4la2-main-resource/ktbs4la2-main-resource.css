@@ -567,6 +567,10 @@
     display: block !important;
 }
 
+#resource-head-content {
+	margin-top: 20px;
+}
+
 /* ----- Authentication form ------- */
 
 #authentication {
