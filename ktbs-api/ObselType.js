@@ -118,6 +118,24 @@ export class ObselType {
     }
 
     /**
+     * Gets the rank of the current obsel type within its model inheritance hierarchy : 0 if the obsel type does not inherit from any other obsel type, 1 if it inherits from a rank 0 obsel type, 2 if it inherits from a rank 1 obsel type etc
+     * \return int
+     * \public
+     */
+    get types_hierarchy_rank() {
+        if(this.super_obsel_types.length > 0) {
+            const super_types_ranks = new Array();
+
+            for(let i = 0; i < this.super_obsel_types.length; i++)
+                super_types_ranks.push(this.super_obsel_types[i].types_hierarchy_rank);
+
+            return Math.max(...super_types_ranks) + 1;
+        }
+        else
+            return 0;
+    }
+
+    /**
      * Sets the super obsel types of the current obsel type
      * \param Array of ObselType new_super_obsel_types the new super obsel types for the current obsel type
      * \throws TypeError if the provided argument is not an Array of ObselType
