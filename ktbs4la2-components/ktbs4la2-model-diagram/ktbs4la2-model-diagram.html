@@ -22,6 +22,14 @@
 
     <div id="empty-message">{translate: 'No data to display'}</div>
 
+    <div id="tools">
+        <button id="details" class="inline selected" title="{translate: 'Currently selected tool : '}{translate: 'View details&#10;Clicking an obsel type show a modal panel including its full details and allowing edition'}"></button>
+        <button id="move" class="inline" title="{translate: 'Click to select tool : '}{translate: 'Move obsel types&#10;Allows to manually rearrange obsel types layout by individually dragging them'}"></button>
+        <button id="auto-arrange" title="{translate: 'Automatically rearrange obsel types layout'}"></button>
+        <button id="create-obseltype" class="edition" title="{translate: 'Create a new obsel type'}"></button>
+        <button id="create-inheritance" class="edition" title="{translate: 'Create a new inheritance relationship'}"></button>
+    </div>
+
     <div id="default-obseltype">
         <header>
             <h2 id="default-obseltype-title">{translate: 'Default'}</h2>
@@ -34,13 +42,5 @@
         </article>
     </div>
 
-    <div id="obseltypes">
-        <slot></slot>
-    </div>
-
-    <!--
-    <div id="tools">
-        <button id="auto-arrange" title="{translate: 'Automatically rearrange layout'}">%</button>
-    </div>
-    -->
+    <div id="model-obseltypes"></div>
 </div>

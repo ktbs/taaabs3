@@ -122,14 +122,8 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
      */
     connectedCallback() {
         super.connectedCallback();
-        this._parentDiagram = this.closest("ktbs4la2-model-diagram");
-
-        if(this._parentDiagram) {
-            this._parentDiagramResizeObserver = new ResizeObserver(this._onParentDiagramResize.bind(this));
-            this._parentDiagramResizeObserver.observe(this._parentDiagram);
-        }
-        else
-            this.emitErrorEvent("Diagram arrow element could not find its parent diagram");
+        this._parentNodeObserver = new ResizeObserver(this._onParentDiagramResize.bind(this));
+        this._parentNodeObserver.observe(this.parentNode);
     }
 
     /**
@@ -138,9 +132,9 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
     disconnectedCallback() {
         super.disconnectedCallback();
 
-        if(this._parentDiagramResizeObserver) {
-            this._parentDiagramResizeObserver.disconnect();
-            delete this._parentDiagramResizeObserver;
+        if(this._parentNodeObserver) {
+            this._parentNodeObserver.disconnect();
+            delete this._parentNodeObserver;
         }
     }
 
@@ -155,7 +149,7 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
      * 
      */
     _updateDraw() {
-        const diagramRect = this._parentDiagram.getBoundingClientRect();
+        const diagramRect = this.parentNode.getBoundingClientRect();
         const fromRect = this.fromBox.getBoundingClientRect();
         let fromX, fromY;
 
