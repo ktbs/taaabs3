@@ -1,0 +1,76 @@
+:host {
+	display: block;
+    position: absolute;
+    width: fit-content;
+    cursor: pointer;
+}
+
+#container {
+    display: block;
+    width: fit-content;
+    border-radius: 5px;
+}
+
+:host(:hover) #container {
+    box-shadow: 0px 0px 8px 4px #888;
+}
+
+#container:not(.light):not(.dark) {
+    border-color: black;
+}
+
+header {
+    text-align: center;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 0.3em;
+    padding-bottom: 0.3em;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+#container.dark header {
+    color: white;
+}
+
+#container:not(.light):not(.dark) header {
+    border: 1px solid black;
+    background-color: white;
+}
+
+#symbol {
+	display: inline;
+	font-family: "unifont", "unifont-upper";
+	text-decoration: none;
+	font-size: 11pt;
+}
+
+h2#title {
+    display: inline;
+    font-size: 1em;
+}
+
+article {
+    border: 1px solid;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-top: none;
+    background-color: white;
+}
+
+#container:not(.light):not(.dark) article {
+    border-color: black;
+}
+
+ul#attributetypes-list {
+    padding-right: 5px;
+    margin-block-start: 0;
+    margin-block-end: 0;
+    padding-top: 0.3em;
+    padding-bottom: 0.3em;
+    padding-inline-start: 20px;
+}
+
+ul#attributetypes-list li {
+    font-size: 0.7em;
+}

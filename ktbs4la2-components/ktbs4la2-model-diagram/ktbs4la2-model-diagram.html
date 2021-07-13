@@ -1,0 +1,46 @@
+<ktbs4la2-document-header id="ktbs4la2-timeline-fonts">
+	<style>
+		@font-face {
+            font-family: 'unifont';
+            src: url('{my-component-folder}/../ktbs4la2-timeline/fonts/unifont.woff2') format("woff2");
+        }
+
+        @font-face {
+            font-family: 'unifont-upper';
+            src: url('{my-component-folder}/../ktbs4la2-timeline/fonts/unifont_upper.woff2') format("woff2");
+            unicode-range: U+10000-10FFFF;
+        }
+	</style>
+</ktbs4la2-document-header>
+
+<div id="container" class="waiting">
+    <div id="wait-message-container">
+        <div id="wait-message">{translate: 'Waiting for server response...'}</div>
+    </div>
+
+    <div id="error-message"></div>
+
+    <div id="empty-message">{translate: 'No data to display'}</div>
+
+    <div id="default-obseltype">
+        <header>
+            <h2 id="default-obseltype-title">{translate: 'Default'}</h2>
+        </header>
+    
+        <article>
+            <ul id="default-obseltype-attributetypes-list">
+                <li>{translate: 'ID'}</li>
+            </ul>
+        </article>
+    </div>
+
+    <div id="obseltypes">
+        <slot></slot>
+    </div>
+
+    <!--
+    <div id="tools">
+        <button id="auto-arrange" title="{translate: 'Automatically rearrange layout'}">%</button>
+    </div>
+    -->
+</div>

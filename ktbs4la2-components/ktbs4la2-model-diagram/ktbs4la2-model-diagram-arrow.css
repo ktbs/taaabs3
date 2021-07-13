@@ -1,0 +1,20 @@
+:host {
+    display: block;
+    width: fit-content;
+    position: absolute;
+    display: flex;
+    flex-flow: column;
+    min-height: 25px;
+}
+
+#head {
+    margin-bottom: -1px;
+}
+
+#tail {
+    border-left: 1px solid black;
+    position: relative;
+    left: calc(50% - 0.5px);
+    width: 0px;
+    flex-grow: 1;
+}
