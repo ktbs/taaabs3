@@ -197,7 +197,15 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
         const horizontalOffset = toX - fromX;
         const verticalOffset = toY - fromY;
         const distance = Math.sqrt(horizontalOffset*horizontalOffset + verticalOffset*verticalOffset);
-        const angle = -Math.atan(horizontalOffset / verticalOffset);
+        
+        let angle; 
+
+        if(verticalOffset < 0)
+            angle = -Math.atan(horizontalOffset / verticalOffset);
+        else
+            angle = -Math.atan(horizontalOffset / verticalOffset) + Math.PI;
+
+        console.log("angle = " + angle + " rad");
         
         this.style.height = distance + "px";
         this.style.left = (fromX + (horizontalOffset / 2) - 9) + "px";
