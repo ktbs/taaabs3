@@ -204,8 +204,6 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
             angle = -Math.atan(horizontalOffset / verticalOffset);
         else
             angle = -Math.atan(horizontalOffset / verticalOffset) + Math.PI;
-
-        console.log("angle = " + angle + " rad");
         
         this.style.height = distance + "px";
         this.style.left = (fromX + (horizontalOffset / 2) - 9) + "px";
