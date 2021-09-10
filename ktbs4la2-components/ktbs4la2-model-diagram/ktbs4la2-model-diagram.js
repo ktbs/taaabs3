@@ -25,6 +25,8 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 */
 	onComponentReady() {
 		this._container = this.shadowRoot.querySelector("#container");
+		this._waitMessage = this.shadowRoot.querySelector("#wait-message");
+		this._emptyMessage = this.shadowRoot.querySelector("#empty-message");
 		this._errorMessage = this.shadowRoot.querySelector("#error-message");
 		this._detailsButton = this.shadowRoot.querySelector("#details");
 		this._detailsButton.addEventListener("click", this._onClickDetailsButton.bind(this));
@@ -43,16 +45,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		for(let i = 0; i < AttributeType.builtin_attribute_types.length; i++) {
 			const aBuiltinAttribute = AttributeType.builtin_attribute_types[i];
 			const aBuilitinAttributeElement = document.createElement("li");
-
-			let attributetype_preferred_label = aBuiltinAttribute.get_translated_label(this._lang);
-
-			if(!attributetype_preferred_label)
-				attributetype_preferred_label = aBuiltinAttribute.label;
-
-			if(!attributetype_preferred_label)
-				attributetype_preferred_label = aBuiltinAttribute.id;
-
-			aBuilitinAttributeElement.innerText = attributetype_preferred_label;
+			aBuilitinAttributeElement.innerText = aBuiltinAttribute.get_preferred_label(this._lang);
 			this._defaultObseltypeAttributetypesList.appendChild(aBuilitinAttributeElement);
 		}
 
@@ -174,6 +167,14 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 
 			if(!this._detailsButton.classList.contains("selected"))
 				this._detailsButton.classList.add("selected");
+
+			this._detailsButton.setAttribute("title", this._translateString("Currently selected tool : ") + this._translateString("View details\nClicking an obsel type show a modal panel including its full details and allowing edition"));
+			this._moveButton.setAttribute("title", this._translateString("Click to select tool : ") + this._translateString("Move obsel types\nAllows to manually rearrange obsel types layout by individually dragging them"));
+
+			const obselTypesBoxes = this._modelObselTypesContainer.querySelectorAll("ktbs4la2-model-diagram-obseltype");
+
+			for(let i = 0; i < obselTypesBoxes.length; i++)
+				obselTypesBoxes[i].setAttribute("title", this._translateString("Click to view this obsel type's details"));
 		}
 		
 	}
@@ -200,6 +201,14 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 
 		if(!this._moveButton.classList.contains("selected"))
 			this._moveButton.classList.add("selected");
+
+		this._detailsButton.setAttribute("title", this._translateString("Click to select tool : ") + this._translateString("View details\nClicking an obsel type show a modal panel including its full details and allowing edition"));
+		this._moveButton.setAttribute("title", this._translateString("Currently selected tool : ") + this._translateString("Move obsel types\nAllows to manually rearrange obsel types layout by individually dragging them"));
+			
+		const obselTypesBoxes = this._modelObselTypesContainer.querySelectorAll("ktbs4la2-model-diagram-obseltype");
+
+		for(let i = 0; i < obselTypesBoxes.length; i++)
+			obselTypesBoxes[i].setAttribute("title", this._translateString("Drag this obsel type"));
 	}
 
 	/**
@@ -396,6 +405,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				for(let i = 0; i < this._ktbsResource.obsel_types.length; i++) {
 					const anObselType = this._ktbsResource.obsel_types[i];
 					const aChildObselTypeNode = document.createElement("ktbs4la2-model-diagram-obseltype");
+					aChildObselTypeNode.setAttribute("title", this._translateString("Click to view this obsel type's details"));
 					aChildObselTypeNode.setAttribute("id", this._ktbsResource.obsel_types[i].id);
 					aChildObselTypeNode.obsel_type = anObselType;
 					aChildObselTypeNode.addEventListener("click", this._onClickObselTypeBox.bind(this));
@@ -499,7 +509,49 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
      * 
      */
 	_updateStringsTranslation() {
+		this._waitMessage.innerText = this._translateString("Waiting for server response...");
+		this._emptyMessage.innerText = this._translateString("No data to display");
 
+		if(this._container.classList.contains("move")) {
+			this._detailsButton.setAttribute("title", this._translateString("Click to select tool : ") + this._translateString("View details\nClicking an obsel type show a modal panel including its full details and allowing edition"));
+			this._moveButton.setAttribute("title", this._translateString("Currently selected tool : ") + this._translateString("Move obsel types\nAllows to manually rearrange obsel types layout by individually dragging them"));
+		}
+		else {
+			this._detailsButton.setAttribute("title", this._translateString("Currently selected tool : ") + this._translateString("View details\nClicking an obsel type show a modal panel including its full details and allowing edition"));
+			this._moveButton.setAttribute("title", this._translateString("Click to select tool : ") + this._translateString("Move obsel types\nAllows to manually rearrange obsel types layout by individually dragging them"));
+		}
+
+		this._autoArrangeButton.setAttribute("title", this._translateString("Automatically rearrange obsel types layout"));
+		this._createObseltypeButton.setAttribute("title", this._translateString("Create a new obsel type"));
+		this._createInheritanceButton.setAttribute("title", this._translateString("Create a new inheritance relationship"));
+		this._defaultObseltypeTitle.innerText = this._translateString("Default");
+
+		// translate "Default box"
+		const defaultObseltypeAttributetypes = this.shadowRoot.querySelectorAll("#default-obseltype-attributetypes-list li");
+
+		defaultObseltypeAttributetypes[0].innerText = this._translateString("ID");
+
+		for(let i = defaultObseltypeAttributetypes.length - 1; i > 0; i--)
+			defaultObseltypeAttributetypes[i].remove();
+
+		for(let i = 0; i < AttributeType.builtin_attribute_types.length; i++) {
+			const aBuiltinAttribute = AttributeType.builtin_attribute_types[i];
+			const aBuilitinAttributeElement = document.createElement("li");
+			aBuilitinAttributeElement.innerText = aBuiltinAttribute.get_preferred_label(this._lang);
+			this._defaultObseltypeAttributetypesList.appendChild(aBuilitinAttributeElement);
+		}
+		// done
+
+		const obselTypesBoxes = this._modelObselTypesContainer.querySelectorAll("ktbs4la2-model-diagram-obseltype");
+
+		for(let i = 0; i < obselTypesBoxes.length; i++) {
+			if(this._container.classList.contains("move"))
+				obselTypesBoxes[i].setAttribute("title", this._translateString("Drag this obsel type"));
+			else
+				obselTypesBoxes[i].setAttribute("title", this._translateString("Click to view this obsel type's details"));
+
+			obselTypesBoxes[i].setAttribute("lang", this._lang);
+		}
     }
 
 	/**

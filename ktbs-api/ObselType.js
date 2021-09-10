@@ -219,6 +219,21 @@ export class ObselType {
 		return this._label;
 	}
 
+    /**
+	 * 
+	 */
+	get_preferred_label(lang) {
+		let preferred_label = this.get_translated_label(lang);
+
+		if(!preferred_label)
+			preferred_label = this.label;
+
+		if(!preferred_label)
+			preferred_label = this.id;
+
+		return preferred_label;
+	}
+
 	/**
 	 * Gets the label for a given language, or the default label if no translated label has been found, or undefined if no default label has been found
 	 * \param String lang - a short code for the language we want the label translated into
@@ -226,18 +241,29 @@ export class ObselType {
      * \public
 	 */
 	get_translated_label(lang) {
-		let label = this.label;
+        const labelKeys = ["label", "http://www.w3.org/2000/01/rdf-schema#label", "rdfs:label"];
 
-		if(label instanceof Array) {
-			for(let i = 0; i < label.length; i++) {
-				let aLabel = label[i];
+        for(let i = 0; i < labelKeys.length; i++) {
+            const labelTranslations = this._JSONData[labelKeys[i]];
 
-				if((aLabel instanceof Object) && (aLabel["@language"] == lang))
-					return aLabel["@value"];
-			}
-		}
-		else
-			return label;
+            if(labelTranslations instanceof Array) {
+                for(let i = 0; i < labelTranslations.length; i++) {
+                    let aLabelTranslation = labelTranslations[i];
+
+                    if((aLabelTranslation instanceof Object) && (aLabelTranslation["@language"] == lang))
+                        return aLabelTranslation["@value"];
+                }
+            }
+            else if(
+                    (labelTranslations instanceof Object)
+                &&	labelTranslations["@language"]
+                &&	labelTranslations["@value"]
+                && 	(labelTranslations["@language"] == lang)
+            )
+                return labelTranslations["@value"];
+        }
+
+        return undefined;
 	}
 
 	/**

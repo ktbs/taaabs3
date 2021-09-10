@@ -64,9 +64,8 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 				parentElement.setAttribute("scale", ".75");
 				parentElement.setAttribute("uri", parentResource.uri.toString());
 				parentElement.setAttribute("resource-type", parentResource.type);
-
-				if(parentResource.label)
-					parentElement.setAttribute("label", parentResource.label);
+				parentElement.setAttribute("lang", this._lang);
+				//parentElement.setAttribute("label", parentResource.get_preferred_label(this._lang));
 
 				this._componentReady.then(() => {
 					this._parentSpan.appendChild(parentElement);

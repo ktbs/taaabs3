@@ -373,6 +373,11 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
         for(let i = 0; i < relatedResourcesLinks.length; i++)
             relatedResourcesLinks[i].setAttribute("lang", this._lang);
+
+        const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
+
+        if(modelDiagram)
+            modelDiagram.setAttribute("lang", this._lang);
 	}
 
     /**
@@ -393,8 +398,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         childElement.setAttribute("uri", child_resource.uri);
         childElement.setAttribute("lang", this._lang);
 
-        if(child_resource.label)
-            childElement.setAttribute("label", child_resource.label);
+        const childLabel = child_resource.get_preferred_label(this._lang);
+
+        /*if(childLabel)
+            childElement.setAttribute("label", childLabel);*/
 
         if(mark_as_new == true)
             childElement.classList.add("new");
@@ -768,7 +775,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 }
                 // ---
 
-                let diagram = document.createElement("ktbs4la2-model-diagram");
+                const diagram = document.createElement("ktbs4la2-model-diagram");
                 diagram.setAttribute("uri", this.getAttribute("uri"));
                 diagram.setAttribute("lang", this._lang);
                 this._resourceHeadContent.appendChild(diagram);
@@ -793,8 +800,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     methodElement.setAttribute("uri", parentMethod.uri);
                     methodElement.setAttribute("scale", "0.7");
 
-                    if(parentMethod.label)
-                        methodElement.setAttribute("label", parentMethod.label);
+                    /*const parentMethodLabel = parentMethod.get_preferred_label(this._lang);
+
+                    if(parentMethodLabel)
+                        methodElement.setAttribute("label", parentMethodLabel);*/
                     
                     this._parentMethodLinkContainer.appendChild(methodElement);
                 }
@@ -844,8 +853,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     modelElement.setAttribute("uri", model.uri);
                     modelElement.setAttribute("scale", "0.7");
 
-                    if(model.label)
-                        modelElement.setAttribute("label", model.label);
+                    /*const modelLabel = model.get_preferred_label(this._lang);
+
+                    if(modelLabel)
+                        modelElement.setAttribute("label", modelLabel);*/
 
                     this._modelLinkContainer.appendChild(modelElement);
 
@@ -884,8 +895,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     else
                         sourceTraceElement.setAttribute("resource-type", "ComputedTrace");
 
-                    if(this._ktbsResource.source_traces[i].label)
-                        sourceTraceElement.setAttribute("label", this._ktbsResource.source_traces[i].label);
+                    /*const sourceTraceLabel = this._ktbsResource.source_traces[i].get_preferred_label(this._lang);
+
+                    if(sourceTraceLabel)
+                        sourceTraceElement.setAttribute("label", sourceTraceLabel);*/
 
                     this._sourceTraceLinkContainer.appendChild(sourceTraceElement);
                 }
@@ -935,8 +948,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 methodElement.setAttribute("uri", this._ktbsResource.method.uri);
                 methodElement.setAttribute("scale", "0.7");
 
-                if(this._ktbsResource.method.label)
-                    methodElement.setAttribute("label", this._ktbsResource.method.label);
+                /*const methodLabel = this._ktbsResource.method.get_preferred_label(this._lang);
+
+                if(methodLabel)
+                    methodElement.setAttribute("label", methodLabel);*/
 
                 this._methodLinkContainer.appendChild(methodElement);
 
@@ -1047,11 +1062,11 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             breadcrumbItemElement.setAttribute("uri", resource.uri);
             breadcrumbItemElement.setAttribute("scale", "0.7");
             
-            let label = resource.label;
+            /*let label = resource.get_preferred_label(this._lang);
 
             if(label)
                 breadcrumbItemElement.setAttribute("label", label);
-            else if(resource.constructor.name == "Ktbs") {
+            else */if(resource.constructor.name == "Ktbs") {
                 let rootLabel = null;
                 this.ktbsRoots = JSON.parse(window.localStorage.getItem("ktbs-roots"));
 

@@ -617,7 +617,15 @@ export class Resource {
 	 * \public
 	 */
 	get label_translations() {
-		return this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+		//return this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+
+		const labelKeys = ["label", "http://www.w3.org/2000/01/rdf-schema#label", "rdfs:label"];
+
+		for(let i = 0; i < labelKeys.length; i++)
+			if(this._JSONData[labelKeys[i]] && (this._JSONData[labelKeys[i]] instanceof Object))
+				return this._JSONData[labelKeys[i]];
+
+		return undefined;
 	}
 
 	/**
@@ -636,24 +644,28 @@ export class Resource {
 	 * \public
 	 */
 	get_translated_label(lang) {
-		let labelTranslations = this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+		const labelKeys = ["label", "http://www.w3.org/2000/01/rdf-schema#label", "rdfs:label"];
 
-		if(labelTranslations instanceof Array) {
-			for(let i = 0; i < labelTranslations.length; i++) {
-				let aLabelTranslation = labelTranslations[i];
+		for(let i = 0; i < labelKeys.length; i++) {
+			const labelTranslations = this._JSONData[labelKeys[i]];
 
-				if((aLabelTranslation instanceof Object) && (aLabelTranslation["@language"] == lang))
-					return aLabelTranslation["@value"];
+			if(labelTranslations instanceof Array) {
+				for(let i = 0; i < labelTranslations.length; i++) {
+					let aLabelTranslation = labelTranslations[i];
+
+					if((aLabelTranslation instanceof Object) && (aLabelTranslation["@language"] == lang))
+						return aLabelTranslation["@value"];
+				}
 			}
+			else if(
+					(labelTranslations instanceof Object)
+				&&	labelTranslations["@language"]
+				&&	labelTranslations["@value"]
+				&& 	(labelTranslations["@language"] == lang)
+			)
+				return labelTranslations["@value"];
 		}
-		else if(
-				(labelTranslations instanceof Object)
-			&&	labelTranslations["@language"]
-			&&	labelTranslations["@value"]
-			&& 	(labelTranslations["@language"] == lang)
-		)
-			return labelTranslations["@value"];
-		
+
 		return undefined;
 	}
 
@@ -664,12 +676,20 @@ export class Resource {
 	 * \public
 	 */
 	set_translated_label(label, lang) {
-		let label_translations;
+		let label_translations, label_translations_key;
 
-		if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"])
+		if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"]) {
 			label_translations = this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
-		else
+			label_translations_key = "http://www.w3.org/2000/01/rdf-schema#label";
+		}
+		else if(this._JSONData["rdfs:label"]) {
+			label_translations = this._JSONData["rdfs:label"];
+			label_translations_key = "rdfs:label";
+		}
+		else {
 			label_translations = new Array();
+			label_translations_key = "http://www.w3.org/2000/01/rdf-schema#label";
+		}
 
 		let existing_translation_replaced = false;
 
@@ -682,7 +702,7 @@ export class Resource {
 		if(!existing_translation_replaced)
 			label_translations.push({"@value": label, "@language": lang})
 		
-		this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] = label_translations;
+		this._JSONData["label_translations_key"] = label_translations;
 	}
 
 	/**

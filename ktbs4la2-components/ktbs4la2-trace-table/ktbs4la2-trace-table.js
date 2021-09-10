@@ -307,7 +307,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 		let obselATypeSortingValue;
 		
 		if(obselA.type)
-			obselATypeSortingValue = obselA.type.get_translated_label(this._lang);
+			obselATypeSortingValue = obselA.type.get_preferred_label(this._lang);
 
 		if(!obselATypeSortingValue)
 			obselATypeSortingValue =  obselA.type_id;
@@ -315,7 +315,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 		let obselBTypeSortingValue;
 		
 		if(obselB.type)
-			obselBTypeSortingValue = obselB.type.get_translated_label(this._lang);
+			obselBTypeSortingValue = obselB.type.get_preferred_label(this._lang);
 
 		if(!obselBTypeSortingValue)
 			obselBTypeSortingValue =  obselB.type_id;
@@ -335,7 +335,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 		let obselATypeSortingValue;
 
 		if(obselA.type)
-			obselATypeSortingValue = obselA.type.get_translated_label(this._lang);
+			obselATypeSortingValue = obselA.type.get_preferred_label(this._lang);
 
 		if(!obselATypeSortingValue)
 			obselATypeSortingValue =  obselA.type_id;
@@ -343,7 +343,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 		let obselBTypeSortingValue;
 		
 		if(obselB.type)
-			obselBTypeSortingValue = obselB.type.get_translated_label(this._lang);
+			obselBTypeSortingValue = obselB.type.get_preferred_label(this._lang);
 
 		if(!obselBTypeSortingValue)
 			obselBTypeSortingValue =  obselB.type_id;
@@ -803,14 +803,7 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 		let obselType = obsel.type;
 
         if(obselType) {
-			let obselTypeLabel;
-            let obselTypeTranslatedLabel = obselType.get_translated_label(this._lang);
-
-            if(obselTypeTranslatedLabel)
-                obselTypeLabel = obselTypeTranslatedLabel;
-            else
-				obselTypeLabel = obselType.label?obselType.label:obselType.id;
-				
+			const obselTypeLabel = obselType.get_preferred_label(this._lang);
 			let obselTypeColor = obselType.suggestedColor;
 
 			if(obselTypeColor)
@@ -857,20 +850,8 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 			let attributeType = obsel_attribute.type;
 			let attributeTypeLabel;
 
-            if(attributeType) {
-                let attributeTypeTranslatedLabel = attributeType.get_translated_label(this._lang);
-
-                if(attributeTypeTranslatedLabel)
-                    attributeTypeLabel = attributeTypeTranslatedLabel;
-                else {
-                    let attributeTypeDefaultLabel = attributeType.label;
-
-                    if(attributeTypeDefaultLabel)
-                        attributeTypeLabel = attributeTypeDefaultLabel;
-                    else
-                        attributeTypeLabel = obsel_attribute.type_id;
-                }
-            }
+            if(attributeType)
+                attributeTypeLabel = attributeType.get_preferred_label(this._lang);
             else
                 attributeTypeLabel = obsel_attribute.type_id;
 
@@ -916,20 +897,8 @@ class KTBS4LA2TraceTable extends KtbsResourceElement {
 				let attributeType = obsel_attribute.type;
 				let attributeTypeLabel;
 	
-				if(attributeType) {
-					let attributeTypeTranslatedLabel = attributeType.get_translated_label(this._lang);
-	
-					if(attributeTypeTranslatedLabel)
-						attributeTypeLabel = attributeTypeTranslatedLabel;
-					else {
-						let attributeTypeDefaultLabel = attributeType.label;
-	
-						if(attributeTypeDefaultLabel)
-							attributeTypeLabel = attributeTypeDefaultLabel;
-						else
-							attributeTypeLabel = obsel_attribute.type_id;
-					}
-				}
+				if(attributeType)
+					attributeTypeLabel = attributeType.get_preferred_label(this._lang);
 				else
 					attributeTypeLabel = obsel_attribute.type_id;
 	

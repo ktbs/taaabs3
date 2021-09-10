@@ -530,13 +530,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		for(let i = 0; i < obselTypes.length; i++) {
 			let obselType = obselTypes[i];
 			let aRule = new HubbleRule({}, defaultStyleSheet);
-			let obselTypeLabel = obselType.get_translated_label(this._lang);
-
-			if(obselTypeLabel)
-				aRule.id = obselTypeLabel;
-			else
-				aRule.id = obselType.id;
-
+			aRule.id = obselType.get_preferred_label(this._lang);
 			aRule.symbol = new Object();
 
 			if(obselType.suggestedColor)
@@ -1502,14 +1496,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		let obselTypeLabel;
 		let obselType = obsel.type;
 
-		if(obselType) {
-			let obselTypeTranslatedLabel = obselType.get_translated_label(this._lang);
-
-			if(obselTypeTranslatedLabel)
-				obselTypeLabel = obselTypeTranslatedLabel;
-			else
-				obselTypeLabel = obselType.label?obselType.label:obselType.id;
-		}
+		if(obselType)
+			obselTypeLabel = obselType.get_preferred_label(this._lang);
 		else
 			obselTypeLabel = obsel.type_id;
 

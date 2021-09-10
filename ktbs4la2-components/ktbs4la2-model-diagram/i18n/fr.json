@@ -1,3 +1,15 @@
 {
-    "Automatically rearrange layout": "Réarranger auomatiquement la disposition"
+    "Waiting for server response...": "En attente de la réponse du serveur...",
+    "No data to display": "Aucune donnée à afficher",
+    "Currently selected tool : ": "Outil actuellement sélectionné : ",
+    "View details\nClicking an obsel type show a modal panel including its full details and allowing edition": "Voir les détails\nLe clic sur un type d'obsel fait apparaître un panneau latéral incluant tous les détails et permettant l'édition",
+    "Click to select tool : ": "Cliquez pour sélectionner l'outil : ",
+    "Move obsel types\nAllows to manually rearrange obsel types layout by individually dragging them": "Déplacer les types d'obsel\nPermet de réarranger manuellement la disposition des types d'obsels en les faisant glisser individuellement",
+    "Automatically rearrange obsel types layout": "Réarranger auomatiquement la disposition des types d'obsel",
+    "Create a new obsel type": "Créer un nouveau type d'obsel",
+    "Create a new inheritance relationship": "Créer une nouvelle relation d'héritage",
+    "Default": "Par défaut",
+    "ID": "ID",
+    "Click to view this obsel type's details": "Cliquez pour voir les détails de ce type d'obsel",
+    "Drag this obsel type": "Faire glisser ce type d'obsel"
 }

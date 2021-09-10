@@ -451,19 +451,8 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
             else
                 attributeType = this._model.get_attribute_type(attributeTypeId);
 
-            if(attributeType) {
-                let attributeTypeLabel = attributeType.get_translated_label(this._lang);
-
-                if(!attributeTypeLabel)
-                    attributeTypeLabel = attributeType.label;
-
-                if(!attributeTypeLabel)
-                    attributeTypeLabel = attributeType.id;
-
-                newAttributeTypeOption.innerText = attributeTypeLabel;
-
-                anOption.innerText = attributeTypeLabel;
-            }
+            if(attributeType)
+                anOption.innerText = attributeType.get_preferred_label(this._lang);
         }
     }
 
@@ -547,17 +536,8 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
         for(let i = 0; i < AttributeType.builtin_attribute_types.length; i++) {
             const attributeType = AttributeType.builtin_attribute_types[i];
             const newAttributeTypeOption = document.createElement("option");
-            newAttributeTypeOption.setAttribute("value", attributeType.id); 
-
-            let attributeTypeLabel = attributeType.get_translated_label(this._lang);
-
-            if(!attributeTypeLabel)
-                attributeTypeLabel = attributeType.label;
-
-            if(!attributeTypeLabel)
-                attributeTypeLabel = attributeType.id;
-
-            newAttributeTypeOption.innerText = attributeTypeLabel;
+            newAttributeTypeOption.setAttribute("value", attributeType.id);
+            newAttributeTypeOption.innerText = attributeType.get_preferred_label(this._lang);
 
             if(selected_attribute_types_ids.includes(attributeType.id))
                 newAttributeTypeOption.setAttribute("selected", "");
@@ -572,16 +552,7 @@ class KTBS4LA2AttributeTypeSelect extends TemplatedHTMLElement {
             if(!this.obsel_type || (this._obselType && attributeType.appliesToObselType(this._obselType))) {
                 const newAttributeTypeOption = document.createElement("option");
                 newAttributeTypeOption.setAttribute("value", attributeType.id); 
-
-                let attributeTypeLabel = attributeType.get_translated_label(this._lang);
-
-                if(!attributeTypeLabel)
-                    attributeTypeLabel = attributeType.label;
-
-                if(!attributeTypeLabel)
-                    attributeTypeLabel = attributeType.id;
-
-                newAttributeTypeOption.innerText = attributeTypeLabel;
+                newAttributeTypeOption.innerText = attributeType.get_preferred_label(this._lang);
 
                 if(selected_attribute_types_ids.includes(attributeType.id))
                     newAttributeTypeOption.setAttribute("selected", "");

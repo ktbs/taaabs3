@@ -3,6 +3,7 @@ import {Resource} from "../../ktbs-api/Resource.js";
 import {Ktbs} from "../../ktbs-api/Ktbs.js";
 import {Base} from "../../ktbs-api/Base.js";
 import {Method} from "../../ktbs-api/Method.js";
+import { ResourceMultiton } from "../../ktbs-api/ResourceMultiton.js";
 
 /**
  * 
@@ -114,16 +115,26 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 		else
 			this._unfoldButton.setAttribute("title", this._translateString("Fold child list"));
 
-		if(!this.hasAttribute("label")) {
-			const label = this._ktbsResource.get_preferred_label(this._lang);
-			
-			if(label)
-				this._titleTag.innerText = label;
-		}
+		//if(!this.hasAttribute("label"))
+			this._titleTag.innerText = this._ktbsResource.get_preferred_label(this._lang);
 
 		this._titleTag.setAttribute("title", this._getTitleHint());
 		this._childListSpinner.innerText = this._translateString("Pending...");
 		this._childListEmpty.innerText = this._translateString("Empty");
+
+		const childElements = this.querySelectorAll("ktbs4la2-nav-resource");
+
+		for(let i = 0; i < childElements.length; i++) {
+			if(childElements[i].hasAttribute("label") && childElements[i].hasAttribute("resource-type")) {
+				const childElementResource = ResourceMultiton.get_resource(childElements[i].getAttribute("resource-type"), childElements[i].getAttribute("uri"));
+				const childElementLabel = childElementResource.get_preferred_label(this._lang);
+
+				if(childElementLabel)
+					childElements[i].setAttribute("label", childElementLabel);
+				else
+					childElements[i].removeAttribute("label");
+			}
+		}
 	}
 
 	/**
@@ -131,12 +142,10 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 	 */
 	_onKtbsResourceSyncInSync() {
 		this._componentReady.then(() => {
-			if(!this.hasAttribute("label")) {
-				const label = this._ktbsResource.get_preferred_label(this._lang);
-				
-				if(label)
-					this._titleTag.innerText = label;
-			}
+			const label = this._ktbsResource.get_preferred_label(this._lang);
+
+			if(label && (label != this._titleTag.innerText))
+				this._titleTag.innerText = label;
 
 			this._titleTag.title = this._getTitleHint();
 
@@ -379,10 +388,10 @@ class KTBS4LA2NavResource extends KtbsResourceElement {
 			newChildElement.setAttribute("resource-type", child.type);
 			newChildElement.setAttribute("uri", child.uri);
 
-			const child_label = child.get_preferred_label(this._lang);
-			
-			if(child_label)
-				newChildElement.setAttribute("label", child_label);
+			const childLabel = child.get_preferred_label(this._lang);
+
+			if(childLabel)
+				newChildElement.setAttribute("label", childLabel);
 
 			if(mark_as_new == true)
 				newChildElement.classList.add("new");

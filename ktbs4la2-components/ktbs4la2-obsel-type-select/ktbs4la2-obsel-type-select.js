@@ -549,16 +549,7 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
                                 
                                 const labelSpan = document.createElement("span");
                                 labelSpan.className = "obsel-type-label";
-
-                                let obselTypeLabel = obselType.get_translated_label(this._lang);
-
-                                if(!obselTypeLabel)
-                                    obselTypeLabel = obselType.label;
-
-                                if(!obselTypeLabel)
-                                    obselTypeLabel = obselType.id;
-
-                                labelSpan.innerText = obselTypeLabel;
+                                labelSpan.innerText = obselType.get_preferred_label(this._lang);
 
                                 if(obselType.suggestedColor)
                                     labelSpan.style.color = obselType.suggestedColor;
@@ -679,17 +670,8 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
             if(obselType) {
                 const labelSpan = anOption.querySelector("span.obsel-type-label");
 
-                if(labelSpan) {
-                    let obselTypeLabel = obselType.get_translated_label(this._lang);
-
-                    if(!obselTypeLabel)
-                        obselTypeLabel = obselType.label;
-
-                    if(!obselTypeLabel)
-                        obselTypeLabel = obselType.id;
-
-                    labelSpan.innerText = obselTypeLabel; 
-                }
+                if(labelSpan)
+                    labelSpan.innerText = obselType.get_preferred_label(this._lang);
             }
         }
 

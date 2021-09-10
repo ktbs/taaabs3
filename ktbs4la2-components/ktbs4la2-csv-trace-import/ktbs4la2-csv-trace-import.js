@@ -1470,15 +1470,7 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                     const anExistingObselType = existingObselTypes[j];
                     const valueMapToExistingObselTypeOption = document.createElement("option");
                     valueMapToExistingObselTypeOption.setAttribute("value", "existing-" + anExistingObselType.id);
-                    let obselTypeLabel = anExistingObselType.get_translated_label(this._lang);
-
-                    if(!obselTypeLabel)
-                        obselTypeLabel = anExistingObselType.label;
-
-                    if(!obselTypeLabel)
-                        obselTypeLabel = anExistingObselType.id;
-
-                    valueMapToExistingObselTypeOption.innerText = obselTypeLabel;
+                    valueMapToExistingObselTypeOption.innerText = anExistingObselType.get_preferred_label(this._lang);
 
                     if(aDistinctValue == anExistingObselType.id)
                         valueMapToExistingObselTypeOption.setAttribute("selected", true);
@@ -1815,15 +1807,7 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                 else {
                     idSpan.innerText = obselTypeId;
                     const obselType = this._model.get_obsel_type(obselTypeId);
-                    let preferred_label = obselType.get_translated_label(this._lang);
-
-                    if(!preferred_label)
-                        preferred_label = obselType.label;
-
-                    if(!preferred_label)
-                        preferred_label = obselType.id;
-
-                    labelSpan.innerText = preferred_label;
+                    labelSpan.innerText = obselType.get_preferred_label(this._lang);
                 }
 
                 tableRow.className = "existing-obsel-type";

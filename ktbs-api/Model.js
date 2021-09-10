@@ -229,6 +229,21 @@ export class Model extends Resource {
 	}
 
 	/**
+	 * 
+	 */
+	get_preferred_label(lang) {
+		let preferred_label = this.get_translated_label(lang);
+
+		if(!preferred_label)
+			preferred_label = this.label;
+
+		if(!preferred_label)
+			preferred_label = this.id;
+
+		return preferred_label;
+	}
+
+	/**
 	 * Gets the label for a given language
 	 * \param string lang a short code for the language we want the label translated into
 	 * \return string the translated label, or the default label if no translated label has been found (which can be "undefined" if it hasn't been set)
@@ -236,25 +251,29 @@ export class Model extends Resource {
 	 */
 	get_translated_label(lang) {
 		let modelOwnGraph = this._get_model_own_graph();
-		let labelTranslations = modelOwnGraph["http://www.w3.org/2000/01/rdf-schema#label"];
+		const labelKeys = ["label", "http://www.w3.org/2000/01/rdf-schema#label", "rdfs:label"];
 
-		if(labelTranslations instanceof Array) {
-			for(let i = 0; i < labelTranslations.length; i++) {
-				let aLabelTranslation = labelTranslations[i];
+        for(let i = 0; i < labelKeys.length; i++) {
+            const labelTranslations = modelOwnGraph[labelKeys[i]];
 
-				if((aLabelTranslation instanceof Object) && (aLabelTranslation["@language"] == lang))
-					return aLabelTranslation["@value"];
-			}
-		}
-		else if(
-				(labelTranslations instanceof Object)
-			&&	labelTranslations["@language"]
-			&&	labelTranslations["@value"]
-			&& 	(labelTranslations["@language"] == lang)
-		)
-			return labelTranslations["@value"];
-		
-		return undefined;
+            if(labelTranslations instanceof Array) {
+                for(let i = 0; i < labelTranslations.length; i++) {
+                    let aLabelTranslation = labelTranslations[i];
+
+                    if((aLabelTranslation instanceof Object) && (aLabelTranslation["@language"] == lang))
+                        return aLabelTranslation["@value"];
+                }
+            }
+            else if(
+                    (labelTranslations instanceof Object)
+                &&	labelTranslations["@language"]
+                &&	labelTranslations["@value"]
+                && 	(labelTranslations["@language"] == lang)
+            )
+                return labelTranslations["@value"];
+        }
+
+        return undefined;
 	}
 
 	/**

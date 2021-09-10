@@ -82,14 +82,8 @@ class KTBS4LA2ObselAttributes extends KtbsResourceElement {
             let obselTypeLabel;
             let obselType = this._ktbsResource.type;
 
-            if(obselType) {
-                let obselTypeTranslatedLabel = obselType.get_translated_label(this._lang);
-
-                if(obselTypeTranslatedLabel)
-                    obselTypeLabel = obselTypeTranslatedLabel;
-                else
-                    obselTypeLabel = obselType.label?obselType.label:obselType.id;
-            }
+            if(obselType)
+                obselTypeLabel = obselType.get_preferred_label(this._lang);
             else
                 obselTypeLabel = this._ktbsResource.type_id;
 
@@ -144,20 +138,8 @@ class KTBS4LA2ObselAttributes extends KtbsResourceElement {
             let attributeTypeLabel;
             let attributeType = obsel_attribute.type;
 
-            if(attributeType) {
-                let attributeTypeTranslatedLabel = attributeType.get_translated_label(this._lang);
-
-                if(attributeTypeTranslatedLabel)
-                    attributeTypeLabel = attributeTypeTranslatedLabel;
-                else {
-                    let attributeTypeDefaultLabel = attributeType.label;
-
-                    if(attributeTypeDefaultLabel)
-                        attributeTypeLabel = attributeTypeDefaultLabel;
-                    else
-                        attributeTypeLabel = obsel_attribute.type_id;
-                }
-            }
+            if(attributeType)
+                attributeTypeLabel = attributeType.get_preferred_label(this._lang);
             else
                 attributeTypeLabel = obsel_attribute.type_id;
 
