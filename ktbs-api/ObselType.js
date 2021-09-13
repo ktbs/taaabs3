@@ -204,6 +204,21 @@ export class ObselType {
     }
 
     /**
+	 * Gets the labels translations array
+	 * \return Array
+	 * \public
+	 */
+	get label_translations() {
+		const labelKeys = ["label", "http://www.w3.org/2000/01/rdf-schema#label", "rdfs:label"];
+
+		for(let i = 0; i < labelKeys.length; i++)
+			if(this._JSONData[labelKeys[i]] && (this._JSONData[labelKeys[i]] instanceof Object))
+				return this._JSONData[labelKeys[i]];
+
+		return undefined;
+	}
+
+    /**
 	 * Returns a user-friendly label
 	 * \return String
      * \public
