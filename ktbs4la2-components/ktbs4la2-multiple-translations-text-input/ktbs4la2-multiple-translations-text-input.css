@@ -2,6 +2,7 @@
     display: inline-block;
     vertical-align: middle;
     outline: none;
+    min-width: 320px;
 }
 
 #container {
@@ -35,8 +36,8 @@ ktbs4la2-localized-text-input {
     cursor: pointer;
     opacity: 0.2;
     display: inline-block;
-    top: 50%;
-    transform: translateY(-50%);
+    /*top: 50%;
+    transform: translateY(-50%);*/
 }
 
 .remove-translation-button:hover, .remove-translation-button:focus {
