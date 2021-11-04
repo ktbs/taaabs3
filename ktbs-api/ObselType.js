@@ -424,4 +424,14 @@ export class ObselType {
 		else
 			throw new KtbsError("ObselType POST data cannot be built before the ObselType's parent model has been set");
     }
+
+    /**
+	 * 
+	 */
+	clone() {
+		// we use this weird JSON.parse+JSON.stringify trick in order to easily make a deep copy of the data
+		const clonedJSONData = JSON.parse(JSON.stringify(this._JSONData));
+		const clone = new ObselType(this._parentModel, clonedJSONData);
+        return clone;
+	}
 }
