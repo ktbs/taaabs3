@@ -788,6 +788,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 const diagram = document.createElement("ktbs4la2-model-diagram");
                 diagram.setAttribute("uri", this.getAttribute("uri"));
                 diagram.setAttribute("lang", this._lang);
+                diagram.addEventListener("change", this._onChangeModelDiagram.bind(this));
                 this._resourceHeadContent.appendChild(diagram);
             }
 
@@ -1367,6 +1368,26 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
                 this._ktbsResource.parent_method = newParentMethod;
             }
+
+            if(resourceType == "Model") {
+                const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
+
+                if(modelDiagram) {
+                    if(modelDiagram.model_is_valid)
+                        this._ktbsResource = modelDiagram.model;
+                    else {
+                        const error = new Error("The model's definition is not valid");
+                        this.emitErrorEvent(error);
+                        alert(error);
+                        throw error;
+                    }
+                }
+                else {
+                    const error = new Error("Could not find model diagram component");
+                    this.emitErrorEvent(error);
+                    throw error;
+                }
+            }
             
             this._ktbsResource.put(this._abortController.signal)
                 .then(() => {
@@ -1526,6 +1547,22 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 					this._updateSaveButtonState();
 				});
 			});
+    }
+
+    /**
+     * 
+     */
+    _onChangeModelDiagram(event) {
+        const modelDiagram = event.target;
+
+        if(modelDiagram.model_is_valid) {
+            if(this._saveModificationsButton.classList.contains("disabled"))
+                this._saveModificationsButton.classList.remove("disabled");
+        }
+        else {
+            if(!this._saveModificationsButton.classList.contains("disabled"))
+                this._saveModificationsButton.classList.add("disabled");
+        }
     }
 
     /**

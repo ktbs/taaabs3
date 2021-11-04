@@ -71,11 +71,18 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
         this._labelDisplayP = this.shadowRoot.querySelector("#label-display");
         this._labelSpan = this.shadowRoot.querySelector("#label");
         this._labelInput = this.shadowRoot.querySelector("#label-input");
+        this._labelInput.addEventListener("input", this._emitChangeEvent.bind(this));
+        this._labelInput.addEventListener("change", this._emitChangeEvent.bind(this));
         this._idDisplaySpan = this.shadowRoot.querySelector("#id-display");
         this._obseltypeColorInput = this.shadowRoot.querySelector("#obseltype-color-input");
+        this._obseltypeColorInput.addEventListener("input", this._emitChangeEvent.bind(this));
+        this._obseltypeColorInput.addEventListener("change", this._emitChangeEvent.bind(this));
         this._obseltypeSymbolInput = this.shadowRoot.querySelector("#obseltype-symbol-input");
+        this._obseltypeSymbolInput.addEventListener("input", this._emitChangeEvent.bind(this));
+        this._obseltypeSymbolInput.addEventListener("change", this._emitChangeEvent.bind(this));
         this._parentObseltypeSelectLabel = this.shadowRoot.querySelector("#parent-obseltype-select-label");
         this._parentObseltypeSelect = this.shadowRoot.querySelector("#parent-obseltype-select");
+        this._parentObseltypeSelect.addEventListener("change", this._emitChangeEvent.bind(this));
         this._parentObseltypeDisplaySpan = this.shadowRoot.querySelector("#parent-obseltype-display");
         this._attributesListTable = this.shadowRoot.querySelector("#attributes-list-table");
         this._attributesListTableBody = this._attributesListTable.querySelector("tbody");
@@ -289,6 +296,8 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                             idInput.classList.add("edit");
                             idInput.setAttribute("value", anAttribute.id);
                             idInput.setAttribute("placeholder", "<id>");
+                            idInput.addEventListener("input", this._emitChangeEvent.bind(this));
+                            idInput.addEventListener("change", this._emitChangeEvent.bind(this));
                         idCell.appendChild(idInput);
 
                         const idDisplaySpan = document.createElement("span");
@@ -318,6 +327,9 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                         labelInput.setAttribute("value", JSON.stringify(labelTranslationsArray));
                     }
 
+                    labelInput.addEventListener("input", this._emitChangeEvent.bind(this));
+                    labelInput.addEventListener("change", this._emitChangeEvent.bind(this));
+
                     labelCell.appendChild(labelInput);
 
                     attributeRowElement.appendChild(labelCell);
@@ -345,6 +357,7 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                         typeSelect.appendChild(aTypeOption);
                     }
 
+                    typeSelect.addEventListener("change", this._emitChangeEvent.bind(this));
                     typeCell.appendChild(typeSelect);
 
                     attributeRowElement.appendChild(typeCell);
@@ -399,6 +412,9 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
         attributeRow.remove();
 
         // @TODO remove attribute from obseltype
+
+        // notify of changes
+        this._emitChangeEvent();
     }
 
     /**
@@ -459,6 +475,8 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                     idInput.classList.add("create");
                     idInput.classList.add("edit");
                     idInput.setAttribute("placeholder", "<id>");
+                    idInput.addEventListener("input", this._emitChangeEvent.bind(this));
+                    idInput.addEventListener("change", this._emitChangeEvent.bind(this));
                 idCell.appendChild(idInput);
 
                 const idDisplaySpan = document.createElement("span");
@@ -475,6 +493,8 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                     labelInput.setAttribute("placeholder", this._translateString("Attribute type label"));
                     labelInput.setAttribute("lang", this._lang);
                     labelInput.classList.add("edit");
+                    labelInput.addEventListener("input", this._emitChangeEvent.bind(this));
+                    labelInput.addEventListener("change", this._emitChangeEvent.bind(this));
                 labelCell.appendChild(labelInput);
             newTableRow.appendChild(labelCell);
 
@@ -495,6 +515,8 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                         aTypeOption.innerText = availableTypes[j];
                         typeSelect.appendChild(aTypeOption);
                     }
+
+                    typeSelect.addEventListener("change", this._emitChangeEvent.bind(this));
                 typeCell.appendChild(typeSelect);
             newTableRow.appendChild(typeCell);
 
@@ -518,6 +540,15 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
         idInput._componentReady.then(() => {
             idInput.focus();
         });
+
+        this._emitChangeEvent();
+    }
+
+    /**
+     * 
+     */
+    _emitChangeEvent() {
+        this.dispatchEvent(new CustomEvent("change", {bubbles: true, cancelable: false, composed: false}));
     }
 }
 

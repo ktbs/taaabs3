@@ -78,6 +78,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		this._obseltypeDetailsPanel = this.shadowRoot.querySelector("#obseltype-details-panel");
 		this._obseltypeDetails = this.shadowRoot.querySelector("#obseltype-details");
 		this._obseltypeDetails.setAttribute("lang", this._lang);
+		this._obseltypeDetails.addEventListener("change", this._onChangeObselType.bind(this));
 		this._closeObseltypeDetailsButton = this.shadowRoot.querySelector("#close-obseltype-details-button");
 		this._closeObseltypeDetailsButton.addEventListener("click", this._onClickCloseObseltypeDetailsButton.bind(this));
 		this._cancelObseltypeModificationsButton = this.shadowRoot.querySelector("#cancel-obseltype-modifications-button");
@@ -98,6 +99,13 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		this._createObseltypeButton.addEventListener("click", this._onClickCreateObseltypeButton.bind(this));
 		this._createInheritanceButton = this.shadowRoot.querySelector("#create-inheritance");
 		this._createInheritanceButton.addEventListener("click", this._onClickCreateInheritanceButton.bind(this));
+	}
+
+	/**
+	 *  
+	 */
+	_onChangeObselType(event) {
+		this.dispatchEvent(new CustomEvent("change", {bubbles: true, cancelable: false, composed: false}));
 	}
 
 	/**
@@ -765,6 +773,20 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			else
 				document.exitFullscreen();
 		}
+	}
+
+	/**
+	 * 
+	 */
+	get model_is_valid() {
+		return false;
+	}
+
+	/**
+	 * 
+	 */
+	get model() {
+
 	}
 }
 
