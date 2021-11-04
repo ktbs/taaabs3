@@ -142,9 +142,24 @@ export class AttributeType {
 	}
 
 	/**
+	 * Gets the labels translations array
+	 * \return Array
+	 * \public
+	 */
+	 get label_translations() {
+		const labelKeys = ["label", "http://www.w3.org/2000/01/rdf-schema#label", "rdfs:label"];
+
+		for(let i = 0; i < labelKeys.length; i++)
+			if(this._JSONData[labelKeys[i]] && (this._JSONData[labelKeys[i]] instanceof Object))
+				return this._JSONData[labelKeys[i]];
+
+		return undefined;
+	}
+
+	/**
 	 * 
 	 */
-	 get_preferred_label(lang) {
+	get_preferred_label(lang) {
 		let preferred_label = this.get_translated_label(lang);
 
 		if(!preferred_label)
@@ -484,7 +499,8 @@ export class AttributeType {
 							"@language": "fr",
 							"@value": "Sujet"
 						}
-					]
+					],
+					"hasAttributeDatatype": ["Obsel"]
 				})
 			];
 		}
