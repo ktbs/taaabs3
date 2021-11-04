@@ -193,4 +193,4 @@ function getDistinctColor(colorRank, totalColorCount) {
     return colorCode;
 }
 
-export {getDistinctColor, lightOrDark};
+export {getDistinctColor, lightOrDark, colorNameToHex};
