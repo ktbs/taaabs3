@@ -1,0 +1,23 @@
+{
+    "name": "KTBS4LA2",
+    "icons": [
+      {
+        "src": "favicon.svg",
+        "type": "image/svg+xml",
+        "sizes": "144x144"
+      }
+    ],
+    "start_url": "/",
+    "background_color": "#FFFFFF",
+    "display": "standalone",
+    "scope": "/",
+    "theme_color": "#6495ED",
+    "description": "A user interface for kTBS",
+    "screenshots": [
+      {
+        "src": "screenshot.png",
+        "type": "image/png",
+        "sizes": "1272x686"
+      }
+    ]
+  }
