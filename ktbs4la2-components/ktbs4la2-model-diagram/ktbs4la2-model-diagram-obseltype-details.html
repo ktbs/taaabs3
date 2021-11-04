@@ -1,0 +1,104 @@
+<ktbs4la2-document-header id="ktbs4la2-timeline-fonts">
+	<style>
+		@font-face {
+            font-family: 'unifont';
+            src: url('{my-component-folder}/../ktbs4la2-timeline/fonts/unifont.woff2') format("woff2");
+        }
+
+        @font-face {
+            font-family: 'unifont-upper';
+            src: url('{my-component-folder}/../ktbs4la2-timeline/fonts/unifont_upper.woff2') format("woff2");
+            unicode-range: U+10000-10FFFF;
+        }
+	</style>
+</ktbs4la2-document-header>
+
+<div id="container">
+    <header>
+        <p class="create edit">
+            <label id="id-input-label" for="id-input">{translate: 'ID'}</label>
+            <span id="id-display" class="edit"></span>
+
+            <ktbs4la2-resource-id-input
+                id="id-input"
+                placeholder="&lt;id&gt;"
+                tabindex="1"
+                class="create">
+            </ktbs4la2-resource-id-input>
+        </p>
+
+        <p id="label-display" class="view">
+            <span id="obseltype-symbol"></span>
+            <span id="label"></span>
+        </p>
+
+        <p class="edit">
+            <ktbs4la2-multiple-translations-text-input
+                id="label-input"
+                placeholder="{translate: 'Obsel type label'}"
+                tabindex="2">
+            </ktbs4la2-multiple-translations-text-input>
+        </p>
+    </header>
+
+    <p class="create edit">
+        <label for="obseltype-color-input">{translate: 'Color'}</label>
+        <input type="color" id="obseltype-color-input" tabindex="3"/>
+    </p>
+
+    <p class="create edit">
+        <label for="obseltype-symbol-input">{translate: 'Symbol'}</label>
+        <input maxlength="2" size="1" id="obseltype-symbol-input" tabindex="4" />
+    </p>
+    
+    <p>
+        <label id="parent-obseltype-select-label" for="parent-obseltype-select">{translate: 'Parent obsel type(s) :'}</label>
+
+        <ktbs4la2-obsel-type-select 
+            id="parent-obseltype-select"
+            multiple="true"
+            class="edit"
+            tabindex="5">
+        </ktbs4la2-obsel-type-select>
+
+        <span id="parent-obseltype-display" class="view"></span>
+    </p>
+
+    <hr />
+
+    <table id="attributes-list-table">
+        <caption id="attributes-list-table-title">{translate: 'Attribute types :'}</caption>
+
+        <thead>
+            <tr>
+                <td>&nbsp;</td>
+                <th>{translate: 'ID'}</th>
+                <th>{translate: 'Label'}</th>
+                <th>{translate: 'Data type(s)'}</th>
+                <td class="edit">&nbsp;</td>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr id="@id" class="default">
+                <td rowspan="6" class="vertical-cell">{translate: 'Default'}</td>
+                <td>@id</td>
+                <td>{translate: 'ID'}</td>
+                <td>xsd:string</td>
+                <td class="edit">&nbsp;</td>
+            </tr>
+        </tbody>
+
+        <tfoot class="edit">
+            <tr>
+                <td>&nbsp;</td>
+
+                <td colspan="3">
+                    <button id="add-attribute-button" title="{translate: 'Add an attribute type to this obsel type'}">+</button>
+                </td>
+
+                <td>&nbsp;</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>

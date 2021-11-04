@@ -454,6 +454,11 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             if(!this._containerDiv.classList.contains("view"))
                 this._containerDiv.classList.add("view");
 
+            const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
+
+            if(modelDiagram)
+                modelDiagram.removeAttribute("mode");
+
             window.removeEventListener("beforeunload", this._bindedOnBeforeUnloadWindowMethod);
             this.removeEventListener("beforeremove", this._bindedOnBeforeRemoveMethod);
 
@@ -473,6 +478,11 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
             if(this._containerDiv.classList.contains("view"))
                 this._containerDiv.classList.remove("view");
+
+            const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
+
+            if(modelDiagram)
+                modelDiagram.setAttribute("mode", "edit");
 
             this._updateSaveButtonState();
 

@@ -9,7 +9,16 @@
     "Create a new obsel type": "Créer un nouveau type d'obsel",
     "Create a new inheritance relationship": "Créer une nouvelle relation d'héritage",
     "Default": "Par défaut",
+    "Obsel type label": "Libellé du type d'obsel",
+    "Parent obsel type(s) :": "Type(s) d'obsel parent(s) :",
+    "Attribute types :": "Types d'attributs",
     "ID": "ID",
     "Click to view this obsel type's details": "Cliquez pour voir les détails de ce type d'obsel",
-    "Drag this obsel type": "Faire glisser ce type d'obsel"
+    "Drag this obsel type": "Faire glisser ce type d'obsel",
+    "Label": "Libellé",
+    "None": "Aucun",
+    "Data type(s)": "Type(s) de donnée",
+    "Attribute type label": "Libellé du type d'attribut",
+    "Add an attribute type to this obsel type": "Ajouter un type d'attribut à ce type d'obsel",
+    "Remove this attribute type from the obsel type": "Retirer ce type d'attribut du type d'obsel"
 }

@@ -155,20 +155,20 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 
         switch(this.fromAnchor) {
             case "left":
-                fromX = fromRect.left - diagramRect.left;
-                fromY = fromRect.top + (fromRect.height / 2) - diagramRect.top;
+                fromX = fromRect.left - diagramRect.left + this.parentNode.scrollLeft;
+                fromY = fromRect.top + (fromRect.height / 2) - diagramRect.top + this.parentNode.scrollTop;
                 break;
             case "top":
-                fromX = fromRect.left + (fromRect.width / 2) - diagramRect.left;
-                fromY = fromRect.top - diagramRect.top;
+                fromX = fromRect.left + (fromRect.width / 2) - diagramRect.left + this.parentNode.scrollLeft;
+                fromY = fromRect.top - diagramRect.top + this.parentNode.scrollTop;
                 break;
             case "right":
-                fromX = fromRect.left + fromRect.width - diagramRect.left;
-                fromY = fromRect.top + (fromRect.height / 2) - diagramRect.top;
+                fromX = fromRect.left + fromRect.width - diagramRect.left + this.parentNode.scrollLeft;
+                fromY = fromRect.top + (fromRect.height / 2) - diagramRect.top + this.parentNode.scrollTop;
                 break;
             case "bottom":
-                fromX = fromRect.left + (fromRect.width / 2) - diagramRect.left;
-                fromY = fromRect.top + fromRect.height - diagramRect.top;
+                fromX = fromRect.left + (fromRect.width / 2) - diagramRect.left + this.parentNode.scrollLeft;
+                fromY = fromRect.top + fromRect.height - diagramRect.top + this.parentNode.scrollTop;
                 break;
         }
 
@@ -177,20 +177,20 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 
         switch(this.toAnchor) {
             case "left":
-                toX = toRect.left - diagramRect.left;
-                toY = toRect.top + (toRect.height / 2) - diagramRect.top;
+                toX = toRect.left - diagramRect.left + this.parentNode.scrollLeft;
+                toY = toRect.top + (toRect.height / 2) - diagramRect.top + this.parentNode.scrollTop;
                 break;
             case "top":
-                toX = toRect.left + (toRect.width / 2) - diagramRect.left;
-                toY = toRect.top - diagramRect.top;
+                toX = toRect.left + (toRect.width / 2) - diagramRect.left + this.parentNode.scrollLeft;
+                toY = toRect.top - diagramRect.top + this.parentNode.scrollTop;
                 break;
             case "right":
-                toX = toRect.left + toRect.width - diagramRect.left;
-                toY = toRect.top + (toRect.height / 2) - diagramRect.top;
+                toX = toRect.left + toRect.width - diagramRect.left + this.parentNode.scrollLeft;
+                toY = toRect.top + (toRect.height / 2) - diagramRect.top + this.parentNode.scrollTop;
                 break;
             case "bottom":
-                toX = toRect.left + (toRect.width / 2) - diagramRect.left;
-                toY = toRect.top + toRect.height - diagramRect.top;
+                toX = toRect.left + (toRect.width / 2) - diagramRect.left + this.parentNode.scrollLeft;
+                toY = toRect.top + toRect.height - diagramRect.top + this.parentNode.scrollTop;
                 break;
         }
 

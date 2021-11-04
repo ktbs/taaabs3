@@ -31,7 +31,6 @@
 	display: none;
 }
 
-
 #error-message {
 	color: red;
 	background-color: pink;
@@ -77,65 +76,22 @@
 	display: none;
 }
 
-/* ------------------------------------------ */
+/* ----------------------------------------- */
 
-#tools {
-	position: absolute;
-	top: 5px;
-	left: 5px;
+#main {
+	display: table;
+	width: 100%;
 }
 
-#tools button:not(:disabled) {
-	display: block;
-	width: 24px;
-	height: 24px;
-	margin-block-start: 2px;
-	margin-block-end: 3px;
-	border: none;
-	border-radius: 4px;
-	background-size: 16px 16px;
-	background-color: transparent;
-	background-repeat: no-repeat;
-	background-position: center;
-	opacity: 0.2;
+#tablerow {
+	display: table-row;
 }
 
-#tools button:not(:disabled) {
-	cursor: pointer;
-}
-
-#tools button:not(:disabled):hover, #tools button:not(:disabled).selected {
-	background-color: rgb(240, 240, 240);
-	opacity: 1;
-}
-
-
-#tools button.inline {
-	display: inline-block;
-}
-
-:host(:not([allow-edit = true])) #tools button.edition {
-	display: none;
-}
-
-#details {
-	background-image: url('{my-component-folder}/eye.svg');
-}
-
-#move {
-	background-image: url('{my-component-folder}/move.svg');
-}
-
-#auto-arrange {
-	background-image: url('{my-component-folder}/auto_arrange.svg');
-}
-
-#create-obseltype {
-	background-image: url('{my-component-folder}/add_obseltype.svg');
-}
-
-#create-inheritance {
-	background-image: url('{my-component-folder}/add_inheritance.svg');
+#diagram-area {
+	position: relative;
+	display: table-cell;
+	overflow: auto;
+	width: 100%;
 }
 
 /* ----------------------------------------- */
@@ -191,17 +147,16 @@
 
 /* ------------------------------------------ */
 
-#model-obseltypes {
-	position: relative;
-}
-
 #container.details ktbs4la2-model-diagram-obseltype:hover,
 #container.details ktbs4la2-model-diagram-obseltype.selected,
 #container.move ktbs4la2-model-diagram-obseltype:hover,
 #container.move ktbs4la2-model-diagram-obseltype.moved,
 #container.obseltype-is-being-edited ktbs4la2-model-diagram-obseltype.edited {
     box-shadow: 0px 0px 8px 4px #888;
+	z-index: 2;
 }
+
+
 
 #container.details ktbs4la2-model-diagram-obseltype:hover {
 	cursor: pointer;
@@ -210,4 +165,183 @@
 
 #container.move ktbs4la2-model-diagram-obseltype:hover {
 	cursor: move;
+}
+
+/* ------------------------------------ */
+
+#obseltype-details-panel {
+	border-left: 1px solid lightgray;
+	padding: 5px 5px 5px;
+	box-shadow: -8px 0 10px -2px #888;
+	position: relative;
+	z-index: 3;
+}
+
+#obseltype-details-panel.hidden {
+	border-left: none;
+	box-shadow: none;
+	width: 0px;
+}
+
+#obseltype-details {
+	overflow: auto;
+}
+
+#obseltype-tools {
+	position: absolute;
+	padding-left: 3px;
+	padding-top: 7px;
+	padding-right: 0px;
+	padding-bottom: 7px;
+    top: 0px;
+    left: -19px;
+    background-color: white;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+	box-shadow: -8px 0 10px -2px #888;
+}
+
+#obseltype-details-panel.hidden #obseltype-tools {
+	display: none;
+}
+
+.obseltype-tool {
+	display: block;
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+	width: 16px;
+	height: 16px;
+	opacity: 0.3;
+	cursor: pointer;
+	margin-bottom: 3px;
+}
+
+.obseltype-tool:hover {
+	opacity: 1;
+}
+
+#close-obseltype-details-button {
+	background-image: url('{my-component-folder}/right-oriented-triangle.svg');
+}
+
+#obseltype-details-panel.is-invalid #close-obseltype-details-button{
+	cursor: default;
+}
+
+#obseltype-details-panel.is-invalid #close-obseltype-details-button:hover {
+	opacity: 0.3;
+}
+
+#cancel-obseltype-modifications-button {
+	background-image: url('{my-component-folder}/cancel.svg');
+}
+
+#duplicate-obseltype-button {
+	background-image: url('{my-component-folder}/duplicate.svg');
+}
+
+#delete-obseltype-button {
+	background-image: url('{my-component-folder}/trash.svg');
+}
+
+:host(:not([mode = edit])) #cancel-obseltype-modifications-button,
+:host(:not([mode = edit])) #duplicate-obseltype-button,
+:host(:not([mode = edit])) #delete-obseltype-button,
+#obseltype-details-panel.is-new #delete-obseltype-button {
+	display: none;
+}
+
+/* ------------------------------------------ */
+
+#tools {
+	position: absolute;
+	left: 5px;
+	top: 5px;
+	background-color: white;
+    z-index: 1;
+    border-radius: 5px;
+    opacity: 0.5;
+}
+
+#tools:hover {
+	opacity: 1;
+}
+
+#tools button:not(:disabled) {
+	display: block;
+	width: 24px;
+	height: 24px;
+	margin-block-start: 2px;
+	margin-block-end: 3px;
+	border: none;
+	border-radius: 4px;
+	background-size: 16px 16px;
+	background-color: transparent;
+	background-repeat: no-repeat;
+	background-position: center;
+	opacity: 0.2;
+}
+
+#tools button:not(:disabled) {
+	cursor: pointer;
+}
+
+#tools button:not(:disabled):hover, #tools button:not(:disabled).selected {
+	background-color: rgb(240, 240, 240);
+	opacity: 1;
+}
+
+#tools button.inline {
+	display: inline-block;
+}
+
+:host(:not([mode = "edit"])) #tools button.edition {
+	display: none;
+}
+
+#details {
+	background-image: url('{my-component-folder}/eye.svg');
+}
+
+#move {
+	background-image: url('{my-component-folder}/move.svg');
+}
+
+#auto-arrange {
+	background-image: url('{my-component-folder}/auto_arrange.svg');
+}
+
+#create-obseltype {
+	background-image: url('{my-component-folder}/add_obseltype.svg');
+}
+
+#create-inheritance {
+	background-image: url('{my-component-folder}/add_inheritance.svg');
+}
+
+#toggle-fullscreen-button {
+	background-image: url('{my-component-folder}/go-fulllscreen.svg');
+}
+
+#container:fullscreen #toggle-fullscreen-button,
+:host-context(:fullscreen) #toggle-fullscreen-button {
+	background-image: url('{my-component-folder}/exit-fulllscreen.svg');
+}
+
+:host([allow-fullscreen = "0"]) #toggle-fullscreen-button, :host([allow-fullscreen = "false"]) #toggle-fullscreen-button {
+	display: none;
+}
+
+#container:fullscreen {
+	background-color: white;
+	padding: 5px 5px 5px 5px;
+}
+
+#container:fullscreen #diagram-area {
+	height: 100vh !important;
+}
+
+#container:fullscreen #obseltype-details {
+	max-height: 100vh !important;
 }

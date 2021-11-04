@@ -14,33 +14,53 @@
 </ktbs4la2-document-header>
 
 <div id="container" class="waiting">
-    <div id="wait-message-container">
-        <div id="wait-message">{translate: 'Waiting for server response...'}</div>
+    <div id="info">
+        <div id="wait-message-container">
+            <div id="wait-message">{translate: 'Waiting for server response...'}</div>
+        </div>
+
+        <div id="error-message"></div>
+
+        <div id="empty-message">{translate: 'No data to display'}</div>
     </div>
 
-    <div id="error-message"></div>
+    <div id="main">
+        <div id="tablerow">
+            <div id="diagram-area">
+                <div id="default-obseltype">
+                    <header>
+                        <h2 id="default-obseltype-title">{translate: 'Default'}</h2>
+                    </header>
+                
+                    <article>
+                        <ul id="default-obseltype-attributetypes-list">
+                            <li>{translate: 'ID'}</li>
+                        </ul>
+                    </article>
+                </div>
+            </div>
 
-    <div id="empty-message">{translate: 'No data to display'}</div>
+            <div id="obseltype-details-panel" class="hidden">
+                <ktbs4la2-model-diagram-obseltype-details
+                    id="obseltype-details">
+                </ktbs4la2-model-diagram-obseltype-details>
+
+                <div id="obseltype-tools">
+                    <a class="obseltype-tool" id="close-obseltype-details-button" title="{translate: 'Close'}"></a>
+                    <a class="obseltype-tool" id="cancel-obseltype-modifications-button" title="{translate: 'Cancel modifications of this obsel type'}"></a>
+                    <a class="obseltype-tool" id="duplicate-obseltype-button" title="{translate: 'Duplicate this obsel type'}"></a>
+                    <a class="obseltype-tool" id="delete-obseltype-button" title="{translate: 'Delete this obsel type'}"></a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="tools">
+        <button id="toggle-fullscreen-button" title="{translate: 'Toggle fullscreen'}"></button>
         <button id="details" class="inline selected"></button>
         <button id="move" class="inline"></button>
         <button id="auto-arrange" title="{translate: 'Automatically rearrange obsel types layout'}"></button>
-        <button id="create-obseltype" class="edition" title="{translate: 'Create a new obsel type'}"></button>
-        <button id="create-inheritance" class="edition" title="{translate: 'Create a new inheritance relationship'}"></button>
+        <button id="create-obseltype" class="inline edition" title="{translate: 'Create a new obsel type'}"></button>
+        <button id="create-inheritance" class="inline edition" title="{translate: 'Create a new inheritance relationship'}"></button>
     </div>
-
-    <div id="default-obseltype">
-        <header>
-            <h2 id="default-obseltype-title">{translate: 'Default'}</h2>
-        </header>
-    
-        <article>
-            <ul id="default-obseltype-attributetypes-list">
-                <li>{translate: 'ID'}</li>
-            </ul>
-        </article>
-    </div>
-
-    <div id="model-obseltypes"></div>
 </div>

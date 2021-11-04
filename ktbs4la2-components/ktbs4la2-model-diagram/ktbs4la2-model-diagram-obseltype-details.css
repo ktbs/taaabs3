@@ -1,0 +1,145 @@
+:host {
+    display: block;
+}
+
+:host(:not([mode])) .edit:not(.view),
+:host(:not([mode])) .create:not(.view),
+:host([mode = view]) .edit:not(.view),
+:host([mode = view]) .create:not(.view),
+:host([mode = edit]) .view:not(.edit),
+:host([mode = edit]) .create:not(.edit),
+:host([mode = create]) .view:not(.create),
+:host([mode = create]) .edit:not(.create)
+{
+    display: none;
+}
+
+header {
+    position: sticky;
+    top: 0px;
+    background-color: white;
+    border-bottom: 1px solid lightgray;
+    z-index: 3;
+    box-shadow: 0 10px 8px -8px grey;
+}
+
+header p {
+    margin-block-start: 0px;
+    margin-block-end: 0px;
+    padding-bottom: 10px;
+}
+
+.disabled {
+    opacity: 0.3;
+    font-style: italic;
+}
+
+#container p {
+    white-space: nowrap;
+}
+
+:host([mode = "edit"]) #parent-obseltype-select {
+    display: block;
+}
+
+#obseltype-symbol, #obseltype-symbol-input {
+	font-family: "unifont", "unifont-upper";
+	text-decoration: none;
+}
+
+#label-display {
+    padding: 5px 5px;
+}
+
+#label-display.dark {
+    color: white;
+}
+
+#label-display.light {
+    color: black;
+}
+
+#label-input {
+    width: 100%;
+}
+
+#label {
+    font-weight: bold;
+}
+
+label {
+    color: gray;
+    font-size: 11px;
+}
+
+#attributes-list-table, #attributes-list-table tr, #attributes-list-table td {
+    border-collapse: collapse;
+	border-spacing: 0;
+    white-space: nowrap;
+}
+
+#attributes-list-table tr.default {
+    font-style: italic;
+    color: gray;
+}
+
+#attributes-list-table td {
+	border: 1px solid #DDD;
+    font-size: 10px;
+    padding: 3px 3px;
+}
+
+#attributes-list-table thead td,
+#attributes-list-table tfoot td  {
+    border: none;
+}
+
+#attributes-list-table td.vertical-cell {
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    text-orientation: sideways;
+    text-align: center;
+}
+
+#attributes-list-table thead th {
+    border: 1px solid #FFF;
+	background-color: var(--nav-background-color, var(--color-main, cornflowerblue));
+    color: white;
+    font-size: 11px;
+	position: sticky;
+	top: 0px;
+}
+
+.remove-attribute-button {
+    border: none;
+    background: none;
+    opacity: 0.2;
+    cursor: pointer;
+}
+
+.remove-attribute-button:hover {
+    opacity: 1;
+}
+
+#add-attribute-button {
+    background-color: var(--color-main, cornflowerblue);
+    opacity: 0.5;
+    width: 100%;
+    height: 22px;
+    cursor: pointer;
+    color: white;
+    border: none;
+    text-align: center;
+    align-self: center;
+    font-size: 14pt;
+}
+
+#add-attribute-button:hover {
+    background-color: var(--color-highlight, royalblue);
+    opacity: 1;
+}
+
+#attributes-list-table tr.remove td:not([rowspan]) {
+    background-color: #FEE;
+    --background-color: #FEE;
+}

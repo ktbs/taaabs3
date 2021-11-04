@@ -4,6 +4,7 @@ import {AttributeType} from "../../ktbs-api/AttributeType.js";
 
 import "./ktbs4la2-model-diagram-obseltype.js";
 import "./ktbs4la2-model-diagram-arrow.js";
+import "./ktbs4la2-model-diagram-obseltype-details.js";
 
 /**
  * 
@@ -20,6 +21,40 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		this._resolveTypeSet();
 	}
 
+	static get observedAttributes() {
+		let _observedAttributes = super.observedAttributes;
+        _observedAttributes.push("mode");
+		_observedAttributes.push("allow-fullscreen");
+		return _observedAttributes;
+    }
+
+    /**
+	 * 
+	 */
+	attributeChangedCallback(name, oldValue, newValue) {
+		super.attributeChangedCallback(name, oldValue, newValue);
+
+        if(name == "mode") {
+			if((newValue == "view") || (newValue == "edit")) {
+				this._componentReady.then(() => {
+					this._obseltypeDetails.setAttribute("mode", newValue);
+				});
+			}
+			else if(newValue == null) {
+				this._componentReady.then(() => {
+					if(this._obseltypeDetails.hasAttribute("mode"))
+						this._obseltypeDetails.removeAttribute("mode");
+				});
+			}
+			else
+				this.emitErrorEvent(new RangeError("The only accepted values for attribute \"mode\" are : \"view\" or \"edit\""));
+        }
+		else if(name == "allow-fullscreen") {
+			if(!this._allowFullScreen && (document.fullscreenElement === this))
+				document.exitFullscreen();
+		}
+    }
+
 	/**
 	 * 
 	 */
@@ -28,16 +63,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		this._waitMessage = this.shadowRoot.querySelector("#wait-message");
 		this._emptyMessage = this.shadowRoot.querySelector("#empty-message");
 		this._errorMessage = this.shadowRoot.querySelector("#error-message");
-		this._detailsButton = this.shadowRoot.querySelector("#details");
-		this._detailsButton.addEventListener("click", this._onClickDetailsButton.bind(this));
-		this._moveButton = this.shadowRoot.querySelector("#move");
-		this._moveButton.addEventListener("click", this._onClickMoveButton.bind(this));
-		this._autoArrangeButton = this.shadowRoot.querySelector("#auto-arrange");
-		this._autoArrangeButton.addEventListener("click", this._onClickAutoArrangeButton.bind(this));
-		this._createObseltypeButton = this.shadowRoot.querySelector("#create-obseltype");
-		this._createObseltypeButton.addEventListener("click", this._onClickCreateObseltypeButton.bind(this));
-		this._createInheritanceButton = this.shadowRoot.querySelector("#create-inheritance");
-		this._createInheritanceButton.addEventListener("click", this._onClickCreateInheritanceButton.bind(this));
+		this._diagramArea = this.shadowRoot.querySelector("#diagram-area");
 		this._defaultObseltypeElement = this.shadowRoot.querySelector("#default-obseltype");
 		this._defaultObseltypeTitle = this.shadowRoot.querySelector("#default-obseltype-title");
 		this._defaultObseltypeAttributetypesList = this.shadowRoot.querySelector("#default-obseltype-attributetypes-list");
@@ -49,7 +75,63 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			this._defaultObseltypeAttributetypesList.appendChild(aBuilitinAttributeElement);
 		}
 
-		this._modelObselTypesContainer = this.shadowRoot.querySelector("#model-obseltypes");
+		this._obseltypeDetailsPanel = this.shadowRoot.querySelector("#obseltype-details-panel");
+		this._obseltypeDetails = this.shadowRoot.querySelector("#obseltype-details");
+		this._obseltypeDetails.setAttribute("lang", this._lang);
+		this._closeObseltypeDetailsButton = this.shadowRoot.querySelector("#close-obseltype-details-button");
+		this._closeObseltypeDetailsButton.addEventListener("click", this._onClickCloseObseltypeDetailsButton.bind(this));
+		this._cancelObseltypeModificationsButton = this.shadowRoot.querySelector("#cancel-obseltype-modifications-button");
+		this._cancelObseltypeModificationsButton.addEventListener("click", this._onClickCancelObseltypeModificationsButton.bind(this));
+		this._duplicateObseltypeButton = this.shadowRoot.querySelector("#duplicate-obseltype-button");
+		this._duplicateObseltypeButton.addEventListener("click", this._onClickDuplicateObseltypeButton.bind(this));
+		this._deleteObseltypeButton = this.shadowRoot.querySelector("#delete-obseltype-button");
+		this._deleteObseltypeButton.addEventListener("click", this._onClickDeleteObseltypeButton.bind(this));
+		this._toggleFullscreenButton = this.shadowRoot.querySelector("#toggle-fullscreen-button");
+		this._toggleFullscreenButton.addEventListener("click", this._onClickToggleFullscreenButton.bind(this));
+		this._detailsButton = this.shadowRoot.querySelector("#details");
+		this._detailsButton.addEventListener("click", this._onClickDetailsButton.bind(this));
+		this._moveButton = this.shadowRoot.querySelector("#move");
+		this._moveButton.addEventListener("click", this._onClickMoveButton.bind(this));
+		this._autoArrangeButton = this.shadowRoot.querySelector("#auto-arrange");
+		this._autoArrangeButton.addEventListener("click", this._onClickAutoArrangeButton.bind(this));
+		this._createObseltypeButton = this.shadowRoot.querySelector("#create-obseltype");
+		this._createObseltypeButton.addEventListener("click", this._onClickCreateObseltypeButton.bind(this));
+		this._createInheritanceButton = this.shadowRoot.querySelector("#create-inheritance");
+		this._createInheritanceButton.addEventListener("click", this._onClickCreateInheritanceButton.bind(this));
+	}
+
+	/**
+	 * 
+	 */
+	_onClickCloseObseltypeDetailsButton(event) {
+		if(!this._obseltypeDetailsPanel.classList.contains("hidden"))
+			this._obseltypeDetailsPanel.classList.add("hidden");
+
+		const selectedBoxes = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-obseltype.selected");
+
+		for(let i = 0; i < selectedBoxes.length; i++)
+			selectedBoxes[i].classList.remove("selected");
+	}
+
+	/**
+	 * 
+	 */
+	_onClickCancelObseltypeModificationsButton(event) {
+		console.log("_onClickCancelObseltypeModificationsButton()");
+	}
+
+	/**
+	 * 
+	 */
+	_onClickDuplicateObseltypeButton(event) {
+		console.log("_onClickDuplicateObseltypeButton()");
+	}
+
+	/**
+	 * 
+	 */
+	_onClickDeleteObseltypeButton(event) {
+		console.log("_onClickDeleteObseltypeButton()");
 	}
 
 	/**
@@ -77,12 +159,16 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				// @TODO : sort aRow
 			}
 
-			// set boxes positions ...
-			const BOXES_HORIZONTAL_SPACING = 20;
-			const BOXES_VERTICAL_SPACING = 50;
-			let topCursor = 155;
+			// calculate boxes relative positions ...
+			const BOXES_HORIZONTAL_SPACING = 10;
+			const BOXES_VERTICAL_SPACING = 40;
+			let topCursor = this._defaultObseltypeElement.getBoundingClientRect().bottom - this._diagramArea.getBoundingClientRect().top + this._diagramArea.scrollTop + BOXES_VERTICAL_SPACING;
+
+			const boxes_relative_positions = new Array();
+			let leftestBoxX = 0;
 
 			for(let row = 0; row < boxes_grid.length; row++) {
+				boxes_relative_positions[row] = new Array();
 				let rowMaxHeight = 0;
 				const aRow = boxes_grid[row];
 				const middleColStart = Math.floor(aRow.length / 2);
@@ -95,7 +181,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				// this row has an odd number of obsels
 				else {
 					const rightStartObsel = aRow[middleColStart];
-					const rightStartObselElement = this._modelObselTypesContainer.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(rightStartObsel.id));
+					const rightStartObselElement = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(rightStartObsel.id));
 					rightCursor = -(rightStartObselElement.clientWidth / 2);
 				}
 
@@ -104,13 +190,11 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				// adjust boxes position from the middle to the right
 				for(let col = middleColStart; col < aRow.length; col++) {
 					const anObsel = aRow[col];
-					const anObselElement = this._modelObselTypesContainer.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(anObsel.id));
-
+					const anObselElement = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(anObsel.id));
+					
 					if(anObselElement) {
-						anObselElement.style.left = "calc(50% + " + rightCursor + "px)";
+						boxes_relative_positions[row][col] = {x: rightCursor, y: topCursor};
 						rightCursor += (anObselElement.clientWidth + BOXES_HORIZONTAL_SPACING);
-						anObselElement.style.top = topCursor + "px";
-						anObselElement.dispatchEvent(new CustomEvent("move", {composed: false, bubbles: false, cancelable: false}));
 
 						if(anObselElement.clientHeight > rowMaxHeight)
 							rowMaxHeight = anObselElement.clientHeight;
@@ -120,13 +204,15 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				// adjust boxes position from the middle to the left
 				for(let col = middleColStart - 1; col >= 0; col--) {
 					const anObsel = aRow[col];
-					const anObselElement = this._modelObselTypesContainer.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(anObsel.id));
+					const anObselElement = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(anObsel.id));
 
 					if(anObselElement) {
 						leftCursor -= (anObselElement.clientWidth + BOXES_HORIZONTAL_SPACING);
-						anObselElement.style.left = "calc(50% - " + Math.abs(leftCursor) + "px)";
-						anObselElement.style.top = topCursor + "px";
-						anObselElement.dispatchEvent(new CustomEvent("move", {composed: false, bubbles: false, cancelable: false}));
+
+						if(leftCursor < leftestBoxX)
+							leftestBoxX = leftCursor;
+
+						boxes_relative_positions[row][col] = {x: -Math.abs(leftCursor), y: topCursor};
 
 						if(anObselElement.clientHeight > rowMaxHeight)
 							rowMaxHeight = anObselElement.clientHeight;
@@ -135,13 +221,46 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 
 				topCursor += rowMaxHeight + BOXES_VERTICAL_SPACING;
 			}
-			// ... box position are now set
+			// ... done calculating boxes relative positions
+
+			// set boxes absolute positions ...
+			const availableWidth = this._diagramArea.getBoundingClientRect().width;
+			const middleX = availableWidth / 2;
+			const leftOffset = Math.abs(leftestBoxX) > middleX?(Math.abs(leftestBoxX) - middleX + 8):0;
+			let rightestBoxRight = 0;
+
+			for(let row = 0; row < boxes_grid.length; row++) {
+				const aRow = boxes_grid[row];
+
+				for(let col = 0; col < aRow.length; col++) {
+					const anObsel = aRow[col];
+					const anObselElement = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(anObsel.id));
+
+					if(anObselElement) {
+						const boxLeft = middleX + leftOffset + boxes_relative_positions[row][col].x;
+						anObselElement.style.left = boxLeft + "px";
+						anObselElement.style.top = boxes_relative_positions[row][col].y + "px";
+						anObselElement.dispatchEvent(new CustomEvent("move", {composed: false, bubbles: false, cancelable: false}));
+
+						const boxRight = boxLeft + anObselElement.getBoundingClientRect().width;
+
+						if(boxRight > rightestBoxRight)
+							rightestBoxRight = boxRight;
+					}
+				}
+			}
+			// ... done setting boxes absolute positions
 
 			// adjust the diagram element's height so it fits the content
-			this._container.style.height = (topCursor - BOXES_VERTICAL_SPACING + 20) + "px";
+			this._diagramArea.style.height = topCursor + "px";
+			this._obseltypeDetails.style.maxHeight = topCursor + "px";
+			
+			// adjust the diagram element's horizontal scroll so it's centered
+			if(rightestBoxRight > availableWidth)
+				this._diagramArea.scrollLeft = (rightestBoxRight - availableWidth) / 2;
 
 			// update arrows
-			const allDiagramArrowElements = this._modelObselTypesContainer.querySelectorAll("ktbs4la2-model-diagram-arrow");
+			const allDiagramArrowElements = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-arrow");
 
 			for(let i = 0; i < allDiagramArrowElements.length; i++) {
 				const anArrowElement = allDiagramArrowElements[i];
@@ -149,6 +268,8 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				anArrowElement.toAnchor = "bottom";
 			}
 		}
+
+		this._layout_is_automatic = true;
 	}
 
 	/**
@@ -171,7 +292,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			this._detailsButton.setAttribute("title", this._translateString("Currently selected tool : ") + this._translateString("View details\nClicking an obsel type show a modal panel including its full details and allowing edition"));
 			this._moveButton.setAttribute("title", this._translateString("Click to select tool : ") + this._translateString("Move obsel types\nAllows to manually rearrange obsel types layout by individually dragging them"));
 
-			const obselTypesBoxes = this._modelObselTypesContainer.querySelectorAll("ktbs4la2-model-diagram-obseltype");
+			const obselTypesBoxes = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-obseltype");
 
 			for(let i = 0; i < obselTypesBoxes.length; i++)
 				obselTypesBoxes[i].setAttribute("title", this._translateString("Click to view this obsel type's details"));
@@ -184,6 +305,27 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 */
 	get _obseltype_is_being_edited() {
 		return this._container.classList.contains("obseltype-is-being-edited");
+	}
+
+	/**
+	 * 
+	 */
+	get _layout_is_automatic() {
+		return this._container.classList.contains("automatic-layout");
+	}
+
+	/**
+	 * 
+	 */
+	set _layout_is_automatic(new_is_automatic) {
+		if(typeof new_is_automatic == "boolean") {
+			if(new_is_automatic && !this._container.classList.contains("automatic-layout"))
+				this._container.classList.add("automatic-layout");
+			else if(!new_is_automatic && this._container.classList.contains("automatic-layout"))
+				this._container.classList.remove("automatic-layout");
+		}
+		else
+			throw new TypeError("New value for property \"_layout_is_automatic\" must be a boolean");
 	}
 
 	/**
@@ -205,7 +347,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		this._detailsButton.setAttribute("title", this._translateString("Click to select tool : ") + this._translateString("View details\nClicking an obsel type show a modal panel including its full details and allowing edition"));
 		this._moveButton.setAttribute("title", this._translateString("Currently selected tool : ") + this._translateString("Move obsel types\nAllows to manually rearrange obsel types layout by individually dragging them"));
 			
-		const obselTypesBoxes = this._modelObselTypesContainer.querySelectorAll("ktbs4la2-model-diagram-obseltype");
+		const obselTypesBoxes = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-obseltype");
 
 		for(let i = 0; i < obselTypesBoxes.length; i++)
 			obselTypesBoxes[i].setAttribute("title", this._translateString("Drag this obsel type"));
@@ -225,14 +367,14 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 * 
 	 */
 	_onClickCreateObseltypeButton(event) {
-
+		console.log("_onClickCreateObseltypeButton()");
 	}
 
 	/**
 	 * 
 	 */
 	_onClickCreateInheritanceButton(event) {
-		
+		console.log("_onClickCreateInheritanceButton()");
 	}
 
 	/**
@@ -247,15 +389,22 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				&&	(clickedBox.localName == "ktbs4la2-model-diagram-obseltype")
 				&& 	clickedBox.hasAttribute("id")
 				&&	!clickedBox.classList.contains("selected")) {
-				const obselType_id = clickedBox.getAttribute("id");
-				console.log("view obsel type details : " + obselType_id);
+					const previousltySelectedBoxes = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-obseltype.selected");
 
-				const previousltySelectedBoxes = this._modelObselTypesContainer.querySelectorAll("ktbs4la2-model-diagram-obseltype.selected");
+					for(let i = 0; i < previousltySelectedBoxes.length; i++)
+						previousltySelectedBoxes[i].classList.remove("selected");
 
-				for(let i = 0; i < previousltySelectedBoxes.length; i++)
-					previousltySelectedBoxes[i].classList.remove("selected");
+					clickedBox.classList.add("selected");
 
-				clickedBox.classList.add("selected");
+					const obselType_id = clickedBox.getAttribute("id");
+					const obselType = this._ktbsResource.get_obsel_type(obselType_id);
+
+					if(obselType) {
+						this._obseltypeDetails.obsel_type = obselType;
+
+						if(this._obseltypeDetailsPanel.classList.contains("hidden"))
+							this._obseltypeDetailsPanel.classList.remove("hidden");
+					}
 			}
 		}
 	}
@@ -271,21 +420,21 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 					clickedBox 
 				&&	(clickedBox.localName == "ktbs4la2-model-diagram-obseltype")
 				&& 	clickedBox.hasAttribute("id")) {
-				const previousltyMovedBoxes = this._modelObselTypesContainer.querySelectorAll("ktbs4la2-model-diagram-obseltype.moved");
-				
-				for(let i = 0; i < previousltyMovedBoxes.length; i++)
-					previousltyMovedBoxes[i].classList.remove("moved");
+					const previousltyMovedBoxes = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-obseltype.moved");
+					
+					for(let i = 0; i < previousltyMovedBoxes.length; i++)
+						previousltyMovedBoxes[i].classList.remove("moved");
 
-				this._draggedBox = clickedBox;
+					this._draggedBox = clickedBox;
 				
-				this._drag_origin = {
-					x: clickedBox.getBoundingClientRect().left - (this._modelObselTypesContainer.getBoundingClientRect().left + event.clientX), 
-					y: clickedBox.getBoundingClientRect().top - (this._modelObselTypesContainer.getBoundingClientRect().top + event.clientY)
-				};
+					this._drag_origin = {
+						x: event.offsetX, 
+						y: event.offsetY
+					};
 
-				this._draggedBox.classList.add("moved");
-				document.addEventListener('mousemove', this._onDocumentMouseMoveBindedMethod);
-    			document.addEventListener('mouseup', this._onDocumentMouseUpBindedMethod);
+					this._draggedBox.classList.add("moved");
+					document.addEventListener('mousemove', this._onDocumentMouseMoveBindedMethod);
+					document.addEventListener('mouseup', this._onDocumentMouseUpBindedMethod);
 			}
 		}
 	}
@@ -302,8 +451,20 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 
 		this._updateDraggedBoxPositionTaskID = setTimeout(() => {
 			if(this._draggedBox) {
-				this._draggedBox.style.left = (event.clientX + this._drag_origin.x) + "px";
-				this._draggedBox.style.top = (event.clientY + this._drag_origin.y) + "px";
+				const diagramAreaRect = this._diagramArea.getBoundingClientRect();
+				let boxX = (event.offsetX + this._diagramArea.scrollLeft) - (diagramAreaRect.left + this._drag_origin.x);
+				
+				if(boxX < 10)
+					boxX = 10;
+
+				this._draggedBox.style.left = boxX + "px";
+				
+				let boxY = (event.offsetY + this._diagramArea.scrollTop) - (diagramAreaRect.top + this._drag_origin.y);
+				
+				if(boxY < 10)
+					boxY = 10;
+
+				this._draggedBox.style.top = boxY + "px";
 				this._draggedBox.dispatchEvent(new CustomEvent("move", {composed: false, bubbles: false, cancelable: false}));
 			}
 
@@ -330,14 +491,14 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 
 			let currentModelLayout = {};
 
-			const obselTypesBoxes = this._modelObselTypesContainer.querySelectorAll("ktbs4la2-model-diagram-obseltype");
+			const obselTypesBoxes = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-obseltype");
 
 			for(let i = 0; i < obselTypesBoxes.length; i++) {
 				const anobselTypeBox = obselTypesBoxes[i];
 
 				currentModelLayout[anobselTypeBox.id] = {
-					x: anobselTypeBox.getBoundingClientRect().left - this._modelObselTypesContainer.getBoundingClientRect().left, 
-					y: anobselTypeBox.getBoundingClientRect().top - this._modelObselTypesContainer.getBoundingClientRect().top
+					x: anobselTypeBox.getBoundingClientRect().left - this._diagramArea.getBoundingClientRect().left, 
+					y: anobselTypeBox.getBoundingClientRect().top - this._diagramArea.getBoundingClientRect().top
 				}
 			}
 
@@ -382,6 +543,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				this._draggedBox.classList.remove("moved");
 
 			delete this._draggedBox;
+			this._layout_is_automatic = false;
 			this._saveCurrentModelDiagramLayout();
 		}
 	}
@@ -458,16 +620,24 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 						if(modelsLayouts[this._ktbsResource.uri.toString()]) {
 							const currentModelLayout = modelsLayouts[this._ktbsResource.uri.toString()];
 							const obsel_types_ids = Object.keys(currentModelLayout);
+							let maxBottom = 0;
 
 							for(let i = 0; i < obsel_types_ids.length; i++) {
-								const obselTypeBox = this._modelObselTypesContainer.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(obsel_types_ids[i]));
+								const obselTypeBox = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(obsel_types_ids[i]));
 
 								if(obselTypeBox) {
 									obselTypeBox.style.left = currentModelLayout[obsel_types_ids[i]].x + "px";
 									obselTypeBox.style.top = currentModelLayout[obsel_types_ids[i]].y + "px";
 									obselTypeBox.dispatchEvent(new CustomEvent("move", {composed: false, bubbles: false, cancelable: false}));
+
+									if((currentModelLayout[obsel_types_ids[i]].y + obselTypeBox.getBoundingClientRect().height) > maxBottom)
+										maxBottom = currentModelLayout[obsel_types_ids[i]].y + obselTypeBox.getBoundingClientRect().height;
 								}
 							}
+
+							// adjust the diagram element's height so it fits the content
+							this._diagramArea.style.height = (maxBottom + 40) + "px";
+							this._obseltypeDetails.style.maxHeight = (maxBottom + 40) + "px";
 						}
 						else
 							this.auto_arrange_obseltypes();
@@ -479,7 +649,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 						this._container.classList.add("details");
 				});
 
-				this._modelObselTypesContainer.appendChild(newNodeContent);
+				this._diagramArea.appendChild(newNodeContent);
 			}
 			else {
 				if(!this._container.classList.contains("empty"))
@@ -542,7 +712,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		}
 		// done
 
-		const obselTypesBoxes = this._modelObselTypesContainer.querySelectorAll("ktbs4la2-model-diagram-obseltype");
+		const obselTypesBoxes = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-obseltype");
 
 		for(let i = 0; i < obselTypesBoxes.length; i++) {
 			if(this._container.classList.contains("move"))
@@ -552,6 +722,13 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 
 			obselTypesBoxes[i].setAttribute("lang", this._lang);
 		}
+
+		setTimeout(() => {
+			if(this._layout_is_automatic)
+				this.auto_arrange_obseltypes();
+		});
+
+		this._obseltypeDetails.setAttribute("lang", this._lang);
     }
 
 	/**
@@ -559,6 +736,35 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 */
 	_getKtbsResourceClass() {
 		return Model;
+	}
+
+	/**
+	 * 
+	 */
+	get _allowFullScreen() {
+		return (
+				!this.hasAttribute("allow-fullscreen") 
+			||	!(
+					(this.getAttribute("allow-fullscreen") == "0") 
+				||	(this.getAttribute("allow-fullscreen") == "false")
+			)
+		);
+	}
+
+	/**
+	 * 
+	 */
+	_onClickToggleFullscreenButton(event) {
+		event.stopPropagation();
+	
+		if(this._allowFullScreen) {
+			if(document.fullscreenElement === null) {
+				if(this.dispatchEvent(new Event("request-fullscreen", {cancelable: true})))
+					this._container.requestFullscreen();
+			}
+			else
+				document.exitFullscreen();
+		}
 	}
 }
 
