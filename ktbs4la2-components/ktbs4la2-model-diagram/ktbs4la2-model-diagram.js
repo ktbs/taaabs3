@@ -37,11 +37,20 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
         if(name == "mode") {
 			if((newValue == "view") || (newValue == "edit")) {
 				this._componentReady.then(() => {
+					if((newValue == "view") && (oldValue == "edit"))
+						this._obseltypeDetails.resetObselType();
+
+					if((newValue == "edit") && (this.selected_obselType))
+						this._obseltype_is_being_edited = true;
+
 					this._obseltypeDetails.setAttribute("mode", newValue);
 				});
 			}
 			else if(newValue == null) {
 				this._componentReady.then(() => {
+					if(oldValue == "edit")
+						this._obseltypeDetails.resetObselType();
+
 					if(this._obseltypeDetails.hasAttribute("mode"))
 						this._obseltypeDetails.removeAttribute("mode");
 				});
@@ -54,6 +63,37 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				document.exitFullscreen();
 		}
     }
+
+	/**
+	 * 
+	 */
+	get mode() {
+		if(
+				this.hasAttribute("mode") 
+			&& 	(
+					(this.getAttribute("mode") == "view")
+				||	(this.getAttribute("mode") == "edit")
+			)
+		)
+				return this.getAttribute("mode");
+		else
+			return "view";
+	}
+
+	/**
+	 * 
+	 */
+	set mode(new_mode) {
+		if((new_mode == "view") || (new_mode == "edit")) {
+			this.setAttribute("mode", new_mode);
+		}
+		else if(new_mode == null) {
+			if(this.hasAttribute("mode"))
+				this.removeAttribute("mode");
+		}
+		else
+			this.emitErrorEvent(new RangeError("The only accepted values for attribute \"mode\" are : \"view\" or \"edit\""));
+	}
 
 	/**
 	 * 
@@ -105,6 +145,67 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 *  
 	 */
 	_onChangeObselType(event) {
+		const changedObselType = this._obseltypeDetails.obsel_type;
+
+		// update the model
+		const model_obsel_types = this._ktbsResource.obsel_types;
+
+		for(let i = 0; i < model_obsel_types.length; i++)
+			if(model_obsel_types[i].id == changedObselType.id) {
+				model_obsel_types[i] = changedObselType;
+			}
+
+		this._ktbsResource.obsel_types = model_obsel_types;
+		// ---
+
+		const obselTypeBox = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(changedObselType.id));
+		
+		if(obselTypeBox) {
+			obselTypeBox.obsel_type = changedObselType;
+			const diagramArrows = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-arrow");
+
+			for(let i = 0; i < diagramArrows.length; i++)
+				if(diagramArrows[i].fromBox == obselTypeBox)
+					diagramArrows[i].remove();
+
+			if(changedObselType.super_obsel_types.length > 0) {
+				const newNodeContent = document.createDocumentFragment();
+
+				for(let i = 0; i < changedObselType.super_obsel_types.length; i++) {
+					const parentObselType = changedObselType.super_obsel_types[i];
+					const parentObselTypeBox = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(parentObselType.id));
+
+					if(parentObselTypeBox) {
+						const anArrow = document.createElement("ktbs4la2-model-diagram-arrow");
+						anArrow.fromBox = obselTypeBox;
+						anArrow.toBox = parentObselTypeBox;
+						newNodeContent.appendChild(anArrow);
+					}
+					else
+						this.emitErrorEvent(new Error("Could not find box for obsel type " + parentObselType.id));
+				}
+
+				this._diagramArea.appendChild(newNodeContent);
+			}
+			else {
+				const anArrow = document.createElement("ktbs4la2-model-diagram-arrow");
+				anArrow.fromBox = obselTypeBox;
+				anArrow.toBox = this._defaultObseltypeElement;
+				this._diagramArea.appendChild(anArrow);
+			}
+
+			const modelsLayoutsString = window.localStorage.getItem("model-diagram-layouts");
+
+			if(modelsLayoutsString != null) {
+				const modelsLayouts = JSON.parse(modelsLayoutsString);
+
+				if(!modelsLayouts[this._ktbsResource.uri.toString()])
+					this.auto_arrange_obseltypes();
+			}
+			else
+				this.auto_arrange_obseltypes();
+		}
+
 		this.dispatchEvent(new CustomEvent("change", {bubbles: true, cancelable: false, composed: false}));
 	}
 
@@ -114,18 +215,50 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	_onClickCloseObseltypeDetailsButton(event) {
 		if(!this._obseltypeDetailsPanel.classList.contains("hidden"))
 			this._obseltypeDetailsPanel.classList.add("hidden");
+		
+		this._obseltype_is_being_edited = false;
 
 		const selectedBoxes = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-obseltype.selected");
 
 		for(let i = 0; i < selectedBoxes.length; i++)
 			selectedBoxes[i].classList.remove("selected");
+
+		const changedObselType = this._obseltypeDetails.obsel_type;
+		const model_obselTypes = this._ktbsResource.obsel_types;
+
+		for(let i = 0; i < model_obselTypes.length; i++) {
+			if(model_obselTypes[i].id == changedObselType.id) {
+				model_obselTypes[i] = changedObselType;
+				break;
+			}
+		}
+
+		this._ktbsResource.obsel_types = model_obselTypes;
 	}
 
 	/**
 	 * 
 	 */
 	_onClickCancelObseltypeModificationsButton(event) {
-		console.log("_onClickCancelObseltypeModificationsButton()");
+		this._obseltypeDetails.resetObselType();
+		const changedObselType = this._obseltypeDetails.obsel_type;
+		const obselType_id = changedObselType.id;
+		const obselTypeBox = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(obselType_id));
+		
+		if(obselTypeBox)
+			obselTypeBox.obsel_type = changedObselType;
+
+		if(!this._obseltypeDetailsPanel.classList.contains("hidden"))
+			this._obseltypeDetailsPanel.classList.add("hidden");
+
+		this._obseltype_is_being_edited = false;
+
+		const selectedBoxes = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-obseltype.selected");
+
+		for(let i = 0; i < selectedBoxes.length; i++)
+			selectedBoxes[i].classList.remove("selected");
+
+		this.dispatchEvent(new CustomEvent("change", {bubbles: true, cancelable: false, composed: false}));
 	}
 
 	/**
@@ -139,7 +272,36 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 * 
 	 */
 	_onClickDeleteObseltypeButton(event) {
-		console.log("_onClickDeleteObseltypeButton()");
+		if(window.confirm(this._translateString("Are you sure you want to delete this obsel type ?\n(Please note that your changes will not be recorded until you click the \"save\" button)"))) {
+			if(!this._obseltypeDetailsPanel.classList.contains("hidden"))
+				this._obseltypeDetailsPanel.classList.add("hidden");
+
+			this._obseltype_is_being_edited = false;
+
+			const changedObselType = this._obseltypeDetails.obsel_type;
+			const obselTypeBox = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(changedObselType.id));
+
+			if(obselTypeBox) {
+				const diagramArrows = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-arrow");
+
+				for(let i = 0; i < diagramArrows.length; i++)
+					if((diagramArrows[i].fromBox == obselTypeBox) || (diagramArrows[i].toBox == obselTypeBox))
+						diagramArrows[i].remove();
+
+				obselTypeBox.remove();
+			}
+			
+			const model_obselTypes = this._ktbsResource.obsel_types;
+
+			for(let i = 0; i < model_obselTypes.length; i++) {
+				if(model_obselTypes[i].id == changedObselType.id) {
+					model_obselTypes.splice(i, 1);
+					break;
+				}
+			}
+
+			this._ktbsResource.obsel_types = model_obselTypes;
+		}
 	}
 
 	/**
@@ -318,6 +480,29 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	/**
 	 * 
 	 */
+	set _obseltype_is_being_edited(is_being_edited) {
+		if(is_being_edited === true) {
+			if(!this._container.classList.contains("obseltype-is-being-edited"))
+				this._container.classList.add("obseltype-is-being-edited");
+		}
+		else if(is_being_edited === false) {
+			if(this._container.classList.contains("obseltype-is-being-edited"))
+				this._container.classList.remove("obseltype-is-being-edited");
+		}
+		else
+			throw new TypeError("Value for private property _obseltype_is_being_edited must be a boolean");
+	}
+
+	/**
+	 * 
+	 */
+	get selected_obselType() {
+		return this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype.selected");
+	}
+
+	/**
+	 * 
+	 */
 	get _layout_is_automatic() {
 		return this._container.classList.contains("automatic-layout");
 	}
@@ -412,6 +597,9 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 
 						if(this._obseltypeDetailsPanel.classList.contains("hidden"))
 							this._obseltypeDetailsPanel.classList.remove("hidden");
+
+						if(this.mode == "edit")
+							this._obseltype_is_being_edited = true;
 					}
 			}
 		}

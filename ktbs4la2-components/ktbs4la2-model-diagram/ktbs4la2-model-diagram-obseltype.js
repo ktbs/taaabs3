@@ -40,33 +40,51 @@ import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
         this._attributetypesList = this.shadowRoot.querySelector("#attributetypes-list");
 
         this._obselTypeSet.then(() => {
-            if(this._obsel_type.suggestedSymbol)
-                this._symbolSpan.innerHTML = this._obsel_type.suggestedSymbol;
-
-            if(this._obsel_type.suggestedColor) {
-                this._container.className = lightOrDark(this._obsel_type.suggestedColor);
-                this._header.style.backgroundColor = this._obsel_type.suggestedColor;
-                this._header.style.borderColor = this._obsel_type.suggestedColor;
-                this._article.style.borderColor = this._obsel_type.suggestedColor;
-            }
-
-            this._titleH2.innerText = this._obsel_type.get_preferred_label(this._lang);
-
-            if((this._obsel_type.attribute_types instanceof Array) && (this._obsel_type.attribute_types.length > 0)) {
-                const attributesListContent = document.createDocumentFragment();
-
-                for(let i = 0; i < this._obsel_type.attribute_types.length; i++) {
-                    const attribute_type = this._obsel_type.attribute_types[i];
-                    const anAttributeNode = document.createElement("li");
-                    anAttributeNode.innerText = attribute_type.get_preferred_label(this._lang);;
-                    attributesListContent.appendChild(anAttributeNode);
-                }
-
-                this._attributetypesList.appendChild(attributesListContent);    
-            }
-
+            this._updateDisplay();
             this._resolveElementPopulated();
         });
+    }
+
+    /**
+     * 
+     */
+    _updateDisplay() {
+        if(this._obsel_type.suggestedSymbol)
+            this._symbolSpan.innerHTML = this._obsel_type.suggestedSymbol;
+        else
+            this._symbolSpan.innerHTML = "";
+
+        if(this._obsel_type.suggestedColor) {
+            this._container.className = lightOrDark(this._obsel_type.suggestedColor);
+            this._header.style.backgroundColor = this._obsel_type.suggestedColor;
+            this._header.style.borderColor = this._obsel_type.suggestedColor;
+            this._article.style.borderColor = this._obsel_type.suggestedColor;
+        }
+        else {
+            this._container.className = null;
+            this._header.style.removeProperty("backgroundColor");
+            this._header.style.removeProperty("borderColor");
+            this._article.style.removeProperty("borderColor");
+        }
+
+
+        this._titleH2.innerText = this._obsel_type.get_preferred_label(this._lang);
+
+        while(this._attributetypesList.hasChildNodes())
+            this._attributetypesList.firstChild.remove();
+
+        if((this._obsel_type.attribute_types instanceof Array) && (this._obsel_type.attribute_types.length > 0)) {
+            const attributesListContent = document.createDocumentFragment();
+
+            for(let i = 0; i < this._obsel_type.attribute_types.length; i++) {
+                const attribute_type = this._obsel_type.attribute_types[i];
+                const anAttributeNode = document.createElement("li");
+                anAttributeNode.innerText = attribute_type.get_preferred_label(this._lang);;
+                attributesListContent.appendChild(anAttributeNode);
+            }
+
+            this._attributetypesList.appendChild(attributesListContent);    
+        }
     }
 
     /**
@@ -99,6 +117,11 @@ import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
         if(new_obsel_type instanceof ObselType) {
             this._obsel_type = new_obsel_type;
             this._resolveObselTypeSet();
+
+            this._componentReady.then(() => {
+                this._updateDisplay();
+            });
+            
         }
         else
             throw new TypeError("new value for property obsel_type must be an instance of ObselType");

@@ -147,7 +147,7 @@
 
 /* ------------------------------------------ */
 
-#container.details ktbs4la2-model-diagram-obseltype:hover,
+#container.details:not(.obseltype-is-being-edited) ktbs4la2-model-diagram-obseltype:hover,
 #container.details ktbs4la2-model-diagram-obseltype.selected,
 #container.move ktbs4la2-model-diagram-obseltype:hover,
 #container.move ktbs4la2-model-diagram-obseltype.moved,
@@ -158,7 +158,7 @@
 
 
 
-#container.details ktbs4la2-model-diagram-obseltype:hover {
+#container.details:not(.obseltype-is-being-edited) ktbs4la2-model-diagram-obseltype:hover {
 	cursor: pointer;
 	cursor: url('{my-component-folder}/eye.png'), pointer;
 }

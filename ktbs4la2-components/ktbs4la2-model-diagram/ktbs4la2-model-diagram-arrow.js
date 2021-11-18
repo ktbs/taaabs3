@@ -136,6 +136,12 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
             this._parentNodeObserver.disconnect();
             delete this._parentNodeObserver;
         }
+
+        if(this._fromBox)
+            this._fromBox.removeEventListener("move", this._bindedOnMoveBoxMethod);
+
+        if(this._toBox)
+            this._toBox.removeEventListener("move", this._bindedOnMoveBoxMethod);
     }
 
     /**

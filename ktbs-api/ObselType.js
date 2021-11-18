@@ -182,7 +182,10 @@ export class ObselType {
      * \public
      */
     set suggestedColor(new_suggestedColor) {
-        this._JSONData["suggestedColor"] = new_suggestedColor;
+        if(new_suggestedColor)
+            this._JSONData["suggestedColor"] = new_suggestedColor;
+        else if(this._JSONData["suggestedColor"])
+            delete this._JSONData["suggestedColor"];
     }
 
     /**
@@ -200,7 +203,10 @@ export class ObselType {
      * \public
      */
     set suggestedSymbol(new_suggestedSymbol) {
-        this._JSONData["suggestedSymbol"] = new_suggestedSymbol;
+        if(new_suggestedSymbol)
+            this._JSONData["suggestedSymbol"] = new_suggestedSymbol;
+        else if(this._JSONData["suggestedSymbol"])
+            delete this._JSONData["suggestedSymbol"];
     }
 
     /**
@@ -225,10 +231,12 @@ export class ObselType {
 	 */
 	get label() {
 		if(!this._label) {
-			if(this._JSONData["label"])
+			if((this._JSONData["label"]) && ((typeof this._JSONData["label"] == 'string') || (this._JSONData["label"] instanceof String)))
 				this._label = this._JSONData["label"];
-			else
+			else if(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] && ((typeof this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] == 'string') || (this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] instanceof String)))
 				this._label = this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
+            else if(this._JSONData["rdfs:label"] && ((typeof this._JSONData["rdfs:label"] == 'string') || (this._JSONData["rdfs:label"] instanceof String)))
+                this._label = this._JSONData["rdfs:label"];
 		}
 
 		return this._label;
@@ -298,21 +306,29 @@ export class ObselType {
      * \public
 	 */
 	set_translated_label(label, lang) {
-		let currentLabel = this.label;
-		let newLabel;
+        if(this.get_translated_label(lang))
+            this.remove_label_translation(lang);
 
-		if(currentLabel instanceof String) {
-			newLabel = new Array();
-			newLabel.push({"@language": "en", "@value": currentLabel});
-		}
-		else if(currentLabel instanceof Array)
-			newLabel = currentLabel;
-		else
-            newLabel = new Array();
+        if(!(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] instanceof Array))
+            this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] = new Array();
 
-        newLabel.push({"@language": lang, "@value": label})
-		this.label = newLabel;
+        this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"].push({"@language": lang, "@value": label});
 	}
+
+    /**
+     * Removes any translation of the obsel type's label for a given language
+     * \param {*} lang the language we want to remove label translations for
+     * \public
+     */
+    remove_label_translation(lang) {
+        const labelKeys = ["label", "http://www.w3.org/2000/01/rdf-schema#label", "rdfs:label"];
+    
+        for(let i = 0; i < labelKeys.length; i++)
+            if(this._JSONData[labelKeys[i]] && (this._JSONData[labelKeys[i]] instanceof Array))
+                for(let j = (this._JSONData[labelKeys[i]].length - 1); j >= 0; j--)
+                    if((this._JSONData[labelKeys[i]][j] instanceof Object) && (this._JSONData[labelKeys[i]][j]["@language"] == lang))
+                        delete this._JSONData[labelKeys[i]].splice(j, 1);
+    }
 
     /**
 	 * Gets the "comment" of the resource
