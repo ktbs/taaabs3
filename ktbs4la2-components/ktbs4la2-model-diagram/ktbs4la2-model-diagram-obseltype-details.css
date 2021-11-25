@@ -87,6 +87,24 @@ label {
 	border: 1px solid #DDD;
     font-size: 10px;
     padding: 3px 3px;
+    position: relative;
+}
+
+#attributes-list-table tr.is-shared-attributetype td.id-cell {
+    padding-top: 18px;
+    padding-bottom: 18px;
+    padding-left: 10px;
+}
+
+.shared-attribute-indicator {
+    display: block;
+    position: absolute;
+    left: 1px;
+    top: 1px;
+    width: 16px;
+    height: 16px;
+    background: url('{my-component-folder}/warning.svg') no-repeat;
+    cursor: help;
 }
 
 #attributes-list-table thead td,

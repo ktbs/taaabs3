@@ -20,5 +20,6 @@
     "Data type(s)": "Type(s) de donnée",
     "Attribute type label": "Libellé du type d'attribut",
     "Add an attribute type to this obsel type": "Ajouter un type d'attribut à ce type d'obsel",
-    "Remove this attribute type from the obsel type": "Retirer ce type d'attribut du type d'obsel"
+    "Remove this attribute type from the obsel type": "Retirer ce type d'attribut du type d'obsel",
+    "This attribute type is shared between several obsel types :": "Ce type d'attribut est partagé entre plusieurs types d'obsel :"
 }

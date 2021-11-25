@@ -40,7 +40,7 @@ import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
         this._attributetypesList = this.shadowRoot.querySelector("#attributetypes-list");
 
         this._obselTypeSet.then(() => {
-            this._updateDisplay();
+            this.updateDisplay();
             this._resolveElementPopulated();
         });
     }
@@ -48,7 +48,7 @@ import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
     /**
      * 
      */
-    _updateDisplay() {
+    updateDisplay() {
         if(this._obsel_type.suggestedSymbol)
             this._symbolSpan.innerHTML = this._obsel_type.suggestedSymbol;
         else
@@ -119,7 +119,7 @@ import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
             this._resolveObselTypeSet();
 
             this._componentReady.then(() => {
-                this._updateDisplay();
+                this.updateDisplay();
             });
             
         }

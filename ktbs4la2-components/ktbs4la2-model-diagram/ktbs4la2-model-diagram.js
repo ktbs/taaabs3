@@ -119,6 +119,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		this._obseltypeDetails = this.shadowRoot.querySelector("#obseltype-details");
 		this._obseltypeDetails.setAttribute("lang", this._lang);
 		this._obseltypeDetails.addEventListener("change", this._onChangeObselType.bind(this));
+		this._obseltypeDetails.addEventListener("change-attribute-type", this._onChangeAttributeType.bind(this));
 		this._closeObseltypeDetailsButton = this.shadowRoot.querySelector("#close-obseltype-details-button");
 		this._closeObseltypeDetailsButton.addEventListener("click", this._onClickCloseObseltypeDetailsButton.bind(this));
 		this._cancelObseltypeModificationsButton = this.shadowRoot.querySelector("#cancel-obseltype-modifications-button");
@@ -207,6 +208,24 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		}
 
 		this.dispatchEvent(new CustomEvent("change", {bubbles: true, cancelable: false, composed: false}));
+	}
+
+	/**
+	 * 
+	 * @param {*} event 
+	 */
+	_onChangeAttributeType(event) {
+		const changedAttribute = event.detail.attributeType;
+		const affected_obselTypes = changedAttribute.obsel_types;
+
+		for(let i = 0; i < affected_obselTypes.length; i++) {
+			const obselTypeBox = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(affected_obselTypes[i].id));
+
+			if(obselTypeBox)
+				obselTypeBox.updateDisplay();
+			else
+				this.emitErrorEvent(new Error("Cannot retrieve box for obsel type " + affected_obselTypes[i].id));
+		}
 	}
 
 	/**

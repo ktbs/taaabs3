@@ -221,7 +221,7 @@ export class ObselType {
 			if(this._JSONData[labelKeys[i]] && (this._JSONData[labelKeys[i]] instanceof Object))
 				return this._JSONData[labelKeys[i]];
 
-		return undefined;
+		return [];
 	}
 
     /**
@@ -309,10 +309,10 @@ export class ObselType {
         if(this.get_translated_label(lang))
             this.remove_label_translation(lang);
 
-        if(!(this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] instanceof Array))
-            this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"] = new Array();
+        if(!(this._JSONData["rdfs:label"] instanceof Array))
+            this._JSONData["rdfs:label"] = new Array();
 
-        this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"].push({"@language": lang, "@value": label});
+        this._JSONData["rdfs:label"].push({"@language": lang, "@value": label});
 	}
 
     /**
@@ -325,9 +325,13 @@ export class ObselType {
     
         for(let i = 0; i < labelKeys.length; i++)
             if(this._JSONData[labelKeys[i]] && (this._JSONData[labelKeys[i]] instanceof Array))
-                for(let j = (this._JSONData[labelKeys[i]].length - 1); j >= 0; j--)
+                for(let j = (this._JSONData[labelKeys[i]].length - 1); j >= 0; j--) {
                     if((this._JSONData[labelKeys[i]][j] instanceof Object) && (this._JSONData[labelKeys[i]][j]["@language"] == lang))
-                        delete this._JSONData[labelKeys[i]].splice(j, 1);
+                        this._JSONData[labelKeys[i]].splice(j, 1);
+
+                    if(this._JSONData[labelKeys[i]].length == 0)
+						delete this._JSONData[labelKeys[i]];
+                }
     }
 
     /**

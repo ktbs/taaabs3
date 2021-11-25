@@ -153,7 +153,7 @@ export class AttributeType {
 			if(this._JSONData[labelKeys[i]] && (this._JSONData[labelKeys[i]] instanceof Object))
 				return this._JSONData[labelKeys[i]];
 
-		return undefined;
+		return [];
 	}
 
 	/**
@@ -219,22 +219,34 @@ export class AttributeType {
 	 * \param String lang - a short code for the language the label is translated in
 	 * \public
 	 */
-	set_translated_label(label, lang) {
-		let currentLabel = this.label;
-		let newLabel;
+	 set_translated_label(label, lang) {
+        if(this.get_translated_label(lang))
+            this.remove_label_translation(lang);
 
-		if(currentLabel instanceof String) {
-			newLabel = new Array();
-			newLabel.push({"@language": "en", "@value": currentLabel});
-		}
-		else if(currentLabel instanceof Array)
-			newLabel = currentLabel;
-		else
-			newLabel = new Array();
+        if(!(this._JSONData["rdfs:label"] instanceof Array))
+            this._JSONData["rdfs:label"] = new Array();
 
-		newLabel.push({"@language": lang, "@value": label})
-		this.label = newLabel;
+        this._JSONData["rdfs:label"].push({"@language": lang, "@value": label});
 	}
+
+	/**
+     * Removes any translation of the obsel type's label for a given language
+     * \param {*} lang the language we want to remove label translations for
+     * \public
+     */
+	remove_label_translation(lang) {
+        const labelKeys = ["label", "http://www.w3.org/2000/01/rdf-schema#label", "rdfs:label"];
+    
+        for(let i = 0; i < labelKeys.length; i++)
+            if(this._JSONData[labelKeys[i]] && (this._JSONData[labelKeys[i]] instanceof Array))
+                for(let j = (this._JSONData[labelKeys[i]].length - 1); j >= 0; j--) {
+                    if((this._JSONData[labelKeys[i]][j] instanceof Object) && (this._JSONData[labelKeys[i]][j]["@language"] == lang))
+                        this._JSONData[labelKeys[i]].splice(j, 1);
+
+					if(this._JSONData[labelKeys[i]].length == 0)
+						delete this._JSONData[labelKeys[i]];
+				}
+    }
 
     /**
 	 * Gets the "comment" of the resource
