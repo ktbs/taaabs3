@@ -358,22 +358,20 @@ export class ObselType {
      * \public
      */
     get attribute_types() {
-        if(!this._attribute_types) {
-            this._attribute_types = new Array();
+        const attribute_types = new Array();
 
-            if(this._parentModel) {
-                let model_attribute_types = this._parentModel.attribute_types;
+        if(this._parentModel) {
+            let model_attribute_types = this._parentModel.attribute_types;
 
-                for(let i = 0; i < model_attribute_types.length; i++) {
-                    let anAttributeType = model_attribute_types[i];
+            for(let i = 0; i < model_attribute_types.length; i++) {
+                let anAttributeType = model_attribute_types[i];
 
-                    if(anAttributeType.isAssignedToObselType(this))
-                        this._attribute_types.push(anAttributeType);
-                }
+                if(anAttributeType.isAssignedToObselType(this))
+                    attribute_types.push(anAttributeType);
             }
         }
 
-        return this._attribute_types;
+        return attribute_types;
     }
 
     /**
@@ -396,11 +394,6 @@ export class ObselType {
             for(let i = 0; i < new_attribute_types.length; i++)
                 if(!new_attribute_types[i].obsel_types.includes(this))
                     new_attribute_types[i].obsel_types.push(this);
-
-            this._attribute_types = new_attribute_types;
-
-            if(this._available_attribute_types)
-                delete this._available_attribute_types;
         }
         else
             throw new TypeError("New value for attribute_types property must be an array of AttributeType.");
@@ -413,21 +406,17 @@ export class ObselType {
      * \readonly
      */
     get available_attribute_types() {
-        if(!this._available_attribute_types) {
-            let unfilteredAttributes = new Array();
+        let unfilteredAttributes = new Array();
 
-            if(this.super_obsel_types.length > 0) {
-                for(let i = 0; i < this.super_obsel_types.length; i++)
-                    unfilteredAttributes = unfilteredAttributes.concat(this.super_obsel_types[i].available_attribute_types);
-            }
-            else
-                unfilteredAttributes = AttributeType.builtin_attribute_types;
-            
-            unfilteredAttributes = unfilteredAttributes.concat(this.attribute_types);
-            this._available_attribute_types = new Array(...new Set(unfilteredAttributes));
+        if(this.super_obsel_types.length > 0) {
+            for(let i = 0; i < this.super_obsel_types.length; i++)
+                unfilteredAttributes = unfilteredAttributes.concat(this.super_obsel_types[i].available_attribute_types);
         }
-
-        return this._available_attribute_types;
+        else
+            unfilteredAttributes = AttributeType.builtin_attribute_types;
+        
+        unfilteredAttributes = unfilteredAttributes.concat(this.attribute_types);
+        return new Array(...new Set(unfilteredAttributes));
     }
     
     /**
