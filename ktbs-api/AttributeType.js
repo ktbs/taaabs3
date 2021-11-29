@@ -355,6 +355,52 @@ export class AttributeType {
 	}
 
 	/**
+	 * Assigns the current attribute type to an obsel type
+	 * \param ObselType obsel_type the obsel type to assign the current attribute type to
+	 * \throws TypeError throws a TypeError if the provided argument is not an instance of ObselType
+	 * \throws KtbsError if the current attribute type is already assigned to the obsel type provided as an argument
+	 */
+	assignToObselType(obsel_type) {
+		if(obsel_type instanceof ObselType) {
+			if(!this.isAssignedToObselType(obsel_type)) {
+				const obsel_types = this.obsel_types;
+				obsel_types.push(obsel_type);
+				this.obsel_types = obsel_types;
+			}
+			else
+				throw new KtbsError("The attribute type is already assigned to this obsel type");
+		}
+		else
+			throw new TypeError("Argument must be an instance of ObselType");
+	}
+
+	/**
+	 * Unassigns the current attribute type from an obsel type
+	 * \param ObselType obsel_type the obsel type to unassign the current attribute type from
+	 * \throws TypeError throws a TypeError if the provided argument is not an instance of ObselType
+	 * \throws KtbsError if the current attribute type is not currently assigned to the obsel type provided as an argument
+	 */
+	unAssignFromObselType(obsel_type) {
+		if(obsel_type instanceof ObselType) {
+			if(this.isAssignedToObselType(obsel_type)) {
+				const obsel_types = this.obsel_types;
+
+				for(let i = 0; i < obsel_types.length; i++)
+					if(obsel_types[i].id == obsel_type.id) {
+						obsel_types.splice(i, 1);
+						break;
+					}
+
+				this.obsel_types = obsel_types;
+			}
+			else
+				throw new KtbsError("The attribute type is not currently assigned to this obsel type");
+		}
+		else
+			throw new TypeError("Argument must be an instance of ObselType");
+	}
+
+	/**
 	 * Gets the data types allowed for this AttributeType
 	 * \return Array of String
 	 * \public
