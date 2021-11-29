@@ -418,6 +418,30 @@ export class ObselType {
         unfilteredAttributes = unfilteredAttributes.concat(this.attribute_types);
         return new Array(...new Set(unfilteredAttributes));
     }
+
+    /**
+     * Adds an attribute type to the current obsel type
+     * \param AttributeType attribute_type 
+     * \throws TypeError throws a TypeError if the provided argument is not an instance of AttributeType
+     */
+    addAttributeType(attribute_type) {
+        if(attribute_type instanceof AttributeType)
+            attribute_type.assignToObselType(this);
+        else
+            throw new TypeError("Argument must be an instance of AttributeType");
+    }
+
+    /**
+     * Removes an attribute type from the current obsel type
+     * \param AttributeType attribute_type 
+     * \throws TypeError throws a TypeError if the provided argument is not an instance of AttributeType
+     */
+    removeAttributeType(attribute_type) {
+        if(attribute_type instanceof AttributeType)
+            attribute_type.unAssignFromObselType(this);
+        else
+            throw new TypeError("Argument must be an instance of AttributeType");
+    }
     
     /**
 	 * Gets the data to be send in a POST query
