@@ -484,7 +484,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             if(modelDiagram)
                 modelDiagram.setAttribute("mode", "edit");
 
-            this._updateSaveButtonState();
+            //this._updateSaveButtonState();
+
+            if(!this._saveModificationsButton.classList.contains("disabled"))
+                this._saveModificationsButton.classList.add("disabled");
 
             if(!this._containerDiv.classList.contains("edit"))
                 this._containerDiv.classList.add("edit");
@@ -1373,7 +1376,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
 
                 if(modelDiagram) {
-                    if(modelDiagram.model_is_valid)
+                    if(modelDiagram.checkValidity())
                         this._ktbsResource = modelDiagram.model;
                     else {
                         const error = new Error("The model's definition is not valid");
@@ -1440,6 +1443,11 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
 					formElementsToValidate.push(this._parametersInput);
 					break;
+                case "Model" :
+                    const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
+
+                    if(modelDiagram)
+                        formElementsToValidate.push(modelDiagram);
 			}
 
 			for(let i = 0; formIsValid && (i < formElementsToValidate.length); i++)
@@ -1553,16 +1561,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
      * 
      */
     _onChangeModelDiagram(event) {
-        const modelDiagram = event.target;
-
-        if(modelDiagram.model_is_valid) {
-            if(this._saveModificationsButton.classList.contains("disabled"))
-                this._saveModificationsButton.classList.remove("disabled");
-        }
-        else {
-            if(!this._saveModificationsButton.classList.contains("disabled"))
-                this._saveModificationsButton.classList.add("disabled");
-        }
+        this._updateSaveButtonState();
     }
 
     /**

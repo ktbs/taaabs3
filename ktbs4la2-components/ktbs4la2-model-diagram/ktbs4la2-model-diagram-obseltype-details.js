@@ -25,9 +25,21 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
      * 
      */
     checkValidity() {
-        // @TODO
+        let isValid = true;
+        const ownAttributesLines = this._attributesListTableBody.querySelectorAll("tr.own");
 
-        return true;
+        for(let i = 0; i < ownAttributesLines.length; i++) {
+            const anAttributeLine = ownAttributesLines[i];
+            const idInput = anAttributeLine.querySelector("td.id-cell ktbs4la2-resource-id-input");
+            const dataTypesSelect = anAttributeLine.querySelector("td.datatypes-cell select");
+            
+            if(!idInput.checkValidity() || !dataTypesSelect.checkValidity()) {
+                isValid = false;
+                break;
+            }
+        }
+
+        return isValid;
     }
 
     /**
@@ -35,10 +47,13 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
      */
     reportValidity() {
         const isValid = this.checkValidity();
+        const criticalInputs = this._attributesListTableBody.querySelectorAll("tr.own td.id-cell ktbs4la2-resource-id-input, tr.own td.datatypes-cell select");
 
-        // @TODO
-
-        //this._idInput.reportValidity();
+        for(let i = 0; i < criticalInputs.length; i++)
+            if(!criticalInputs[i].checkValidity()) {
+                criticalInputs[i].reportValidity();
+                break;
+            }
 
         return isValid;
 	}
@@ -49,6 +64,7 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
 	static get observedAttributes() {
 		let _observedAttributes = super.observedAttributes;
         _observedAttributes.push("mode");
+        _observedAttributes.push("reserved-attributetypes-ids");
 		return _observedAttributes;
     }
 
@@ -69,6 +85,24 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
             else if(newValue == "view") {
 
             }
+            else
+                throw new RangeError("Value for attribute \"mode\" must be either \"view\", \"edit\" or \"create\"");
+        }
+        else if(name == "reserved-attributetypes-ids") {
+            this._componentReady.then(() => {
+                const allIdInputs = this._attributesListTableBody.querySelectorAll("tr.own td.id-cell ktbs4la2-resource-id-input");
+
+                for(let i = 0; i < allIdInputs.length; i++) {
+                    const anIdInput = allIdInputs[i];
+                    const reserved_ids = this.reserved_attributetypes_ids.slice();
+                    
+                    if(anIdInput._lastValidValue && (reserved_ids.indexOf(anIdInput._lastValidValue) != -1))
+                        reserved_ids.splice(reserved_ids.indexOf(anIdInput._lastValidValue), 1);
+
+                    if(reserved_ids.length > 1)
+                        anIdInput.setAttribute("reserved-ids", reserved_ids.join(" "));
+                }
+            });
         }
     }
 
@@ -87,6 +121,42 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
             return this.getAttribute("mode");
         else
             return "view";
+    }
+
+    /**
+     * 
+     */
+    set mode(newValue) {
+        if(newValue)
+            this.setAttribute("mode", newValue);
+        else
+            if(this.hasAttribute("mode"))
+                this.removeAttribute("mode");
+    }
+
+    /**
+     * 
+     */
+    get reserved_attributetypes_ids() {
+        if(this.hasAttribute("reserved-attributetypes-ids"))
+            return this.getAttribute("reserved-attributetypes-ids").split(" ").filter(Boolean);
+        else
+            return [];
+    }
+
+    /**
+     * 
+     */
+    set reserved_attributetypes_ids(newValue) {
+        if(newValue) {
+            if(newValue instanceof Array)
+                this.setAttribute("reserved-attributetypes-ids", newValue.join(" "));
+            else
+                throw new TypeError("Value for property \"\" must be an instance of Array");
+        }
+        else
+            if(this.hasAttribute("reserved-attributetypes-ids"))
+                this.removeAttribute("reserved-attributetypes-ids");
     }
 
     /**
@@ -172,6 +242,12 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
             if(!langIsSetInInput)
                 this._obsel_type.remove_label_translation(translationLang);
         }
+
+        // update attributes tables' vertical cell content
+        const verticalCell = this._attributesListTableBody.querySelector("tr.own td.vertical-cell");
+
+        if(verticalCell)
+            verticalCell.innerText = this._obsel_type.get_preferred_label(this._lang);
         
         this._emitChangeEvent();
     }
@@ -301,6 +377,11 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
             this._parentObseltypeDisplaySpan.innerText = parentObseltypesLabels.join(", ");
         else
             this._parentObseltypeDisplaySpan.innerText = this._translateString("None");
+
+        const allIdInputs = this._attributesListTableBody.querySelectorAll("tr.own td.id-cell ktbs4la2-resource-id-input");
+
+        for(let i = 0; i < allIdInputs.length; i++)
+            allIdInputs[i].setAttribute("lang", this._lang);
     }
 
     /**
@@ -465,7 +546,6 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
         }
 
         // ... with current obsel type's own attributes
-
         for(let i = 0; i < obsel_type.attribute_types.length; i++) {
             const anAttribute = obsel_type.attribute_types[i];
 
@@ -502,9 +582,19 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                         idInput.classList.add("create");
                         idInput.classList.add("edit");
                         idInput.setAttribute("value", anAttribute.id);
+                        idInput._lastValidValue = anAttribute.id;
                         idInput.setAttribute("placeholder", "<id>");
-                        idInput.addEventListener("input", this._onChangeAttributeType.bind(this));
-                        idInput.addEventListener("change", this._onChangeAttributeType.bind(this));
+                        idInput.setAttribute("required", true);
+                        idInput.setAttribute("lang", this._lang);
+
+                        const reserved_ids = this.reserved_attributetypes_ids.slice();
+                        reserved_ids.splice(reserved_ids.indexOf(anAttribute.id), 1);
+
+                        if(reserved_ids.length > 1)
+                            idInput.setAttribute("reserved-ids", reserved_ids.join(" "));
+
+                        idInput.addEventListener("input", this._onChangeIdInput.bind(this));
+                        idInput.addEventListener("change", this._onChangeIdInput.bind(this));
                     idCell.appendChild(idInput);
 
                     const idDisplaySpan = document.createElement("span");
@@ -589,6 +679,26 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
     /**
      * 
      */
+    _onChangeIdInput(event) {
+        const changedIdInput = event.target;
+        changedIdInput.setCustomValidity("");
+
+        if(changedIdInput.checkValidity()) {
+            const reserved_ids = this.reserved_attributetypes_ids.slice();
+            
+            if(changedIdInput._lastValidValue && reserved_ids.indexOf(changedIdInput._lastValidValue) != -1)
+                reserved_ids.splice(reserved_ids.indexOf(changedIdInput._lastValidValue), 1);
+
+            changedIdInput._lastValidValue = changedIdInput.value;
+            reserved_ids.push(changedIdInput.value);
+            this.reserved_attributetypes_ids = reserved_ids;
+            this._onChangeAttributeType(event);
+        }
+        else
+            this._emitChangeEvent();
+        
+        changedIdInput.reportValidity();
+    }
 
     /**
      * 
@@ -675,17 +785,15 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
 
                     if(attributeRow.classList.contains("is-shared-attributetype"))
                         this.dispatchEvent(new CustomEvent("change-attribute-type", {bubbles: true, cancelable: false, composed: false, detail: {attributeType: attributeType}}));
-
-                    this._emitChangeEvent();
                 }
-                else
-                    this.reportValidity();
             }
             else
                 this.emitErrorEvent(new Error("Cannot retrieve attribute's table row's form elements"));
         }
         else
             this.emitErrorEvent(new Error("Cannot retrieve attribute's table row"));
+
+        this._emitChangeEvent();
     }
 
     /**
@@ -701,6 +809,20 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
      */
     _onClickRemoveAttributeButton(event) {
         const attributeRow = event.target.closest("tr");
+
+        // remove the attribute type from the obseltype
+        const idInput = attributeRow.querySelector("td.id-cell ktbs4la2-resource-id-input");
+
+        if(idInput && idInput._lastValidValue) {
+            const attribute_types = this._obsel_type.attribute_types;
+
+            for(let i = 0; i < attribute_types.length; i++)
+                if(attribute_types[i].id == idInput._lastValidValue) {
+                    this._obsel_type.removeAttributeType(attribute_types[i]);
+                    break;
+                }
+        }
+        // ---
         
         // decrease rowspan attribute of the vertical cell for the obsel type's row group
         const obseltypesCells = this._attributesListTableBody.querySelectorAll("tr td[rowspan].vertical-cell");
@@ -724,8 +846,6 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
 
         // remove current attribute row
         attributeRow.remove();
-
-        // @TODO remove attribute from obseltype
 
         // notify of changes
         this._emitChangeEvent();
@@ -776,6 +896,7 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
 
         // create the new table line for the attribute
         const newTableRow = document.createElement("tr");
+            newTableRow.classList.add("own");
             newTableRow.setAttribute("id", "<new>");
 
             if(!currentObselTypeVerticalCell) {
@@ -792,9 +913,15 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                 const idInput = document.createElement("ktbs4la2-resource-id-input");
                     idInput.classList.add("create");
                     idInput.classList.add("edit");
+                    idInput.setAttribute("required", true);
                     idInput.setAttribute("placeholder", "<id>");
-                    idInput.addEventListener("input", this._onChangeAttributeType.bind(this));
-                    idInput.addEventListener("change", this._onChangeAttributeType.bind(this));
+                    idInput.setAttribute("lang", this._lang);
+
+                    if(this.reserved_attributetypes_ids > 1)
+                        idInput.setAttribute("reserved-ids", this.reserved_attributetypes_ids.join(" "));
+
+                    idInput.addEventListener("input", this._onChangeIdInput.bind(this));
+                    idInput.addEventListener("change", this._onChangeIdInput.bind(this));
                 idCell.appendChild(idInput);
 
                 const idDisplaySpan = document.createElement("span");
@@ -859,12 +986,14 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
         // increase rowspan attribute of the vertical cell for the obsel type's row group
         const currentRowspan = parseInt(currentObselTypeVerticalCell.getAttribute("rowspan"), 10);
         currentObselTypeVerticalCell.setAttribute("rowspan", (currentRowspan + 1));
+        
+        this._emitChangeEvent();
 
         idInput._componentReady.then(() => {
-            idInput.focus();
+            setTimeout(() => {
+                idInput.focus();
+            });
         });
-
-        this._emitChangeEvent();
     }
 
     /**

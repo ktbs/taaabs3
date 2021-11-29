@@ -8,6 +8,10 @@
     "Automatically rearrange obsel types layout": "Réarranger auomatiquement la disposition des types d'obsel",
     "Create a new obsel type": "Créer un nouveau type d'obsel",
     "Create a new inheritance relationship": "Créer une nouvelle relation d'héritage",
+    "Close": "Femer",
+    "Cancel modifications of this obsel type": "Annuler les modifications de ce type d'obsel",
+    "Duplicate this obsel type": "Dupliquer ce type d'obsel",
+    "Delete this obsel type": "Supprimer ce type d'obsel",
     "Default": "Par défaut",
     "Obsel type label": "Libellé du type d'obsel",
     "Parent obsel type(s) :": "Type(s) d'obsel parent(s) :",
@@ -21,5 +25,7 @@
     "Attribute type label": "Libellé du type d'attribut",
     "Add an attribute type to this obsel type": "Ajouter un type d'attribut à ce type d'obsel",
     "Remove this attribute type from the obsel type": "Retirer ce type d'attribut du type d'obsel",
-    "This attribute type is shared between several obsel types :": "Ce type d'attribut est partagé entre plusieurs types d'obsel :"
+    "This attribute type is shared between several obsel types :": "Ce type d'attribut est partagé entre plusieurs types d'obsel :",
+    "This ID is already used for another attribute type": "Cet identifiant est déjà utilisé pour un autre type d'attribut",
+    "Specified data for the obsel type is invalid.\nYou must correct it to be able to close this panel.": "Les données spécifiées pour le type d'obsel ne sont pas valides.\nVous devez les corriger pour pouvoir fermer ce panneau."
 }
