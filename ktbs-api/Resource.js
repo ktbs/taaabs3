@@ -1649,6 +1649,23 @@ export class Resource {
 	}
 
 	/**
+	 * Creates and returns a deep copy of the current resource
+	 * \return Resource
+	 * \public
+	 */
+	clone() {
+		const copy = new this.constructor(this.uri);
+		copy._etag = this._etag;
+		copy._JSONData = JSON.parse(JSON.stringify(this._JSONData));
+		copy._syncStatus = this._syncStatus;
+		copy._lifecycleStatus = this._lifecycleStatus;
+		copy._error = this._error;
+		copy._authentified = this._authentified;
+		copy._use_parent_credentials = this._use_parent_credentials;
+		return copy;
+	}
+
+	/**
      * A Promise that resolves when the shared cache has been successfully open
 	 * \return Promise
 	 * \public
