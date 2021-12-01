@@ -62,9 +62,9 @@ import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
         }
         else {
             this._container.className = null;
-            this._header.style.removeProperty("backgroundColor");
-            this._header.style.removeProperty("borderColor");
-            this._article.style.removeProperty("borderColor");
+            this._header.style.removeProperty("background-color");
+            this._header.style.removeProperty("border-color");
+            this._article.style.removeProperty("border-color");
         }
 
 

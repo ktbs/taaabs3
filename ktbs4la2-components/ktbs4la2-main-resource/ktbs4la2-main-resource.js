@@ -484,8 +484,6 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             if(modelDiagram)
                 modelDiagram.setAttribute("mode", "edit");
 
-            //this._updateSaveButtonState();
-
             if(!this._saveModificationsButton.classList.contains("disabled"))
                 this._saveModificationsButton.classList.add("disabled");
 
@@ -662,6 +660,13 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
                 if(this._ktbsResource.raw_parameters_data)
                     this._parametersInput.setAttribute("value", JSON.stringify(this._ktbsResource.raw_parameters_data));
+            }
+
+            if(resourceType == "Model") {
+                const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
+
+                if(modelDiagram)
+                    modelDiagram.resetModel();
             }
 		});
     }

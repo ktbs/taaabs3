@@ -389,14 +389,12 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
      */
      set obsel_type(new_obsel_type) {
         if(new_obsel_type instanceof ObselType) {
-            if(new_obsel_type != this._obsel_type) {
-                this._obsel_type = new_obsel_type.clone();
+            this._obsel_type = new_obsel_type.clone();
 
-                if(this.mode == "edit")
-                    this._obsel_type_copy = new_obsel_type.clone();
+            if(this.mode == "edit")
+                this._obsel_type_copy = new_obsel_type.clone();
 
-                this._set_obsel_type(this._obsel_type);
-            }
+            this._set_obsel_type(this._obsel_type);
         }
         else
             throw new TypeError("new value for property obsel_type must be an instance of ObselType");
