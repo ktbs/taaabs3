@@ -226,7 +226,7 @@
 	cursor: not-allowed;
 }
 
-.obseltype-tool:hover.disabled {
+.obseltype-tool.disabled:hover {
 	opacity: 0.3;
 }
 

@@ -262,6 +262,11 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				this._closeObseltypeDetailsButton.classList.remove("disabled");
 
 			this._closeObseltypeDetailsButton.setAttribute("title", this._translateString("Close"));
+
+			if(this._duplicateObseltypeButton.classList.contains("disabled"))
+				this._duplicateObseltypeButton.classList.remove("disabled");
+
+			this._duplicateObseltypeButton.setAttribute("title", this._translateString("Delete this obsel type"));
 		}
 		else {
 			this._is_valid = false;
@@ -269,7 +274,12 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			if(!this._closeObseltypeDetailsButton.classList.contains("disabled"))
 				this._closeObseltypeDetailsButton.classList.add("disabled");
 
-			this._closeObseltypeDetailsButton.setAttribute("title", this._translateString("Specified data for the obsel type is invalid.\nYou must correct it to be able to close this panel."));
+			this._closeObseltypeDetailsButton.setAttribute("title", this._translateString("Specified data for the obsel type is invalid.\nYou must correct it first to be able to close this panel."));
+
+			if(!this._duplicateObseltypeButton.classList.contains("disabled"))
+				this._duplicateObseltypeButton.classList.add("disabled");
+
+			this._duplicateObseltypeButton.setAttribute("title", this._translateString("Specified data for the obsel type is invalid.\nYou must correct it first to be able to duplicate this obsel type."));
 		}
 
 		this._updateObseltypeDetailsReservedIds();
@@ -315,7 +325,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 * 
 	 */
 	_onClickCloseObseltypeDetailsButton(event) {
-		if(!this._closeObseltypeDetailsButton.classList.contains("disabled")) {			
+		if(!this._closeObseltypeDetailsButton.classList.contains("disabled")) {
 			if(!this._obseltypeDetailsPanel.classList.contains("hidden"))
 				this._obseltypeDetailsPanel.classList.add("hidden");
 			
@@ -339,7 +349,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			this._model.obsel_types = model_obselTypes;
 		}
 		else {
-			alert(this._translateString("Specified data for the obsel type is invalid.\nYou must correct it to be able to close this panel."));
+			alert(this._translateString("Specified data for the obsel type is invalid.\nYou must correct it first to be able to close this panel."));
 			this._obseltypeDetails.reportValidity();
 		}
 	}
@@ -368,7 +378,67 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 * 
 	 */
 	_onClickDuplicateObseltypeButton(event) {
-		console.log("_onClickDuplicateObseltypeButton()");
+		if(!this._closeObseltypeDetailsButton.classList.contains("disabled")) {
+			const newObselTypeId = this._promptNewObseltypeID();
+
+			if(newObselTypeId != null) {
+				const modelObselTypes = this._model.obsel_types;
+				const newObselType = this._obseltypeDetails.obsel_type.clone();
+				newObselType.id = newObselTypeId;
+
+				for(let i = 0; i < this._obseltypeDetails.obsel_type.attribute_types.length; i++)
+					newObselType.addAttributeType(this._obseltypeDetails.obsel_type.attribute_types[i]);
+
+				const label_translations = newObselType.label_translations;
+
+				for(let i = (label_translations.length - 1); i >= 0; i--)
+					newObselType.remove_label_translation(label_translations[i]["@language"]);
+
+				newObselType.suggestedColor = null;
+				newObselType.suggestedSymbol = null;
+				modelObselTypes.push(newObselType);
+				this._model.obsel_types = modelObselTypes;
+
+				const newObselTypeBox = document.createElement("ktbs4la2-model-diagram-obseltype");
+				newObselTypeBox.setAttribute("title", this._translateString("Click to view this obsel type's details"));
+				newObselTypeBox.setAttribute("id", newObselTypeId);
+				newObselTypeBox.setAttribute("lang", this._lang);
+				newObselTypeBox.obsel_type = newObselType;
+				newObselTypeBox.classList.add("selected")
+				newObselTypeBox.addEventListener("click", this._onClickObselTypeBox.bind(this));
+				newObselTypeBox.addEventListener("mousedown", this._onMouseDownObselTypeBox.bind(this));
+				this._diagramArea.appendChild(newObselTypeBox);
+
+				newObselTypeBox._componentReady.then(() => {
+					const anArrowNode = document.createElement("ktbs4la2-model-diagram-arrow");
+					anArrowNode.fromBox = newObselTypeBox;
+					anArrowNode.toBox = this._defaultObseltypeElement;
+					this._diagramArea.appendChild(anArrowNode);
+
+					this._obseltypeDetails.obsel_type = newObselType;
+
+					if(this._obseltypeDetailsPanel.classList.contains("hidden"))
+						this._obseltypeDetailsPanel.classList.remove("hidden");
+
+					this._obseltype_is_being_edited = true;
+
+					const modelsLayoutsString = window.localStorage.getItem("model-diagram-layouts");
+
+					if(modelsLayoutsString != null) {
+						const modelsLayouts = JSON.parse(modelsLayoutsString);
+
+						if(!modelsLayouts[this._model.uri.toString()])
+							this.auto_arrange_obseltypes();
+					}
+					else
+						this.auto_arrange_obseltypes();
+				});
+			}
+		}
+		else {
+			alert(this._translateString("Specified data for the obsel type is invalid.\nYou must correct it first to be able to duplicate this obsel type."));
+			this._obseltypeDetails.reportValidity();
+		}
 	}
 
 	/**
@@ -662,33 +732,42 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	_onClickCreateObseltypeButton(event) {
-		if(this.getAttribute("mode") == "edit") {
-			const reserved_ids = new Array();
+	_promptNewObseltypeID() {
+		const reserved_ids = new Array();
 
-			for(let i = 0; i < this._model.obsel_types.length; i++)
-				reserved_ids.push(this._model.obsel_types[i].id);
+		for(let i = 0; i < this._model.obsel_types.length; i++)
+			reserved_ids.push(this._model.obsel_types[i].id);
 
-			const idValidationPattern = new RegExp('^[a-zA-Z0-9\-_]+$');
-			let newObselTypeId = "";
+		const idValidationPattern = new RegExp('^[a-zA-Z0-9\-_]+$');
+		let newObselTypeId = "";
 
-			while(newObselTypeId == "") {
-				newObselTypeId = window.prompt(this._translateString("Please enter an ID for the new obsel type :\n(allowed characters : letters, numbers, \"-\" and \"_\")"));
+		while(newObselTypeId == "") {
+			newObselTypeId = window.prompt(this._translateString("Please enter an ID for the new obsel type :\n(allowed characters : letters, numbers, \"-\" and \"_\")"));
 
-				if(newObselTypeId != null) {
-					let error = null;
-					
-					if(!idValidationPattern.test(newObselTypeId))
-						error = "Invalid ID !\nPlease enter an non empty string containing only letters, numbers, \"-\" or \"_\".";
-					else if(reserved_ids.includes(newObselTypeId))
-						error = "This ID is already used by an other obsel type in the same model !\nPlease choose a different ID.";
-	
-					if(error) {
-						window.alert(this._translateString(error));
-						newObselTypeId = "";
-					}
+			if(newObselTypeId != null) {
+				let error = null;
+				
+				if(!idValidationPattern.test(newObselTypeId))
+					error = "Invalid ID !\nPlease enter an non empty string containing only letters, numbers, \"-\" or \"_\".";
+				else if(reserved_ids.includes(newObselTypeId))
+					error = "This ID is already used by an other obsel type in the same model !\nPlease choose a different ID.";
+
+				if(error) {
+					window.alert(this._translateString(error));
+					newObselTypeId = "";
 				}
 			}
+		}
+
+		return newObselTypeId;
+	}
+
+	/**
+	 * 
+	 */
+	_onClickCreateObseltypeButton(event) {
+		if(this.getAttribute("mode") == "edit") {
+			const newObselTypeId = this._promptNewObseltypeID();
 
 			if(newObselTypeId != null) {
 				const modelObselTypes = this._model.obsel_types;
