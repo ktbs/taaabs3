@@ -91,13 +91,15 @@
 
         <tfoot class="edit">
             <tr>
-                <td>&nbsp;</td>
+                <td colspan="5">
+                    <label id="add-attribute-type-select-label" for="add-attribute-type-select">{translate: 'Add an attribute type :'}</label>
 
-                <td colspan="3">
+                    <select id="add-attribute-type-select">
+                        <option id="new" value="&lt;new&gt;">{translate: '&lt;Create a new attribute type&gt;'}</option>
+                    </select>
+
                     <button id="add-attribute-button" title="{translate: 'Add an attribute type to this obsel type'}">+</button>
                 </td>
-
-                <td>&nbsp;</td>
             </tr>
         </tfoot>
     </table>

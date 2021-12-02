@@ -208,6 +208,7 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
             this._attributesListTableBody.appendChild(aBuilitinAttributeRowElement);
         }
 
+        this._addAttributetypeSelect = this.shadowRoot.querySelector("#add-attribute-type-select");
         this._addAttributeButton = this.shadowRoot.querySelector("#add-attribute-button");
         this._addAttributeButton.addEventListener("click", this._onClickAddAttributeButton.bind(this));
     }
@@ -672,6 +673,8 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                 attributeRowElement.appendChild(actionCell);
             this._attributesListTableBody.appendChild(attributeRowElement);
         }
+
+        this._updateAvailableAttributeTypesSelect();
     }
 
     /**
@@ -845,6 +848,8 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
         // remove current attribute row
         attributeRow.remove();
 
+        this._updateAvailableAttributeTypesSelect();
+
         // notify of changes
         this._emitChangeEvent();
     }
@@ -881,7 +886,42 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
     /**
      * 
      */
+    _updateAvailableAttributeTypesSelect() {
+        const options = this._addAttributetypeSelect.options;
+
+        for(let i = (options.length -1); i >= 0; i--)
+            if(options[i].id != "new")
+                options[i].remove();
+
+        const model_attribute_types = this._obsel_type.parent_model.attribute_types;
+
+        for(let i = 0; i < model_attribute_types.length; i++) {
+            const anAttributeType = model_attribute_types[i];
+
+            if(!this._obsel_type.available_attribute_types.includes(anAttributeType)) {
+                const option = document.createElement("option");
+                option.setAttribute("value", anAttributeType.id);
+                option.innerText = anAttributeType.get_preferred_label(this._lang);
+                this._addAttributetypeSelect.appendChild(option);
+            }      
+        }
+    }
+
+    /**
+     * 
+     */
     _onClickAddAttributeButton() {
+        const selectAttributeOption = this._addAttributetypeSelect.value;
+        let selectedSharedAttribute = null;
+
+        if(selectAttributeOption != "<new>")
+            selectedSharedAttribute = this._obsel_type.parent_model.get_attribute_type(selectAttributeOption);
+        
+        if(selectedSharedAttribute instanceof AttributeType) {
+            selectedSharedAttribute.assignToObselType(this._obsel_type);
+            this.dispatchEvent(new CustomEvent("change-attribute-type", {bubbles: true, cancelable: false, composed: false, detail: {attributeType: selectedSharedAttribute}}));
+        }
+
         // check if the table already has a row group for the current obsel type
         const obseltypesCells = this._attributesListTableBody.querySelectorAll("tr td[rowspan].vertical-cell");
         let currentObselTypeVerticalCell;
@@ -895,7 +935,10 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
         // create the new table line for the attribute
         const newTableRow = document.createElement("tr");
             newTableRow.classList.add("own");
-            newTableRow.setAttribute("id", "<new>");
+            newTableRow.setAttribute("id", selectAttributeOption);
+
+            if(selectedSharedAttribute instanceof AttributeType)
+                newTableRow.classList.add("is-shared-attributetype");
 
             if(!currentObselTypeVerticalCell) {
                 currentObselTypeVerticalCell = document.createElement("td");
@@ -908,6 +951,18 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
             const idCell = document.createElement("td");
                 idCell.classList.add("id-cell");
 
+                if(selectedSharedAttribute instanceof AttributeType) {
+                    const sharedAttributeTypeIndicator = document.createElement("span");
+                        sharedAttributeTypeIndicator.classList.add("shared-attribute-indicator");
+                        let sharedAttributeTypeMsg = this._translateString("This attribute type is shared between several obsel types :");
+                        
+                        for(let j = 0; j < selectedSharedAttribute.obsel_types.length; j++)
+                            sharedAttributeTypeMsg += "\n" + selectedSharedAttribute.obsel_types[j].get_preferred_label(this._lang);
+    
+                        sharedAttributeTypeIndicator.setAttribute("title", sharedAttributeTypeMsg);
+                    idCell.appendChild(sharedAttributeTypeIndicator);
+                }
+
                 const idInput = document.createElement("ktbs4la2-resource-id-input");
                     idInput.classList.add("create");
                     idInput.classList.add("edit");
@@ -917,6 +972,11 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
 
                     if(this.reserved_attributetypes_ids > 1)
                         idInput.setAttribute("reserved-ids", this.reserved_attributetypes_ids.join(" "));
+
+                    if(selectedSharedAttribute instanceof AttributeType) {
+                        idInput.setAttribute("value", selectedSharedAttribute.id);
+                        idInput._lastValidValue = selectedSharedAttribute.id;
+                    }
 
                     idInput.addEventListener("input", this._onChangeIdInput.bind(this));
                     idInput.addEventListener("change", this._onChangeIdInput.bind(this));
@@ -938,6 +998,19 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                     labelInput.setAttribute("placeholder", this._translateString("Attribute type label"));
                     labelInput.setAttribute("lang", this._lang);
                     labelInput.classList.add("edit");
+
+                    if(
+                            (selectedSharedAttribute instanceof AttributeType)
+                        &&  (selectedSharedAttribute.label_translations instanceof Array)
+                    ) {
+                        const labelTranslationsArray = new Array();
+
+                        for(let j = 0; j < selectedSharedAttribute.label_translations.length; j++)
+                            labelTranslationsArray.push({"value": selectedSharedAttribute.label_translations[j]["@value"], "lang": selectedSharedAttribute.label_translations[j]["@language"]})
+                        
+                        labelInput.setAttribute("value", JSON.stringify(labelTranslationsArray));
+                    }
+
                     labelInput.addEventListener("input", this._onChangeAttributeType.bind(this));
                     labelInput.addEventListener("change", this._onChangeAttributeType.bind(this));
                 labelCell.appendChild(labelInput);
@@ -961,6 +1034,13 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                         const aTypeOption = document.createElement("option");
                         aTypeOption.setAttribute("value", availableTypes[j]);
                         aTypeOption.innerText = availableTypes[j];
+
+                        if(
+                                (selectedSharedAttribute instanceof AttributeType)
+                            &&  (selectedSharedAttribute.data_types.includes(availableTypes[j]))
+                        )
+                            aTypeOption.setAttribute("selected", "true");
+
                         typeSelect.appendChild(aTypeOption);
                     }
 
@@ -984,7 +1064,8 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
         // increase rowspan attribute of the vertical cell for the obsel type's row group
         const currentRowspan = parseInt(currentObselTypeVerticalCell.getAttribute("rowspan"), 10);
         currentObselTypeVerticalCell.setAttribute("rowspan", (currentRowspan + 1));
-        
+        this._updateAvailableAttributeTypesSelect();
+
         this._emitChangeEvent();
 
         idInput._componentReady.then(() => {

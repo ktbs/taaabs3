@@ -145,11 +145,14 @@ label {
     opacity: 1;
 }
 
+#attributes-list-table tfoot {
+    text-align: right;
+}
+
 #add-attribute-button {
     background-color: var(--color-main, cornflowerblue);
     opacity: 0.5;
-    width: 100%;
-    height: 22px;
+    padding: 3px 12px;
     cursor: pointer;
     color: white;
     border: none;
