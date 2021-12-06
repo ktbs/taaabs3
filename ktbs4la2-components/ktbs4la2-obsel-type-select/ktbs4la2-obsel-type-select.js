@@ -287,7 +287,7 @@ class KTBS4LA2ObselTypeSelect extends TemplatedHTMLElement {
 
         if(clickedOption) {
             if(this.multiple) {
-                if(event.ctrlKey) {
+                if(event.ctrlKey || event.metaKey) {
                     if(clickedOption.classList.contains("selected"))
                         this._unSelectOption(clickedOption);
                     else
