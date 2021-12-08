@@ -411,6 +411,8 @@ class KTBS4LA2UnicodeIconPicker extends TemplatedHTMLElement {
      * 
      */
     _onChangeInput(event) {
+        event.stopPropagation();
+
         // update selected cell
         let selectedCell = this._tableContainer.querySelector("td.selected");
 
@@ -434,7 +436,14 @@ class KTBS4LA2UnicodeIconPicker extends TemplatedHTMLElement {
 
         }
         // ---
+ 
+        const componentEvent = new Event(event.type, {
+            bubbles: true,
+            cancelable: false,
+            composed: event.composed
+        });
 
+        this.dispatchEvent(componentEvent);
     }
 
     /**
@@ -479,6 +488,14 @@ class KTBS4LA2UnicodeIconPicker extends TemplatedHTMLElement {
 
             if(!this._explorerPanel.classList.contains("hidden"))
                 this._explorerPanel.classList.add("hidden");
+
+            const componentEvent = new Event("change", {
+                bubbles: true,
+                cancelable: false,
+                composed: true
+            });
+    
+            this.dispatchEvent(componentEvent);
 
             this._input.focus();
         }
