@@ -367,7 +367,7 @@ export class Model extends Resource {
 					throw new TypeError("New value for obsel_types property must be an array of ObselType");
 
 			for(let i = 0; i < new_obsel_types.length; i++)
-				if(new_obsel_types[i].parent_model && (new_obsel_types[i].parent_model != this))
+				if(new_obsel_types[i].parent_model && (new_obsel_types[i].parent_model.uri != this.uri))
 					throw new KtbsError("Cannot associate an ObselType to a different Model once it has been set");
 
 			for(let i = 0; i < new_obsel_types.length; i++)
