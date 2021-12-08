@@ -291,8 +291,8 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                 const new_parent_obseltype_uri = new URL(parent_obseltypes_uri_strings[i]);
 
                 if(new_parent_obseltype_uri.hash) {
-                    const new_parent_obselType_id = new_parent_obseltype_uri.hash.substring(1);
-                    const new_parent_model_uri = new_parent_obseltype_uri.href.replace("#" + new_parent_obselType_id, "");
+                    const new_parent_obselType_id = decodeURIComponent(new_parent_obseltype_uri.hash.substring(1));
+                    const new_parent_model_uri = new_parent_obseltype_uri.href.replace("#" + encodeURIComponent(new_parent_obselType_id), "");
                     
                     if(new_parent_model_uri == this._obsel_type.parent_model.uri) {
                         const new_parent_obselType = this._obsel_type.parent_model.get_obsel_type(new_parent_obselType_id);
