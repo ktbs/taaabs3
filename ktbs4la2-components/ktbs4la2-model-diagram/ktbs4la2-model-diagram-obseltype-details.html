@@ -35,12 +35,12 @@
     </header>
 
     <p class="edit">
-        <label for="obseltype-color-input">{translate: 'Color'}</label>
+        <label id="obseltype-color-input-label" for="obseltype-color-input">{translate: 'Color :'}</label>
         <input type="color" id="obseltype-color-input" tabindex="3"/>
     </p>
 
     <p class="edit">
-        <label for="obseltype-symbol-input">{translate: 'Symbol'}</label>
+        <label id="obseltype-symbol-input-label" for="obseltype-symbol-input">{translate: 'Symbol :'}</label>
         <ktbs4la2-unicode-icon-picker id="obseltype-symbol-input" tabindex="4"></ktbs4la2-unicode-icon-picker>
     </p>
     
@@ -67,18 +67,18 @@
         <thead>
             <tr>
                 <td>&nbsp;</td>
-                <th>{translate: 'ID'}</th>
-                <th>{translate: 'Label'}</th>
-                <th>{translate: 'Data type(s)'}</th>
+                <th id="attributes-list-table-id-header">{translate: 'ID'}</th>
+                <th id="attributes-list-table-label-header">{translate: 'Label'}</th>
+                <th id="attributes-list-table-datatype-header">{translate: 'Data type(s)'}</th>
                 <td class="edit">&nbsp;</td>
             </tr>
         </thead>
 
         <tbody>
             <tr id="@id" class="default">
-                <td rowspan="6" class="vertical-cell">{translate: 'Default'}</td>
+                <td rowspan="6" id="default-vertical-cell" class="vertical-cell">{translate: 'Default'}</td>
                 <td>@id</td>
-                <td>{translate: 'ID'}</td>
+                <td id="default-id-label">{translate: 'ID'}</td>
                 <td>xsd:string</td>
                 <td class="edit">&nbsp;</td>
             </tr>

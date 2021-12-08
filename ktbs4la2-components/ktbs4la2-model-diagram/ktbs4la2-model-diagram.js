@@ -143,8 +143,6 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		this._autoArrangeButton.addEventListener("click", this._onClickAutoArrangeButton.bind(this));
 		this._createObseltypeButton = this.shadowRoot.querySelector("#create-obseltype");
 		this._createObseltypeButton.addEventListener("click", this._onClickCreateObseltypeButton.bind(this));
-		/*this._createInheritanceButton = this.shadowRoot.querySelector("#create-inheritance");
-		this._createInheritanceButton.addEventListener("click", this._onClickCreateInheritanceButton.bind(this));*/
 	}
 
 	/**
@@ -266,7 +264,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			if(this._duplicateObseltypeButton.classList.contains("disabled"))
 				this._duplicateObseltypeButton.classList.remove("disabled");
 
-			this._duplicateObseltypeButton.setAttribute("title", this._translateString("Delete this obsel type"));
+			this._duplicateObseltypeButton.setAttribute("title", this._translateString("Duplicate this obsel type"));
 		}
 		else {
 			this._is_valid = false;
@@ -817,13 +815,6 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	/*_onClickCreateInheritanceButton(event) {
-		console.log("_onClickCreateInheritanceButton()");
-	}*/
-
-	/**
-	 * 
-	 */
 	_onClickObselTypeBox(event) {
 		if(this._container.classList.contains("details") && !this._obseltype_is_being_edited) {
 			const clickedBox = event.target;
@@ -1171,6 +1162,22 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	_updateStringsTranslation() {
 		this._waitMessage.innerText = this._translateString("Waiting for server response...");
 		this._emptyMessage.innerText = this._translateString("No data to display");
+		
+		if(!this._closeObseltypeDetailsButton.classList.contains("disabled"))
+			this._closeObseltypeDetailsButton.setAttribute("title", this._translateString("Close"));
+		else
+			this._closeObseltypeDetailsButton.setAttribute("title", this._translateString("Specified data for the obsel type is invalid.\nYou must correct it first to be able to close this panel."));
+		
+		this._cancelObseltypeModificationsButton.setAttribute("title", this._translateString("Cancel modifications of this obsel type"));
+
+		if(!this._duplicateObseltypeButton.classList.contains("disabled"))
+			this._duplicateObseltypeButton.setAttribute("title", this._translateString("Duplicate this obsel type"));
+		else
+			this._duplicateObseltypeButton.setAttribute("title", this._translateString("Specified data for the obsel type is invalid.\nYou must correct it first to be able to duplicate this obsel type."));
+
+		this._toggleFullscreenButton.setAttribute("title", this._translateString("Toggle fullscreen"));
+
+		this._deleteObseltypeButton.setAttribute("title", this._translateString("Delete this obsel type"));
 
 		if(this._container.classList.contains("move")) {
 			this._detailsButton.setAttribute("title", this._translateString("Click to select tool : ") + this._translateString("View details\nClicking an obsel type show a modal panel including its full details and allowing edition"));
@@ -1183,7 +1190,6 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 
 		this._autoArrangeButton.setAttribute("title", this._translateString("Automatically rearrange obsel types layout"));
 		this._createObseltypeButton.setAttribute("title", this._translateString("Create a new obsel type"));
-		//this._createInheritanceButton.setAttribute("title", this._translateString("Create a new inheritance relationship"));
 		this._defaultObseltypeTitle.innerText = this._translateString("Default");
 
 		// translate "Default box"

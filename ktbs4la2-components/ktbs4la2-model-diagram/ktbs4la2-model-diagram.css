@@ -324,10 +324,6 @@
 #create-obseltype {
 	background-image: url('{my-component-folder}/add_obseltype.svg');
 }
-/*
-#create-inheritance {
-	background-image: url('{my-component-folder}/add_inheritance.svg');
-}*/
 
 #toggle-fullscreen-button {
 	background-image: url('{my-component-folder}/go-fulllscreen.svg');
