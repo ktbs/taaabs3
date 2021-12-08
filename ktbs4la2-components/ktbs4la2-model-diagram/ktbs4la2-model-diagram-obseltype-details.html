@@ -15,16 +15,9 @@
 
 <div id="container">
     <header>
-        <p class="create edit">
-            <label id="id-input-label" for="id-input">{translate: 'ID'}</label>
+        <p class="edit">
+            <label id="id-input-label">{translate: 'ID'}</label>
             <span id="id-display" class="edit"></span>
-
-            <ktbs4la2-resource-id-input
-                id="id-input"
-                placeholder="&lt;id&gt;"
-                tabindex="1"
-                class="create">
-            </ktbs4la2-resource-id-input>
         </p>
 
         <p id="label-display" class="view">
@@ -41,18 +34,20 @@
         </p>
     </header>
 
-    <p class="create edit">
+    <p class="edit">
         <label for="obseltype-color-input">{translate: 'Color'}</label>
         <input type="color" id="obseltype-color-input" tabindex="3"/>
     </p>
 
-    <p class="create edit">
+    <p class="edit">
         <label for="obseltype-symbol-input">{translate: 'Symbol'}</label>
         <ktbs4la2-unicode-icon-picker id="obseltype-symbol-input" tabindex="4"></ktbs4la2-unicode-icon-picker>
     </p>
     
     <p>
         <label id="parent-obseltype-select-label" for="parent-obseltype-select">{translate: 'Parent obsel type(s) :'}</label>
+
+        <span id="parent-obseltype-select-explanation" class="edit">{translate: 'Selected obsel types are highlighted.<br />Use Shift+click to select a range of adjacent obsel types, or Ctrl+click (PC) / Cmd+click (Mac) to add or remove non-adjacent obsel types to/from the selection.'}</span>
 
         <ktbs4la2-obsel-type-select 
             id="parent-obseltype-select"

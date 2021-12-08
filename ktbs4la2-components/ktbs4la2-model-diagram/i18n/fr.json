@@ -16,6 +16,7 @@
     "Default": "Par défaut",
     "Obsel type label": "Libellé du type d'obsel",
     "Parent obsel type(s) :": "Type(s) d'obsel parent(s) :",
+    "Selected obsel types are highlighted.<br />Use Shift+click to select a range of adjacent obsel types, or Ctrl+click (PC) / Cmd+click (Mac) to add or remove non-adjacent obsel types to/from the selection.": "Les types d'obsel sélectionnés sont en surbrillance.<br />Utilisez Shift+click pour sélectionner une rangée de type d'obsel ajacents, ou Ctrl+click (PC) / Cmd+click (Mac) pour ajouter ou retirer des types d'obsel non-adjacents à/de la sélection.",
     "Attribute types :": "Types d'attributs",
     "ID": "ID",
     "Click to view this obsel type's details": "Cliquez pour voir les détails de ce type d'obsel",

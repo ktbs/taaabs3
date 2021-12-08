@@ -72,6 +72,13 @@ label {
     font-size: 11px;
 }
 
+:host([mode = "edit"]) #parent-obseltype-select-explanation {
+    display: block;
+    font-size: 9pt;
+    white-space: break-spaces;
+    font-style: italic;
+}
+
 #attributes-list-table, #attributes-list-table tr, #attributes-list-table td {
     border-collapse: collapse;
 	border-spacing: 0;
