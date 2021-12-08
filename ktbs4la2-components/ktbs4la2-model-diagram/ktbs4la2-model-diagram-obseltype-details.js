@@ -80,14 +80,8 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                 if(this._obsel_type)
                     this._obsel_type_copy = this._obsel_type.clone();
             }
-            else if(newValue == "create") {
-                
-            }
-            else if(newValue == "view") {
-
-            }
-            else
-                throw new RangeError("Value for attribute \"mode\" must be either \"view\", \"edit\" or \"create\"");
+            else if((newValue != "view") && (newValue != null))
+                throw new RangeError("Value for attribute \"mode\" must be either \"view\" or \"edit\"");
         }
         else if(name == "reserved-attributetypes-ids") {
             this._componentReady.then(() => {
