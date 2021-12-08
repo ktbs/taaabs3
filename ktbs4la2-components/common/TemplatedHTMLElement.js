@@ -11,6 +11,7 @@ class TemplatedHTMLElement extends HTMLElement {
 	constructor(componentJSPath, fetchStylesheet = true, fetchTranslation = true, listenAncestorLangChange = true) {
 		super();
 		this._connected = false;
+		this._isReady = false;
 		this._componentJSPath = componentJSPath;
 		this._fetchTranslation = fetchTranslation;
 		this._listenAncestorLangChange = listenAncestorLangChange;
@@ -34,6 +35,8 @@ class TemplatedHTMLElement extends HTMLElement {
 			.then(() => {
 				if(this.onComponentReady)
 					this.onComponentReady();
+
+				this._isReady = true;
 			})
 			.catch((error) => {
 				if((this._connected) && !this._abortController.signal.aborted)
