@@ -8,6 +8,7 @@ import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
 import "../ktbs4la2-multiple-translations-text-input/ktbs4la2-multiple-translations-text-input.js";
 import "../ktbs4la2-obsel-type-select/ktbs4la2-obsel-type-select.js";
 import "../ktbs4la2-resource-id-input/ktbs4la2-resource-id-input.js";
+import "../ktbs4la2-unicode-icon-picker/ktbs4la2-unicode-icon-picker.js";
 
 /**
  * 
