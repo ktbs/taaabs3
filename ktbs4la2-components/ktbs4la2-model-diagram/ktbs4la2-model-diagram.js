@@ -493,13 +493,6 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				boxes_grid[obselType_hierarchy_rank].push(anObselType);
 			}
 
-			// sort obsel types inside each row
-			for(let row = 0; row < boxes_grid.length; row++) {
-				const aRow = boxes_grid[row];
-
-				// @TODO : sort aRow
-			}
-
 			// calculate boxes relative positions ...
 			const BOXES_HORIZONTAL_SPACING = 10;
 			const BOXES_VERTICAL_SPACING = 40;
