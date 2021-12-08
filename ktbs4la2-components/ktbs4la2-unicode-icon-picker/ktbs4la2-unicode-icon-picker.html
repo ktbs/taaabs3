@@ -1,0 +1,30 @@
+<ktbs4la2-document-header id="ktbs4la2-timeline-fonts">
+	<style>
+		@font-face {
+            font-family: 'unifont';
+            src: url('{my-component-folder}/../ktbs4la2-timeline/fonts/unifont.woff2') format("woff2");
+        }
+
+        @font-face {
+            font-family: 'unifont-upper';
+            src: url('{my-component-folder}/../ktbs4la2-timeline/fonts/unifont_upper.woff2') format("woff2");
+            unicode-range: U+10000-10FFFF;
+        }
+	</style>
+</ktbs4la2-document-header>
+
+<div id="container">
+    <input maxlength="2" size="1" id="input" tabindex="1" />
+    
+    <button id="open-explorer-button" title="{translate: 'Open/Close icon picker'}" tabindex="2">🔍</button>
+
+    <div id="explorer-panel" class="hidden">
+        <div id="explorer-header">
+            <button id="previous-tab-button" title="{translate: 'Previous'}" tabindex="3" disabled>&lt;</button>
+            <select id="tab-select" tabindex="4"></select>
+            <button id="next-tab-button" title="{translate: 'Next'}" tabindex="5">&gt;</button>
+        </div>
+
+        <div id="table-container"></div>
+    </div>
+</div>

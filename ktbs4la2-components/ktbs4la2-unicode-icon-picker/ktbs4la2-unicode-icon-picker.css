@@ -1,0 +1,100 @@
+:host {
+    display: inline-block;
+}
+
+#container {
+    position: relative;
+    user-select: none;
+}
+
+#input {
+    font-family: "unifont", "unifont-upper", "Arial", "emoji";
+    font-size: 16pt;
+    width: 26px;
+}
+
+button {
+    background-color: var(--color-main, cornflowerblue);
+    opacity: 0.5;
+    color: white;
+    border: none;
+    text-align: center;
+    align-self: center;
+}
+
+button:not([disabled]) {
+    cursor: pointer;
+}
+
+button:not([disabled]):hover {
+    background-color: var(--color-highlight, royalblue);
+    opacity: 1;
+}
+
+#open-explorer-button {
+    height: 28px;
+    vertical-align: bottom;
+    padding: 1px 4px;
+}
+
+#explorer-panel {
+    border: 1px solid #AAA;
+    padding: 10px 5px;
+    background-color: white;
+    position: absolute;
+    left: 67px;
+    top: -1px;
+    border-radius: 5px;
+    box-shadow: 0px 0px 8px 4px #888;
+    z-index: 2;
+}
+
+#explorer-panel.hidden {
+    display: none;
+}
+
+#explorer-header {
+    padding: 5px 5px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+#table-container {
+    max-height: 200px;
+    overflow-y: scroll;
+    padding-bottom: 1px;
+}
+
+#explorer-panel table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+}
+
+#explorer-panel table:not(.selected) {
+    display: none;
+}
+
+#explorer-panel td {
+    font-family: "unifont", "unifont-upper", "Arial", "emoji";
+    font-size: 16pt;
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    border: 1px solid #AAA;
+}
+
+#explorer-panel td:not(.selected) {
+    cursor: pointer;
+    color: black;
+    background-color: white;
+}
+
+#explorer-panel td:hover {
+    background-color: lightskyblue;
+}
+
+#explorer-panel td.selected {
+    color: white;
+    background-color: darkblue;
+}
