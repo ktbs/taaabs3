@@ -1292,7 +1292,75 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
     _onClickSaveModificationsButton(event) {
         if(!this._saveModificationsButton.classList.contains("disabled")) {
             const resourceType = this.getAttribute("resource-type");
+            
+            // assign fields specific to resource types
+            if(resourceType == "StoredTrace") {
+                this._ktbsResource.model = ResourceMultiton.get_resource(Model, this._modelPicker.value);
+                this._ktbsResource.origin = this._originInput.value;
+            }
+            else if(resourceType == "ComputedTrace") {
+                let newMethod;
 
+                if(Method.builtin_methods_ids.includes(this._methodPicker.value))
+                    newMethod = Method.getBuiltinMethod(this._methodPicker.value);
+                else
+                    newMethod = ResourceMultiton.get_resource(Method, this._methodPicker.value);
+
+                this._ktbsResource.method = newMethod;
+
+                if(this._sourceTracesP.className == "single")
+                    this._ktbsResource.source_traces = [ResourceMultiton.get_resource(Trace, this._singleSourceTracePicker.value)];
+                else if(this._sourceTracesP.className == "multiple") {
+                    let new_source_traces = [];
+                    const new_source_traces_uris = JSON.parse(this._multipleSourceTracesPicker.value);
+
+                    for(let i = 0; i < new_source_traces_uris.length; i++) {
+                        const aSourceTrace = ResourceMultiton.get_resource(Trace, new_source_traces_uris[i]);
+                        new_source_traces.push(aSourceTrace);
+                    }
+
+                    this._ktbsResource.source_traces = new_source_traces;
+                }
+
+                this._ktbsResource.parameters = JSON.parse(this._parametersInput.value);
+            }
+            else if(resourceType == "Method") {
+                const parent_method_uri = this._parentMethodPicker.value;
+                let newParentMethod;
+
+                if(Method.builtin_methods_ids.includes(parent_method_uri))
+                    newParentMethod = Method.getBuiltinMethod(parent_method_uri);
+                else
+                    newParentMethod = ResourceMultiton.get_resource(Method, parent_method_uri);
+
+                this._ktbsResource.parent_method = newParentMethod;
+
+                this._ktbsResource.parameters = JSON.parse(this._parametersInput.value);
+            }
+            else if(resourceType == "Model") {
+                const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
+
+                if(modelDiagram) {
+                    if(modelDiagram.checkValidity()) {
+                        this._ktbsResource.obsel_types = modelDiagram.model.obsel_types;
+                        this._ktbsResource.attribute_types = modelDiagram.model.attribute_types;
+                    }
+                    else {
+                        const error = new Error("The model's definition is not valid");
+                        this.emitErrorEvent(error);
+                        alert(error);
+                        throw error;
+                    }
+                }
+                else {
+                    const error = new Error("Could not find model diagram component");
+                    this.emitErrorEvent(error);
+                    throw error;
+                }
+            }
+            // done
+
+            // read and assign label and label translations
             try {
                 const labelInputValues = JSON.parse(this._editLabelInput.value);
 
@@ -1331,72 +1399,9 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             catch(error) {
                 this.emitErrorEvent(error);
             }
+            // done
             
-            if(resourceType == "StoredTrace") {
-                this._ktbsResource.model = ResourceMultiton.get_resource(Model, this._modelPicker.value);
-                this._ktbsResource.origin = this._originInput.value;
-            }
-
-            if(resourceType == "ComputedTrace") {
-                let newMethod;
-
-                if(Method.builtin_methods_ids.includes(this._methodPicker.value))
-                    newMethod = Method.getBuiltinMethod(this._methodPicker.value);
-                else
-                    newMethod = ResourceMultiton.get_resource(Method, this._methodPicker.value);
-
-                this._ktbsResource.method = newMethod;
-
-                if(this._sourceTracesP.className == "single")
-                    this._ktbsResource.source_traces = [ResourceMultiton.get_resource(Trace, this._singleSourceTracePicker.value)];
-                else if(this._sourceTracesP.className == "multiple") {
-                    let new_source_traces = [];
-                    const new_source_traces_uris = JSON.parse(this._multipleSourceTracesPicker.value);
-
-                    for(let i = 0; i < new_source_traces_uris.length; i++) {
-                        const aSourceTrace = ResourceMultiton.get_resource(Trace, new_source_traces_uris[i]);
-                        new_source_traces.push(aSourceTrace);
-                    }
-
-                    this._ktbsResource.source_traces = new_source_traces;
-                }
-            }
-
-            if((resourceType == "Method") || (resourceType == "ComputedTrace"))
-                this._ktbsResource.parameters = JSON.parse(this._parametersInput.value);
-
-            if(resourceType == "Method") {
-                const parent_method_uri = this._parentMethodPicker.value;
-                let newParentMethod;
-
-                if(Method.builtin_methods_ids.includes(parent_method_uri))
-                    newParentMethod = Method.getBuiltinMethod(parent_method_uri);
-                else
-                    newParentMethod = ResourceMultiton.get_resource(Method, parent_method_uri);
-
-                this._ktbsResource.parent_method = newParentMethod;
-            }
-
-            if(resourceType == "Model") {
-                const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
-
-                if(modelDiagram) {
-                    if(modelDiagram.checkValidity())
-                        this._ktbsResource = modelDiagram.model;
-                    else {
-                        const error = new Error("The model's definition is not valid");
-                        this.emitErrorEvent(error);
-                        alert(error);
-                        throw error;
-                    }
-                }
-                else {
-                    const error = new Error("Could not find model diagram component");
-                    this.emitErrorEvent(error);
-                    throw error;
-                }
-            }
-            
+            // save modifications
             this._ktbsResource.put(this._abortController.signal)
                 .then(() => {
                     this._switchToViewMode();

@@ -816,15 +816,9 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                     const attribute_old_id = attributeRow.getAttribute("id");
 
                     if(attribute_old_id == "<new>") {
-                        attributeType = new AttributeType(this._obsel_type.parent_model);
-
-                        const modelAttributeTypes = this._obsel_type.parent_model.attribute_types;
-                        modelAttributeTypes.push(attributeType);
-                        this._obsel_type.parent_model.attribute_types = modelAttributeTypes;
-
-                        const obselAttributeTypes = this._obsel_type.attribute_types;
-                        obselAttributeTypes.push(attributeType);
-                        this._obsel_type.attribute_types = obselAttributeTypes;
+                        attributeType = new AttributeType();
+                        attributeType.id = idInput.value;
+                        attributeType.assignToObselType(this._obsel_type);
                     }
                     else {
                         attributeType = this._obsel_type.parent_model.get_attribute_type(attribute_old_id);
@@ -834,9 +828,10 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
                             this.emitErrorEvent(error);
                             throw error;
                         }
+                        else
+                            attributeType.id = idInput.value;
                     }
-
-                    attributeType.id = idInput.value;
+                    
                     attributeRow.setAttribute("id", attributeType.id);
                     attributeRow.querySelector("td.id-cell span.view").innerText = attributeType.id;
 
@@ -1050,7 +1045,10 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
             const idCell = document.createElement("td");
                 idCell.classList.add("id-cell");
 
-                if(selectedSharedAttribute instanceof AttributeType) {
+                if(
+                        (selectedSharedAttribute instanceof AttributeType)
+                    &&  (selectedSharedAttribute.obsel_types.length > 1)
+                ) {
                     const sharedAttributeTypeIndicator = document.createElement("span");
                         sharedAttributeTypeIndicator.classList.add("shared-attribute-indicator");
                         let sharedAttributeTypeMsg = this._translateString("This attribute type is shared between several obsel types :");
@@ -1165,10 +1163,9 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
         currentObselTypeVerticalCell.setAttribute("rowspan", (currentRowspan + 1));
         this._updateAvailableAttributeTypesSelect();
 
-        this._emitChangeEvent();
-
         idInput._componentReady.then(() => {
             setTimeout(() => {
+                this._emitChangeEvent();
                 idInput.focus();
             });
         });

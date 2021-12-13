@@ -72,7 +72,7 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
      * 
      */
     get value() {
-        if(this._idInput) {
+        if(this._isReady) {
             if(
                     this.hasAttribute("force-trailing-slash") 
                 &&  (
@@ -85,8 +85,10 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
             else
                 return this._idInput.value;
         }
+        else if(this.hasAttribute("value"))
+            return this.getAttribute("value");
         else
-            return "";
+            return null;
     }
 
     /**
@@ -301,7 +303,7 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
     checkValidity() {
         let isValid;
 
-        if(this._idInput) {
+        if(this._isReady) {
             this._idInput.setCustomValidity(this._customValidity);
 
             if(this._idInput.checkValidity()) {
@@ -318,8 +320,12 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
             if(!isValid)
                 this._idInput.dispatchEvent(new Event("invalid"), {bubbles: false, cancelable: true});
         }
-        else
-            isValid = false;
+        else {
+            if(this.hasAttribute("required") && !this.hasAttribute("value"))
+                isValid = false;
+            else
+                isValid = true;
+        }
 
         return isValid;
 	}

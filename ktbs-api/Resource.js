@@ -617,8 +617,6 @@ export class Resource {
 	 * \public
 	 */
 	get label_translations() {
-		//return this._JSONData["http://www.w3.org/2000/01/rdf-schema#label"];
-
 		const labelKeys = ["label", "http://www.w3.org/2000/01/rdf-schema#label", "rdfs:label"];
 
 		for(let i = 0; i < labelKeys.length; i++)
@@ -702,7 +700,7 @@ export class Resource {
 		if(!existing_translation_replaced)
 			label_translations.push({"@value": label, "@language": lang})
 		
-		this._JSONData["label_translations_key"] = label_translations;
+		this._JSONData[label_translations_key] = label_translations;
 	}
 
 	/**

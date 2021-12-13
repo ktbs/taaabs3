@@ -116,11 +116,18 @@ export class AttributeType {
 	/**
 	 * Sets the parent model where the AttributeType is described
 	 * \param Model new_parent_model - the new parent model for the AttributeType
+	 * \throws TypeError throws a TypeError if the provided argument is not an instance of Model
+	 * \throws KtbsError throws a KtbsError if the parent model of the AttributeType has already been set
+	 * \throws KtbsError throws a KtbsError if the parent model already has an AttributeType with the same ID
 	 * \public
 	 */
 	set parent_model(new_parent_model) {
-		if(new_parent_model instanceof Model)
-			this._parentModel = new_parent_model;
+		if(new_parent_model instanceof Model) {
+			if(!this._parentModel)
+				this._parentModel = new_parent_model;
+			else
+				throw new KtbsError("The parent model of the AttributeType has already been set");
+		}
 		else
 			throw new TypeError("New value for parent_model property must be of type Model.");
 	}
@@ -306,29 +313,27 @@ export class AttributeType {
 	 * \public
 	 */
 	get obsel_types() {
-		if(!this._obsel_types) {
-			if(this._parentModel) {
-				this._obsel_types = new Array();
-				
-				if(this._JSONData["hasAttributeObselType"] instanceof Array) {
-					for(let i = 0; i < this._JSONData["hasAttributeObselType"].length; i++) {
-						let obselType_link = this._JSONData["hasAttributeObselType"][i];
-						let obselType_uri = this._parentModel.resolve_link_uri(obselType_link);
-						let obselType_id = decodeURIComponent(obselType_uri.hash.substring(1));
-						let obselType = this._parentModel.get_obsel_type(obselType_id);
+		if(this._parentModel) {
+			const obsel_types = new Array();
+			
+			if(this._JSONData["hasAttributeObselType"] instanceof Array) {
+				for(let i = 0; i < this._JSONData["hasAttributeObselType"].length; i++) {
+					let obselType_link = this._JSONData["hasAttributeObselType"][i];
+					let obselType_uri = this._parentModel.resolve_link_uri(obselType_link);
+					let obselType_id = decodeURIComponent(obselType_uri.hash.substring(1));
+					let obselType = this._parentModel.get_obsel_type(obselType_id);
 
-						if(obselType)
-							this._obsel_types.push(obselType);
-					}
+					if(obselType)
+						obsel_types.push(obselType);
+					else
+						throw new KtbsError("Unresolved reference to obsel type : " + obselType_id);
 				}
 			}
-			else if(this._JSONData["hasAttributeObselType"] instanceof Array)
-				throw new KtbsError("Obsel types linked to the AttributeType cannot be retrieved before the AttributeType's parent Model has been set.");
-			else
-				this._obsel_types = new Array();
-		}
 
-		return this._obsel_types;
+			return obsel_types;
+		}
+		else
+			return [];
 	}
 
 	/**
@@ -346,9 +351,7 @@ export class AttributeType {
 			this._JSONData["hasAttributeObselType"] = new Array();
 
 			for(let i = 0; i < new_obsel_types.length; i++)
-				this._JSONData["hasAttributeObselType"].push(new_obsel_types[i].id);
-
-			this._obsel_types = new_obsel_types;
+				this._JSONData["hasAttributeObselType"].push("#" + new_obsel_types[i].id);
 		}
 		else
 			throw new TypeError("New value for obsel_types property must be an array of ObselType");
@@ -358,17 +361,26 @@ export class AttributeType {
 	 * Assigns the current attribute type to an obsel type
 	 * \param ObselType obsel_type the obsel type to assign the current attribute type to
 	 * \throws TypeError throws a TypeError if the provided argument is not an instance of ObselType
+	 * \throws KtbsError if the ObselType and the AttributeType belong to two different models
 	 * \throws KtbsError if the current attribute type is already assigned to the obsel type provided as an argument
+	 * \public
 	 */
 	assignToObselType(obsel_type) {
 		if(obsel_type instanceof ObselType) {
-			if(!this.isAssignedToObselType(obsel_type)) {
-				const obsel_types = this.obsel_types;
-				obsel_types.push(obsel_type);
-				this.obsel_types = obsel_types;
+			if(!this.parent_model || (this.parent_model.uri == obsel_type.parent_model.uri)) {
+				if(!this.isAssignedToObselType(obsel_type)) {
+					if(!this.parent_model)
+						obsel_type.parent_model.addAttributeType(this);
+
+					const obsel_types = this.obsel_types;
+					obsel_types.push(obsel_type);
+					this.obsel_types = obsel_types;
+				}
+				else
+					throw new KtbsError("The attribute type is already assigned to this obsel type");
 			}
 			else
-				throw new KtbsError("The attribute type is already assigned to this obsel type");
+				throw new KtbsError("The ObselType and the AttributeType belong to two different models");
 		}
 		else
 			throw new TypeError("Argument must be an instance of ObselType");
@@ -379,6 +391,7 @@ export class AttributeType {
 	 * \param ObselType obsel_type the obsel type to unassign the current attribute type from
 	 * \throws TypeError throws a TypeError if the provided argument is not an instance of ObselType
 	 * \throws KtbsError if the current attribute type is not currently assigned to the obsel type provided as an argument
+	 * \public
 	 */
 	unAssignFromObselType(obsel_type) {
 		if(obsel_type instanceof ObselType) {
@@ -438,7 +451,7 @@ export class AttributeType {
      */
     _getPostData() {
 		if(this._parentModel) {
-			let postData = this._JSONData;
+			let postData = JSON.parse(JSON.stringify(this._JSONData));
 			postData["@id"] = this._parentModel.id + postData["@id"];
 
 			if(this.data_types && (this.data_types.length > 0))

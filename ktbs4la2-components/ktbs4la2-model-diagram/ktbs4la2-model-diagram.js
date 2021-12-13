@@ -150,6 +150,14 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 */
 	_applyObselTypeChanges(changedObselType) {
 		// update the model
+		/*const model_attribute_types = this._model.attribute_types;
+
+		for(let i = (model_attribute_types.length - 1); i >= 0; i--)
+			if(model_attribute_types[i].obsel_types.length == 0)
+				model_attribute_types.splice(i, 1);
+
+		this._model.attribute_types = model_attribute_types;*/
+
 		const model_obsel_types = this._model.obsel_types;
 
 		for(let i = 0; i < model_obsel_types.length; i++)
@@ -158,20 +166,14 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			}
 
 		this._model.obsel_types = model_obsel_types;
-
-		// purge unused attribute types
-		const model_attribute_types = this._model.attribute_types;
-
-		for(let i = (model_attribute_types.length - 1); i >= 0; i--)
-			if(model_attribute_types[i].obsel_types.length == 0)
-				model_attribute_types.splice(i, 1);
-
-		this._model.attribute_types = model_attribute_types;
 		// ---
 
 		const obselTypeBox = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(changedObselType.id));
 
 		if(obselTypeBox) {
+			obselTypeBox.updateDisplay();
+
+			// update arrows
 			const parentObselTypesIDs = new Array();
 
 			for(let i = 0; i < changedObselType.super_obsel_types.length; i++)
@@ -233,7 +235,9 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				anArrow.toBox = this._defaultObseltypeElement;
 				this._diagramArea.appendChild(anArrow);
 			}
+			// ---
 
+			// check if this model's diagram layout is set to automatic, and if yes, updates it
 			const modelsLayoutsString = window.localStorage.getItem("model-diagram-layouts");
 
 			if(modelsLayoutsString != null) {
@@ -244,6 +248,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			}
 			else
 				this.auto_arrange_obseltypes();
+			// ---
 		}
 	}
 

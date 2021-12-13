@@ -52,11 +52,6 @@ export class Base extends Resource {
 						let stored_trace_uri_string = this._JSONData.contains[i]["@id"];
 						let stored_trace_uri = this.resolve_link_uri(stored_trace_uri_string);
 						let stored_trace = ResourceMultiton.get_resource(StoredTrace, stored_trace_uri);
-						let stored_trace_label = this._JSONData.contains[i]["label"];
-
-						if(stored_trace_label && !stored_trace.label)
-							stored_trace.label = stored_trace_label;
-
 						stored_trace.registerObserver(this._onChildResourceDeleted.bind(this), "lifecycle-status-change", "deleted");
 						this._stored_traces.push(stored_trace);
 					}
@@ -82,11 +77,6 @@ export class Base extends Resource {
 						let computed_trace_uri_string = this._JSONData.contains[i]["@id"];
 						let computed_trace_uri = this.resolve_link_uri(computed_trace_uri_string);
 						let computed_trace = ResourceMultiton.get_resource(ComputedTrace, computed_trace_uri);
-						let computed_trace_label = this._JSONData.contains[i]["label"];
-
-						if(computed_trace_label && !computed_trace.label)
-							computed_trace.label = computed_trace_label;
-
 						computed_trace.registerObserver(this._onChildResourceDeleted.bind(this), "lifecycle-status-change", "deleted");
 						this._computed_traces.push(computed_trace);
 					}
@@ -112,11 +102,6 @@ export class Base extends Resource {
 						let model_uri_string = this._JSONData.contains[i]["@id"];
 						let model_uri = this.resolve_link_uri(model_uri_string);
 						let model = ResourceMultiton.get_resource(Model, model_uri);
-						let model_label = this._JSONData.contains[i]["label"];
-
-						if(model_label && !model.label)
-							model.label = model_label;
-
 						model.registerObserver(this._onChildResourceDeleted.bind(this), "lifecycle-status-change", "deleted");
 						this._models.push(model);
 					}
@@ -142,11 +127,6 @@ export class Base extends Resource {
 						let method_uri_string = this._JSONData.contains[i]["@id"];
 						let method_uri = this.resolve_link_uri(method_uri_string);
 						let method = ResourceMultiton.get_resource(Method, method_uri);
-						let method_label = this._JSONData.contains[i]["label"];
-
-						if(method_label && !method.label)
-							method.label = method_label;
-
 						method.registerObserver(this._onChildResourceDeleted.bind(this), "lifecycle-status-change", "deleted");
 						this._methods.push(method);
 					}
@@ -172,11 +152,6 @@ export class Base extends Resource {
 						let base_uri_string = this._JSONData.contains[i]["@id"];
 						let base_uri = this.resolve_link_uri(base_uri_string);
 						let base = ResourceMultiton.get_resource(Base, base_uri);
-						let base_label = this._JSONData.contains[i]["label"];
-
-						if(base_label && !base.label)
-							base.label = base_label;
-
 						base.registerObserver(this._onChildResourceDeleted.bind(this), "lifecycle-status-change", "deleted");
 						this._bases.push(base);
 					}
@@ -209,7 +184,7 @@ export class Base extends Resource {
 		let newChildrenJSONDataChunk = {"@id": new_children.id, "@type": new_children.type};
 
 		if(new_children.label)
-			newChildrenJSONDataChunk.label = new_children.label;
+			newChildrenJSONDataChunk["label"] = new_children.label;
 
 		if(this._JSONData.contains == undefined)
 			this._JSONData.contains = new Array();

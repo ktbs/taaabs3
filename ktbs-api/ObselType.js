@@ -84,13 +84,36 @@ export class ObselType {
      * \throws TypeError throws a TypeError if the provided argument is not a Model
      * \public
 	 */
-	set parent_model(new_parent_model) {
+	/*set parent_model(new_parent_model) {
 		if(new_parent_model instanceof Model)
 			this._parentModel = new_parent_model;
 		else
 			throw new TypeError("New value for parent_model property must be of type Model.");
-    }
+    }*/
     
+    /**
+	 * Sets the parent model where the ObselType is described
+	 * \param Model new_parent_model - the new parent model for the ObselType
+	 * \throws TypeError throws a TypeError if the provided argument is not an instance of Model
+	 * \throws KtbsError throws a KtbsError if the parent model of the ObselType has already been set
+	 * \throws KtbsError throws a KtbsError if the parent model already has an ObselType with the same ID
+	 * \public
+	 */
+	set parent_model(new_parent_model) {
+		if(new_parent_model instanceof Model) {
+			if(!this._parentModel) {
+				if(!new_parent_model.get_obsel_type(this.id))
+					new_parent_model.addObselType(this);
+				else
+					throw new KtbsError("The parent model already has an ObselType with the same ID");
+			}
+			else
+				throw new KtbsError("The parent model of the ObselType has already been set");
+		}
+		else
+			throw new TypeError("New value for parent_model property must be of type Model.");
+	}
+
     /**
      * Gets the super obsel types of the current obsel type
      * \return Array of ObselType
@@ -383,17 +406,17 @@ export class ObselType {
      */
     set attribute_types(new_attribute_types) {
         if(new_attribute_types instanceof Array) {
-            for(let i = 0; i < new_attribute_types.length; i++)
+            for(let i = 0; i < new_attribute_types.length; i++) {
                 if(!(new_attribute_types[i] instanceof AttributeType))
                     throw new TypeError("New value for attribute_types property must be an array of AttributeType.");
 
-            for(let i = 0; i < new_attribute_types.length; i++)
-                if(this.parent_model && new_attribute_types[i].parent_model && (new_attribute_types[i].parent_model != this.parent_model))
+                if(this.parent_model && new_attribute_types[i].parent_model && (new_attribute_types[i].parent_model.uri != this.parent_model.uri))
                     throw new KtbsError("Cannot associate an ObselType and an AttributeType from two different models");
+            }
 
             for(let i = 0; i < new_attribute_types.length; i++)
-                if(!new_attribute_types[i].obsel_types.includes(this))
-                    new_attribute_types[i].obsel_types.push(this);
+                if(!new_attribute_types[i].isAssignedToObselType(this))
+                    new_attribute_types[i].assignToObselType(this);
         }
         else
             throw new TypeError("New value for attribute_types property must be an array of AttributeType.");
@@ -450,7 +473,7 @@ export class ObselType {
 	 */
     _getPostData() {
         if(this._parentModel) {
-            let postData = this._JSONData;
+            let postData = JSON.parse(JSON.stringify(this._JSONData));
             postData["@id"] = this._parentModel.id + postData["@id"];
             return postData;
         }

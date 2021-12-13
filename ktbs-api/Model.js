@@ -79,14 +79,38 @@ export class Model extends Resource {
 	 * \protected
 	 */
 	_get_model_own_graph() {
-		if(this._model_own_graph == null) {
-			let modelOwnGraphRank = this._get_model_own_graph_rank();
+		let modelOwnGraphRank = this._get_model_own_graph_rank();
 
-			if(modelOwnGraphRank != null)
-				this._model_own_graph = this._JSONData["@graph"][modelOwnGraphRank];
-		}
+		if(modelOwnGraphRank != null)
+			return this._JSONData["@graph"][modelOwnGraphRank];
+		else
+			return undefined;
+	}
 
-		return this._model_own_graph;
+	/**
+	 * Gets the data to be sent in PUT or POST queries
+	 * \return Object
+	 * \protected
+	 */
+	_getJSONData() {
+		let postData = {"@graph" : [this._get_model_own_graph()]};
+
+		for(let i = 0; i <  this.obsel_types.length; i++)
+			postData["@graph"].push(this.obsel_types[i]._getPostData());
+	
+		for(let i = 0; i < this.attribute_types.length; i++)
+			postData["@graph"].push(this.attribute_types[i]._getPostData());
+
+		return postData;
+	}
+
+	/**
+	 * Gets the data to be send in a PUT query
+	 * \return Object
+	 * \protected
+	 */
+	_getPutData() {
+		return this._getJSONData();
 	}
 
 	/**
@@ -95,34 +119,7 @@ export class Model extends Resource {
 	 * \protected
 	 */
 	_getPostData() {
-		let postData = {"@graph" : [this._get_model_own_graph()]};
-
-		for(let i = 0; i <  this.obsel_types.length; i++) {
-			if(!(this.obsel_types[i].parent_model))
-				this.obsel_types[i].parent_model = this;
-
-			for(let j = 0; j < this.obsel_types[i].attribute_types.length; j++) {
-				if(!(this.obsel_types[i].attribute_types[j].parent_model))
-					this.obsel_types[i].attribute_types[j].parent_model = this;
-
-				if(!(this.obsel_types[i].attribute_types[j].obsel_types.includes(this.obsel_types[i])))
-					this.obsel_types[i].attribute_types[j].obsel_types.push(this.obsel_types[i]);
-
-				if(!(this.attribute_types.includes(this.obsel_types[i].attribute_types[j])))
-					this.attribute_types.push(this.obsel_types[i].attribute_types[j]);
-			}
-
-			postData["@graph"].push(this.obsel_types[i]._getPostData());
-		}
-	
-		for(let i = 0; i < this.attribute_types.length; i++) {
-			if(!(this.attribute_types[i].parent_model))
-				this.attribute_types[i].parent_model = this;
-
-			postData["@graph"].push(this.attribute_types[i]._getPostData());
-		}
-
-		return postData;
+		return this._getJSONData();
 	}
 
 	/**
@@ -160,14 +157,12 @@ export class Model extends Resource {
 	 * \public
 	 */
 	get label() {
-		if(!this._label) {
-			let modelOwnGraph = this._get_model_own_graph();
+		let modelOwnGraph = this._get_model_own_graph();
 
-			if(modelOwnGraph && modelOwnGraph["label"])
-				this._label = modelOwnGraph["label"];
-		}
-		
-		return this._label;
+		if(modelOwnGraph && modelOwnGraph["label"])
+			return modelOwnGraph["label"];
+		else
+			return undefined;
 	}
 
 	/**
@@ -178,7 +173,6 @@ export class Model extends Resource {
 	set label(new_label) {
 		let modelOwnGraphRank = this._get_model_own_graph_rank();
 		this._JSONData["@graph"][modelOwnGraphRank]["label"] = new_label;
-		this._label = new_label;
 	}
 
 	/**
@@ -188,7 +182,13 @@ export class Model extends Resource {
 	 */
 	get label_translations() {
 		let modelOwnGraph = this._get_model_own_graph();
-		return modelOwnGraph["http://www.w3.org/2000/01/rdf-schema#label"];
+		const labelKeys = ["label", "http://www.w3.org/2000/01/rdf-schema#label", "rdfs:label"];
+
+		for(let i = 0; i < labelKeys.length; i++)
+			if(modelOwnGraph[labelKeys[i]] && (modelOwnGraph[labelKeys[i]] instanceof Object))
+				return modelOwnGraph[labelKeys[i]];
+
+		return undefined;
 	}
 
 	/**
@@ -225,7 +225,6 @@ export class Model extends Resource {
 	set comment(new_comment) {
 		let modelOwnGraphRank = this._get_model_own_graph_rank();
 		this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#comment"] = new_comment;
-		this._label = new_comment;
 	}
 
 	/**
@@ -284,12 +283,20 @@ export class Model extends Resource {
 	 */
 	set_translated_label(label, lang) {
 		let modelOwnGraphRank = this._get_model_own_graph_rank();
-		let label_translations;
+		let label_translations, label_translations_key;
 
-		if(this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#label"])
+		if(this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#label"]) {
 			label_translations = this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#label"];
-		else
+			label_translations_key = "http://www.w3.org/2000/01/rdf-schema#label";
+		}
+		else if(this._JSONData["@graph"][modelOwnGraphRank]["rdfs:label"]) {
+			label_translations = this._JSONData["@graph"][modelOwnGraphRank]["rdfs:label"];
+			label_translations_key = "rdfs:label";
+		}
+		else {
 			label_translations = new Array();
+			label_translations_key = "http://www.w3.org/2000/01/rdf-schema#label";
+		}
 
 		let existing_translation_replaced = false;
 
@@ -302,7 +309,7 @@ export class Model extends Resource {
 		if(!existing_translation_replaced)
 			label_translations.push({"@value": label, "@language": lang})
 		
-		this._JSONData["@graph"][modelOwnGraphRank]["http://www.w3.org/2000/01/rdf-schema#label"] = label_translations;
+		this._JSONData["@graph"][modelOwnGraphRank][label_translations_key] = label_translations;
 	}
 
 	/**
@@ -357,27 +364,99 @@ export class Model extends Resource {
 	 * Sets the obsel types defined in the Model
 	 * \param Array of ObselType new_obsel_types - the new obsel types defined in the Model
 	 * \throws TypeError throws a TypeError if the provided argument is not an Array of ObselType
-	 * \throws KtbsError throws a KtbsError if one of the ObselType provided as an argument belongs to an other Model
+	 * \throws KtbsError throws a KtbsError if one of the ObselType provided as an argument does not belong to the current Model
 	 * \public
 	 */
 	set obsel_types(new_obsel_types) {
 		if(new_obsel_types instanceof Array) {
+			// check validity of provided data
 			for(let i = 0; i < new_obsel_types.length; i++)
 				if(!(new_obsel_types[i] instanceof ObselType))
 					throw new TypeError("New value for obsel_types property must be an array of ObselType");
 
 			for(let i = 0; i < new_obsel_types.length; i++)
-				if(new_obsel_types[i].parent_model && (new_obsel_types[i].parent_model.uri != this.uri))
-					throw new KtbsError("Cannot associate an ObselType to a different Model once it has been set");
+				if(
+						!new_obsel_types[i].parent_model 
+					|| (new_obsel_types[i].parent_model.uri != this.uri)
+				)
+					throw new KtbsError("ObselType does not belong to the current Model");
+			// done
 
-			for(let i = 0; i < new_obsel_types.length; i++)
-				if(!new_obsel_types[i].parent_model)
-					new_obsel_types[i].parent_model = this;
-
+			// update cached array this._obsel_types
 			this._obsel_types = new_obsel_types;
 		}
 		else
 			throw new TypeError("New value for obsel_types property must be an array of ObselType");
+	}
+
+	/**
+	 * Adds an ObselType to the Model
+	 * \param ObselType obsel_type the ObselType to add to the Model
+	 * \throws TypeError if the provided parameter is not an instance of ObselType
+	 * \throws KtbsError if the ObselType belongs to another Model
+	 * \throws KtbsError if the Model already has an ObselType with the same ID
+	 * \public
+	 */
+	addObselType(obsel_type) {
+		if(obsel_type instanceof ObselType) {
+			if(	
+					!obsel_type.parent_model
+				||	(obsel_type.parent_model.uri == this.uri)
+			) {
+				if(!this.get_obsel_type(obsel_type.id)) {
+					const model_obsel_types = this.obsel_types;
+					model_obsel_types.push(obsel_type);
+					this.obsel_types = model_obsel_types;
+				}
+				else
+					throw new KtbsError("The Model already has an ObselType with the same ID");
+			}
+			else
+				throw new KtbsError("The ObselType belongs to another Model");
+		}
+		else
+			throw new TypeError("The provided parameter must be an instance of ObselType");
+	}
+
+	/**
+	 * Removes an ObselType from the Model
+	 * \param ObselType obsel_type the ObselType to remove from the Model
+	 * \throws TypeError if the provided parameter is not an instance of ObselType
+	 * \throws KtbsError if the Model does not contains the ObselType
+	 * \public
+	 */
+	removeObselType(obsel_type) {
+		if(obsel_type instanceof ObselType) {
+			if(obsel_type.parent_model.uri == this.uri)
+				this.removeObselTypeById(obsel_type.id);
+			else
+				throw new KtbsError("The ObselType does not belong to this Model");
+		}
+		else
+			throw new TypeError("The provided parameter must be an instance of ObselType");
+	}
+
+	/**
+	 * Removes the ObselType identified by the given ID from the Model
+	 * \param string obsel_type_id the id of the ObselType to remove from the Model
+	 * \throws KtbsError if the Model does not contains an ObselType with the specified ID
+	 * \public
+	 */
+	removeObselTypeById(obsel_type_id) {
+		const model_obsel_types = this.obsel_types;
+		let obsel_type_id_found = false;
+
+		for(let i = 0; i < model_obsel_types.length; i++)
+			if(model_obsel_types[i].id == obsel_type_id) {
+				model_obsel_types.splice(i, 1);
+				obsel_type_id_found = true;
+				break;
+			}
+
+		if(obsel_type_id_found)
+			this.obsel_types = model_obsel_types;
+		else
+			throw new KtbsError("The Model does not contains any ObselType with the specified id");
 	}
 
 	/**
@@ -428,27 +507,100 @@ export class Model extends Resource {
 	 * Sets the attribute types defined in the Model
 	 * \param Array of AttributeType new_attribute_types - the new attribute types defined in the Model
 	 * \throws TypeError throws a TypeError if the provided argument is not an Array of AttributeType
-	 * \throws KtbsError throws a KtbsError if one of the AttributeType provided as an argument belongs to an other Model
+	 * \throws KtbsError throws a KtbsError if one of the AttributeType provided as an argument does not belong to the current Model
 	 * \public
 	 */
 	set attribute_types(new_attribute_types) {
-		if(new_attribute_types instanceof Array){
+		if(new_attribute_types instanceof Array) {
+			// check validity of provided data
 			for(let i = 0; i < new_attribute_types.length; i++)
 				if(!(new_attribute_types[i] instanceof AttributeType))
 					throw new TypeError("New value for attribute_types property must be an array of AttributeType");
 
 			for(let i = 0; i < new_attribute_types.length; i++)
-				if(new_attribute_types[i].parent_model && (new_attribute_types[i].parent_model != this))
-					throw new KtbsError("Cannot associate an AttributeType to a different Model once it has been set");
+				if(
+						!new_attribute_types[i].parent_model
+					|| (new_attribute_types[i].parent_model.uri != this.uri)
+				)
+					throw new KtbsError("AttributeType does not belong to the current Model");
+			// done
 
-			for(let i = 0; i < new_attribute_types.length; i++)
-				if(!new_attribute_types[i].parent_model)
-					new_attribute_types[i].parent_model = this;
-
+			// update cached array this._attribute_types
 			this._attribute_types = new_attribute_types;
 		}
 		else
 			throw new TypeError("New value for attribute_types property must be an array of AttributeType");
+	}
+
+	/**
+	 * Adds an AttributeType to the Model
+	 * \param AttributeType attribute_type the AttributeType to add to the Model
+	 * \throws TypeError if the provided parameter is not an instance of AttributeType
+	 * \throws KtbsError if the AttributeType belongs to another Model
+	 * \throws KtbsError if the Model already has an AttributeType with the same ID
+	 * \public
+	 */
+	addAttributeType(attribute_type) {
+		if(attribute_type instanceof AttributeType) {
+			if(	
+					!attribute_type.parent_model
+				||	(attribute_type.parent_model.uri == this.uri)
+			) {
+				if(!this.get_attribute_type(attribute_type.id)) {
+					const model_attribute_types = this.attribute_types;
+					attribute_type.parent_model = this;
+					model_attribute_types.push(attribute_type);
+					this.attribute_types = model_attribute_types;
+				}
+				else
+					throw new KtbsError("The Model already has an AttributeType with the same ID");
+			}
+			else
+				throw new KtbsError("The AttributeType belongs to another Model");
+		}
+		else
+			throw new TypeError("The provided parameter must be an instance of AttributeType");
+	}
+
+	/**
+	 * Removes an AttributeType from the Model
+	 * \param AttributeType attribute_type the AttributeType to remove from the Model
+	 * \throws TypeError if the provided parameter is not an instance of AttributeType
+	 * \throws KtbsError if the Model does not contains the AttributeType
+	 * \public
+	 */
+	removeAttributeType(attribute_type) {
+		if(attribute_type instanceof AttributeType) {
+			if(attribute_type.parent_model.uri == this.uri)
+				this.removeAttributeTypeById(attribute_type.id);
+			else
+				throw new KtbsError("The AttributeType does not belong to this Model");
+		}
+		else
+			throw new TypeError("The provided parameter must be an instance of AttributeType");
+	}
+
+	/**
+	 * Removes the AttributeType identified by the given ID from the Model
+	 * \param string attribute_type_id the id of the AttributeType to remove from the Model
+	 * \throws KtbsError if the Model does not contains an AttributeType with the specified ID
+	 * \public
+	 */
+	removeAttributeTypeById(attribute_type_id) {
+		const model_attribute_types = this.attribute_types;
+		let attribute_type_id_found = false;
+
+		for(let i = 0; i < model_attribute_types.length; i++)
+			if(model_attribute_types[i].id == attribute_type_id) {
+				model_attribute_types.splice(i, 1);
+				attribute_type_id_found = true;
+				break;
+			}
+
+		if(attribute_type_id_found)
+			this.attribute_types = model_attribute_types;
+		else
+			throw new KtbsError("The Model does not contains any AttributeType with the specified id");
 	}
 
 	/**
@@ -555,12 +707,6 @@ export class Model extends Resource {
 	_resetCalculatedData() {
 		if(this._model_own_graph_rank)
 			this._model_own_graph_rank = null;
-
-		if(this._model_own_graph)
-			this._model_own_graph = null;
-
-		if(this._label)
-			delete this._label;
 
 		if(this._comment)
 			delete this._comment;
