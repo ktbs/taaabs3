@@ -48,31 +48,12 @@
 	display: none;
 }
 
-#empty-message {
-	background-color: rgb(0, 0, 0, 0.2);
-	text-align: center;
-	padding: 10px 10px 10px 10px;
-	border-radius: 5px;
-	font-size: 10pt;
-	color: white;	
-	font-weight: bold;
-	font-size: 14pt;
-	font-style: italic;
-}
-
-#container:not(.empty) #empty-message {
-	display: none;
-}
-
 #container.waiting #obseltypes, 
 #container.waiting #default-obseltype,
 #container.waiting #tools,
 #container.error #obseltypes,
 #container.error #default-obseltype,
-#container.error #tools,
-#container.empty #obseltypes,
-#container.empty #default-obseltype,
-#container.empty #tools {
+#container.error #tools {
 	display: none;
 }
 

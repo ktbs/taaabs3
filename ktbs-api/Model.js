@@ -405,6 +405,7 @@ export class Model extends Resource {
 			) {
 				if(!this.get_obsel_type(obsel_type.id)) {
 					const model_obsel_types = this.obsel_types;
+					obsel_type.parent_model = this;
 					model_obsel_types.push(obsel_type);
 					this.obsel_types = model_obsel_types;
 				}
@@ -446,12 +447,18 @@ export class Model extends Resource {
 		const model_obsel_types = this.obsel_types;
 		let obsel_type_id_found = false;
 
-		for(let i = 0; i < model_obsel_types.length; i++)
-			if(model_obsel_types[i].id == obsel_type_id) {
+		for(let i = 0; i < model_obsel_types.length; i++) {
+			const anObselType = model_obsel_types[i];
+
+			if(anObselType.id == obsel_type_id) {
+				for(let j = (anObselType.attribute_types.length - 1); j >= 0; j--)
+					anObselType.attribute_types[j].unAssignFromObselType(anObselType);
+
 				model_obsel_types.splice(i, 1);
 				obsel_type_id_found = true;
 				break;
 			}
+		}
 
 		if(obsel_type_id_found)
 			this.obsel_types = model_obsel_types;

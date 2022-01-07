@@ -35,8 +35,12 @@ export class ObselType {
      * \public
      */
     get id() {
-        if(!this._id)
-            this._id = decodeURIComponent(this.uri.hash.substring(1));
+        if(!this._id) {
+			if(this._JSONData["@id"].startsWith("#"))
+				this._id = this._JSONData["@id"].substring(1);
+			else
+				this._id = this._JSONData["@id"];
+		}
 
         return this._id;
     }
@@ -57,7 +61,7 @@ export class ObselType {
      * \public
      */
     get uri() {
-        if((this.parent_model.lifecycleStatus == "exists") || (this.parent_model.lifecycleStatus == "modified")) {
+        if(this.parent_model && (this.parent_model.lifecycleStatus == "exists") || (this.parent_model.lifecycleStatus == "modified")) {
             if(!this._uri) {
                 let rawID = this._JSONData["@id"];
                 this._uri = this.parent_model.resolve_link_uri(rawID);
@@ -96,17 +100,12 @@ export class ObselType {
 	 * \param Model new_parent_model - the new parent model for the ObselType
 	 * \throws TypeError throws a TypeError if the provided argument is not an instance of Model
 	 * \throws KtbsError throws a KtbsError if the parent model of the ObselType has already been set
-	 * \throws KtbsError throws a KtbsError if the parent model already has an ObselType with the same ID
 	 * \public
 	 */
 	set parent_model(new_parent_model) {
 		if(new_parent_model instanceof Model) {
-			if(!this._parentModel) {
-				if(!new_parent_model.get_obsel_type(this.id))
-					new_parent_model.addObselType(this);
-				else
-					throw new KtbsError("The parent model already has an ObselType with the same ID");
-			}
+			if(!this._parentModel)
+                this._parentModel = new_parent_model;
 			else
 				throw new KtbsError("The parent model of the ObselType has already been set");
 		}
@@ -139,6 +138,23 @@ export class ObselType {
         
         return this._super_obsel_types;
     }
+
+    /**
+     * Gets the whole hierarchy of super obsel types for the current obsel type
+     * \return Array of ObselType
+     * \public
+     */
+    get super_obsel_types_hierarchy() {
+        if(!this._super_obsel_types_hierarchy) {
+            this._super_obsel_types_hierarchy = this.super_obsel_types;
+
+            for(let i = 0; i < this.super_obsel_types.length; i++)
+                this._super_obsel_types_hierarchy = this.super_obsel_types[i].super_obsel_types_hierarchy.concat(this._super_obsel_types_hierarchy);
+        }
+        
+        return this._super_obsel_types_hierarchy;
+    }
+
 
     /**
      * Gets the rank of the current obsel type within its model inheritance hierarchy : 0 if the obsel type does not inherit from any other obsel type, 1 if it inherits from a rank 0 obsel type, 2 if it inherits from a rank 1 obsel type etc
@@ -487,7 +503,7 @@ export class ObselType {
 	clone() {
 		// we use this weird JSON.parse+JSON.stringify trick in order to easily make a deep copy of the data
 		const clonedJSONData = JSON.parse(JSON.stringify(this._JSONData));
-		const clone = new ObselType(this._parentModel, clonedJSONData);
+		const clone = new ObselType(this.parent_model, clonedJSONData);
         return clone;
 	}
 }

@@ -120,8 +120,8 @@ import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
 
             this._componentReady.then(() => {
                 this.updateDisplay();
-            });
-            
+            })
+            .catch((e) => {});
         }
         else
             throw new TypeError("new value for property obsel_type must be an instance of ObselType");

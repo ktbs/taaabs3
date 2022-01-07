@@ -25,7 +25,7 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
     /**
      * 
      */
-    setAttribute(name, value) {
+    /*setAttribute(name, value) {
         if(name == "value") {
             if(this._lastSetValuePromise)
                 this._rejectLastSetValuePromise("A newer value has been set");
@@ -42,7 +42,7 @@ class KTBS4LA2ResourceIDInput extends TemplatedHTMLElement {
             super.setAttribute(name, value);
             return Promise.resolve();
         }
-    }
+    }*/
 
     /**
      * 

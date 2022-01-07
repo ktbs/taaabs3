@@ -39,12 +39,6 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
         if(name == "mode") {
 			if((newValue == "view") || (newValue == "edit")) {
 				this._componentReady.then(() => {
-					if((newValue == "edit") && this._model)
-						this._model_copy = this._model.clone();
-
-					if((newValue == "view") && (oldValue == "edit"))
-						this._obseltypeDetails.resetObselType();
-
 					if((newValue == "edit") && (this.selected_obselType))
 						this._obseltype_is_being_edited = true;
 
@@ -53,9 +47,6 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			}
 			else if(newValue == null) {
 				this._componentReady.then(() => {
-					if(oldValue == "edit")
-						this._obseltypeDetails.resetObselType();
-
 					if(this._obseltypeDetails.hasAttribute("mode"))
 						this._obseltypeDetails.removeAttribute("mode");
 				});
@@ -106,7 +97,6 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	onComponentReady() {
 		this._container = this.shadowRoot.querySelector("#container");
 		this._waitMessage = this.shadowRoot.querySelector("#wait-message");
-		this._emptyMessage = this.shadowRoot.querySelector("#empty-message");
 		this._errorMessage = this.shadowRoot.querySelector("#error-message");
 		this._diagramArea = this.shadowRoot.querySelector("#diagram-area");
 		this._defaultObseltypeElement = this.shadowRoot.querySelector("#default-obseltype");
@@ -149,25 +139,6 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 * 
 	 */
 	_applyObselTypeChanges(changedObselType) {
-		// update the model
-		/*const model_attribute_types = this._model.attribute_types;
-
-		for(let i = (model_attribute_types.length - 1); i >= 0; i--)
-			if(model_attribute_types[i].obsel_types.length == 0)
-				model_attribute_types.splice(i, 1);
-
-		this._model.attribute_types = model_attribute_types;*/
-
-		const model_obsel_types = this._model.obsel_types;
-
-		for(let i = 0; i < model_obsel_types.length; i++)
-			if(model_obsel_types[i].id == changedObselType.id) {
-				model_obsel_types[i] = changedObselType;
-			}
-
-		this._model.obsel_types = model_obsel_types;
-		// ---
-
 		const obselTypeBox = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(changedObselType.id));
 
 		if(obselTypeBox) {
@@ -243,7 +214,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			if(modelsLayoutsString != null) {
 				const modelsLayouts = JSON.parse(modelsLayoutsString);
 
-				if(!modelsLayouts[this._model.uri.toString()])
+				if(!modelsLayouts[this._ktbsResource.uri.toString()])
 					this.auto_arrange_obseltypes();
 			}
 			else
@@ -298,8 +269,8 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 		for(let i = 0; i < AttributeType.builtin_attribute_types_ids.length; i++)
 			reserved_ids.push(AttributeType.builtin_attribute_types_ids[i]);
 
-		for(let i = 0; i < this._model.attribute_types.length; i++)
-			reserved_ids.push(this._model.attribute_types[i].id);
+		for(let i = 0; i < this._ktbsResource.attribute_types.length; i++)
+			reserved_ids.push(this._ktbsResource.attribute_types[i].id);
 
 		this._obseltypeDetails.reserved_attributetypes_ids = reserved_ids;
 	}
@@ -340,7 +311,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				selectedBoxes[i].classList.remove("selected");
 
 			const changedObselType = this._obseltypeDetails.obsel_type;
-			const model_obselTypes = this._model.obsel_types;
+			const model_obselTypes = this._ktbsResource.obsel_types;
 
 			for(let i = 0; i < model_obselTypes.length; i++) {
 				if(model_obselTypes[i].id == changedObselType.id) {
@@ -349,7 +320,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				}
 			}
 
-			this._model.obsel_types = model_obselTypes;
+			this._ktbsResource.obsel_types = model_obselTypes;
 		}
 		else {
 			alert(this._translateString("Specified data for the obsel type is invalid.\nYou must correct it first to be able to close this panel."));
@@ -361,7 +332,9 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 * 
 	 */
 	_onClickCancelObseltypeModificationsButton(event) {
-		this._obseltypeDetails.resetObselType();
+		const obselTypeID = this._obseltypeDetails.obsel_type.id;
+		this._restoreObselTypesAndAttributeTypes();
+		this._obseltypeDetails.obsel_type = this._ktbsResource.get_obsel_type(obselTypeID);
 		this._applyObselTypeChanges(this._obseltypeDetails.obsel_type);
 
 		if(!this._obseltypeDetailsPanel.classList.contains("hidden"))
@@ -385,7 +358,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			const newObselTypeId = this._promptNewObseltypeID();
 
 			if(newObselTypeId != null) {
-				const modelObselTypes = this._model.obsel_types;
+				const modelObselTypes = this._ktbsResource.obsel_types;
 				const newObselType = this._obseltypeDetails.obsel_type.clone();
 				newObselType.id = newObselTypeId;
 
@@ -400,7 +373,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				newObselType.suggestedColor = null;
 				newObselType.suggestedSymbol = null;
 				modelObselTypes.push(newObselType);
-				this._model.obsel_types = modelObselTypes;
+				this._ktbsResource.obsel_types = modelObselTypes;
 
 				const newObselTypeBox = document.createElement("ktbs4la2-model-diagram-obseltype");
 				newObselTypeBox.setAttribute("title", this._translateString("Click to view this obsel type's details"));
@@ -430,7 +403,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 					if(modelsLayoutsString != null) {
 						const modelsLayouts = JSON.parse(modelsLayoutsString);
 
-						if(!modelsLayouts[this._model.uri.toString()])
+						if(!modelsLayouts[this._ktbsResource.uri.toString()])
 							this.auto_arrange_obseltypes();
 					}
 					else
@@ -454,8 +427,8 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 
 			this._obseltype_is_being_edited = false;
 
-			const changedObselType = this._obseltypeDetails.obsel_type;
-			const obselTypeBox = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(changedObselType.id));
+			const deletedObselType = this._obseltypeDetails.obsel_type;
+			const obselTypeBox = this._diagramArea.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(deletedObselType.id));
 
 			if(obselTypeBox) {
 				const diagramArrows = this._diagramArea.querySelectorAll("ktbs4la2-model-diagram-arrow");
@@ -466,17 +439,9 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 
 				obselTypeBox.remove();
 			}
-			
-			const model_obselTypes = this._model.obsel_types;
 
-			for(let i = 0; i < model_obselTypes.length; i++) {
-				if(model_obselTypes[i].id == changedObselType.id) {
-					model_obselTypes.splice(i, 1);
-					break;
-				}
-			}
-
-			this._model.obsel_types = model_obselTypes;
+			this._ktbsResource.removeObselType(deletedObselType);
+			this.dispatchEvent(new CustomEvent("change", {bubbles: true, cancelable: false, composed: false}));
 		}
 	}
 
@@ -484,12 +449,12 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 * 
 	 */
 	auto_arrange_obseltypes() {
-		if((this._model.obsel_types instanceof Array) && (this._model.obsel_types.length > 0)) {
+		if((this._ktbsResource.obsel_types instanceof Array) && (this._ktbsResource.obsel_types.length > 0)) {
 			const boxes_grid = new Array();
 			
 			// assign obsel types rows
-			for(let i = 0; i < this._model.obsel_types.length; i++) {
-				const anObselType = this._model.obsel_types[i];
+			for(let i = 0; i < this._ktbsResource.obsel_types.length; i++) {
+				const anObselType = this._ktbsResource.obsel_types[i];
 				const obselType_hierarchy_rank = anObselType.types_hierarchy_rank;
 
 				if(!(boxes_grid[obselType_hierarchy_rank] instanceof Array))
@@ -731,8 +696,8 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	_promptNewObseltypeID() {
 		const reserved_ids = new Array();
 
-		for(let i = 0; i < this._model.obsel_types.length; i++)
-			reserved_ids.push(this._model.obsel_types[i].id);
+		for(let i = 0; i < this._ktbsResource.obsel_types.length; i++)
+			reserved_ids.push(this._ktbsResource.obsel_types[i].id);
 
 		const idValidationPattern = new RegExp('^[a-zA-Z0-9\-_]+$');
 		let newObselTypeId = "";
@@ -766,11 +731,9 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			const newObselTypeId = this._promptNewObseltypeID();
 
 			if(newObselTypeId != null) {
-				const modelObselTypes = this._model.obsel_types;
-				const newObselType = new ObselType(this._model);
+				const newObselType = new ObselType();
 				newObselType.id = newObselTypeId;
-				modelObselTypes.push(newObselType);
-				this._model.obsel_types = modelObselTypes;
+				this._ktbsResource.addObselType(newObselType);
 
 				const newObselTypeBox = document.createElement("ktbs4la2-model-diagram-obseltype");
 				newObselTypeBox.setAttribute("title", this._translateString("Click to view this obsel type's details"));
@@ -788,6 +751,8 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 					anArrowNode.toBox = this._defaultObseltypeElement;
 					this._diagramArea.appendChild(anArrowNode);
 
+					this._backupObselTypesAndAttributeTypes();
+
 					this._obseltypeDetails.obsel_type = newObselType;
 
 					if(this._obseltypeDetailsPanel.classList.contains("hidden"))
@@ -800,12 +765,14 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 					if(modelsLayoutsString != null) {
 						const modelsLayouts = JSON.parse(modelsLayoutsString);
 
-						if(!modelsLayouts[this._model.uri.toString()])
+						if(!modelsLayouts[this._ktbsResource.uri.toString()])
 							this.auto_arrange_obseltypes();
 					}
 					else
 						this.auto_arrange_obseltypes();
 				});
+
+				this.dispatchEvent(new CustomEvent("change", {bubbles: true, cancelable: false, composed: false}));
 			}
 		}
 	}
@@ -830,9 +797,10 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 					clickedBox.classList.add("selected");
 
 					const obselType_id = clickedBox.getAttribute("id");
-					const obselType = this._model.get_obsel_type(obselType_id);
+					const obselType = this._ktbsResource.get_obsel_type(obselType_id);
 
 					if(obselType) {
+						this._backupObselTypesAndAttributeTypes();
 						this._obseltypeDetails.obsel_type = obselType;
 
 						if(this._obseltypeDetailsPanel.classList.contains("hidden"))
@@ -843,6 +811,31 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 					}
 			}
 		}
+	}
+
+	/**
+	 * 
+	 */
+	_backupObselTypesAndAttributeTypes() {
+		this._obsel_types_copies = new Array();
+
+		for(let i = 0; i < this._ktbsResource.obsel_types.length; i++)
+			this._obsel_types_copies.push(this._ktbsResource.obsel_types[i].clone());
+
+		this._attribute_types_copies = new Array();
+
+		for(let i = 0; i < this._ktbsResource.attribute_types.length; i++)
+			this._attribute_types_copies.push(this._ktbsResource.attribute_types[i].clone());
+	}
+
+	/**
+	 * 
+	 */
+	_restoreObselTypesAndAttributeTypes() {
+		this._ktbsResource.obsel_types = this._obsel_types_copies;
+		this._ktbsResource.attribute_types = this._attribute_types_copies;
+		delete this._obsel_types_copies;
+		delete this._attribute_types_copies;
 	}
 
 	/**
@@ -938,7 +931,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				}
 			}
 
-			modelsLayouts[this._model.uri.toString()] = currentModelLayout;
+			modelsLayouts[this._ktbsResource.uri.toString()] = currentModelLayout;
 			window.localStorage.setItem("model-diagram-layouts", JSON.stringify(modelsLayouts));
 			delete this._saveCurrentModelDiagramLayoutTaskID;
 		});
@@ -957,8 +950,8 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
             if(modelsLayoutsString != null) {
                 const modelsLayouts = JSON.parse(modelsLayoutsString);
 
-				if(modelsLayouts[this._model.uri.toString()]) {
-					delete modelsLayouts[this._model.uri.toString()];
+				if(modelsLayouts[this._ktbsResource.uri.toString()]) {
+					delete modelsLayouts[this._ktbsResource.uri.toString()];
 					window.localStorage.setItem("model-diagram-layouts", JSON.stringify(modelsLayouts));
 				}
 			}
@@ -987,22 +980,6 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	/**
 	 * 
 	 */
-	resetModel() {
-		if(this._model_copy) {
-			this._model = this._model_copy;
-
-			if(this.getAttribute("mode") == "edit")
-				this._model_copy = this._model.clone();
-			else
-				delete this._model_copy;
-
-			this._updateDiagram();
-		}
-	}
-
-	/**
-	 * 
-	 */
 	_updateDiagram() {
 		this._componentReady.then(() => {
 			if(this._container.classList.contains("waiting"))
@@ -1016,16 +993,16 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 			// ---
 			
 			// instanciate diagram elements
-			if((this._model.obsel_types instanceof Array) && (this._model.obsel_types.length > 0)) {
+			if((this._ktbsResource.obsel_types instanceof Array) && (this._ktbsResource.obsel_types.length > 0)) {
 				const newNodeContent = document.createDocumentFragment();
 				const obseltypesElementsPopulatedPromises = new Array();
 
 				// instanciate obsel type's boxes
-				for(let i = 0; i < this._model.obsel_types.length; i++) {
-					const anObselType = this._model.obsel_types[i];
+				for(let i = 0; i < this._ktbsResource.obsel_types.length; i++) {
+					const anObselType = this._ktbsResource.obsel_types[i];
 					const aChildObselTypeNode = document.createElement("ktbs4la2-model-diagram-obseltype");
 					aChildObselTypeNode.setAttribute("title", this._translateString("Click to view this obsel type's details"));
-					aChildObselTypeNode.setAttribute("id", this._model.obsel_types[i].id);
+					aChildObselTypeNode.setAttribute("id", this._ktbsResource.obsel_types[i].id);
 					aChildObselTypeNode.setAttribute("lang", this._lang);
 					aChildObselTypeNode.obsel_type = anObselType;
 					aChildObselTypeNode.addEventListener("click", this._onClickObselTypeBox.bind(this));
@@ -1035,8 +1012,8 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 				}
 
 				// instanciate inheritance arrows
-				for(let i = 0; i < this._model.obsel_types.length; i++) {
-					const anObselType = this._model.obsel_types[i];
+				for(let i = 0; i < this._ktbsResource.obsel_types.length; i++) {
+					const anObselType = this._ktbsResource.obsel_types[i];
 					const anObselTypeBox = newNodeContent.querySelector("ktbs4la2-model-diagram-obseltype#" + CSS.escape(anObselType.id));
 
 					if(anObselTypeBox) {
@@ -1075,8 +1052,8 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 					if(modelsLayoutsString != null) {
 						const modelsLayouts = JSON.parse(modelsLayoutsString);
 
-						if(modelsLayouts[this._model.uri.toString()]) {
-							const currentModelLayout = modelsLayouts[this._model.uri.toString()];
+						if(modelsLayouts[this._ktbsResource.uri.toString()]) {
+							const currentModelLayout = modelsLayouts[this._ktbsResource.uri.toString()];
 							const obsel_types_ids = Object.keys(currentModelLayout);
 							let maxBottom = 0;
 
@@ -1129,11 +1106,6 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 * 
 	 */
 	_onKtbsResourceSyncInSync() {
-		this._model = this._ktbsResource.clone();
-
-		if(this.getAttribute("mode") == "edit")
-			this._model_copy = this._model.clone();
-
 		this._updateDiagram();
 	}
 
@@ -1159,8 +1131,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
      */
 	_updateStringsTranslation() {
 		this._waitMessage.innerText = this._translateString("Waiting for server response...");
-		this._emptyMessage.innerText = this._translateString("No data to display");
-		
+
 		if(!this._closeObseltypeDetailsButton.classList.contains("disabled"))
 			this._closeObseltypeDetailsButton.setAttribute("title", this._translateString("Close"));
 		else
@@ -1272,7 +1243,7 @@ class KTBS4LA2ModelDiagram extends KtbsResourceElement {
 	 * 
 	 */
 	get model() {
-		return this._model;
+		return this._ktbsResource;
 	}
 }
 

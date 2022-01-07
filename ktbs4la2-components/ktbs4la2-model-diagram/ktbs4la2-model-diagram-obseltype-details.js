@@ -76,11 +76,7 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
 		super.attributeChangedCallback(name, oldValue, newValue);
 
         if(name == "mode") {
-            if(newValue == "edit") {
-                if(this._obsel_type)
-                    this._obsel_type_copy = this._obsel_type.clone();
-            }
-            else if((newValue != "view") && (newValue != null))
+            if((newValue != "view") && (newValue != "edit") && (newValue != null))
                 throw new RangeError("Value for attribute \"mode\" must be either \"view\" or \"edit\"");
         }
         else if(name == "reserved-attributetypes-ids") {
@@ -364,6 +360,7 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
             }
         }
 
+        this._updateAvailableAttributeTypesSelect();
         this._emitChangeEvent();
     }
 
@@ -379,7 +376,7 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
         this._obseltypeSymbolInputLabel.innerText = this._translateString("Symbol :");
         this._obseltypeSymbolInput.setAttribute("lang", this._lang);
         this._parentObseltypeSelectLabel.innerText = this._translateString("Parent obsel type(s) :");
-        this._parentObseltypeSelectExplanation.innerText = this._translateString("Selected obsel types are highlighted.<br />Use Shift+click to select a range of adjacent obsel types, or Ctrl+click (PC) / Cmd+click (Mac) to add or remove non-adjacent obsel types to/from the selection.");
+        this._parentObseltypeSelectExplanation.innerHTML = this._translateString("Selected obsel types are highlighted.<br />Use Shift+click to select a range of adjacent obsel types, or Ctrl+click (PC) / Cmd+click (Mac) to add or remove non-adjacent obsel types to/from the selection.");
         this._parentObseltypeSelect.setAttribute("lang", this._lang);
         const parentObseltypesLabels = new Array();
 
@@ -486,293 +483,283 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
      */
      set obsel_type(new_obsel_type) {
         if(new_obsel_type instanceof ObselType) {
-            this._obsel_type = new_obsel_type.clone();
+            this._obsel_type = new_obsel_type;
 
-            if(this.mode == "edit")
-                this._obsel_type_copy = new_obsel_type.clone();
-
-            this._set_obsel_type(this._obsel_type);
+            if(this._obsel_type.suggestedSymbol) {
+                this._obseltypeSymbolSpan.innerText = this._obsel_type.suggestedSymbol;
+                this._obseltypeSymbolInput.setAttribute("value", this._obsel_type.suggestedSymbol);
+                this._obseltypeSymbolInput.value = this._obsel_type.suggestedSymbol;
+            }
+            else {
+                this._obseltypeSymbolSpan.innerText = "";
+                this._obseltypeSymbolInput.removeAttribute("value");
+                this._obseltypeSymbolInput.value = null;
+            }
+    
+            this._labelSpan.innerText = this._obsel_type.get_preferred_label(this._lang);
+            
+            if(this._obsel_type.suggestedColor) {
+                this._labelDisplayP.style.backgroundColor = this._obsel_type.suggestedColor;
+                const isColorCode = /^#[0-9A-F]{6}$/i.test(this._obsel_type.suggestedColor);
+    
+                if(isColorCode) {
+                    this._obseltypeColorInput.setAttribute("value", this._obsel_type.suggestedColor);
+                    this._obseltypeColorInput.value = this._obsel_type.suggestedColor;
+                }
+                else {
+                    const colorCode = colorNameToHex(this._obsel_type.suggestedColor);
+    
+                    if(colorCode) {
+                        this._obseltypeColorInput.setAttribute("value", colorCode);
+                        this._obseltypeColorInput.value = colorCode;
+                    }
+                    else {
+                        if(this._obseltypeColorInput.hasAttribute("value"))
+                            this._obseltypeColorInput.removeAttribute("value");
+    
+                        this._obseltypeColorInput.value = null;
+                    }
+                }
+            }
+            else {
+                this._labelDisplayP.style.backgroundColor = null;
+    
+                if(this._obseltypeColorInput.hasAttribute("value"))
+                    this._obseltypeColorInput.removeAttribute("value");
+    
+                this._obseltypeColorInput.value = null;
+            }
+    
+            if(this._obsel_type.suggestedColor)
+                this._labelDisplayP.className = "view "+lightOrDark(this._obsel_type.suggestedColor);
+            else
+                this._labelDisplayP.className = "view";
+    
+            if(this._obsel_type.label_translations instanceof Array) {
+                const labelTranslationsArray = new Array();
+    
+                for(let i = 0; i < this._obsel_type.label_translations.length; i++)
+                    labelTranslationsArray.push({"value": this._obsel_type.label_translations[i]["@value"], "lang": this._obsel_type.label_translations[i]["@language"]})
+                
+                this._labelInput.setAttribute("value", JSON.stringify(labelTranslationsArray));
+            }
+            else
+                this._labelInput.removeAttribute("value");
+    
+            this._idDisplaySpan.innerText = "#" + this._obsel_type.id;
+    
+            this._parentObseltypeSelect.setAttribute("model-uri", this._obsel_type.parent_model.uri.toString());
+            this._parentObseltypeSelect.setAttribute("excluded-obseltypes-uris", this._obsel_type.uri);
+    
+            const parentObselTypesUris = new Array();
+            const parentObseltypesLabels = new Array();
+            const parentObselType = this._obsel_type.super_obsel_types;
+    
+            for(let i = 0; i < this._obsel_type.super_obsel_types.length; i++) {
+                parentObselTypesUris.push(parentObselType[i].uri);
+                parentObseltypesLabels.push(parentObselType[i].get_preferred_label(this._lang));
+            }
+    
+            this._parentObseltypeSelect.setAttribute("value", parentObselTypesUris.join(" "));
+    
+            if(parentObseltypesLabels.length > 0) {
+                this._parentObseltypeDisplaySpan.innerText = parentObseltypesLabels.join(", ");
+    
+                if(this._parentObseltypeDisplaySpan.classList.contains("disabled"))
+                    this._parentObseltypeDisplaySpan.classList.remove("disabled");
+            }
+            else {
+                this._parentObseltypeDisplaySpan.innerText = this._translateString("None");
+    
+                if(!this._parentObseltypeDisplaySpan.classList.contains("disabled"))
+                    this._parentObseltypeDisplaySpan.classList.add("disabled");
+            }
+    
+            // purge attributes from the table
+            const attributeTableLines = this._attributesListTableBody.querySelectorAll("tr:not(.default)");
+    
+            for(let i = 0; i < attributeTableLines.length; i++)
+                attributeTableLines[i].remove();
+    
+            // populate the attribute list table...
+            
+            // ... with attributes inherited from parent obsel types
+            for(let i = 0; i < this._obsel_type.super_obsel_types_hierarchy.length; i++) {
+                const aParentObselType = this._obsel_type.super_obsel_types_hierarchy[i];
+    
+                for(let j = 0; j < aParentObselType.attribute_types.length; j++) {
+                    const anAttribute = aParentObselType.attribute_types[j];
+                    const attributeRowElement = document.createElement("tr");
+                    attributeRowElement.classList.add("inherited");
+                    attributeRowElement.setAttribute("id", anAttribute.id);
+    
+                    if(j == 0) {
+                        const originCell = document.createElement("td");
+                        originCell.setAttribute("rowspan", aParentObselType.attribute_types.length);
+                        originCell.classList.add("vertical-cell");
+                        originCell.setAttribute("id", aParentObselType.id);
+                        originCell.innerText = aParentObselType.get_preferred_label(this._lang);
+                        attributeRowElement.appendChild(originCell);
+                    }
+    
+                    const idCell = document.createElement("td");
+                        idCell.classList.add("id-cell");
+                        idCell.innerText = anAttribute.id;
+                    attributeRowElement.appendChild(idCell);
+    
+                    const labelCell = document.createElement("td");
+                        idCell.classList.add("label-cell");
+                        labelCell.innerText = anAttribute.get_preferred_label(this._lang);
+                    attributeRowElement.appendChild(labelCell);
+    
+                    const typeCell = document.createElement("td");
+                        idCell.classList.add("datatypes-cell");
+                        typeCell.innerText = anAttribute.data_types.join(", ");
+                    attributeRowElement.appendChild(typeCell);
+    
+                    const actionCell = document.createElement("td");
+                        actionCell.classList.add("edit");
+                    attributeRowElement.appendChild(actionCell);
+                    
+                    this._attributesListTableBody.appendChild(attributeRowElement);
+                }
+            }
+    
+            // ... with current obsel type's own attributes
+            for(let i = 0; i < this._obsel_type.attribute_types.length; i++) {
+                const anAttribute = this._obsel_type.attribute_types[i];
+    
+                const attributeRowElement = document.createElement("tr");
+                    attributeRowElement.classList.add("own");
+                    attributeRowElement.setAttribute("id", anAttribute.id);
+    
+                    if(i == 0) {
+                        const originCell = document.createElement("td");
+                        originCell.setAttribute("rowspan", this._obsel_type.attribute_types.length);
+                        originCell.classList.add("vertical-cell");
+                        originCell.setAttribute("id", this._obsel_type.id);
+                        originCell.innerText = this._obsel_type.get_preferred_label(this._lang);
+                        attributeRowElement.appendChild(originCell);
+                    }
+    
+                    const idCell = document.createElement("td");
+                        idCell.classList.add("id-cell");
+    
+                        if(anAttribute.obsel_types.length > 1) {
+                            attributeRowElement.classList.add("is-shared-attributetype");
+    
+                            const sharedAttributeTypeIndicator = document.createElement("span");
+                                sharedAttributeTypeIndicator.classList.add("shared-attribute-indicator");
+                                let sharedAttributeTypeMsg = this._translateString("This attribute type is shared between several obsel types :");
+                                
+                                for(let j = 0; j < anAttribute.obsel_types.length; j++)
+                                    sharedAttributeTypeMsg += "\n" + anAttribute.obsel_types[j].get_preferred_label(this._lang);
+    
+                                sharedAttributeTypeIndicator.setAttribute("title", sharedAttributeTypeMsg);
+                            idCell.appendChild(sharedAttributeTypeIndicator);
+                        }
+    
+                        const idInput = document.createElement("ktbs4la2-resource-id-input");
+                            idInput.classList.add("create");
+                            idInput.classList.add("edit");
+                            idInput.setAttribute("value", anAttribute.id);
+                            idInput._lastValidValue = anAttribute.id;
+                            idInput.setAttribute("placeholder", "<id>");
+                            idInput.setAttribute("required", true);
+                            idInput.setAttribute("lang", this._lang);
+    
+                            const reserved_ids = this.reserved_attributetypes_ids.slice();
+                            reserved_ids.splice(reserved_ids.indexOf(anAttribute.id), 1);
+    
+                            if(reserved_ids.length > 1)
+                                idInput.setAttribute("reserved-ids", reserved_ids.join(" "));
+    
+                            idInput.addEventListener("input", this._onChangeIdInput.bind(this));
+                            idInput.addEventListener("change", this._onChangeIdInput.bind(this));
+                        idCell.appendChild(idInput);
+    
+                        const idDisplaySpan = document.createElement("span");
+                            idDisplaySpan.classList.add("view");
+                            idDisplaySpan.innerText = anAttribute.id;
+                        idCell.appendChild(idDisplaySpan);
+                    attributeRowElement.appendChild(idCell);
+    
+                    const labelCell = document.createElement("td");
+                        labelCell.classList.add("label-cell");
+    
+                        const labelSpan = document.createElement("span");
+                            labelSpan.classList.add("view");
+                            labelSpan.innerText = anAttribute.get_preferred_label(this._lang);
+                        labelCell.appendChild(labelSpan);
+    
+                        const labelInput = document.createElement("ktbs4la2-multiple-translations-text-input");
+                            labelInput.setAttribute("placeholder", this._translateString("Attribute type label"));
+                            labelInput.setAttribute("lang", this._lang);
+                            labelInput.classList.add("edit");
+    
+                            if(anAttribute.label_translations instanceof Array) {
+                                const labelTranslationsArray = new Array();
+    
+                                for(let j = 0; j < anAttribute.label_translations.length; j++)
+                                    labelTranslationsArray.push({"value": anAttribute.label_translations[j]["@value"], "lang": anAttribute.label_translations[j]["@language"]})
+                                
+                                labelInput.setAttribute("value", JSON.stringify(labelTranslationsArray));
+                            }
+    
+                            labelInput.addEventListener("input", this._onChangeAttributeType.bind(this));
+                            labelInput.addEventListener("change", this._onChangeAttributeType.bind(this));
+                        labelCell.appendChild(labelInput);
+                    attributeRowElement.appendChild(labelCell);
+    
+                    const typeCell = document.createElement("td");
+                        typeCell.classList.add("datatypes-cell");
+    
+                        const typeSpan = document.createElement("span");
+                            typeSpan.classList.add("view");
+                            typeSpan.innerText = anAttribute.data_types.join(", ");
+                        typeCell.appendChild(typeSpan);
+    
+                        const typeSelect = document.createElement("select");
+                            typeSelect.classList.add("edit");
+                            typeSelect.setAttribute("multiple", "true");
+                            typeSelect.setAttribute("required", true);
+    
+                            const availableTypes = ["xsd:string", "xsd:integer", "xsd:float", "xsd:dateTime", "xsd:boolean", "Obsel"];
+    
+                            for(let j = 0; j < availableTypes.length; j++) {
+                                const aTypeOption = document.createElement("option");
+                                aTypeOption.setAttribute("value", availableTypes[j]);
+                                aTypeOption.innerText = availableTypes[j];
+    
+                                if(anAttribute.data_types.includes(availableTypes[j]))
+                                    aTypeOption.setAttribute("selected", "true");
+    
+                                typeSelect.appendChild(aTypeOption);
+                            }
+    
+                            typeSelect.addEventListener("change", this._onChangeAttributeType.bind(this));
+                        typeCell.appendChild(typeSelect);
+                    attributeRowElement.appendChild(typeCell);
+    
+                    const actionCell = document.createElement("td");
+                        actionCell.classList.add("edit");
+    
+                        const removeButton = document.createElement("button");
+                            removeButton.classList.add("remove-attribute-button");
+                            removeButton.setAttribute("title", this._translateString("Remove this attribute type from the obsel type"));
+                            removeButton.innerText = "❌";
+                            removeButton.addEventListener("mouseover", this._onMouseOverRemoveAttributeButton.bind(this));
+                            removeButton.addEventListener("mouseout", this._onMouseOutRemoveAttributeButton.bind(this));
+                            removeButton.addEventListener("click", this._onClickRemoveAttributeButton.bind(this));
+                        actionCell.appendChild(removeButton);
+                    attributeRowElement.appendChild(actionCell);
+                this._attributesListTableBody.appendChild(attributeRowElement);
+            }
+    
+            this._updateAvailableAttributeTypesSelect();
         }
         else
             throw new TypeError("new value for property obsel_type must be an instance of ObselType");
-    }
-
-    /**
-     * 
-     */
-    _set_obsel_type(obsel_type) {
-        if(obsel_type.suggestedSymbol) {
-            this._obseltypeSymbolSpan.innerText = obsel_type.suggestedSymbol;
-            this._obseltypeSymbolInput.setAttribute("value", obsel_type.suggestedSymbol);
-            this._obseltypeSymbolInput.value = obsel_type.suggestedSymbol;
-        }
-        else {
-            this._obseltypeSymbolSpan.innerText = "";
-            this._obseltypeSymbolInput.removeAttribute("value");
-            this._obseltypeSymbolInput.value = null;
-        }
-
-        this._labelSpan.innerText = obsel_type.get_preferred_label(this._lang);
-        
-        if(obsel_type.suggestedColor) {
-            this._labelDisplayP.style.backgroundColor = obsel_type.suggestedColor;
-            const isColorCode = /^#[0-9A-F]{6}$/i.test(obsel_type.suggestedColor);
-
-            if(isColorCode) {
-                this._obseltypeColorInput.setAttribute("value", obsel_type.suggestedColor);
-                this._obseltypeColorInput.value = obsel_type.suggestedColor;
-            }
-            else {
-                const colorCode = colorNameToHex(obsel_type.suggestedColor);
-
-                if(colorCode) {
-                    this._obseltypeColorInput.setAttribute("value", colorCode);
-                    this._obseltypeColorInput.value = colorCode;
-                }
-                else {
-                    if(this._obseltypeColorInput.hasAttribute("value"))
-                        this._obseltypeColorInput.removeAttribute("value");
-
-                    this._obseltypeColorInput.value = null;
-                }
-            }
-        }
-        else {
-            this._labelDisplayP.style.backgroundColor = null;
-
-            if(this._obseltypeColorInput.hasAttribute("value"))
-                this._obseltypeColorInput.removeAttribute("value");
-
-            this._obseltypeColorInput.value = null;
-        }
-
-        if(obsel_type.suggestedColor)
-            this._labelDisplayP.className = "view "+lightOrDark(obsel_type.suggestedColor);
-        else
-            this._labelDisplayP.className = "view";
-
-        if(obsel_type.label_translations instanceof Array) {
-            const labelTranslationsArray = new Array();
-
-            for(let i = 0; i < obsel_type.label_translations.length; i++)
-                labelTranslationsArray.push({"value": obsel_type.label_translations[i]["@value"], "lang": obsel_type.label_translations[i]["@language"]})
-            
-            this._labelInput.setAttribute("value", JSON.stringify(labelTranslationsArray));
-        }
-        else
-            this._labelInput.removeAttribute("value");
-
-        this._idDisplaySpan.innerText = "#" + obsel_type.id;
-
-        this._parentObseltypeSelect.setAttribute("model-uri", obsel_type.parent_model.uri.toString());
-        this._parentObseltypeSelect.setAttribute("excluded-obseltypes-uris", obsel_type.uri);
-
-        const parentObselTypesUris = new Array();
-        const parentObseltypesLabels = new Array();
-        const parentObselType = obsel_type.super_obsel_types;
-
-        for(let i = 0; i < obsel_type.super_obsel_types.length; i++) {
-            parentObselTypesUris.push(parentObselType[i].uri);
-            parentObseltypesLabels.push(parentObselType[i].get_preferred_label(this._lang));
-        }
-
-        this._parentObseltypeSelect.setAttribute("value", parentObselTypesUris.join(" "));
-
-        if(parentObseltypesLabels.length > 0) {
-            this._parentObseltypeDisplaySpan.innerText = parentObseltypesLabels.join(", ");
-
-            if(this._parentObseltypeDisplaySpan.classList.contains("disabled"))
-                this._parentObseltypeDisplaySpan.classList.remove("disabled");
-        }
-        else {
-            this._parentObseltypeDisplaySpan.innerText = this._translateString("None");
-
-            if(!this._parentObseltypeDisplaySpan.classList.contains("disabled"))
-                this._parentObseltypeDisplaySpan.classList.add("disabled");
-        }
-
-        // purge attributes from the table
-        const attributeTableLines = this._attributesListTableBody.querySelectorAll("tr:not(.default)");
-
-        for(let i = 0; i < attributeTableLines.length; i++)
-            attributeTableLines[i].remove();
-
-        // populate the attribute list table...
-        
-        // ... with attributes inherited from parent obsel types
-        for(let i = 0; i < obsel_type.super_obsel_types.length; i++) {
-            const aParentObselType = obsel_type.super_obsel_types[i];
-
-            for(let j = 0; j < aParentObselType.attribute_types.length; j++) {
-                const anAttribute = aParentObselType.attribute_types[j];
-                const attributeRowElement = document.createElement("tr");
-                attributeRowElement.classList.add("inherited");
-                attributeRowElement.setAttribute("id", anAttribute.id);
-
-                if(j == 0) {
-                    const originCell = document.createElement("td");
-                    originCell.setAttribute("rowspan", aParentObselType.attribute_types.length);
-                    originCell.classList.add("vertical-cell");
-                    originCell.setAttribute("id", aParentObselType.id);
-                    originCell.innerText = aParentObselType.get_preferred_label(this._lang);
-                    attributeRowElement.appendChild(originCell);
-                }
-
-                const idCell = document.createElement("td");
-                    idCell.classList.add("id-cell");
-                    idCell.innerText = anAttribute.id;
-                attributeRowElement.appendChild(idCell);
-
-                const labelCell = document.createElement("td");
-                    idCell.classList.add("label-cell");
-                    labelCell.innerText = anAttribute.get_preferred_label(this._lang);
-                attributeRowElement.appendChild(labelCell);
-
-                const typeCell = document.createElement("td");
-                    idCell.classList.add("datatypes-cell");
-                    typeCell.innerText = anAttribute.data_types.join(", ");
-                attributeRowElement.appendChild(typeCell);
-
-                const actionCell = document.createElement("td");
-                    actionCell.classList.add("edit");
-                attributeRowElement.appendChild(actionCell);
-                
-                this._attributesListTableBody.appendChild(attributeRowElement);
-            }
-        }
-
-        // ... with current obsel type's own attributes
-        for(let i = 0; i < obsel_type.attribute_types.length; i++) {
-            const anAttribute = obsel_type.attribute_types[i];
-
-            const attributeRowElement = document.createElement("tr");
-                attributeRowElement.classList.add("own");
-                attributeRowElement.setAttribute("id", anAttribute.id);
-
-                if(i == 0) {
-                    const originCell = document.createElement("td");
-                    originCell.setAttribute("rowspan", obsel_type.attribute_types.length);
-                    originCell.classList.add("vertical-cell");
-                    originCell.setAttribute("id", obsel_type.id);
-                    originCell.innerText = obsel_type.get_preferred_label(this._lang);
-                    attributeRowElement.appendChild(originCell);
-                }
-
-                const idCell = document.createElement("td");
-                    idCell.classList.add("id-cell");
-
-                    if(anAttribute.obsel_types.length > 1) {
-                        attributeRowElement.classList.add("is-shared-attributetype");
-
-                        const sharedAttributeTypeIndicator = document.createElement("span");
-                            sharedAttributeTypeIndicator.classList.add("shared-attribute-indicator");
-                            let sharedAttributeTypeMsg = this._translateString("This attribute type is shared between several obsel types :");
-                            
-                            for(let j = 0; j < anAttribute.obsel_types.length; j++)
-                                sharedAttributeTypeMsg += "\n" + anAttribute.obsel_types[j].get_preferred_label(this._lang);
-
-                            sharedAttributeTypeIndicator.setAttribute("title", sharedAttributeTypeMsg);
-                        idCell.appendChild(sharedAttributeTypeIndicator);
-                    }
-
-                    const idInput = document.createElement("ktbs4la2-resource-id-input");
-                        idInput.classList.add("create");
-                        idInput.classList.add("edit");
-                        idInput.setAttribute("value", anAttribute.id);
-                        idInput._lastValidValue = anAttribute.id;
-                        idInput.setAttribute("placeholder", "<id>");
-                        idInput.setAttribute("required", true);
-                        idInput.setAttribute("lang", this._lang);
-
-                        const reserved_ids = this.reserved_attributetypes_ids.slice();
-                        reserved_ids.splice(reserved_ids.indexOf(anAttribute.id), 1);
-
-                        if(reserved_ids.length > 1)
-                            idInput.setAttribute("reserved-ids", reserved_ids.join(" "));
-
-                        idInput.addEventListener("input", this._onChangeIdInput.bind(this));
-                        idInput.addEventListener("change", this._onChangeIdInput.bind(this));
-                    idCell.appendChild(idInput);
-
-                    const idDisplaySpan = document.createElement("span");
-                        idDisplaySpan.classList.add("view");
-                        idDisplaySpan.innerText = anAttribute.id;
-                    idCell.appendChild(idDisplaySpan);
-                attributeRowElement.appendChild(idCell);
-
-                const labelCell = document.createElement("td");
-                    labelCell.classList.add("label-cell");
-
-                    const labelSpan = document.createElement("span");
-                        labelSpan.classList.add("view");
-                        labelSpan.innerText = anAttribute.get_preferred_label(this._lang);
-                    labelCell.appendChild(labelSpan);
-
-                    const labelInput = document.createElement("ktbs4la2-multiple-translations-text-input");
-                        labelInput.setAttribute("placeholder", this._translateString("Attribute type label"));
-                        labelInput.setAttribute("lang", this._lang);
-                        labelInput.classList.add("edit");
-
-                        if(anAttribute.label_translations instanceof Array) {
-                            const labelTranslationsArray = new Array();
-
-                            for(let j = 0; j < anAttribute.label_translations.length; j++)
-                                labelTranslationsArray.push({"value": anAttribute.label_translations[j]["@value"], "lang": anAttribute.label_translations[j]["@language"]})
-                            
-                            labelInput.setAttribute("value", JSON.stringify(labelTranslationsArray));
-                        }
-
-                        labelInput.addEventListener("input", this._onChangeAttributeType.bind(this));
-                        labelInput.addEventListener("change", this._onChangeAttributeType.bind(this));
-                    labelCell.appendChild(labelInput);
-                attributeRowElement.appendChild(labelCell);
-
-                const typeCell = document.createElement("td");
-                    typeCell.classList.add("datatypes-cell");
-
-                    const typeSpan = document.createElement("span");
-                        typeSpan.classList.add("view");
-                        typeSpan.innerText = anAttribute.data_types.join(", ");
-                    typeCell.appendChild(typeSpan);
-
-                    const typeSelect = document.createElement("select");
-                        typeSelect.classList.add("edit");
-                        typeSelect.setAttribute("multiple", "true");
-                        typeSelect.setAttribute("required", true);
-
-                        const availableTypes = ["xsd:string", "xsd:integer", "xsd:float", "xsd:dateTime", "xsd:boolean", "Obsel"];
-
-                        for(let j = 0; j < availableTypes.length; j++) {
-                            const aTypeOption = document.createElement("option");
-                            aTypeOption.setAttribute("value", availableTypes[j]);
-                            aTypeOption.innerText = availableTypes[j];
-
-                            if(anAttribute.data_types.includes(availableTypes[j]))
-                                aTypeOption.setAttribute("selected", "true");
-
-                            typeSelect.appendChild(aTypeOption);
-                        }
-
-                        typeSelect.addEventListener("change", this._onChangeAttributeType.bind(this));
-                    typeCell.appendChild(typeSelect);
-                attributeRowElement.appendChild(typeCell);
-
-                const actionCell = document.createElement("td");
-                    actionCell.classList.add("edit");
-
-                    const removeButton = document.createElement("button");
-                        removeButton.classList.add("remove-attribute-button");
-                        removeButton.setAttribute("title", this._translateString("Remove this attribute type from the obsel type"));
-                        removeButton.innerText = "❌";
-                        removeButton.addEventListener("mouseover", this._onMouseOverRemoveAttributeButton.bind(this));
-                        removeButton.addEventListener("mouseout", this._onMouseOutRemoveAttributeButton.bind(this));
-                        removeButton.addEventListener("click", this._onClickRemoveAttributeButton.bind(this));
-                    actionCell.appendChild(removeButton);
-                attributeRowElement.appendChild(actionCell);
-            this._attributesListTableBody.appendChild(attributeRowElement);
-        }
-
-        this._updateAvailableAttributeTypesSelect();
     }
 
     /**
@@ -888,14 +875,6 @@ class KTBS4LA2ModelDiagramObseltypeDetails extends TemplatedHTMLElement {
             this.emitErrorEvent(new Error("Cannot retrieve attribute's table row"));
 
         this._emitChangeEvent();
-    }
-
-    /**
-     * 
-     */
-    resetObselType() {
-        this._obsel_type = this._obsel_type_copy;
-        this._set_obsel_type(this._obsel_type);
     }
 
     /**

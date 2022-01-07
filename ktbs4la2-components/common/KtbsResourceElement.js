@@ -20,6 +20,7 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	constructor(componentJSPath, fetchStylesheet = true, fetchTranslation = true) {
 		super(componentJSPath, fetchStylesheet, fetchTranslation);
 		this._ktbsResource = null;
+		this._bindedOnKtbsResourceNotificationMethod = this._onKtbsResourceNotification.bind(this);
 
 		// 
 			this._resolveUriSet;
@@ -70,8 +71,24 @@ class KtbsResourceElement extends TemplatedHTMLElement {
 	_onResourceAttributesSet() {
 		let uri = new URL(this.getAttribute("uri"));
 		let type = this._getKtbsResourceClass();
-		this._ktbsResource = ResourceMultiton.get_resource(type, uri);
-		this._bindedOnKtbsResourceNotificationMethod = this._onKtbsResourceNotification.bind(this);
+		this.ktbsResource = ResourceMultiton.get_resource(type, uri);
+	}
+
+	/**
+	 * 
+	 */
+	get ktbsResource() {
+		return this._ktbsResource;
+	}
+
+	/**
+	 * 
+	 */
+	set ktbsResource(ktbsResource) {
+		if(this._ktbsResource)
+			this._ktbsResource.unregisterObserver(this._bindedOnKtbsResourceNotificationMethod);
+
+		this._ktbsResource = ktbsResource;
 		this._ktbsResource.registerObserver(this._bindedOnKtbsResourceNotificationMethod);
 		this._onKtbsResourceNotification(this._ktbsResource, "sync-status-change");
 	}

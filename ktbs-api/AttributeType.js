@@ -78,7 +78,7 @@ export class AttributeType {
 	 * \public
      */
     get uri() {
-		if((this.parent_model.lifecycleStatus == "exists") || (this.parent_model.lifecycleStatus == "modified")) {
+		if(this.parent_model && (this.parent_model.lifecycleStatus == "exists") || (this.parent_model.lifecycleStatus == "modified")) {
 			if(!this._uri) {
 				if(this.is_builtin)
 					this._uri = new URL(AttributeType.builtin_attribute_types_prefix + this._JSONData["real_id"]);
@@ -118,7 +118,6 @@ export class AttributeType {
 	 * \param Model new_parent_model - the new parent model for the AttributeType
 	 * \throws TypeError throws a TypeError if the provided argument is not an instance of Model
 	 * \throws KtbsError throws a KtbsError if the parent model of the AttributeType has already been set
-	 * \throws KtbsError throws a KtbsError if the parent model already has an AttributeType with the same ID
 	 * \public
 	 */
 	set parent_model(new_parent_model) {
@@ -476,11 +475,7 @@ export class AttributeType {
 	clone() {
 		// we use this weird JSON.parse+JSON.stringify trick in order to easily make a deep copy of the data
 		const clonedJSONData = JSON.parse(JSON.stringify(this._JSONData));
-		
-		if(clonedJSONData["hasAttributeObselType"])
-			delete clonedJSONData["hasAttributeObselType"];
-
-		const clone = new AttributeType(null, clonedJSONData);
+		const clone = new AttributeType(this.parent_model, clonedJSONData);
         return clone;
 	}
 	

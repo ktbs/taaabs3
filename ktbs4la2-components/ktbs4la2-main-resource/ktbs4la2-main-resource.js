@@ -44,6 +44,8 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         this._titleTag = this.shadowRoot.querySelector("#title");
         this._editLabelInput = this.shadowRoot.querySelector("#edit-label-input");
         this._editLabelInput.setAttribute("lang", this._lang);
+        this._editLabelInput.addEventListener("change", this._onChangeEditLabelInput.bind(this));
+        this._editLabelInput.addEventListener("input", this._onChangeEditLabelInput.bind(this));
         this._linkTag = this.shadowRoot.querySelector("#resource-link");		
 		this._resourceTypeLabel = this.shadowRoot.querySelector("#resource-type-label");
 		this._resourceStatusTag = this.shadowRoot.querySelector("#resource-status");
@@ -147,6 +149,13 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         this._addMethodButton.addEventListener("click", this._onClickAddMethodButton.bind(this));
         this._addComputedTraceButton = this.shadowRoot.querySelector("#add-computedtrace-button");
         this._addComputedTraceButton.addEventListener("click", this._onClickAddComputedTraceButton.bind(this));
+    }
+
+    /**
+     * 
+     */
+    _onChangeEditLabelInput(event) {
+        this._updateSaveButtonState();
     }
 
     /**
@@ -398,11 +407,6 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
         childElement.setAttribute("uri", child_resource.uri);
         childElement.setAttribute("lang", this._lang);
 
-        const childLabel = child_resource.get_preferred_label(this._lang);
-
-        /*if(childLabel)
-            childElement.setAttribute("label", childLabel);*/
-
         if(mark_as_new == true)
             childElement.classList.add("new");
 
@@ -481,8 +485,10 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
 
             const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
 
-            if(modelDiagram)
+            if(modelDiagram) {
+                this._model_copy = this._ktbsResource.clone();
                 modelDiagram.setAttribute("mode", "edit");
+            }
 
             if(!this._saveModificationsButton.classList.contains("disabled"))
                 this._saveModificationsButton.classList.add("disabled");
@@ -666,7 +672,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
 
                 if(modelDiagram)
-                    modelDiagram.resetModel();
+                    modelDiagram.setAttribute("uri", this._ktbsResource.uri);
             }
 		});
     }
@@ -784,20 +790,15 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             }
 
             if(resourceType == "Model") {
-                // remove previously instanciated head-content child elements
-                let childHeadContentElements = this._resourceHeadContent.childNodes;
+                let diagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
 
-                for(let i = 0; i < childHeadContentElements.length; i++) {
-                    let aChildHeadContentElement = childHeadContentElements[i];
-                    aChildHeadContentElement.remove();
+                if(!diagram) {
+                    diagram = document.createElement("ktbs4la2-model-diagram");
+                    diagram.ktbsResource = this.ktbsResource;
+                    diagram.setAttribute("lang", this._lang);
+                    diagram.addEventListener("change", this._onChangeModelDiagram.bind(this));
+                    this._resourceHeadContent.appendChild(diagram);
                 }
-                // ---
-
-                const diagram = document.createElement("ktbs4la2-model-diagram");
-                diagram.setAttribute("uri", this.getAttribute("uri"));
-                diagram.setAttribute("lang", this._lang);
-                diagram.addEventListener("change", this._onChangeModelDiagram.bind(this));
-                this._resourceHeadContent.appendChild(diagram);
             }
 
             if(resourceType == "Method") {
@@ -818,12 +819,6 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     methodElement.setAttribute("resource-type", "Method");
                     methodElement.setAttribute("uri", parentMethod.uri);
                     methodElement.setAttribute("scale", "0.7");
-
-                    /*const parentMethodLabel = parentMethod.get_preferred_label(this._lang);
-
-                    if(parentMethodLabel)
-                        methodElement.setAttribute("label", parentMethodLabel);*/
-                    
                     this._parentMethodLinkContainer.appendChild(methodElement);
                 }
 
@@ -871,12 +866,6 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                     modelElement.setAttribute("resource-type", "Model");
                     modelElement.setAttribute("uri", model.uri);
                     modelElement.setAttribute("scale", "0.7");
-
-                    /*const modelLabel = model.get_preferred_label(this._lang);
-
-                    if(modelLabel)
-                        modelElement.setAttribute("label", modelLabel);*/
-
                     this._modelLinkContainer.appendChild(modelElement);
 
                     if(resourceType == "StoredTrace") {
@@ -913,11 +902,6 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                         sourceTraceElement.setAttribute("resource-type", "StoredTrace");
                     else
                         sourceTraceElement.setAttribute("resource-type", "ComputedTrace");
-
-                    /*const sourceTraceLabel = this._ktbsResource.source_traces[i].get_preferred_label(this._lang);
-
-                    if(sourceTraceLabel)
-                        sourceTraceElement.setAttribute("label", sourceTraceLabel);*/
 
                     this._sourceTraceLinkContainer.appendChild(sourceTraceElement);
                 }
@@ -966,12 +950,6 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 methodElement.setAttribute("resource-type", "Method");
                 methodElement.setAttribute("uri", this._ktbsResource.method.uri);
                 methodElement.setAttribute("scale", "0.7");
-
-                /*const methodLabel = this._ktbsResource.method.get_preferred_label(this._lang);
-
-                if(methodLabel)
-                    methodElement.setAttribute("label", methodLabel);*/
-
                 this._methodLinkContainer.appendChild(methodElement);
 
                 this._methodPicker.setAttribute("browse-start-uri", this._ktbsResource.uri);
@@ -1081,11 +1059,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             breadcrumbItemElement.setAttribute("uri", resource.uri);
             breadcrumbItemElement.setAttribute("scale", "0.7");
             
-            /*let label = resource.get_preferred_label(this._lang);
-
-            if(label)
-                breadcrumbItemElement.setAttribute("label", label);
-            else */if(resource.constructor.name == "Ktbs") {
+            if(resource.constructor.name == "Ktbs") {
                 let rootLabel = null;
                 this.ktbsRoots = JSON.parse(window.localStorage.getItem("ktbs-roots"));
 
@@ -1341,11 +1315,7 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
                 const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
 
                 if(modelDiagram) {
-                    if(modelDiagram.checkValidity()) {
-                        this._ktbsResource.obsel_types = modelDiagram.model.obsel_types;
-                        this._ktbsResource.attribute_types = modelDiagram.model.attribute_types;
-                    }
-                    else {
+                    if(!modelDiagram.checkValidity()) {
                         const error = new Error("The model's definition is not valid");
                         this.emitErrorEvent(error);
                         alert(error);
@@ -1405,6 +1375,9 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
             this._ktbsResource.put(this._abortController.signal)
                 .then(() => {
                     this._switchToViewMode();
+
+                    if((resourceType == "Model") && this._model_copy)
+                        delete this._model_copy;
                 })
                 .catch((error) => {
                     this.emitErrorEvent(error);
@@ -1417,6 +1390,14 @@ class KTBS4LA2MainResource extends KtbsResourceElement {
      * 
      */
     _onClickCancelModificationsButton(event) {
+        const modelDiagram = this._resourceHeadContent.querySelector("ktbs4la2-model-diagram");
+
+        if(modelDiagram) {
+            this._ktbsResource = this._model_copy;
+            modelDiagram.ktbsResource = this._ktbsResource;
+            delete this._model_copy;
+        }
+
         if(this._is_in_edit_mode())
             this._switchToViewMode();
     }

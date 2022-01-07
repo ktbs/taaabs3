@@ -1399,9 +1399,9 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                     this._importParameters.obseltype_column_index = clickedColIndex;
                     this._setClickedColumnStyle(clickedColIndex);
 
-                    this._initObselTypesMappingTable(distinctValues).finally(() => {
+                    this._initObselTypesMappingTable(distinctValues);//.finally(() => {
                         this._updateNextStepButton();
-                    });
+                    //});
 
                     const firstObselTypeInputId = this._obselTypesMappingTableBody.querySelector("tr.new-obsel-type td.obsel-type-id ktbs4la2-resource-id-input");
 
@@ -1425,7 +1425,7 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
      * 
      */
     _initObselTypesMappingTable(distinctValues) {
-        const idInputsValuesSetPromises = new Array();
+        //const idInputsValuesSetPromises = new Array();
 
         for(let i = 0; i < distinctValues.length; i++) {
             const aDistinctValue = distinctValues[i];
@@ -1500,11 +1500,11 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
             obselTypeIdCell.appendChild(obselTypeIdCellInput);
             valueRow.appendChild(obselTypeIdCell);
 
-            const anIdInputValueSetPromise = obselTypeIdCellInput.setAttribute("value", aDistinctValue);
-            idInputsValuesSetPromises.push(anIdInputValueSetPromise);
+            /*const anIdInputValueSetPromise = */obselTypeIdCellInput.setAttribute("value", aDistinctValue);
+            //idInputsValuesSetPromises.push(anIdInputValueSetPromise);
             
             //if(this._importParameters.model_mode == "new")
-                anIdInputValueSetPromise.then(() => {
+                //anIdInputValueSetPromise.then(() => {
                     obselTypeIdCellInput.dispatchEvent(
                         new Event(
                             "change", {
@@ -1514,7 +1514,7 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                             }
                         )
                     );
-                });
+                //});
 
             const obselTypeLabelCell = document.createElement("td");
             obselTypeLabelCell.classList.add("obsel-type-label");
@@ -1532,7 +1532,7 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
             this._obselTypesMappingTableBody.appendChild(valueRow);
         }
 
-        return Promise.all(idInputsValuesSetPromises);
+        //return Promise.all(idInputsValuesSetPromises);
     }
 
     /**
@@ -1689,10 +1689,10 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                         const replacementIdInput = replacementRow.querySelector("td.obsel-type-id ktbs4la2-resource-id-input");
                         
                         
-                        replacementIdInput.setAttribute("value", idInput.value).then(() => {
+                        replacementIdInput.setAttribute("value", idInput.value);//.then(() => {
                             replacementIdInput.old_value = idInput.old_value;
                             this._updateNextStepButton();
-                        });
+                        //});
 
                         const replacementLabelInput = replacementRow.querySelector("td.obsel-type-label ktbs4la2-multiple-translations-text-input");
                         replacementLabelInput.value = labelInput.value;
@@ -1755,15 +1755,14 @@ class KTBS4LA2CsvTraceImport extends TemplatedHTMLElement {
                 const idInput = tableRow.querySelector("td.obsel-type-id ktbs4la2-resource-id-input");
                 const labelInput = tableRow.querySelector("td.obsel-type-label ktbs4la2-multiple-translations-text-input");
                 
-                idInput.setAttribute("value", "").then(() => {
-                    if(idInput.old_value)
-                        delete idInput.old_value;
+                idInput.setAttribute("value", "");
 
-                    labelInput.setAttribute("value", "[{\"lang\": \"*\", \"value\": \"\"}]");
-                    tableRow.className = "new-obsel-type";
-                    this._updateNextStepButton();
-                });
+                if(idInput.old_value)
+                    delete idInput.old_value;
 
+                labelInput.setAttribute("value", "[{\"lang\": \"*\", \"value\": \"\"}]");
+                tableRow.className = "new-obsel-type";
+                this._updateNextStepButton();
                 break;
             default:
                 const obselTypeId = newMappingType.substring(9);

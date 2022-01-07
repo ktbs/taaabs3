@@ -228,7 +228,8 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
             this._componentReady.then(() => {
                 this._updateDraw();
                 delete this._updateDrawTaskID;
-            });
+            })
+            .catch((e) => {});
         });
     }
 
