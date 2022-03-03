@@ -30,6 +30,27 @@
     <div id="timeline-container">
         <slot name="timeline"></slot>
 
+        <div id="view-mode-buttons">
+            <a id="view-obsel-mode-button" title="{translate: 'Obsels detail view'}"></a>
+            <a id="view-histogram-mode-button" title="{translate: 'Histogram view'}"></a>
+
+            <div id="histogram-options-panel">
+                <select id="histogram-option-granularity">
+                    <option value="auto">{translate: 'auto'}</option>
+                </select>
+
+                <p id="histogram-option-duration">
+                    <input type="checkbox" name="histogram-option-duration-checkbox" id="histogram-option-duration-checkbox" />
+                    <label for="histogram-option-duration-checkbox" id="histogram-option-duration-label">{translate: 'Duration'}</label>
+                </p>
+
+                <p id="histogram-option-normalize">
+                    <input type="checkbox" name="histogram-option-normalize-checkbox" id="histogram-option-normalize-checkbox" />
+                    <label for="histogram-option-normalize-checkbox" id="histogram-option-normalize-label">{translate: 'Normalize'}</label>
+                </p>
+            </div>
+        </div>
+
         <div id="obsels-loading-indications" class="loading">
             <div id="load-control">
                 <div id="loading-status-icon" title="{translate: 'Loading...'}"></div>

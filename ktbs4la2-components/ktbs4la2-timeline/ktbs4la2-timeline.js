@@ -1,6 +1,7 @@
 import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 import {KTBS4LA2TimelineEvent} from "./ktbs4la2-timeline-event.js";
 
+import "./ktbs4la2-timeline-histogram-bar.js";
 import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
 
 /**
@@ -292,6 +293,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._visibleEventsNodes = null;
 		this._eventsData = null;
 
+		this._histogramBars = null;
+
 		this._bindedOnDragFunction = this._onDrag.bind(this);
 		this._bindedOnStopDraggingFunction = this._onStopDragging.bind(this);
 		this._displayWindowDragMouseTime;
@@ -363,6 +366,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._timelineCursorLabel.innerText = getFormattedDate(this._getMouseTime(0));
 		this._updateMaxDisplayableRows();
 		this._updateEventsPosX(this._getVisibleEventNodes());
+		this._updateHistogramBarsPosX(this._getHistogramBars());
 		this._requestUpdateEventsRow();
 	}
 
@@ -640,48 +644,55 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_updateMaxDisplayableRows() {
+	get availableHeight() {
 		let widgetHeight = this._displayWindow.getBoundingClientRect().height;
 		let currentLevel = this._widgetContainer.className;
-		let availableHeightForEvents;
+		let availableHeight;
 		
 		switch(currentLevel) {
 			case "year" :
-				availableHeightForEvents = widgetHeight - 25;
+				availableHeight = widgetHeight - 25;
 				break;
 			case "month" :
-				availableHeightForEvents = widgetHeight - 45;
+				availableHeight = widgetHeight - 45;
 				break;
 			case "day" :
-				availableHeightForEvents = widgetHeight - 65;
+				availableHeight = widgetHeight - 65;
 				break;
 			case "hour" :
-				availableHeightForEvents = widgetHeight - 85;
+				availableHeight = widgetHeight - 85;
 				break;
 			case "tenminutes" :
-				availableHeightForEvents = widgetHeight - 105;
+				availableHeight = widgetHeight - 105;
 				break;
 			case "minute" :
-				availableHeightForEvents = widgetHeight - 105;
+				availableHeight = widgetHeight - 105;
 				break;
 			case "tenseconds" :
-				availableHeightForEvents = widgetHeight - 125;
+				availableHeight = widgetHeight - 125;
 				break;
 			case "second" :
-				availableHeightForEvents = widgetHeight - 125;
+				availableHeight = widgetHeight - 125;
 				break;
 			case "ahundredmilliseconds" :
-				availableHeightForEvents = widgetHeight - 145;
+				availableHeight = widgetHeight - 145;
 				break;
 			case "tenmilliseconds" :
-				availableHeightForEvents = widgetHeight - 145;
+				availableHeight = widgetHeight - 145;
 				break;
 			case "millisecond" :
-				availableHeightForEvents = widgetHeight - 145;
+				availableHeight = widgetHeight - 145;
 				break;
 		}
-		
-		let newMaxDisplayableRows = Math.floor(availableHeightForEvents / 15);
+
+		return availableHeight;
+	}
+
+	/**
+	 * 
+	 */
+	_updateMaxDisplayableRows() {
+		let newMaxDisplayableRows = Math.floor(this.availableHeight / 15);
 		
 		if(newMaxDisplayableRows != this._maxDisplayableRows) {
 			this._maxDisplayableRows = newMaxDisplayableRows;
@@ -725,6 +736,16 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	 _getHistogramBars() {
+		if(this._histogramBars == null)
+			this._histogramBars = Array.from(this.querySelectorAll("ktbs4la2-timeline-histogram-bar"));
+
+		return this._histogramBars;
+	}
+
+	/**
+	 * 
+	 */
 	_getDisplayedEventsOverlappingInterval(minTime, maxTime) {
 		let overlappingEvents = new Array();
 		let visibleEvents = this._getVisibleEventNodes();
@@ -738,6 +759,23 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		}
 		
 		return overlappingEvents;
+	}
+
+	/**
+	 * 
+	 */
+	 _getHistoBarsOverlappingInterval(minTime, maxTime) {
+		const overlappingBars = new Array();
+		const bars = this._getHistogramBars();
+
+		for(let i = 0; i < bars.length; i++) {
+			const currentBar = bars[i];
+
+			if((currentBar.endTime >= minTime) && (currentBar.beginTime <= maxTime))
+				overlappingBars.push(currentBar);
+		}
+		
+		return overlappingBars;
 	}
 
 	/**
@@ -837,10 +875,13 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onEventsNodesMutation(mutationRecords, observer) {
-		let nodeAdded = false;
-		let nodeRemoved = false;
+		let eventAdded = false;
+		let eventRemoved = false;
 		let changedEventVisibility = false;
-		let newlyAddedNodes = new Array();
+		let newlyAddedEvents = new Array();
+		let histoBarAdded = false;
+		let histoBarRemoved = false;
+		let newlyAddedHistoBars = new Array();
 
 		for(let i = 0; i < mutationRecords.length; i++) {
 			let currentMutationRecord = mutationRecords[i];
@@ -850,13 +891,24 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					let addedNode = currentMutationRecord.addedNodes[j];
 					
 					if(addedNode.localName == "ktbs4la2-timeline-event") {
-						newlyAddedNodes.push(addedNode);
-						nodeAdded = true;
+						newlyAddedEvents.push(addedNode);
+						eventAdded = true;
+					}
+					else if(addedNode.localName == "ktbs4la2-timeline-histogram-bar") {
+						addedNode.addEventListener("click", this._onClickHistogramBar.bind(this));
+						newlyAddedHistoBars.push(addedNode);
+						histoBarAdded = true;
 					}
 				}
 
-				if(currentMutationRecord.removedNodes.length > 0)
-					nodeRemoved = true;
+				for(let j = 0; j < currentMutationRecord.removedNodes.length; j++) {
+					let removedNode = currentMutationRecord.removedNodes[j];
+					
+					if(removedNode.localName == "ktbs4la2-timeline-event")
+						eventRemoved = true;
+					else if(removedNode.localName == "ktbs4la2-timeline-histogram-bar")
+						histoBarRemoved = true;
+				}
 			}
 			else if(	(currentMutationRecord.type == "attributes")
 					&&	(currentMutationRecord.target.localName == "ktbs4la2-timeline-event")
@@ -864,7 +916,17 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 						changedEventVisibility = true;
 		}
 
-		if(nodeAdded || nodeRemoved) {
+		if(histoBarAdded || histoBarRemoved) {
+			setTimeout(() => {
+				this._histogramBars = null;
+				
+				this._timeDivisionsInitialized.then(() => {
+					this._updateHistogramBarsPosX(newlyAddedHistoBars);
+				});
+			});
+		}
+
+		if(eventAdded || eventRemoved) {
 			setTimeout(() => {
 				this._allEventNodes = null;
 				this._visibleEventsNodes = null;
@@ -877,7 +939,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 				this._timeDivisionsInitialized.then(() => {
 					this._updateScrollBarContent();
-					this._updateEventsPosX(newlyAddedNodes);
+					this._updateEventsPosX(newlyAddedEvents);
 					this._requestUpdateEventsRow();
 				});
 			});
@@ -891,6 +953,91 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._updateScrollBarContent();
 				this._requestUpdateEventsRow();
 			});
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_setViewBeginEnd(newViewBegin, newViewEnd) {
+		const newViewDuration = newViewEnd - newViewBegin;
+		const candidateNewZoomLevels = ["millisecond", "tenmilliseconds", "ahundredmilliseconds", "second", "tenseconds", "minute", "tenminutes", "hour", "day", "month", "year"];
+
+		for(let i = 0; i < candidateNewZoomLevels.length; i++) {
+			const candidateNewZoomLevel = candidateNewZoomLevels[i];
+			const maxFittableDivNumber = this._displayWindow.clientWidth / KTBS4LA2Timeline.minDivisionWidthPerUnit[candidateNewZoomLevel];
+
+			let requiredDivNumber;
+
+			switch(candidateNewZoomLevel) {
+				case "millisecond":
+					requiredDivNumber = newViewDuration;
+					break;
+				case "tenmilliseconds":
+					requiredDivNumber = newViewDuration / 10;
+					break;
+				case "ahundredmilliseconds":
+					requiredDivNumber = newViewDuration / 100;
+					break;
+				case "second":
+					requiredDivNumber = newViewDuration / 1000;
+					break;
+				case "tenseconds":
+					requiredDivNumber = newViewDuration / 10000;
+					break;
+				case "minute":
+					requiredDivNumber = newViewDuration / 60000;
+					break;
+				case "tenminutes":
+					requiredDivNumber = newViewDuration / 600000;
+					break;
+				case "hour":
+					requiredDivNumber = newViewDuration / 3600000;
+					break;
+				case "day":
+					requiredDivNumber = newViewDuration / 86400000;
+					break;
+				case "month":
+					requiredDivNumber = newViewDuration / 2678400000;
+					break;
+				case "year":
+					requiredDivNumber = newViewDuration / 31622400000;
+					break;
+			}
+
+			if(maxFittableDivNumber >= requiredDivNumber) {
+				let newDivWidth;
+
+				if(candidateNewZoomLevel == "millisecond")
+					newDivWidth = 19;
+				else
+					newDivWidth = this._displayWindow.clientWidth / requiredDivNumber;
+
+				this._requestSetView(newViewBegin, candidateNewZoomLevel, newDivWidth);
+				return;
+			}
+		}
+
+		throw new Exception("Cannot render specified duration in available width");
+	}
+
+	/**
+	 * 
+	 */
+	_onClickHistogramBar(event) {
+		const clickedBar = event.target.closest("ktbs4la2-timeline-histogram-bar");
+
+		if(
+				clickedBar
+			&&	(clickedBar.hasAttribute("begin"))
+			&&	(clickedBar.hasAttribute("end"))
+		)
+		{
+			/*console.log("-------------------------------------------------");
+			console.log("clickedBar.beginTime = " + new Date(clickedBar.beginTime).toISOString());
+			console.log("clickedBar.endTime = " + new Date(clickedBar.endTime).toISOString());
+			console.log("-------------------------------------------------");*/
+			this._setViewBeginEnd(clickedBar.beginTime, clickedBar.endTime);
 		}
 	}
 
@@ -927,6 +1074,45 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 			if(!currentEvent.hasAttribute("posx-initialized"))
 				currentEvent.setAttribute("posx-initialized", "");
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_updateHistogramBarsPosX(histogramBars) {
+		let timelineDuration = this._lastRepresentedTime - this._firstRepresentedTime;
+							
+		// we browse bars
+		for(let i = 0; i < histogramBars.length; i++) {
+			let currentBar = histogramBars[i];
+			let barPosXIsOverflow = ((currentBar.endTime < this._firstRepresentedTime) || (currentBar.beginTime > this._lastRepresentedTime));
+
+			if(!barPosXIsOverflow) {
+				let barPaintBeginTime = (currentBar.beginTime >= this._firstRepresentedTime)?currentBar.beginTime:this._firstRepresentedTime;
+				let timeOffset = barPaintBeginTime - this._firstRepresentedTime;
+				let posX = (timeOffset / timelineDuration) * 100;
+				currentBar.style.left = posX + "%";
+
+				let barPaintEndTime = (currentBar.endTime <= this._lastRepresentedTime)?currentBar.endTime:this._lastRepresentedTime;
+				let barPaintDuration = barPaintEndTime - barPaintBeginTime;
+
+				if(barPaintDuration > 0) {
+					let barPercentageWidth = (barPaintDuration / timelineDuration) * 100;
+					currentBar.style.width = barPercentageWidth + "%";
+				}
+				else
+					currentBar.style.width = KTBS4LA2Timeline.minDivisionWidthPerUnit["millisecond"] + "px";
+
+				if(currentBar.classList.contains("posx-is-overflow"))
+					currentBar.classList.remove("posx-is-overflow");
+			}
+			else
+				if(!currentBar.classList.contains("posx-is-overflow"))
+					currentBar.classList.add("posx-is-overflow");
+
+			if(!currentBar.hasAttribute("posx-initialized"))
+				currentBar.setAttribute("posx-initialized", "");
 		}
 	}
 
@@ -1175,6 +1361,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					let interval = affectedIntervals[i];
 					let eventsToUpdate = this._getDisplayedEventsOverlappingInterval(interval.begin, interval.end);
 					this._updateEventsPosX(eventsToUpdate);
+					const histoBarsToUpdate = this._getHistoBarsOverlappingInterval(interval.begin, interval.end);
+					this._updateHistogramBarsPosX(histoBarsToUpdate);
 				}
 
 				let widthOverTimeRatio = this._timeDiv.clientWidth / (this._lastRepresentedTime - this._firstRepresentedTime);
@@ -1388,6 +1576,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 							let interval = affectedIntervals[i];
 							let eventsToUpdate = this._getAllEventsOverlappingInterval(interval.begin, interval.end);
 							this._updateEventsPosX(eventsToUpdate);
+							const histoBarsToUpdate = this._getHistoBarsOverlappingInterval(interval.begin, interval.end);
+							this._updateHistogramBarsPosX(histoBarsToUpdate);
 						}
 					}
 				}
@@ -1417,6 +1607,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 			this._requestUpdateEventsRow();
 			this._setTimelineCursorPositionForTime(timelineCursorTime);
+			this._notifyViewChange();
 			this._requestSetViewID = null;
 		});
 	}
@@ -1549,6 +1740,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					let interval = affectedIntervals[i];
 					let eventsToUpdate = this._getDisplayedEventsOverlappingInterval(interval.begin, interval.end);
 					this._updateEventsPosX(eventsToUpdate);
+					const histoBarsToUpdate = this._getHistoBarsOverlappingInterval(interval.begin, interval.end);
+					this._updateHistogramBarsPosX(histoBarsToUpdate);
 				}
 			}
 
@@ -1593,6 +1786,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				let interval = affectedIntervals[i];
 				let eventsToUpdate = this._getDisplayedEventsOverlappingInterval(interval.begin, interval.end);
 				this._updateEventsPosX(eventsToUpdate);
+				const histoBarsToUpdate = this._getHistoBarsOverlappingInterval(interval.begin, interval.end);
+				this._updateHistogramBarsPosX(histoBarsToUpdate);
 			}
 		}
 
@@ -1634,6 +1829,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				let interval = affectedIntervals[i];
 				let eventsToUpdate = this._getDisplayedEventsOverlappingInterval(interval.begin, interval.end);
 				this._updateEventsPosX(eventsToUpdate);
+				const histoBarsToUpdate = this._getHistoBarsOverlappingInterval(interval.begin, interval.end);
+				this._updateHistogramBarsPosX(histoBarsToUpdate);
 			}
 		}
 
@@ -1683,6 +1880,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._displayWindow.classList.remove("scrollable");
 
 			this._updateEventsPosX(this._getVisibleEventNodes());
+			this._updateHistogramBarsPosX(this._getHistogramBars());
 			this._requestUpdateEventsRow();
 			this._notifyViewChange();
 		}
@@ -2765,6 +2963,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 									let interval = affectedIntervals[i];
 									let eventsToUpdate = this._getDisplayedEventsOverlappingInterval(interval.begin, interval.end);
 									this._updateEventsPosX(eventsToUpdate);
+									const histoBarsToUpdate = this._getHistoBarsOverlappingInterval(interval.begin, interval.end);
+									this._updateHistogramBarsPosX(histoBarsToUpdate);
 								}
 							}
 						}

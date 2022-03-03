@@ -39,5 +39,10 @@
     "This style has unsaved modifications that will be lost.\nAre you sure ?": "Ce style a des modifications non sauvegardées qui seront perdues.\nÊtes-vous sûr(e) ?",
     "Are you sure you want to remove this style ?\n(Please note this won't erase the style's data from the model until you save the modified stylesheet)": "Êtes-vous sûr(e) de vouloir supprimer ce style ?\n(Veuillez noter que cela n'effacera pas les données du style dans le modèle jusqu'à ce que vous sauvegardiez la feuille de style modifiée)",
     "Duplicate this style": "Dupliquer ce style",
-    "Please enter an ID for the new style": "Veuillez entrer un ID pour le nouveau style"
+    "Please enter an ID for the new style": "Veuillez entrer un ID pour le nouveau style",
+    "Obsels detail view": "Vue détail des obsels",
+    "Histogram view": "Vue Histogramme",
+    "auto": "auto",
+    "Duration": "Durée",
+    "Normalize": "Normaliser"
 }

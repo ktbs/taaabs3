@@ -23,6 +23,15 @@ function JSSpecialCharToHTMLHex(str) {
 }
 
 /**
+ * Gets the number of days in a particular month
+ * @param int month the number of the month 
+ * @param int year the year
+ */
+ function getNumberOfDaysInMonth(month, year) {
+	return new Date(year, month, 0).getDate();
+}
+
+/**
  * 
  */
 class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
@@ -110,6 +119,17 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._timeline.setAttribute("allow-fullscreen", this.hasAttribute("allow-fullscreen")?this.getAttribute("allow-fullscreen"):"true");
 		this._timeline.addEventListener("request-fullscreen", this._onTimelineRequestFullscreen.bind(this), true);
 		this._timeline.addEventListener("click", this._onClickTimeline.bind(this), true);
+		this._timeline.addEventListener("view-change", this._onTimelineViewChanged.bind(this), true);
+		this._viewHistogramModeButton = this.shadowRoot.querySelector("#view-histogram-mode-button");
+		this._viewHistogramModeButton.addEventListener("click", this._onClickViewHistogramModeButton.bind(this));
+		this._viewObselModeButton = this.shadowRoot.querySelector("#view-obsel-mode-button");
+		this._viewObselModeButton.addEventListener("click", this._onClickViewObselModeButton.bind(this));
+		this._histogramOptionDurationCheckbox = this.shadowRoot.querySelector("#histogram-option-duration-checkbox");
+		this._histogramOptionDurationCheckbox.addEventListener("change", this._onchangeHistogramOptionDurationCheckbox.bind(this));
+		this._histogramOptionDurationLabel = this.shadowRoot.querySelector("#histogram-option-duration-label");
+		this._histogramOptionNormalizeCheckbox = this.shadowRoot.querySelector("#histogram-option-normalize-checkbox");
+		this._histogramOptionNormalizeCheckbox.addEventListener("change", this._onchangeHistogramOptionNormalizeCheckbox.bind(this));
+		this._histogramOptionNormalizeLabel = this.shadowRoot.querySelector("#histogram-option-normalize-label");
 		this._obselsLoadingIndications = this.shadowRoot.querySelector("#obsels-loading-indications");
 		this._obselsLoadControlButton = this.shadowRoot.querySelector("#obsels-load-control-button");
 		this._obselsLoadControlButton.addEventListener("click", this._onClickObselsLoadControlButton.bind(this));
@@ -1367,6 +1387,201 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_clearHistogram() {
+		const histogramBars = this._timeline.querySelectorAll("ktbs4la2-timeline-histogram-bar");
+
+		for(let i = histogramBars.length - 1; i >= 0; i--)
+			histogramBars[i].remove();
+	}
+
+	/**
+	 * 
+	 */
+	_getObselHistogramBar(histogramData, anObsel) {
+		let histogramBar;
+
+		for(let i = 0; i < histogramData.length; i++) {
+			histogramBar = histogramData[i];
+			
+			if(
+					(histogramBar.begin <= anObsel.begin)
+				&&	(anObsel.begin <= histogramBar.end)
+			)
+				return histogramBar;
+		}
+
+		// the bar for the obsel does not exists yet, let's create it
+		histogramBar = {subdivisions: new Array()};
+		const obselBeginDate = new Date(anObsel.begin);
+		const obselYear = obselBeginDate.getFullYear().toString();
+		const obselMonth = (obselBeginDate.getMonth() + 1).toString().padStart(2, '0');
+		const obselDay = obselBeginDate.getDate().toString().padStart(2, '0');
+		const obselHour = obselBeginDate.getHours().toString().padStart(2, '0');
+		const obselMinute = obselBeginDate.getMinutes().toString().padStart(2, '0');
+		const obselSecond = obselBeginDate.getSeconds().toString().padStart(2, '0');
+		const obselMillisecond = obselBeginDate.getMilliseconds().toString().padStart(3, '0');
+
+		// @TODO prendre en compte la granularité de l'histogramme définie par l'utilisateur
+		switch(this._timeline.zoomLevel) {
+			case "year": 
+				histogramBar.begin = new Date(obselYear + "-01-01T00:00:00.000");
+				histogramBar.end = new Date(obselYear + "-12-31T23:59:59.999");
+				break;
+			case "month":
+				histogramBar.begin = new Date(obselYear + "-" + obselMonth + "-01T00:00:00.000");
+				histogramBar.end = new Date(obselYear + "-"+ obselMonth + "-" + getNumberOfDaysInMonth(obselMonth, obselYear) + "T23:59:59.999");
+				break;
+			case "day":
+				histogramBar.begin = new Date(obselYear + "-" + obselMonth + "-" + obselDay + "T00:00:00.000");
+				histogramBar.end = new Date(obselYear + "-"+ obselMonth + "-" + obselDay + "T23:59:59.999");
+				break;
+			case "hour":
+				histogramBar.begin = new Date(obselYear + "-" + obselMonth + "-" + obselDay + "T"+ obselHour +":00:00.000");
+				histogramBar.end = new Date(obselYear + "-"+ obselMonth + "-" + obselDay + "T"+ obselHour +":59:59.999");
+				break;
+			case "tenminutes":
+				histogramBar.begin = new Date(obselYear + "-" + obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute.substring(0, 1) + "0:00.000");
+				histogramBar.end = new Date(obselYear + "-"+ obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute.substring(0, 1) + "9:59.999");
+				break;
+			case "minute":
+				histogramBar.begin = new Date(obselYear + "-" + obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":00.000");
+				histogramBar.end = new Date(obselYear + "-"+ obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":59.999");
+				break;
+			case "tenseconds":
+				histogramBar.begin = new Date(obselYear + "-" + obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":" + obselSecond.substring(0, 1) + "0.000");
+				histogramBar.end = new Date(obselYear + "-"+ obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":" + obselSecond.substring(0, 1) + "9.999");
+				break;
+			case "second":
+				histogramBar.begin = new Date(obselYear + "-" + obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":" + obselSecond + ".000");
+				histogramBar.end = new Date(obselYear + "-"+ obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":" + obselSecond + ".999");
+				break;
+			case "ahundredmilliseconds": 
+				histogramBar.begin = new Date(obselYear + "-" + obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":" + obselSecond + "." + obselMillisecond.substring(0, 1) + "00");
+				histogramBar.end = new Date(obselYear + "-"+ obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":" + obselSecond + "." + obselMillisecond.substring(0, 1) + "99");
+				break;
+			case "tenmilliseconds" :
+				histogramBar.begin = new Date(obselYear + "-" + obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":" + obselSecond + "." + obselMillisecond.substring(0, 2) + "0");
+				histogramBar.end = new Date(obselYear + "-"+ obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":" + obselSecond + "." + obselMillisecond.substring(0, 2) + "9");
+				break;
+			case "millisecond" :
+				histogramBar.begin = new Date(obselYear + "-" + obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":" + obselSecond + "." + obselMillisecond);
+				histogramBar.end = new Date(obselYear + "-"+ obselMonth + "-" + obselDay + "T"+ obselHour + ":" + obselMinute + ":" + obselSecond + "." + obselMillisecond);
+				break;
+		}
+
+		histogramData.push(histogramBar);
+		return histogramBar;
+	}
+
+	/**
+	 * 
+	 */
+	_updateHistogram() {
+		// --- prepare histogram ---
+		this._clearHistogram();
+		let histogramData = [];
+		// ---
+
+		// --- apply rules to obsels ---
+		for(let i = 0; i < this._obsels.length; i++) {
+			let anObsel = this._obsels[i];
+			let obselEventNode = this.querySelector("#" + CSS.escape(anObsel.id));
+
+			if(obselEventNode) {
+				let matchedRule = this._currentStylesheet.getFirstRuleMatchedByObsel(anObsel);
+				
+				if(matchedRule) {
+					let obselHistogramBar = this._getObselHistogramBar(histogramData, anObsel);
+					let subdivisionFound = false;
+
+					for(let j = 0; !subdivisionFound && (j < obselHistogramBar.subdivisions.length); j++)
+						if(obselHistogramBar.subdivisions[j].id == matchedRule.id) {
+							obselHistogramBar.subdivisions[j].amount += this.durationHistogram?(anObsel.end - anObsel.begin):1;
+							subdivisionFound = true;
+						}
+
+					if(!subdivisionFound) {
+						let newSubDivision = {
+							id: matchedRule.id,
+							rank: this._currentStylesheet.get_rule_rank(matchedRule),
+							visible: matchedRule.visible,
+							amount: this.durationHistogram?(anObsel.end - anObsel.begin):1
+						};
+
+						if(matchedRule.symbol.symbol)
+							newSubDivision.symbol = matchedRule.symbol.symbol;
+						else if(matchedRule.symbol.shape)
+							newSubDivision.shape = matchedRule.symbol.shape;
+
+						if(matchedRule.symbol.color)
+							newSubDivision.color = matchedRule.symbol.color;
+
+						obselHistogramBar.subdivisions.push(newSubDivision);
+					}
+				}
+				else
+					obselEventNode.setAttribute("visible", false);
+			}
+			else
+				this.emitErrorEvent(new Error("Could not found event node for obsel " + anObsel.id));
+		}
+		
+		// --- re-instanciate histogram bars ---
+		const histogramFragment = document.createDocumentFragment();
+
+		for(let i = 0; i < histogramData.length; i++) {
+			const barData = histogramData[i];
+
+			const bar = document.createElement("ktbs4la2-timeline-histogram-bar");
+				bar.setAttribute("begin", barData.begin.getTime());
+				bar.setAttribute("end", barData.end.getTime());
+
+				if(this.normalizeHistogram)
+					bar.setAttribute("normalized", "true");
+
+				if(this.durationHistogram)
+					bar.setAttribute("show-duration", "true");
+
+				barData.subdivisions.sort((subdivA, subdivB) => {
+					return subdivA.rank - subdivB.rank;
+				});
+
+				for(let j = 0; j < barData.subdivisions.length; j++) {
+					const subDivData = barData.subdivisions[j];
+					const subdiv = document.createElement("ktbs4la2-timeline-histogram-bar-subdivision");
+					subdiv.setAttribute("label", subDivData.id);
+					subdiv.setAttribute("amount", subDivData.amount);
+
+					if(subDivData.symbol)
+						subdiv.setAttribute("symbol", subDivData.symbol);
+					else if(subDivData.shape)
+						subdiv.setAttribute("shape", subDivData.shape);
+
+					if(subDivData.color)
+						subdiv.setAttribute("color", subDivData.color);
+
+					bar.appendChild(subdiv);
+				}
+			histogramFragment.appendChild(bar);
+		}
+
+		this._timeline.appendChild(histogramFragment);
+		// ---
+
+		this._lastHistogramUpdateZoomLevel = this._timeline.zoomLevel;
+	}
+
+	/**
+	 * 
+	 */
+	_onTimelineViewChanged(event) {
+		if(event.detail.zoomLevel != this._lastHistogramUpdateZoomLevel)
+			this._updateHistogram();
+	}
+
+	/**
+	 * 
+	 */
 	_applyStyleSheet(stylesheet, emit_event = false) {
 		this._currentStylesheet = stylesheet;
 		let reserved_ids = this._getStylesheetsIDs();
@@ -1432,6 +1647,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			else
 				this.emitErrorEvent(new Error("Could not found event node for obsel " + anObsel.id));
 		}
+		
+		this._updateHistogram();
 
 		if(emit_event)
 			this.dispatchEvent(
@@ -1598,6 +1815,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		}
 
 		this._timeline.appendChild(eventsFragment);
+		this._updateHistogram();
 	}
 
 	/**
@@ -1706,6 +1924,11 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			if(eventElement)
 				eventElement.setAttribute("title", this._getObselTitleHint(obsel));
 		}
+
+		this._viewObselModeButton.setAttribute("title", this._translateString("Obsels detail view"));
+		this._viewHistogramModeButton.setAttribute("title", this._translateString("Histogram view"));
+		this._histogramOptionDurationLabel.innerText = this._translateString("Duration");
+		this._histogramOptionNormalizeLabel.innerText = this._translateString("Normalize");
 	}
 
 	/**
@@ -1729,6 +1952,99 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
         if(this._current_stylesheet_has_unsaved_modifications && !confirm(this._translateString("Your modifications haven't been saved. Are you sure you want to leave ?")))
             event.preventDefault();
     }
+
+	/**
+	 * 
+	 */
+	get viewMode() {
+		if(
+				this.hasAttribute("view-mode") 
+			&& 	(
+					(this.getAttribute("view-mode") == "obsels-detail")
+				||	(this.getAttribute("view-mode") == "histogram")
+			)
+		)
+				return this.getAttribute("view-mode");
+		else
+				return "obsels-detail";
+	}
+
+	/**
+	 * 
+	 */
+	set viewMode(newValue) {
+		if(
+				(newValue == "obsels-detail")
+			||	(newValue == "histogram")
+		)
+			this.setAttribute("view-mode", newValue);
+		else
+			throw new RangeError("New value for property \"viewMode\" must be either \"obsels-detail\" or \"histogram\"");
+	}
+
+	/**
+	 * 
+	 */
+	_onClickViewHistogramModeButton(event) {
+		if(this.viewMode != "histogram")
+			this.viewMode = "histogram";
+	}
+
+	/**
+	 * 
+	 */
+	_onClickViewObselModeButton(event) {
+		if(this.viewMode != "obsels-detail")
+			this.viewMode = "obsels-detail";
+	}
+
+	/**
+	 * 
+	 */
+	get normalizeHistogram() {
+		return this._histogramOptionNormalizeCheckbox.checked;
+	}
+
+	/**
+	 * 
+	 */
+	set normalizeHistogram(newValue) {
+		if(newValue instanceof Boolean)
+			this._histogramOptionNormalizeCheckbox.checked = newValue;
+		else
+			throw new TypeError("The value for property \"normalizeHistogram\" must be a boolean");
+	}
+
+	/**
+	 * 
+	 */
+	get durationHistogram() {
+		return this._histogramOptionDurationCheckbox.checked;
+	}
+
+	/**
+	 * 
+	 */
+	set durationHistogram(newValue) {
+		if(newValue instanceof Boolean)
+			this._histogramOptionDurationCheckbox.checked = newValue;
+		else
+			throw new TypeError("The value for property \"durationHistogram\" must be a boolean");
+	}
+
+	/**
+	 * 
+	 */
+	_onchangeHistogramOptionDurationCheckbox(event) {
+		this._updateHistogram();
+	}
+
+	/**
+	 * 
+	 */
+	_onchangeHistogramOptionNormalizeCheckbox(event) {
+		this._updateHistogram();
+	}
 }
 
 customElements.define('ktbs4la2-trace-timeline', KTBS4LA2TraceTimeline);

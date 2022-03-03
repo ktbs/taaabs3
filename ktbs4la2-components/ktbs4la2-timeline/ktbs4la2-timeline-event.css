@@ -3,6 +3,7 @@
 	transition-property: bottom;
 	transition-duration: .6s;
 	transition-timing-function: ease-in;
+	display: var(--timeline-event-display, inline-block);
 }
 
 :host([visible = "false"]), :host([visible = "0"]),

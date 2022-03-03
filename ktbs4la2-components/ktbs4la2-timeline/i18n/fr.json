@@ -22,5 +22,8 @@
 	"Scroll left": "Faire défiler vers la gauche",
 	"Scroll right": "Faire défiler vers la droite",
 	"Toggle fullscreen": "Activer/désactiver le mode plein écran",
-	"Close": "Fermer"
+	"Close": "Fermer",
+	"From ": "De ",
+	" to ": " à ",
+	"d": "j"
 }

@@ -1,0 +1,90 @@
+:host {
+	position: absolute;
+	display: var(--timeline-histogram-bar-display, inline-block);
+	bottom: 0px;
+	padding-left: 2px;
+	padding-right: 2px;
+	box-sizing: border-box;
+	cursor: pointer;
+}
+
+:host(:hover) #container {
+	box-shadow: 0px 0px 4px 2px #888;
+}
+
+:host(:not([posx-initialized])),
+:host(.posx-is-overflow) {
+	display: none;
+}
+
+/* -------------------------------- */
+
+#popup {
+	display: none;
+	position: absolute;
+	border-radius: 5px 5px 5px 5px;
+	z-index: 1;
+	background-color: white;
+    border: 1px solid lightgray;
+	padding: 10px 10px;
+}
+
+:host(:hover) #popup {
+	display: block;
+}
+
+#popup-title {
+	font-size: 11pt;
+    margin-block-start: 0;
+    margin-block-end: 0;
+	white-space: nowrap;
+}
+
+#popup-list {
+	margin-block-start: 5px;
+    margin-block-end: 0px;
+    padding-inline-start: 0px;
+	list-style-type: none;
+	font-size: 9pt;
+}
+
+#popup-list li {
+	white-space: nowrap;
+}
+
+#popup-list li a.marker {
+	display: inline-block;
+	margin-right: 5px;
+	font-size: 12pt;
+}
+
+#popup-list li a.marker.symbol {
+	font-family: "unifont", "unifont-upper";
+	text-decoration: none;
+}
+
+#popup-list li a.marker:not(.symbol) {
+	width: 12px;
+	height: 12px;
+}
+
+#popup-list li a.marker.duration-bar {
+	border-radius: 2px;
+}
+
+#popup-list li a.marker.circle {
+	clip-path: circle(50%);
+}
+
+#popup-list li a.marker.diamond {
+	clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+#popup-list li a.marker.star {
+	clip-path: polygon( 50% 0, 64% 30%, 97% 35%, 73% 57%, 79% 90%, 50% 75%, 21% 90%, 26% 57%, 2% 35%, 35% 30%);
+}
+
+#popup-list li span.figure {
+	font-weight: bold;
+	font-size: 10pt;
+}
