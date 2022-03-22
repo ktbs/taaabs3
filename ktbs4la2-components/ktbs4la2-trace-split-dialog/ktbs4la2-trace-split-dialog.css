@@ -1,0 +1,38 @@
+#stylesheets {
+    text-align: center;
+}
+
+#stylesheets div {
+    display: inline-block;
+    padding: 20px 20px;
+}
+
+#stylesheets div label {
+    cursor: pointer;
+    font-style: italic;
+    color: rgb(110, 110, 110);
+}
+
+#stylesheets div select {
+    display: block;
+}
+
+p#buttons {
+    margin-bottom: 0px;
+    text-align: center;
+}
+
+#buttons button {
+    background-color: var(--color-main, cornflowerblue);
+	width: 90px;
+	height: 35px;
+	cursor: pointer;
+	margin-left: 10px;
+	margin-right: 10px;
+	color: white;
+	border: none;
+}
+
+#buttons button:hover, #buttons button:focus {
+    background-color: var(--color-highlight, royalblue);
+}

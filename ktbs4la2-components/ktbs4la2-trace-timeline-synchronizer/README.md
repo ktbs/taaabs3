@@ -57,6 +57,14 @@ Whether or not we should synchronize the child timelines cursors.
 + **optional**
 + **default**: "true"
 
+### set-viewmode
+
+Whether or not we should synchronize the child timelines view modes (histogram / obsels detail)
+
++ **format**: "true", "1", "false" or "0"
++ **optional**
++ **default**: "true"
+
 ## Child nodes
 Any HTML content can be nested inside the element.  
 Any occurence of \<ktbs4la2-trace-timeline\> found in the subtree will be automatically included in the synchronization process.  

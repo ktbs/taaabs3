@@ -13,6 +13,7 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
 	constructor() {
         super(import.meta.url, false, false);
         this._onChildTraceTimelineSetStylesheetBindedFunction = this._onChildTraceTimelineSetStylesheet.bind(this);
+        this._onChildTraceTimelineSetViewModeBindedFunction = this._onChildTraceTimelineSetViewMode.bind(this);
     }
 
     /**
@@ -23,6 +24,9 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
 
         if(!this.hasAttribute("sync-stylesheets"))
            this.syncStylesheets = true;
+
+        if(!this.hasAttribute("sync-viewmodes"))
+           this.syncViewModes = true;
     }
 
     /**
@@ -56,6 +60,29 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
     /**
      * 
      */
+    get syncViewModes() {
+        return !(this.hasAttribute("sync-viewmodes") && ((this.getAttribute("sync-viewmodes") == "false") || (this.getAttribute("sync-viewmodes") == "0")));
+    }
+
+    /**
+     * 
+     */
+    set syncViewModes(sync_viewmodes) {
+        if(typeof sync_viewmodes === "boolean") {
+            if(sync_viewmodes)
+                this.addEventListener("set-viewmode", this._onChildTraceTimelineSetViewModeBindedFunction);
+            else
+                this.removeEventListener("set-viewmode", this._onChildTraceTimelineSetViewModeBindedFunction);
+        }
+        else
+            throw new TypeError("Value for property syncViewModes MUST be a boolean");
+    }
+
+
+
+    /**
+     * 
+     */
     _onChildTraceTimelineSetStylesheet(event) {
         if((this.syncStylesheets) && (event.target.localName == "ktbs4la2-trace-timeline")) {
             let stylesheetId = event.detail.stylesheetId;
@@ -71,11 +98,29 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
     }
 
     /**
+     * 
+     */
+     _onChildTraceTimelineSetViewMode(event) {
+        if((this.syncViewModes) && (event.target.localName == "ktbs4la2-trace-timeline")) {
+            let viewMode = event.detail.view_mode;
+            let childTraceTimelines = this.trace_timelines;
+
+            for(let i = 0; i < childTraceTimelines.length; i++) {
+                let aTimeline = childTraceTimelines[i];
+
+                if((aTimeline !== event.target) && (aTimeline.getAttribute("view-mode") != viewMode))
+                    aTimeline.setAttribute("view-mode", viewMode);
+            }
+        }
+    }
+
+    /**
 	 * 
 	 */
 	static get observedAttributes() {
         let observedAttributes = super.observedAttributes;
         observedAttributes.push("sync-stylesheets");
+        observedAttributes.push("sync-viewmodes");
 		return observedAttributes;
     }
     

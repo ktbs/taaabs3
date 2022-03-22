@@ -1,0 +1,26 @@
+<h1 id="title">{translate: 'Split trace'}</h1>
+
+<form id="split-form">
+    <div id="stylesheets">
+        <div>
+            <label for="select-split" id="select-split-label">{translate: 'Split from stylesheet'}</label>
+
+            <select id="select-split" tabIndex="1">
+                <option value="{translate: 'Default'}">{translate: 'Default'}</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="select-display" id="select-display-label">{translate: 'Display with stylesheet'}</label>
+
+            <select id="select-display" tabIndex="2">
+                <option value="{translate: 'Default'}">{translate: 'Default'}</option>
+            </select>
+        </div>
+    </div>
+
+    <p id="buttons">
+        <button type="submit" id="split" tabIndex="3">{translate: 'Split !'}</button>
+        <button type="reset" id="cancel" tabIndex="4">{translate: 'Cancel'}</button>
+    </p>
+</form>

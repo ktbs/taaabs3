@@ -80,6 +80,30 @@ Whether or not the user should be able to edit stylesheets (modify or delete exi
 + **optional**
 + **default**: "true"
 
+### view-mode
+
+Whether the data should be represented as an histogram or as obsels detail
+
++ **format**: "obsels-detail" or "histogram"
++ **optional**
++ **default**: "obsels-detail"
+
+### show-mode-buttons
+
+Wheter or not the mode switching buttons should be shown to the user
+
++ **format**: "true", "1", "false" or "0"
++ **optional**
++ **default**: "true"
+
+### allow-split-trace
+
+Wheter or not the split trace button should be shown to the user
+
++ **format**: "true", "1", "false" or "0"
++ **optional**
++ **default**: "true"
+
 ## Emitted events
 
 ### set-stylesheet

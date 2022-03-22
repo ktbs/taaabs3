@@ -19,6 +19,9 @@ import "../ktbs4la2-main-resource/ktbs4la2-main-resource.js";
 import "../ktbs4la2-create-resource-form/ktbs4la2-create-resource-form.js";
 import "../ktbs4la2-store-stylesheet-rules-to-method-form/ktbs4la2-store-stylesheet-rules-to-method-form.js";
 import "../ktbs4la2-csv-trace-import/ktbs4la2-csv-trace-import.js";
+import "../ktbs4la2-trace-split-dialog/ktbs4la2-trace-split-dialog.js";
+import "../ktbs4la2-trace-split/ktbs4la2-trace-split.js";
+
 import {ObselType} from "../../ktbs-api/ObselType.js";
 import {KtbsError} from "../../ktbs-api/Errors.js";
 
@@ -73,6 +76,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._mainContentDiv.addEventListener("request-create-method-from-stylesheet", this._onRequestCreateMethodFromStylesheet.bind(this));
 		this._mainContentDiv.addEventListener("fold-header", this._onFoldMainHeader.bind(this));
 		this._mainContentDiv.addEventListener("unfold-header", this._onUnfoldMainHeader.bind(this));
+		this._mainContentDiv.addEventListener("request-trace-split", this._onRequestTraceSplit.bind(this));
 
 		this._overlayDiv = this.shadowRoot.querySelector("#overlay");
 
@@ -465,6 +469,66 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			formElement.addEventListener("submit", this._onSubmitFormCreateMethodFromStylesheet.bind(this));
 			formElement.addEventListener("cancel", this.removeOverlay.bind(this));
 			this.setOverlay(formElement);
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onRequestTraceSplit(requestEvent) {
+		if(
+				requestEvent 
+			&&	requestEvent.detail
+			&&	requestEvent.detail.trace_uri
+			&&	(
+						(requestEvent.detail.trace_type == "StoredTrace")
+					||	(requestEvent.detail.trace_type == "ComputedTrace")
+			)
+		) {
+			const trace = ResourceMultiton.get_resource(requestEvent.detail.trace_type, requestEvent.detail.trace_uri)
+
+			trace.get(this._abortController.signal)
+				.then(() => {
+					const splitDialog = document.createElement("ktbs4la2-trace-split-dialog");
+					splitDialog.setAttribute("uri", trace.model.uri);
+
+					if(requestEvent.detail.current_stylesheet_name)
+						splitDialog.setAttribute("current-stylesheet-name", requestEvent.detail.current_stylesheet_name);
+
+					splitDialog.addEventListener("cancel-trace-split", this.removeOverlay.bind(this));
+
+					splitDialog.addEventListener("validate-trace-split", (validateDialogEvent) => {
+						this.removeOverlay();
+
+						if(
+								validateDialogEvent
+							&&	validateDialogEvent.detail
+							&&	validateDialogEvent.detail.split_stylesheet
+							&&	validateDialogEvent.detail.display_styleshhet
+						) {
+							const splitElement = document.createElement("ktbs4la2-trace-split");
+							splitElement.setAttribute("uri", trace.uri);
+							splitElement.setAttribute("resource-type", trace.type);
+							splitElement.setAttribute("split-stylesheet", validateDialogEvent.detail.split_stylesheet);
+							splitElement.setAttribute("display-stylesheet", validateDialogEvent.detail.display_styleshhet);
+							splitElement.setAttribute("view-mode", requestEvent.detail.view_mode);
+							this.setOverlay(splitElement);
+						}
+					});
+
+					this.setOverlay(splitDialog);
+				})
+				.catch(error => {
+					this.emitErrorEvent(error);
+					console.error(error);
+					alert(error.name + " : " + error.message);
+				});
+		}
+		else {
+			const error = new Error("Missing trace uri and/or unknown type");
+			this.emitErrorEvent(error);
+			console.error(error);
+			alert(error.name + " : " + error.message);
 		}
 	}
 

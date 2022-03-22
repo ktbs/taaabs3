@@ -186,6 +186,10 @@
 	opacity: 1;
 }
 
+#split-button {
+	background-image: url('{my-component-folder}/split.svg');
+}
+
 #edit-stylesheet-button {
 	background-image: url('{my-component-folder}/edit.svg');
 }
@@ -221,6 +225,9 @@
 #stylesheet-tools:not(.edit-mode) #add-style-button,
 #stylesheet-tools:not(.edit-mode) #save-stylesheet-button,
 #stylesheet-tools:not(.edit-mode) #cancel-stylesheet-modifications-button,
+#stylesheet-tools.edit-mode #split-button,
+:host([allow-split-trace = "0"]) #split-button,
+:host([allow-split-trace = "false"]) #split-button,
 #stylesheet-tools.edit-mode #edit-stylesheet-button,
 #stylesheet-tools.edit-mode #duplicate-stylesheet-button,
 #stylesheet-tools.edit-mode #delete-stylesheet-button,
@@ -388,6 +395,13 @@
 	position: relative;
 	bottom: -3px;
 }
+
+:host([show-mode-buttons = "0"]) #view-mode-buttons,
+:host([show-mode-buttons = "false"]) #view-mode-buttons {
+	display: none;
+}
+
+/* --- */
 
 #obsels-loading-indications {
 	position: absolute;
