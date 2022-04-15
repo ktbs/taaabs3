@@ -402,7 +402,7 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
                             const sourceTrace = ResourceMultiton.get_resource(Trace, this.suggestions_source_trace_uri);
                             const sourceTraceObselList = sourceTrace.obsel_list;
 
-                            sourceTraceObselList.list_attribute_type_distinct_values(attributeType, this._abortController.signal)
+                            sourceTraceObselList.list_attribute_type_distinct_values(attributeType, this._abortController.signal, sourceTrace.credentials)
                                 .then((distinct_values) => {
                                     while(this._valueSuggestionsList.hasChildNodes())
                                         this._valueSuggestionsList.firstChild.remove();
@@ -413,10 +413,10 @@ class KTBS4LA2HrulesAttributeConstraintInput extends TemplatedHTMLElement {
                                         this._valueSuggestionsList.appendChild(aSuggestion);
                                     }
                                 })
-                                .catch(this.emitErrorEvent);
+                                .catch(this.emitErrorEvent.bind(this));
                         }
                     })
-                    .catch(this.emitErrorEvent);
+                    .catch(this.emitErrorEvent.bind(this));
             }
         }
     }

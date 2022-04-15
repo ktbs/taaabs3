@@ -21,6 +21,7 @@ import "../ktbs4la2-store-stylesheet-rules-to-method-form/ktbs4la2-store-stylesh
 import "../ktbs4la2-csv-trace-import/ktbs4la2-csv-trace-import.js";
 import "../ktbs4la2-trace-split-dialog/ktbs4la2-trace-split-dialog.js";
 import "../ktbs4la2-trace-split/ktbs4la2-trace-split.js";
+import "../ktbs4la2-trace-timeline/ktbs4la2-trace-timeline-create-stylesheet-dialog.js";
 
 import {ObselType} from "../../ktbs-api/ObselType.js";
 import {KtbsError} from "../../ktbs-api/Errors.js";
@@ -77,6 +78,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._mainContentDiv.addEventListener("fold-header", this._onFoldMainHeader.bind(this));
 		this._mainContentDiv.addEventListener("unfold-header", this._onUnfoldMainHeader.bind(this));
 		this._mainContentDiv.addEventListener("request-trace-split", this._onRequestTraceSplit.bind(this));
+		this._mainContentDiv.addEventListener("request-stylesheet-creation-dialog", this._onRequestStylesheetCreationDialog.bind(this));
 
 		this._overlayDiv = this.shadowRoot.querySelector("#overlay");
 
@@ -530,6 +532,27 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 			console.error(error);
 			alert(error.name + " : " + error.message);
 		}
+	}
+
+	/**
+	 * 
+	 */
+	_onRequestStylesheetCreationDialog(event) {
+		const createSSDialog = document.createElement("ktbs4la2-trace-timeline-create-stylesheet-dialog");
+		createSSDialog.setAttribute("trace-uri", event.detail.trace_uri);
+		createSSDialog.setAttribute("trace-type", event.detail.trace_type);
+
+		if(
+				event.detail.reserved_ids
+			&&	event.detail.reserved_ids instanceof Array
+			&&	event.detail.reserved_ids.length > 0)
+			createSSDialog.setAttribute("reserved-ids", event.detail.reserved_ids.join(" "));
+			createSSDialog.addEventListener("validate-stylesheet-creation-dialog", this.removeOverlay.bind(this));
+			createSSDialog.addEventListener("cancel-stylesheet-creation-dialog", this.removeOverlay.bind(this));
+			this.setOverlay(createSSDialog);
+
+		event.stylesheet_creation_dialog_instance = createSSDialog;
+		return true;
 	}
 
 	/**

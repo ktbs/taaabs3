@@ -45,5 +45,19 @@
     "Histogram view": "Vue Histogramme",
     "auto": "auto",
     "Duration": "Durée",
-    "Normalize": "Normaliser"
+    "Normalize": "Normaliser",
+    "Create a new stylesheet": "Créer une nouvelle feuille de styles",
+    "ID :": "ID:",
+    "Empty": "Vide",
+    "Create a style for each combination of distinct values from...": "Créer un style pour chaque combinaison de valeurs distinctes de...",
+    "Add a criteria": "Ajouter un critère",
+    "Create": "Créer",
+    "Cancel": "Annuler",
+    "Attribute : ": "Attribut : ",
+    "Obsel type": "Type d'obsel",
+    "Obsel ID": "ID obsel",
+    "Remove": "Retirer",
+    " styles will be created": " styles seront créés",
+    "Also create styles to match for empty or missing attributes": "Créer également des styles correspondant aux attributs manquants ou vides",
+    "This criteria is a duplicate of a previous one. Please choose another value": "Ce critère est un doublon d'un critère précédent. Veuilles choisir une autre valeur."
 }

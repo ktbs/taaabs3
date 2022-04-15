@@ -123,9 +123,9 @@ class KTBS4LA2TraceSplit extends KtbsResourceElement {
                     else
                         this.emitErrorEvent(new KtbsError("Cannot find stylesheet \"" + this.getAttribute("split-stylesheet") + "\""));
                 })
-                .catch(this.emitErrorEvent);
+                .catch(this.emitErrorEvent.bind(this));
         })
-		.catch(this.emitErrorEvent);
+		.catch(this.emitErrorEvent.bind(this));
 	}
 
 	/**

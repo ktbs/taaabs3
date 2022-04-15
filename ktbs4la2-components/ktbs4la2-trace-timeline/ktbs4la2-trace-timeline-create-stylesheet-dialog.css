@@ -1,0 +1,70 @@
+#create-method-distinct-values {
+    margin-block-end: 0px;
+}
+
+#criterias {
+    border: none;
+    margin-left: 50px;
+    margin-block-end: 1em;
+    width: fit-content;
+}
+
+#criterias.hidden {
+    display: none;
+}
+
+#criterias p {
+    margin-block-start: 0.5em;
+    margin-block-end: 0.5em;
+}
+
+.remove-criteria-button {
+    border: none;
+    outline: none;
+    background: none;
+    cursor: pointer;
+    opacity: 0.2;
+    display: inline-block;
+}
+
+.remove-criteria-button:hover, .remove-criteria-button:focus {
+    opacity: 1;
+}
+
+#buttons button, #add-criteria {
+    background-color: var(--color-main, cornflowerblue);
+    width: 90px;
+    height: 35px;
+    cursor: pointer;
+    margin-left: 10px;
+    margin-right: 10px;
+    color: white;
+    border: none;
+}
+
+#buttons button:hover, #buttons button:focus,
+#add-criteria:hover, #add-criteria:focus {
+    background-color: var(--color-highlight, royalblue);
+}
+
+#add-criteria {
+    margin: 0px 0px;
+    width: 30px;
+    font-size: 20pt;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    height: 26px;
+}
+
+#message.hidden {
+    visibility: hidden;
+}
+
+#validate:disabled, #validate:disabled:hover {
+    cursor: default;
+    background-color: #CCC;
+}
+
+#buttons {
+    text-align: center;
+}

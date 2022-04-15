@@ -341,10 +341,20 @@ export class ObselList {
 	 * \Public
 	 */
 	list_attribute_type_distinct_values(attributeType, abortSignal = null, credentials = null) {
-		const sparqlQuery = "PREFIX m: <" + attributeType.parent_model.uri + "#>\n\nSELECT DISTINCT ?val {?obs m:" + attributeType.id + " ?val}";
+		return 	list_attribute_type_distinct_values_by_atrribute_id(attributeType.id, abortSignal, credentials);
+	}
+
+	/**
+	 * Performs a SPARQL Query in order to list all distinct values in the obsels for a given attribute id, and returns a Promise that resolves with an Array containing the distinct values
+	 * \param string attribute_id the attribute id we want to list distinct values
+	 * \return Promise
+	 * \Public
+	 */
+	list_attribute_type_distinct_values_by_atrribute_id(attribute_id, abortSignal = null, credentials = null) {
+		const sparqlQuery = "PREFIX m: <" + this.parent.model.uri + "#>\n\nSELECT DISTINCT ?val {?obs m:" + attribute_id + " ?val}";
 		
 		const listPromise = new Promise((resolve, reject) => {
-			this.SPARQLQuery(sparqlQuery)
+			this.SPARQLQuery(sparqlQuery, abortSignal, credentials)
 				.then((JSONData) => {
 					const distinctValuesArray = new Array();
 

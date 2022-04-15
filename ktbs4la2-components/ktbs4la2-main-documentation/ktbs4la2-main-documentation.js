@@ -41,13 +41,13 @@ class KTBS4LA2MainDocumentation extends TemplatedHTMLElement {
 											.then((responseText) => {
 												this._style.innerHTML = responseText;
 											})
-											.catch(this.emitErrorEvent);
+											.catch(this.emitErrorEvent.bind(this));
 									}
 									else {
 										this.emitErrorEvent("Fetch failed : response not ok");
 									}
 								})
-								.catch(this.emitErrorEvent);
+								.catch(this.emitErrorEvent.bind(this));
 						}
 						else
 							this.emitErrorEvent(new Error("Requested path is outside the application"));
@@ -124,13 +124,13 @@ class KTBS4LA2MainDocumentation extends TemplatedHTMLElement {
 											this._content.appendChild(contentDocumentMain);
 										}
 									})
-									.catch(this.emitErrorEvent);
+									.catch(this.emitErrorEvent.bind(this));
 							}
 							else {
 								this.emitErrorEvent("Fetch failed : response not ok");
 							}
 						})
-						.catch(this.emitErrorEvent);
+						.catch(this.emitErrorEvent.bind(this));
 				}
 				else
 					this.emitErrorEvent(new Error("Requested path is outside the application"));

@@ -1,0 +1,42 @@
+<h1 id="title">{translate: 'Create a new stylesheet'}</h1>
+
+<form id="form">
+    <p>
+        <label id="stylesheet-id-input-label" for="stylesheet-id-input">{translate: 'ID :'}</label>
+        
+        <ktbs4la2-resource-id-input 
+            id="stylesheet-id-input"
+            placeholder="&lt;id&gt;"
+            required
+            tabindex="1">
+        </ktbs4la2-resource-id-input>
+    </p>
+
+    <p>
+        <input type="radio" name="create-method-radio" id="create-method-radio-empty" value="empty" checked tabindex="2" />
+        <label id="create-method-radio-empty-label" for="create-method-radio-empty">{translate: 'Empty'}</label>
+    </p>
+
+    <p id="create-method-distinct-values">
+        <input type="radio" name="create-method-radio" id="create-method-radio-distinct-values" value="distinct" tabindex="3" />
+        <label id="create-method-radio-distinct-values-label" for="create-method-radio-distinct-values">{translate: 'Create a style for each combination of distinct values from...'}</label>
+    </p>
+
+    <fieldset id="criterias" class="hidden">
+        <p id="add-criteria-paragraph">
+            <button type="button" id="add-criteria" title="{translate: 'Add a criteria'}">+</button>
+        </p>
+
+        <p>
+            <input type="checkbox" id="create-empty-value-rules" checked />
+            <label id="create-empty-value-rules-label" for="create-empty-value-rules">{translate: 'Also create styles to match for empty or missing attributes'}</label>
+        </p>
+
+        <p id="message"></p>
+    </fieldset>
+    
+    <p id="buttons">
+        <button type="submit" id="validate" disabled>{translate: 'Create'}</button>
+        <button type="button" id="cancel">{translate: 'Cancel'}</button>
+    </p>
+</form>

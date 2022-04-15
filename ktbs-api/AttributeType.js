@@ -78,18 +78,14 @@ export class AttributeType {
 	 * \public
      */
     get uri() {
-		if(this.parent_model && (this.parent_model.lifecycleStatus == "exists") || (this.parent_model.lifecycleStatus == "modified")) {
-			if(!this._uri) {
-				if(this.is_builtin)
-					this._uri = new URL(AttributeType.builtin_attribute_types_prefix + this._JSONData["real_id"]);
-				else
-					this._uri = this.parent_model.resolve_link_uri(this._JSONData["@id"]);
-			}
-
-			return this._uri;
+		if(!this._uri) {
+			if(this.is_builtin)
+				this._uri = new URL(AttributeType.builtin_attribute_types_prefix + this._JSONData["real_id"]);
+			else if(this.parent_model && (this.parent_model.lifecycleStatus == "exists") || (this.parent_model.lifecycleStatus == "modified"))
+				this._uri = this.parent_model.resolve_link_uri(this._JSONData["@id"]);
 		}
-		else
-			return undefined;
+
+		return this._uri;
 	}
 	
 	/**

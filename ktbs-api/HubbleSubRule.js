@@ -76,6 +76,26 @@ export class HubbleSubRule {
     }
 
     /**
+     * 
+     */
+    set attributes(new_value) {
+        if(new_value instanceof Array) {
+            for(let i = 0; i < new_value.length; i++)
+                if(!new_value[i] instanceof HubbleAttributeConstraint)
+                    throw new TypeError("New value for property \"attributes\" must be an array of HubbleAttributeConstraint");
+
+            this._JSONData.attributes = [];
+
+            for(let i = 0; i < new_value.length; i++)
+                this._JSONData.attributes.push(new_value[i]._JSONData);
+
+            this._attributes = new_value;
+        }
+        else
+            throw new TypeError("New value for property \"attributes\" must be an array of HubbleAttributeConstraint");
+    }
+
+    /**
 	 * Checks if an obsel matches the current rule's type
 	 * \param Obsel obsel - the obsel to check if it matches the current rule's type
 	 * \return boolean
