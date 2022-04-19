@@ -110,7 +110,6 @@ class KTBS4LA2TraceSplit extends KtbsResourceElement {
                                     if(i != 0) {
                                         aTimeLine.setAttribute("allow-change-stylesheet", "false");
                                         aTimeLine.setAttribute("show-stylesheet-legend", "false");
-                                        aTimeLine.setAttribute("show-mode-buttons", "false");
                                     }
 
                                     if(this.hasAttribute("view-mode"))
