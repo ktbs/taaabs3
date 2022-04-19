@@ -449,14 +449,14 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let newViewBeginTime = parseFloat(newValue, 10);
 
 			if(!isNaN(newViewBeginTime))
-				this._requestSetView(newViewBeginTime, null, null);
+				this._requestSetView(newViewBeginTime, null, null, true);
 			else
 				this.emitErrorEvent(new TypeError("Value for \"view-begin\" is not a number"));
 		}
 
 		if((attributeName == "zoom-level") && (newValue)) {
 			if(Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit).includes(newValue))
-				this._requestSetView(null, newValue, null);
+				this._requestSetView(null, newValue, null, true);
 			else
 				this.emitErrorEvent(new TypeError("Value for \"zoom-level\" is not a valid time subdivision unit"));
 		}
@@ -465,7 +465,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let newDivWidth = parseFloat(newValue, 10);
 
 			if(!isNaN(newDivWidth))
-				this._requestSetView(null, null, newDivWidth);
+				this._requestSetView(null, null, newDivWidth, true);
 			else
 				this.emitErrorEvent(new TypeError("Value for \"div-width\" is not a number"));
 		}
@@ -1509,7 +1509,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_requestSetView(newViewBegin = null, newZoomLevel = null, newDivWidth = null) {
+	_requestSetView(newViewBegin = null, newZoomLevel = null, newDivWidth = null, silent = false) {
 		if(newViewBegin)
 			this._requestedNewViewBegin = newViewBegin;
 
@@ -1607,7 +1607,10 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 			this._requestUpdateEventsRow();
 			this._setTimelineCursorPositionForTime(timelineCursorTime);
-			this._notifyViewChange();
+
+			if(!silent)
+				this._notifyViewChange();
+			
 			this._requestSetViewID = null;
 		});
 	}
