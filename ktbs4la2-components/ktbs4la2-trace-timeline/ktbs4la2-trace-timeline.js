@@ -283,7 +283,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		observedAttributes.push("allow-fullscreen");
 		observedAttributes.push("allow-change-stylesheet");
 		observedAttributes.push("stylesheet");
-		observedAttributes.push("view-mode");
+		//observedAttributes.push("view-mode");
 		return observedAttributes;
 	}
 
@@ -360,17 +360,6 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 							});
 					}
 				});
-		}
-
-		if(attributeName == "view-mode") {
-			this.dispatchEvent(
-				new CustomEvent("set-viewmode", {
-					bubbles: true,
-					cancelable: false,
-					composed: true,
-					detail : {view_mode: this.viewMode}
-				})
-			);
 		}
 	}
 
@@ -2130,6 +2119,15 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	_onClickViewHistogramModeButton(event) {
 		if(this.viewMode != "histogram")
 			this.viewMode = "histogram";
+
+		this.dispatchEvent(
+			new CustomEvent("set-viewmode", {
+				bubbles: true,
+				cancelable: false,
+				composed: true,
+				detail : {view_mode: this.viewMode}
+			})
+		);
 	}
 
 	/**
@@ -2138,6 +2136,15 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	_onClickViewObselModeButton(event) {
 		if(this.viewMode != "obsels-detail")
 			this.viewMode = "obsels-detail";
+
+		this.dispatchEvent(
+			new CustomEvent("set-viewmode", {
+				bubbles: true,
+				cancelable: false,
+				composed: true,
+				detail : {view_mode: this.viewMode}
+			})
+		);
 	}
 
 	/**
