@@ -1,16 +1,24 @@
-#stylesheets {
-    text-align: center;
-}
-
 #stylesheets div {
     display: inline-block;
-    padding: 20px 20px;
+    width: calc(50% - 20px);
+    margin: 0 0;
+    vertical-align: top;
+}
+
+#display-choice {
+    border-left: 1px solid lightgrey;
+    padding-left: 10px;
 }
 
 #stylesheets div label {
     cursor: pointer;
+
+}
+
+#stylesheets .help {
     font-style: italic;
     color: rgb(110, 110, 110);
+    font-size: 9pt;
 }
 
 #stylesheets div select {

@@ -2,20 +2,24 @@
 
 <form id="split-form">
     <div id="stylesheets">
-        <div>
-            <label for="select-split" id="select-split-label">{translate: 'Split from stylesheet'}</label>
+        <div id="split-choice">
+            <label for="select-split" id="select-split-label">{translate: '<strong>Split</strong> from stylesheet'}</label>
 
             <select id="select-split" tabIndex="1">
                 <option value="{translate: 'Default'}">{translate: 'Default'}</option>
             </select>
+
+            <span class="help">{translate: 'A timeline instance will be created for each style in this stylesheet, each showing only the obsels matching the rules defined in the corresponding style.'}</span>
         </div>
 
-        <div>
-            <label for="select-display" id="select-display-label">{translate: 'Display with stylesheet'}</label>
+        <div id="display-choice">
+            <label for="select-display" id="select-display-label">{translate: '<strong>Display</strong> with stylesheet'}</label>
 
             <select id="select-display" tabIndex="2">
                 <option value="{translate: 'Default'}">{translate: 'Default'}</option>
             </select>
+
+            <span class="help">{translate: 'Inside each timeline instance, the obsels will be represented using this stylesheet.'}</span>
         </div>
     </div>
 

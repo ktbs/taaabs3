@@ -1,8 +1,10 @@
 {
     "Default": "Par défaut",
     "Split trace": "Fractionner la trace",
-    "Split from stylesheet": "Fractionner d'après la feuille de styles",
-    "Display with stylesheet": "Afficher avec la feuille de styles",
+    "<strong>Split</strong> from stylesheet": "<strong>Fractionner</strong> d'après la feuille de styles",
+    "<strong>Display</strong> with stylesheet": "<strong>Afficher</strong> avec la feuille de styles",
     "Split !": "Fractionner !",
-    "Cancel": "Annuler"
+    "Cancel": "Annuler",
+    "A timeline instance will be created for each style in this stylesheet, each showing only the obsels matching the rules defined in the corresponding style.": "Une instance de timeline sera crée pour chaque style dans cette feuille de styles, chacune ne représentant que les obsels vérifiant les règles définies dans le style correspondant.",
+    "Inside each timeline instance, the obsels will be represented using this stylesheet.": "Dans chaque instance de timeline, les obsels seront représentés en utilisant cette feuille de style."
 }
