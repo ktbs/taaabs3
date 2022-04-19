@@ -283,7 +283,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		observedAttributes.push("allow-fullscreen");
 		observedAttributes.push("allow-change-stylesheet");
 		observedAttributes.push("stylesheet");
-		//observedAttributes.push("view-mode");
+		observedAttributes.push("histogram-normalize");
+		observedAttributes.push("histogram-duration");
 		return observedAttributes;
 	}
 
@@ -360,6 +361,54 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 							});
 					}
 				});
+		}
+
+		if(attributeName == "histogram-normalize") {
+			if(
+					(newValue == "true")
+				||	(newValue == "1")
+			) {
+				this._componentReady.then(() => {
+					this._histogramOptionNormalizeCheckbox.checked = true;
+					this._updateHistogram();
+				});
+			}
+			else if(
+					(newValue == "false")
+				||	(newValue == "0")
+				||	(newValue == null)
+			) {
+				this._componentReady.then(() => {
+					this._histogramOptionNormalizeCheckbox.checked = false;
+					this._updateHistogram();
+				});
+			}
+			else
+				this.emitErrorEvent(new TypeError("Value for attribute \"histogram-normalize\" must be a boolean"));
+		}
+
+		if(attributeName == "histogram-duration") {
+			if(
+					(newValue == "true")
+				||	(newValue == "1")
+			) {
+				this._componentReady.then(() => {
+					this._histogramOptionDurationCheckbox.checked = true;
+					this._updateHistogram();
+				});
+			}
+			else if(
+					(newValue == "false")
+				||	(newValue == "0")
+				||	(newValue == null)
+			) {
+				this._componentReady.then(() => {
+					this._histogramOptionDurationCheckbox.checked = false;
+					this._updateHistogram();
+				});
+			}
+			else
+				this.emitErrorEvent(new TypeError("Value for attribute \"histogram-duration\" must be a boolean"));
 		}
 	}
 
@@ -2186,6 +2235,15 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onchangeHistogramOptionDurationCheckbox(event) {
 		this._updateHistogram();
+
+		this.dispatchEvent(
+			new CustomEvent("histogram-set-duration-option", {
+				bubbles: true,
+				cancelable: false,
+				composed: true,
+				detail : {duration: this._histogramOptionDurationCheckbox.checked}
+			})
+		);
 	}
 
 	/**
@@ -2193,6 +2251,15 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 */
 	_onchangeHistogramOptionNormalizeCheckbox(event) {
 		this._updateHistogram();
+
+		this.dispatchEvent(
+			new CustomEvent("histogram-set-normalize-option", {
+				bubbles: true,
+				cancelable: false,
+				composed: true,
+				detail : {normalize: this._histogramOptionNormalizeCheckbox.checked}
+			})
+		);
 	}
 }
 

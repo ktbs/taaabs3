@@ -14,6 +14,8 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
         super(import.meta.url, false, false);
         this._onChildTraceTimelineSetStylesheetBindedFunction = this._onChildTraceTimelineSetStylesheet.bind(this);
         this._onChildTraceTimelineSetViewModeBindedFunction = this._onChildTraceTimelineSetViewMode.bind(this);
+        this._onChildTraceTimelineSetHistogramDurationOptionBindedFunction = this._onChildTraceTimelineSetHistogramDurationOption.bind(this);
+        this._onChildTraceTimelineSetHistogramNormalizeOptionBindedFunction = this._onChildTraceTimelineSetHistogramNormalizeOption.bind(this);
     }
 
     /**
@@ -69,10 +71,16 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
      */
     set syncViewModes(sync_viewmodes) {
         if(typeof sync_viewmodes === "boolean") {
-            if(sync_viewmodes)
+            if(sync_viewmodes) {
                 this.addEventListener("set-viewmode", this._onChildTraceTimelineSetViewModeBindedFunction);
-            else
+                this.addEventListener("histogram-set-duration-option", this._onChildTraceTimelineSetHistogramDurationOptionBindedFunction);
+                this.addEventListener("histogram-set-normalize-option", this._onChildTraceTimelineSetHistogramNormalizeOptionBindedFunction);
+            }
+            else {
                 this.removeEventListener("set-viewmode", this._onChildTraceTimelineSetViewModeBindedFunction);
+                this.removeEventListener("histogram-set-duration-option", this._onChildTraceTimelineSetHistogramDurationOptionBindedFunction);
+                this.removeEventListener("histogram-set-normalize-option", this._onChildTraceTimelineSetHistogramNormalizeOptionBindedFunction);
+            }
         }
         else
             throw new TypeError("Value for property syncViewModes MUST be a boolean");
@@ -133,6 +141,54 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
         if(attributeName == "sync-stylesheets")
             this.syncStylesheets = ((newValue != "0") && (newValue != "false"));
 	}
+
+    /**
+     * 
+     */
+    _onChildTraceTimelineSetHistogramDurationOption(event) {
+        if(
+                (this.syncViewModes)
+            &&  (event.target.localName == "ktbs4la2-trace-timeline")
+            &&  (event.detail)
+            &&  (
+                        (event.detail.duration === true)
+                    ||  (event.detail.duration === false)
+            )
+        ) {
+            let childTraceTimelines = this.trace_timelines;
+
+            for(let i = 0; i < childTraceTimelines.length; i++) {
+                let aTimeline = childTraceTimelines[i];
+
+                if((aTimeline !== event.target) && (aTimeline.getAttribute("histogram-duration") != event.detail.duration))
+                    aTimeline.setAttribute("histogram-duration", event.detail.duration);
+            }
+        }
+    }
+    
+    /**
+     * 
+     */
+    _onChildTraceTimelineSetHistogramNormalizeOption(event) {
+        if(
+                (this.syncViewModes)
+            &&  (event.target.localName == "ktbs4la2-trace-timeline")
+            &&  (event.detail)
+            &&  (
+                        (event.detail.normalize === true)
+                    ||  (event.detail.normalize === false)
+            )
+        ) {
+            let childTraceTimelines = this.trace_timelines;
+
+            for(let i = 0; i < childTraceTimelines.length; i++) {
+                let aTimeline = childTraceTimelines[i];
+
+                if((aTimeline !== event.target) && (aTimeline.getAttribute("histogram-normalize") != event.detail.normalize))
+                    aTimeline.setAttribute("histogram-normalize", event.detail.normalize);
+            }
+        }
+    }
 }
 
 customElements.define('ktbs4la2-trace-timeline-synchronizer', KTBS4LA2TraceTimelineSynchronizer);
