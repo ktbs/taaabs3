@@ -44,6 +44,9 @@ class KTBS4LA2TraceTimelineCreateStylesheetDialog extends TemplatedHTMLElement {
         this._idInput = this.shadowRoot.querySelector("#stylesheet-id-input");
         this._idInput.addEventListener("input", this._onChangeIdInput.bind(this));
         this._idInput.addEventListener("change", this._onChangeIdInput.bind(this));
+        this._stylesheetDescriptionTextarea = this.shadowRoot.querySelector("#stylesheet-description-textarea");
+        this._stylesheetDescriptionTextarea.addEventListener("input", this._onChangeDescriptionTextarea.bind(this));
+        this._stylesheetDescriptionTextarea.addEventListener("change", this._onChangeDescriptionTextarea.bind(this));
         this._createMethodRadioEmpty = this.shadowRoot.querySelector("#create-method-radio-empty");
         this._createMethodRadioEmptyLabel = this.shadowRoot.querySelector("#create-method-radio-empty-label");
         this._createMethodRadioDistinctValues = this.shadowRoot.querySelector("#create-method-radio-distinct-values");
@@ -74,6 +77,13 @@ class KTBS4LA2TraceTimelineCreateStylesheetDialog extends TemplatedHTMLElement {
         
         this._updateStylesheetData();
         this._updateValidateButton();
+    }
+
+    /**
+     * 
+     */
+    _onChangeDescriptionTextarea(event) {
+        this._updateStylesheetData();
     }
 
     /**
@@ -336,6 +346,7 @@ class KTBS4LA2TraceTimelineCreateStylesheetDialog extends TemplatedHTMLElement {
                 
                 this._stylesheet = new Stylesheet();
                 this._stylesheet.name = this._idInput.value;
+                this._stylesheet.description = this._stylesheetDescriptionTextarea.value;
 
                 if(this._createMethodRadioDistinctValues.checked) {
                     if(this._checkCriteriasValidity()) {
