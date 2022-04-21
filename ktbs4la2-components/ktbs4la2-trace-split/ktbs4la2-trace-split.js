@@ -123,6 +123,8 @@ class KTBS4LA2TraceSplit extends KtbsResourceElement {
 
                                     if(this.hasAttribute("view-mode"))
                                         aTimeLine.setAttribute("view-mode", this.getAttribute("view-mode"));
+
+                                    aTimeLine.setAttribute("lang", this._lang);
                                 aDiv.appendChild(aTimeLine);
                             this._timelineSynchronizer.appendChild(aDiv);
                         }
@@ -147,6 +149,10 @@ class KTBS4LA2TraceSplit extends KtbsResourceElement {
      */
     _updateStringsTranslation() {
         this._timelineSynchronizer.setAttribute("lang", this._lang);
+        const childTimelines = this._timelineSynchronizer.querySelectorAll("ktbs4la2-trace-timeline");
+
+        for(let i = 0; i < childTimelines.length; i++)
+            childTimelines[i].setAttribute("lang", this._lang);
     }
 }
 
