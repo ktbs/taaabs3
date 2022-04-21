@@ -514,6 +514,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 							splitElement.setAttribute("split-stylesheet", validateDialogEvent.detail.split_stylesheet);
 							splitElement.setAttribute("display-stylesheet", validateDialogEvent.detail.display_styleshhet);
 							splitElement.setAttribute("view-mode", requestEvent.detail.view_mode);
+							splitElement.setAttribute("lang", this._lang);
 							this.setOverlay(splitElement);
 						}
 					});

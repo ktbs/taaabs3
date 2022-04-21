@@ -114,7 +114,6 @@ class KTBS4LA2TraceSplit extends KtbsResourceElement {
 
                                     if(this.hasAttribute("view-mode"))
                                         aTimeLine.setAttribute("view-mode", this.getAttribute("view-mode"));
-
                                 aDiv.appendChild(aTimeLine);
                             this._timelineSynchronizer.appendChild(aDiv);
                         }
@@ -138,7 +137,7 @@ class KTBS4LA2TraceSplit extends KtbsResourceElement {
      * 
      */
     _updateStringsTranslation() {
-        // ...
+        this._timelineSynchronizer.setAttribute("lang", this._lang);
     }
 }
 
