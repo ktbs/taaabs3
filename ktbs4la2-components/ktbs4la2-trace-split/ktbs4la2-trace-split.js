@@ -74,17 +74,26 @@ class KTBS4LA2TraceSplit extends KtbsResourceElement {
 		this._componentReady.then(() => {
             this._ktbsResource.model.get(this._abortController.signal)
                 .then(() => {
+                    const stylesheets = new Array(...this._ktbsResource.model.stylesheets);
+                    let default_stylesheet_found = false;
                     let splitStylesheet;
-                    const modelStylesheets = this._ktbsResource.model.stylesheets;
-                    modelStylesheets.unshift(this._generateDefaultStylesheetFromModel());
+                    
+                    for(let i = 0; !(default_stylesheet_found && splitStylesheet) && (i < stylesheets.length); i++) {
+                        const aStylesheet = stylesheets[i];
 
-                    for(let i = 0; i < modelStylesheets.length; i++) {
-                        const aStylesheet = modelStylesheets[i];
+                        if(aStylesheet.automatically_generated)
+                            default_stylesheet_found = true;
 
-                        if(aStylesheet.name == this.getAttribute("split-stylesheet")) {
+                        if(aStylesheet.name == this.getAttribute("split-stylesheet"))
                             splitStylesheet = aStylesheet;
-                            break;
-                        }
+                    }
+
+                    if(!default_stylesheet_found) {
+                        const defaultStyleSheet = this._generateDefaultStylesheetFromModel();
+                        stylesheets.unshift(defaultStyleSheet);
+
+                        if(!splitStylesheet && (splitStylesheet.name == this.getAttribute("split-stylesheet")))
+                            splitStylesheet = defaultStyleSheet;
                     }
 
                     if(splitStylesheet) {
