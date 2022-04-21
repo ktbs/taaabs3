@@ -162,7 +162,13 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
      * 
      */
     _onChildTimelineViewChange(event) {
-       if((this.syncView) && (event.target.localName == "ktbs4la2-timeline")) {
+       if(
+                this.syncView
+            &&  event.target
+            &&  (event.target.localName == "ktbs4la2-timeline")
+            &&  event.detail
+            &&  event.detail.user_initiated
+       ) {
             let newViewBeginTime = event.detail.begin;
             let newZoomLevel = event.detail.zoomLevel;
             let newDivWidth = event.detail.divWidth;

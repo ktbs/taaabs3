@@ -449,14 +449,14 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let newViewBeginTime = parseFloat(newValue, 10);
 
 			if(!isNaN(newViewBeginTime))
-				this._requestSetView(newViewBeginTime, null, null, true);
+				this._requestSetView(newViewBeginTime, null, null, false);
 			else
 				this.emitErrorEvent(new TypeError("Value for \"view-begin\" is not a number"));
 		}
 
 		if((attributeName == "zoom-level") && (newValue)) {
 			if(Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit).includes(newValue))
-				this._requestSetView(null, newValue, null, true);
+				this._requestSetView(null, newValue, null, false);
 			else
 				this.emitErrorEvent(new TypeError("Value for \"zoom-level\" is not a valid time subdivision unit"));
 		}
@@ -465,7 +465,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			let newDivWidth = parseFloat(newValue, 10);
 
 			if(!isNaN(newDivWidth))
-				this._requestSetView(null, null, newDivWidth, true);
+				this._requestSetView(null, null, newDivWidth, false);
 			else
 				this.emitErrorEvent(new TypeError("Value for \"div-width\" is not a number"));
 		}
@@ -1032,13 +1032,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			&&	(clickedBar.hasAttribute("begin"))
 			&&	(clickedBar.hasAttribute("end"))
 		)
-		{
-			/*console.log("-------------------------------------------------");
-			console.log("clickedBar.beginTime = " + new Date(clickedBar.beginTime).toISOString());
-			console.log("clickedBar.endTime = " + new Date(clickedBar.endTime).toISOString());
-			console.log("-------------------------------------------------");*/
 			this._setViewBeginEnd(clickedBar.beginTime, clickedBar.endTime);
-		}
 	}
 
 	/**
@@ -1509,7 +1503,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_requestSetView(newViewBegin = null, newZoomLevel = null, newDivWidth = null, silent = false) {
+	_requestSetView(newViewBegin = null, newZoomLevel = null, newDivWidth = null, user_initiated = true) {
 		if(newViewBegin)
 			this._requestedNewViewBegin = newViewBegin;
 
@@ -1607,10 +1601,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 			this._requestUpdateEventsRow();
 			this._setTimelineCursorPositionForTime(timelineCursorTime);
-
-			if(!silent)
-				this._notifyViewChange();
-			
+			this._notifyViewChange(user_initiated);
 			this._requestSetViewID = null;
 		});
 	}
@@ -1725,7 +1716,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		let mouseXDelta = event.clientX - this._scrollBarDragOrigin;
 		let totalDuration = this.endTime - this.beginTime;
 		let scrollBarTimeOverWidthRatio = totalDuration / this._scrollBar.clientWidth;
-		let newScrollBarCursorLeft = this._scrollBarCursorOrigin + mouseXDelta;
 
 		if(this._dragScrollBarCursorUpdateViewID != null)
 			clearTimeout(this._dragScrollBarCursorUpdateViewID);
@@ -3330,15 +3320,17 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_notifyViewChange() {
+	_notifyViewChange(user_initiated = true) {
 		this.dispatchEvent(
 			new CustomEvent("view-change", {
 				bubbles: true,
 				cancelable: false,
+				composed: true,
 				detail : {
 					begin: this.viewBeginTime,
 					zoomLevel: this.zoomLevel,
-					divWidth: this.divWidth
+					divWidth: this.divWidth,
+					user_initiated: user_initiated
 				}
 			})
 		);
