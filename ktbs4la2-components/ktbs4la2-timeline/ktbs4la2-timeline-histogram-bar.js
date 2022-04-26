@@ -80,7 +80,8 @@ export class KTBS4LA2TimelineHistogramBar extends TemplatedHTMLElement {
 
 			this._componentReady.then(() => {
 				this._updatePopupTitle();
-			});
+			})
+			.catch(() => {});
 		}
 		else if(attributeName == "end") {
 			if(newValue != null) {
@@ -94,7 +95,8 @@ export class KTBS4LA2TimelineHistogramBar extends TemplatedHTMLElement {
 
 			this._componentReady.then(() => {
 				this._updatePopupTitle();
-			});
+			})
+			.catch(() => {});
 		}
 		else if(attributeName == "normalized") {
 			const childSubdivs = this.querySelectorAll("ktbs4la2-timeline-histogram-bar-subdivision");
@@ -104,13 +106,15 @@ export class KTBS4LA2TimelineHistogramBar extends TemplatedHTMLElement {
 
 				aChildSubdiv._componentReady.then(() => {
 					aChildSubdiv._updateHeight();
-				});
+				})
+				.catch(() => {});
 			}
 		}
 		else if(attributeName == "show-duration") {
 			this._componentReady.then(() => {
 				this._updatePopupList();
-			});
+			})
+			.catch(() => {});
 		}
     }
 
@@ -389,7 +393,8 @@ export class KTBS4LA2TimelineHistogramBar extends TemplatedHTMLElement {
 		this._requestUpdatePopupListTaskID = setTimeout(() => {
 			this._componentReady.then(() => {
 				this._updatePopupList();
-			});
+			})
+			.catch(() => {});
 
 			delete this._requestUpdatePopupListTaskID;
 		});

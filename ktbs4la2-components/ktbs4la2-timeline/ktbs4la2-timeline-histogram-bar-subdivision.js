@@ -63,7 +63,8 @@ export class KTBS4LA2TimelineHistogramBarSubdivision extends TemplatedHTMLElemen
 				this.style.height = ((parseInt(this.getAttribute("amount"), 10) / this.parentBar.totalAmount) * this.parentTimeline.availableHeight) + "px";
 			else
 				this.style.height = ((parseInt(this.getAttribute("amount"), 10) / this._maxChartAmount) * this.parentTimeline.availableHeight) + "px";
-		});
+		})
+		.catch(() => {});
 	}
 
 	/**
