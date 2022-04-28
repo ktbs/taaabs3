@@ -430,10 +430,14 @@ class TemplatedHTMLElement extends HTMLElement {
 						atLeastOneClientDidntAbort = !aClient.aborted;
 					}
 
-					if(!atLeastOneClientDidntAbort) {
+					if(
+							!atLeastOneClientDidntAbort 
+						&&	TemplatedHTMLElement._templatesPromises[aTemplatePath]
+						&&	!TemplatedHTMLElement._templatesPromises[aTemplatePath]._fulfilled
+					) {
 						TemplatedHTMLElement._templatesAbortControllers[aTemplatePath].master.abort();
-						delete TemplatedHTMLElement._templatesPromises[aTemplatePath];
 						delete TemplatedHTMLElement._templatesAbortControllers[aTemplatePath];
+						delete TemplatedHTMLElement._templatesPromises[aTemplatePath];
 					}
 				}
 			}
@@ -449,7 +453,7 @@ class TemplatedHTMLElement extends HTMLElement {
 	 * \static
 	 */
 	static _fetchComponentTemplate(componentJSPath, fetchStylesheet = true, abortSignal) {
-		return new Promise(function(resolve, reject) {
+		const fetchPromise = new Promise(function(resolve, reject) {
 			// we check if the given URL of the JS file ends with ".js". If it doesn't, we won't know how to build the template and stylesheet URLs
 			if(componentJSPath.substring(componentJSPath.length - 3) == ".js") {
 
@@ -535,6 +539,12 @@ class TemplatedHTMLElement extends HTMLElement {
 				// componentJSPath doesn't end with ".js"
 				reject(new Error("Could not recognise file name pattern for component " + componentJSPath + " (must end with .js)"));
 		});
+
+		fetchPromise.then(() => {
+			fetchPromise._fulfilled = true;
+		});
+
+		return fetchPromise;
 	}
 }
 
