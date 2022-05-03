@@ -97,6 +97,8 @@ class KTBS4LA2TraceSplit extends KtbsResourceElement {
                     }
 
                     if(splitStylesheet) {
+                        let firstTimeline;
+
                         for(let i = 0; i < splitStylesheet.rules.length; i++) {
                             const aRule = splitStylesheet.rules[i];
 
@@ -116,7 +118,14 @@ class KTBS4LA2TraceSplit extends KtbsResourceElement {
                                     aTimeLine.setAttribute("allow-edit-stylesheet", "false");
                                     aTimeLine.setAttribute("allow-split-trace", "false");
 
-                                    if(i != 0) {
+                                    if(i == 0) {
+                                        firstTimeline = aTimeLine;
+
+                                        Promise.all([this._componentReady, firstTimeline._componentReady]).then(() => {
+                                            this.shadowRoot.insertBefore(firstTimeline.stylesheetTools, this._timelineSynchronizer);
+                                        });
+                                    }
+                                    else {
                                         aTimeLine.setAttribute("allow-change-stylesheet", "false");
                                         aTimeLine.setAttribute("show-stylesheet-legend", "false");
                                     }

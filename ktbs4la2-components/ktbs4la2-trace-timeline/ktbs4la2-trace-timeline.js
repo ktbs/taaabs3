@@ -161,6 +161,13 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	get stylesheetTools() {
+		return this._stylesheetTools;
+	}
+
+	/**
+	 * 
+	 */
 	disconnectedCallback() {
 		this._obselsLoadingAbortController.abort();
 		window.removeEventListener("beforeunload", this._bindedOnBeforeUnloadWindowMethod);
