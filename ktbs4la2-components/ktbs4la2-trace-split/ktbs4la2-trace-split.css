@@ -13,13 +13,8 @@
     font-size: 14pt;
 }
 
-/*.timeline-div:not(:first-child) {
-    width: calc(50% - 40px);
-    display: inline-block;
-}*/
-
 .timeline-div {
-    width: calc(50% - 40px);
+    width: calc(49%);
     display: inline-block;
 }
 
@@ -38,13 +33,6 @@
     top: 0px;
     background-color: white;
     z-index: 3;
-}
-
-:host([allow-change-stylesheet = "0"][show-stylesheet-legend = "0"]) #stylesheet-tools,
-:host([allow-change-stylesheet = "0"][show-stylesheet-legend = "false"]) #stylesheet-tools,
-:host([allow-change-stylesheet = "false"][show-stylesheet-legend = "0"]) #stylesheet-tools,
-:host([allow-change-stylesheet = "false"][show-stylesheet-legend = "false"]) #stylesheet-tools {
-	display: none;
 }
 
 #stylesheet-selection {
@@ -75,24 +63,9 @@
 	color: #AAA;
 }
 
-#stylesheet-tools.edit-mode #slylesheet-selector {
-	display: none;
-}
-
-#stylesheet-id-input {
-	position: relative;
-	top: -3px;
-	left: 3px;
-}
-
-#stylesheet-tools:not(.edit-mode) #stylesheet-id-input {
-	display: none;
-}
-
+#stylesheet-id-input,
 #create-new-stylesheet {
-	font-weight: bold;
-	font-style: italic;
-	color: green;
+	display: none;
 }
 
 #legend {
@@ -128,10 +101,6 @@
 	cursor: text;
 }
 
-:host([show-stylesheet-legend = "0"]) #legend, :host([show-stylesheet-legend = "false"]) #legend {
-	display: none;
-}
-
 #stylesheet-tools ktbs4la2-trace-timeline-style-legend {
 	padding-left: 3px;
 	padding-right: 3px;
@@ -157,113 +126,7 @@
 	padding-bottom: 1px;
 }
 
-#add-style-button {
-    text-decoration-line: none;
-    color: green;
-    border-radius: 4px;
-    text-align: center;
-    background-color: none;
-    outline: none;
-	border: none;
-	padding-top: 0px;
-	padding-bottom: 0px;
-}
-
-#stylesheet-tools.edit-mode:not(.style-being-edited) #add-style-button {
-	cursor: pointer;
-}
-
-#stylesheet-tools.edit-mode:not(.style-being-edited) #add-style-button:hover {
-	background-color: green;
-	color: white;
-	box-shadow: 0px 0px 4px 2px #888;
-}
-
+#add-style-button,
 #current-stylesheet-tools {
-	display: inline-flex;
-	border-left: 1px solid #EEE;
-}
-
-.stylesheet-tool {
-	display: inline-block;
-	background-repeat: no-repeat;
-	background-size: contain;
-	width: 16px;
-	height: 16px;
-	opacity: 0.3;
-	margin-left: 2px;
-	margin-right: 2px;
-}
-
-#stylesheet-tools:not(.style-being-edited) .stylesheet-tool {
-	cursor: pointer;
-}
-
-#stylesheet-tools:not(.style-being-edited) .stylesheet-tool:hover {
-	opacity: 1;
-}
-
-#split-button {
-	background-image: url('{my-component-folder}/split.svg');
-}
-
-#edit-stylesheet-button {
-	background-image: url('{my-component-folder}/edit.svg');
-}
-
-#save-stylesheet-button {
-	background-image: url('{my-component-folder}/floppy_black.svg');
-}
-
-#current-stylesheet-tools.is-invalid #save-stylesheet-button {
-	cursor: default;
-}
-
-#current-stylesheet-tools.is-invalid #save-stylesheet-button:hover {
-	opacity: 0.3;
-}
-
-#cancel-stylesheet-modifications-button {
-	background-image: url('{my-component-folder}/cancel.svg');
-}
-
-#duplicate-stylesheet-button {
-	background-image: url('{my-component-folder}/duplicate.svg');
-}
-
-#create-method-from-stylesheet-button {
-	background-image: url('{my-component-folder}/Method.svg');
-}
-
-#delete-stylesheet-button {
-	background-image: url('{my-component-folder}/trash.svg');
-}
-
-#stylesheet-tools:not(.edit-mode) #add-style-button,
-#stylesheet-tools:not(.edit-mode) #save-stylesheet-button,
-#stylesheet-tools:not(.edit-mode) #cancel-stylesheet-modifications-button,
-#stylesheet-tools.edit-mode #split-button,
-:host([allow-split-trace = "0"]) #split-button,
-:host([allow-split-trace = "false"]) #split-button,
-#stylesheet-tools.edit-mode #edit-stylesheet-button,
-#stylesheet-tools.edit-mode #duplicate-stylesheet-button,
-#stylesheet-tools.edit-mode #delete-stylesheet-button,
-#stylesheet-tools.edit-mode #create-method-from-stylesheet-button,
-#current-stylesheet-tools.stylesheet-automatically-generated #edit-stylesheet-button,
-#current-stylesheet-tools.stylesheet-automatically-generated #save-stylesheet-button,
-#current-stylesheet-tools.stylesheet-automatically-generated #cancel-stylesheet-modifications-button,
-#current-stylesheet-tools.stylesheet-automatically-generated #delete-stylesheet-button {
 	display: none;
-}
-
-#current-stylesheet-tools:not(.has-unsaved-modifications) #save-stylesheet-button {
-	cursor: default;
-}
-
-#current-stylesheet-tools:not(.has-unsaved-modifications) #save-stylesheet-button:hover {
-	opacity: 0.3;
-}
-
-#current-stylesheet-tools.has-unsaved-modifications:not(.is-invalid) #save-stylesheet-button {
-	background-image: url('{my-component-folder}/floppy_green.svg');
 }

@@ -229,9 +229,17 @@
 :host([allow-split-trace = "0"]) #split-button,
 :host([allow-split-trace = "false"]) #split-button,
 #stylesheet-tools.edit-mode #edit-stylesheet-button,
+:host([allow-edit-stylesheet = "0"]) #edit-stylesheet-button,
+:host([allow-edit-stylesheet = "false"]) #edit-stylesheet-button,
+:host([allow-edit-stylesheet = "0"]) #duplicate-stylesheet-button,
+:host([allow-edit-stylesheet = "false"]) #duplicate-stylesheet-button,
+:host([allow-edit-stylesheet = "0"]) #delete-stylesheet-button,
+:host([allow-edit-stylesheet = "false"]) #delete-stylesheet-button,
 #stylesheet-tools.edit-mode #duplicate-stylesheet-button,
 #stylesheet-tools.edit-mode #delete-stylesheet-button,
 #stylesheet-tools.edit-mode #create-method-from-stylesheet-button,
+:host([allow-create-method-from-stylesheet = "0"]) #create-method-from-stylesheet-button,
+:host([allow-create-method-from-stylesheet = "false"]) #create-method-from-stylesheet-button,
 #current-stylesheet-tools.stylesheet-automatically-generated #edit-stylesheet-button,
 #current-stylesheet-tools.stylesheet-automatically-generated #save-stylesheet-button,
 #current-stylesheet-tools.stylesheet-automatically-generated #cancel-stylesheet-modifications-button,
@@ -249,6 +257,17 @@
 
 #current-stylesheet-tools.has-unsaved-modifications:not(.is-invalid) #save-stylesheet-button {
 	background-image: url('{my-component-folder}/floppy_green.svg');
+}
+
+:host([allow-create-method-from-stylesheet = "0"][allow-edit-stylesheet = "0"][allow-split-trace = "0"]) #current-stylesheet-tools,
+:host([allow-create-method-from-stylesheet = "0"][allow-edit-stylesheet = "0"][allow-split-trace = "false"]) #current-stylesheet-tools,
+:host([allow-create-method-from-stylesheet = "0"][allow-edit-stylesheet = "false"][allow-split-trace = "0"]) #current-stylesheet-tools,
+:host([allow-create-method-from-stylesheet = "0"][allow-edit-stylesheet = "false"][allow-split-trace = "false"]) #current-stylesheet-tools,
+:host([allow-create-method-from-stylesheet = "false"][allow-edit-stylesheet = "0"][allow-split-trace = "0"]) #current-stylesheet-tools,
+:host([allow-create-method-from-stylesheet = "false"][allow-edit-stylesheet = "0"][allow-split-trace = "false"]) #current-stylesheet-tools,
+:host([allow-create-method-from-stylesheet = "false"][allow-edit-stylesheet = "false"][allow-split-trace = "0"]) #current-stylesheet-tools,
+:host([allow-create-method-from-stylesheet = "false"][allow-edit-stylesheet = "false"][allow-split-trace = "false"]) #current-stylesheet-tools {
+	display: none;
 }
 
 #timeline-container {

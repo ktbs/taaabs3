@@ -117,6 +117,7 @@ class KTBS4LA2TraceSplit extends KtbsResourceElement {
                                     aTimeLine.setAttribute("stylesheet", this.getAttribute("display-stylesheet"));
                                     aTimeLine.setAttribute("allow-edit-stylesheet", "false");
                                     aTimeLine.setAttribute("allow-split-trace", "false");
+                                    aTimeLine.setAttribute("allow-create-method-from-stylesheet", "false");
 
                                     if(i == 0) {
                                         firstTimeline = aTimeLine;
