@@ -1093,17 +1093,16 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	_onClickDeleteStylesheetButton(event) {
 		// we can't delete stylesheet #0, as it always should be the default stylesheet (automatically generated "on the fly" and not stored)
 		if(this._currentStylesheet_rank != 0) {
-			if(confirm(this._translateString("You are about to permanently delete this stylesheet.\nAre you sure ?"))) {			
-				const model_copy = new Model(this._model.uri);
-
-				model_copy.get(this._abortController.signal)
+			if(confirm(this._translateString("You are about to permanently delete this stylesheet.\nAre you sure ?"))) {
+				this._model.get(this._abortController.signal)
 					.then(() => {
-						let model_copy_stylesheets_copy = model_copy.stylesheets;
+						const stylesheets_backup_copy = this._model.stylesheets;
+						let stylesheets_working_copy = this._model.stylesheets;
 						// we have to withdraw 1 from this._currentStylesheet_rank because the model doesn't has the defaut stylesheet at index 0
-						model_copy_stylesheets_copy.splice(this._currentStylesheet_rank - 1, 1);
-						model_copy.stylesheets = model_copy_stylesheets_copy;
+						stylesheets_working_copy.splice(this._currentStylesheet_rank - 1, 1);
+						this._model.stylesheets = stylesheets_working_copy;
 
-						model_copy.put()
+						this._model.put()
 							.then(() => {
 								this._styleSheets.splice(this._currentStylesheet_rank, 1);
 								this._styleSheetSelector.options[this._currentStylesheet_rank].remove();
@@ -1113,13 +1112,14 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 								this._applyStyleSheet(newStylesheet);
 							})
 							.catch((error) => {
+								this._model.stylesheets = stylesheets_backup_copy;
 								this.emitErrorEvent(error);
 								alert(this._translateString("An error occured while attempting to delete the stylesheet in its model") + " : \n" + error.name + " : " + error.message);
 							});
 					})
 					.catch((error) => {
 						this.emitErrorEvent(error);
-						alert(this._translateString("An error occured while attempting to delete the stylesheet in its model") + " : \n" + error.name + " : " + error.message);
+						alert(this._translateString("An error occured while attempting to save the stylesheet in its model") + " : \n" + error.name + " : " + error.message);
 					});
 			}
 		}
