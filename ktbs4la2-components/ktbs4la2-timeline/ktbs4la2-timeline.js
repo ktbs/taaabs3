@@ -317,7 +317,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		this._onDisplayWindowChangeHeightID = null;
 		this._onDisplayWindowChangeWidthID = null;
-		this._isZoomedOut = null;
 
 		this._lastKnownDisplayWindowWidth = null;
 		this._lastKnownDisplayWindowHeight = null;
@@ -526,6 +525,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		this._minuteLabel = this.shadowRoot.querySelector("#minute-label");
 		this._secondLabel = this.shadowRoot.querySelector("#second-label");
 		this._millisecondLabel = this.shadowRoot.querySelector("#millisecond-label");
+
+		document.addEventListener("fullscreenchange", this._onDocumentFullScreenChange.bind(this));
 	}
 
 	/**
@@ -549,6 +550,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	 */
 	_onClickToggleFullscreenButton(event) {
 		event.stopPropagation();
+		this._wasZoomedOutBeforeLastFullscreenChange = this._isZoomedOut;
 
 		if(this._allowFullScreen) {
 			if(document.fullscreenElement === null) {
@@ -558,6 +560,20 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			else
 				document.exitFullscreen();
 		}
+	}
+
+	/**
+	 * 
+	 */
+	_onDocumentFullScreenChange(event) {
+		setTimeout(() => {
+			setTimeout(() => {
+				if(this._wasZoomedOutBeforeLastFullscreenChange)
+					this._onClickDezoomButton();
+
+				delete this._wasZoomedOutBeforeLastFullscreenChange;
+			});
+		});
 	}
 
 	/**
@@ -618,22 +634,25 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 		// widget's width has changed
 		if((this._displayWindow.clientWidth != 0) && (this._lastKnownDisplayWindowWidth != this._displayWindow.clientWidth)) {
-			this._lastKnownDisplayWindowWidth = this._displayWindow.clientWidth;
-
 			if(this._onDisplayWindowChangeWidthID != null)
 				clearTimeout(this._onDisplayWindowChangeWidthID);
 
 			this._onDisplayWindowChangeWidthID = setTimeout(() => {
+				this._lastKnownDisplayWindowWidth = this._displayWindow.clientWidth;
+
 				this._timeDivisionsInitialized.then(() => {
 					this._initZoomParams();
 
-					if(this._isZoomedOut == true) {
+					if(this._isZoomedOut) {
 						this._setWidthRules(this._initialLevel, this._initialDivWidth);
-						this._requestUpdateEventsRow();
+						this._updateTimeDivisions(this.beginTime, this.endTime);
 					}
-					
-					this._updateScrollBarCursor();
+
+					this._requestUpdateEventsRow();
 					this._updateScrollBarContent();
+					this._updateScrollBarCursor();
+					this._updateScrollButtons();
+					this._notifyViewChange();
 				});
 
 				this._onDisplayWindowChangeWidthID = null;
@@ -1303,9 +1322,7 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._scrollRightButton.removeAttribute("disabled");
 		}
 
-		if(this._beginIsInView() && this._endIsInView()) {
-			this._isZoomedOut = true;
-
+		if(this._isZoomedOut) {
 			if(!this._dezoomButton.hasAttribute("disabled"))
 				this._dezoomButton.setAttribute("disabled", "");
 
@@ -1315,7 +1332,17 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		else {
 			if(this._dezoomButton.hasAttribute("disabled"))
 				this._dezoomButton.removeAttribute("disabled");
+
+			if(!this._scrollBar.classList.contains("scrollable"))
+				this._scrollBar.classList.add("scrollable");
 		}
+	}
+
+	/**
+	 * 
+	 */
+	get _isZoomedOut() {
+		return (this._beginIsInView() && this._endIsInView());
 	}
 
 	/**
@@ -1536,6 +1563,11 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 			if((this._requestedNewZoomLevel == this._initialLevel) && (this._requestedNewDivWidth < this._initialDivWidth))
 				this._requestedNewDivWidth = this._initialDivWidth;
 
+			this._updateRepresentedTime();
+
+			if(!this._requestedNewViewBegin)
+				this._requestedNewViewBegin = this.viewBeginTime;
+
 			let timelineCursorPosition = this._timelineCursor.getBoundingClientRect().left - this._displayWindow.getBoundingClientRect().left + this._displayWindow.scrollLeft;
 			let timelineCursorTime = this._getMouseTime(timelineCursorPosition);
 			let divisionsLevelHasChanged = false;
@@ -1549,43 +1581,40 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				this._requestedNewDivWidth = null;
 			}
 
-			if(this._requestedNewViewBegin) {
+			let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
+			let newViewEndTime = this._requestedNewViewBegin + (this._displayWindow.clientWidth * timeOverWidthRatio);
+			let newTimeDivBoundaries = this._getTimeDivBoundariesForView(this._requestedNewViewBegin, newViewEndTime);
+			let timeDivNeedsToChange = ((newTimeDivBoundaries.beginTime != this._firstRepresentedTime) || (newTimeDivBoundaries.endTime != this._lastRepresentedTime));
+
+			if(timeDivNeedsToChange || divisionsLevelHasChanged) {
+				let firstBefore = this._firstRepresentedTime;
+				let lastBefore = this._lastRepresentedTime;
+				this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
 				this._updateRepresentedTime();
-				let timeOverWidthRatio = (this._lastRepresentedTime - this._firstRepresentedTime) / this._timeDiv.clientWidth;
-				let newViewEndTime = this._requestedNewViewBegin + (this._displayWindow.clientWidth * timeOverWidthRatio);
-				let newTimeDivBoundaries = this._getTimeDivBoundariesForView(this._requestedNewViewBegin, newViewEndTime);
-				let timeDivNeedsToChange = ((newTimeDivBoundaries.beginTime != this._firstRepresentedTime) || (newTimeDivBoundaries.endTime != this._lastRepresentedTime));
+				let timeDivHasChanged = ((this._firstRepresentedTime != firstBefore) || (this._lastRepresentedTime != lastBefore));
 
-				if(timeDivNeedsToChange || divisionsLevelHasChanged) {
-					let firstBefore = this._firstRepresentedTime;
-					let lastBefore = this._lastRepresentedTime;
-					this._updateTimeDivisions(newTimeDivBoundaries.beginTime, newTimeDivBoundaries.endTime);
-					this._updateRepresentedTime();
-					let timeDivHasChanged = ((this._firstRepresentedTime != firstBefore) || (this._lastRepresentedTime != lastBefore));
-
-					if(timeDivHasChanged) {
-						let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
-						
-						for(let i = 0; i < affectedIntervals.length; i++) {
-							let interval = affectedIntervals[i];
-							let eventsToUpdate = this._getAllEventsOverlappingInterval(interval.begin, interval.end);
-							this._updateEventsPosX(eventsToUpdate);
-							const histoBarsToUpdate = this._getHistoBarsOverlappingInterval(interval.begin, interval.end);
-							this._updateHistogramBarsPosX(histoBarsToUpdate);
-						}
+				if(timeDivHasChanged) {
+					let affectedIntervals = this._getIntervalUnion({begin: firstBefore, end: lastBefore}, {begin: this._firstRepresentedTime, end: this._lastRepresentedTime});
+					
+					for(let i = 0; i < affectedIntervals.length; i++) {
+						let interval = affectedIntervals[i];
+						let eventsToUpdate = this._getAllEventsOverlappingInterval(interval.begin, interval.end);
+						this._updateEventsPosX(eventsToUpdate);
+						const histoBarsToUpdate = this._getHistoBarsOverlappingInterval(interval.begin, interval.end);
+						this._updateHistogramBarsPosX(histoBarsToUpdate);
 					}
 				}
-
-				this._setScrollForMousePositionAndTime(this._requestedNewViewBegin, 0);
-				this._updateScrollBarCursor();
-				this._requestedNewViewBegin = null;
 			}
 
+			this._setScrollForMousePositionAndTime(this._requestedNewViewBegin, 0);
+			this._updateScrollBarCursor();
+			this._requestedNewViewBegin = null;
+
 			if((this._requestedNewZoomLevel == this._initialLevel) && (this._requestedNewDivWidth == this._initialDivWidth)) {
-				if(!this._displayWindow.classList.contains("scrollable"))
+				if(this._displayWindow.classList.contains("scrollable"))
 					this._displayWindow.classList.remove("scrollable");
 
-				if(!this._scrollBar.classList.contains("scrollable"))
+				if(this._scrollBar.classList.contains("scrollable"))
 					this._scrollBar.classList.remove("scrollable");
 			}
 			else {
@@ -1595,6 +1624,8 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 				if(!this._scrollBar.classList.contains("scrollable"))
 					this._scrollBar.classList.add("scrollable");
 			}
+
+			this._updateScrollButtons();
 			
 			if(divisionsLevelHasChanged)
 				this._updateMaxDisplayableRows();
@@ -2758,7 +2789,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 	_initZoom() {
 		this._initZoomParams();
 		this._setWidthRules(this._initialLevel, this._initialDivWidth);
-		this._isZoomedOut = true;
 		this._resolveZoomInitialized();
 	}
 
@@ -3149,8 +3179,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 					newLevel = this._initialLevel;
 					newWidth = this._initialDivWidth;
 
-					this._isZoomedOut = true;
-
 					if(this._displayWindow.classList.contains("scrollable"))
 						this._displayWindow.classList.remove("scrollable");
 
@@ -3219,8 +3247,6 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 
 				if(!this._scrollBar.classList.contains("scrollable"))
 					this._scrollBar.classList.add("scrollable");
-
-				this._isZoomedOut = false;
 			}
 
 			divisionsLevelHasChanged = (newLevel != this._widgetContainer.className);

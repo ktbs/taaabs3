@@ -168,6 +168,7 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
             &&  (event.target.localName == "ktbs4la2-timeline")
             &&  event.detail
             &&  event.detail.user_initiated
+            &&  !document.fullscreenElement
        ) {
             let newViewBeginTime = event.detail.begin;
             let newZoomLevel = event.detail.zoomLevel;
@@ -193,7 +194,7 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
                             aTimeline.setAttribute("div-width", newDivWidth);
                     }
                 }
-
+                
                 this._syncChildViewsID = null;
             });
         }
@@ -203,7 +204,11 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
      * 
      */
     _onChildTimelineCursorMove(event) {
-        if((this.syncCursor) && (event.target.localName == "ktbs4la2-timeline")) {
+        if(
+                this.syncCursor
+            &&  (event.target.localName == "ktbs4la2-timeline")
+            &&  !document.fullscreenElement
+        ) {
             let cursorTime = event.detail.cursorTime;
 
             if(this._syncChildCursorsID)

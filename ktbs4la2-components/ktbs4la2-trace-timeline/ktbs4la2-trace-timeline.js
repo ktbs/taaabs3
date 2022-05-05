@@ -1661,8 +1661,15 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onTimelineViewChanged(event) {
-		if(event.detail.zoomLevel != this._lastHistogramUpdateZoomLevel)
-			this._updateHistogram();
+		if(this._updateHistogramTaskID)
+			delete this._updateHistogramTaskID;
+
+		this._updateHistogramTaskID = setTimeout(() => {
+			if(event.detail.zoomLevel != this._lastHistogramUpdateZoomLevel)
+				this._updateHistogram();
+
+			delete this._updateHistogramTaskID;
+		});
 	}
 
 	/**
