@@ -258,8 +258,8 @@ class KTBS4LA2CreateResourceForm extends TemplatedHTMLElement {
 			"new-resource-id": this._idInput.value
 		};
 
-		if((createType == "Base") || (createType == "StoredTrace") || (createType == "ComputedTrace"))
-			formData["new-resource-id"] = this._idInput.value + "/";
+		/*if((createType == "Base") || (createType == "StoredTrace") || (createType == "ComputedTrace"))
+			formData["new-resource-id"] = this._idInput.value + "/";*/
 
 		if(this._labelFormInput.value)
 			formData["label"] = JSON.parse(this._labelFormInput.value);
