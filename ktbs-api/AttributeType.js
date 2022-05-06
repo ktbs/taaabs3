@@ -314,9 +314,20 @@ export class AttributeType {
 			if(this._JSONData["hasAttributeObselType"] instanceof Array) {
 				for(let i = 0; i < this._JSONData["hasAttributeObselType"].length; i++) {
 					let obselType_link = this._JSONData["hasAttributeObselType"][i];
-					let obselType_uri = this._parentModel.resolve_link_uri(obselType_link);
-					let obselType_id = decodeURIComponent(obselType_uri.hash.substring(1));
-					let obselType = this._parentModel.get_obsel_type(obselType_id);
+					let obselType;
+
+					if(
+							(this._parentModel.lifecycleStatus == "exists")
+						||	(this._parentModel.lifecycleStatus == "modified")
+					) {
+						let obselType_uri = this._parentModel.resolve_link_uri(obselType_link);
+						let obselType_id = decodeURIComponent(obselType_uri.hash.substring(1));
+						obselType = this._parentModel.get_obsel_type(obselType_id);
+					}
+					else {
+						let obselType_id = obselType_link.substring(1);
+						obselType = this._parentModel.get_obsel_type(obselType_id);
+					}
 
 					if(obselType)
 						obsel_types.push(obselType);

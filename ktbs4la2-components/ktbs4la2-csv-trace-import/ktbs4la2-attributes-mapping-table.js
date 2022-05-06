@@ -257,12 +257,12 @@ class KTBS4LA2AttributesMappingTable extends TemplatedHTMLElement {
 
                         anIdInput._componentReady
                             .then(() => {
-                                anIdInput.setAttribute("value", aMappingSetValue.attribute_id)
-                                    .then(() => {
+                                anIdInput.setAttribute("value", aMappingSetValue.attribute_id);
+                                    //.then(() => {
                                         anIdInput.old_value = aMappingSetValue.attribute_id;
                                         resolveIdInputSetValuePromise();
-                                    })
-                                    .catch(rejectIdInputSetValuePromise);
+                                    //})
+                                    //.catch(rejectIdInputSetValuePromise);
                             })
                             .catch(rejectIdInputSetValuePromise);
 
