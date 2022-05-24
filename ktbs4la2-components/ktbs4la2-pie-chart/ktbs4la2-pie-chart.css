@@ -1,0 +1,78 @@
+#container {
+	display: inline-block;
+}
+
+#title {
+	font-size: 8pt;
+	text-align: center;
+}
+
+#pie {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+#legend {
+	display: inline-block;
+	margin-block-start: 0px;
+	margin-block-end: 0px;
+	vertical-align: middle;
+	padding-inline-start: 20px;
+	/*list-style-type: none;*/
+	vertical-align: middle;
+}
+
+/*
+#legend li {
+	height: 17px;
+	position: relative;
+	top: -23px;
+}
+*/
+
+/*
+#legend li::before {
+	content: '\2022';
+    position: relative;
+    left: -5px;
+	top: 10px;
+    font-size: 2.5em;
+}
+*/
+
+#legend li span {
+	color: black;
+	font-size: 9pt;
+}
+
+/* -------------------------------- */
+
+#popup {
+	position: absolute;
+	border-radius: 5px 5px 5px 5px;
+	z-index: 1;
+	background-color: white;
+    border: 1px solid lightgray;
+	padding: 10px 10px;
+}
+
+#popup.hidden {
+	display: none;
+}
+
+#popup-title {
+	font-size: 9pt;
+	font-weight: normal;
+    margin-block-start: 0;
+    margin-block-end: 0;
+	white-space: nowrap;
+}
+
+#popup-content {
+	font-weight: bold;
+	margin-block-start: 5px;
+    margin-block-end: 0px;
+    padding-inline-start: 0px;
+	list-style-type: none;
+	font-size: 9pt;
+}
