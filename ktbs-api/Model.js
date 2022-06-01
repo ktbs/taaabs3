@@ -467,7 +467,7 @@ export class Model extends Resource {
 	}
 
 	/**
-	 * Gets the obsel type with the given id from the current Model,  or null if no obsel type with the given obsel_type_id has been found in the model
+	 * Gets the obsel type with the given id from the current Model, or undefined if no obsel type with the given obsel_type_id has been found in the model
 	 * \param string obsel_type_id - the id of the obsel type we are looking for
 	 * \return ObselType
 	 * \public
@@ -480,6 +480,25 @@ export class Model extends Resource {
 
 			if(obsel_type.id == obsel_type_id)
 				return obsel_type;
+		}
+
+		return undefined;
+	}
+
+	/**
+	 * Gets the rank for the obsel type with the given id within the current Model, or undefined if no obsel type with the given obsel_type_id has been found in the model
+	 * \param string obsel_type_id - the id of the obsel type we are looking for
+	 * \return Integer
+	 * \public
+	 */
+	get_obsel_type_rank(obsel_type_id) {
+		let obsel_types = this.obsel_types;
+
+		for(let i = 0; i < obsel_types.length; i++) {
+			let obsel_type = obsel_types[i];
+
+			if(obsel_type.id == obsel_type_id)
+				return i;
 		}
 
 		return undefined;

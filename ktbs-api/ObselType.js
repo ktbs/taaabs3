@@ -81,19 +81,6 @@ export class ObselType {
     get parent_model() {
         return this._parentModel;
     }
-
-    /**
-	 * Sets the Model the obsel type is described in
-     * \param Model new_parent_model - the new Model the obsel type is described in
-     * \throws TypeError throws a TypeError if the provided argument is not a Model
-     * \public
-	 */
-	/*set parent_model(new_parent_model) {
-		if(new_parent_model instanceof Model)
-			this._parentModel = new_parent_model;
-		else
-			throw new TypeError("New value for parent_model property must be of type Model.");
-    }*/
     
     /**
 	 * Sets the parent model where the ObselType is described
@@ -204,6 +191,15 @@ export class ObselType {
         }
         else
             throw new TypeError("New value for super_obsel_types property must be an Array of ObselType");
+    }
+
+    /**
+	 * Gets the rank for the current obsel type id within it's parent Model
+	 * \return Integer
+	 * \public
+	 */
+    get rank_within_parent_model() {
+        return this._parentModel.get_obsel_type_rank(this.id);
     }
 
     /**
