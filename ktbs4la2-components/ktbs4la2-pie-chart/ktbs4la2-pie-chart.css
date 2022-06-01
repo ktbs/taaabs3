@@ -19,12 +19,25 @@
 	margin-block-end: 0px;
 	vertical-align: middle;
 	padding-inline-start: 20px;
-	vertical-align: middle;
+}
+
+#legend li {
+    list-style-type: none;
+    position: relative;
+}
+
+#legend li::before {
+    content: '⬤';
+    position: absolute;
+    left: -1.5em;
+	top: 0.3em;
+    font-size: 0.6em;
 }
 
 #legend li span {
 	color: black;
 	font-size: 9pt;
+	vertical-align: middle;
 }
 
 /* -------------------------------- */
