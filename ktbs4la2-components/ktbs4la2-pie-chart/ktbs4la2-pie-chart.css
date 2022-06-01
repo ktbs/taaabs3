@@ -1,5 +1,6 @@
 #container {
 	display: inline-block;
+	position: relative;
 }
 
 #title {
@@ -18,27 +19,8 @@
 	margin-block-end: 0px;
 	vertical-align: middle;
 	padding-inline-start: 20px;
-	/*list-style-type: none;*/
 	vertical-align: middle;
 }
-
-/*
-#legend li {
-	height: 17px;
-	position: relative;
-	top: -23px;
-}
-*/
-
-/*
-#legend li::before {
-	content: '\2022';
-    position: relative;
-    left: -5px;
-	top: 10px;
-    font-size: 2.5em;
-}
-*/
 
 #legend li span {
 	color: black;
@@ -54,6 +36,7 @@
 	background-color: white;
     border: 1px solid lightgray;
 	padding: 10px 10px;
+	pointer-events: none;
 }
 
 #popup.hidden {

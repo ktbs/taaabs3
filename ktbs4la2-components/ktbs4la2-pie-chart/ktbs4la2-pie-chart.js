@@ -55,6 +55,7 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 	 * 
 	 */
 	onComponentReady() {
+		this._container = this.shadowRoot.querySelector("#container");
 		this._title = this.shadowRoot.querySelector("#title");
 		this._pie = this.shadowRoot.querySelector("#pie");
 		this._legend = this.shadowRoot.querySelector("#legend");
@@ -315,9 +316,10 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 						this._popupContent.innerText = "";
 				}
 
+				const componentRect = this._container.getBoundingClientRect();
 				const sliceRect = groupNode.getBoundingClientRect();
-				const sliceCenterX = sliceRect.x + (sliceRect.width / 2);
-				const sliceCenterY = sliceRect.y + (sliceRect.height / 2);
+				const sliceCenterX = sliceRect.x + (sliceRect.width / 2) - componentRect.x;
+				const sliceCenterY = sliceRect.y + (sliceRect.height / 2) - componentRect.y;
 
 				this._popup.style.left = sliceCenterX + "px";
 				this._popup.style.top = sliceCenterY + "px";
