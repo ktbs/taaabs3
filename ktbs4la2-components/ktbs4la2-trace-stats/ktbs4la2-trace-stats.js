@@ -17,6 +17,11 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 	constructor() {
 		super(import.meta.url, true, true);
 		this._originTime = undefined;
+
+		this._modelReady = new Promise((resolve, reject) => {
+			this._resolveModelReady = resolve;
+			this._rejectModelReady = resolve;
+		});
 	}
 
 	/**
@@ -132,6 +137,25 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_onModelNotification() {
+		switch(this._model.syncStatus) {
+			case "needs_sync":
+				this._model.get(this._abortController.signal).catch(() => {});
+				break;
+			case "in_sync" :
+				this._resolveModelReady();
+				break;
+			case "pending" :
+				break;
+			default:
+				this._rejectModelReady(this._model.error);
+				break;
+		}
+	}
+
+	/**
+	 * 
+	 */
 	_onStatsNotification() {
 		switch(this._stats.syncStatus) {
 			case "needs_sync":
@@ -161,6 +185,17 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 
 			if(!isNaN(parsedOrigin))
 				this._originTime = parsedOrigin;
+		}
+
+		if(!this._model || (this._trace.model != this._model)) {
+			if(this._model) {
+				this._model.unregisterObserver(this._onModelNotification.bind(this));
+				delete this._model;
+			}
+
+			this._model = this._trace.model;
+			this._model.registerObserver(this._onModelNotification.bind(this), "sync-status-change");
+			this._onModelNotification(this._model, "sync-status-change");
 		}
 
 		if(this._stats)
@@ -196,6 +231,78 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_updatePieChart() {
+		while(this._pieChart.firstChild)
+		this._pieChart.removeChild(this._pieChart.firstChild);
+
+		let obselCount = this._stats.obsel_count;
+		this._countTag.innerText = obselCount;
+
+		if(obselCount > 0) {
+			let obselCountPerType = this._stats.obsel_count_per_type;
+			let sorted_slices = new Array();
+
+			for(let i = 0; i < obselCountPerType.length; i++) {
+				let type = obselCountPerType[i]["stats:hasObselType"];
+				let count = obselCountPerType[i]["stats:nb"];
+				let sliceElement = document.createElement("ktbs4la2-pie-slice");
+				sliceElement.setAttribute("string", type);
+
+				this._modelReady.then(() => {
+					const obseltype_id = type.startsWith("m:")?type.substring(2):type;
+					const obselType = this._model.get_obsel_type(obseltype_id);
+
+					if(obselType) {
+						sliceElement.setAttribute("string", obselType.get_preferred_label(this._lang));
+
+						if(obselType.suggestedColor)
+							sliceElement.setAttribute("color", obselType.suggestedColor);
+
+						const rank = obselType.rank_within_parent_model;
+						
+						if(rank != undefined)
+							sorted_slices[rank] = sliceElement;
+					}
+				})
+				.catch(this.emitErrorEvent);
+
+				sliceElement.setAttribute("number", count);
+				this._pieChart.appendChild(sliceElement);
+			}
+
+			this._modelReady.then(() => {
+				if(sorted_slices.length > 1) {
+					// reindex the array in case it has missing keys
+					sorted_slices = sorted_slices.filter(val => val);
+					let inversion_occured;
+
+					do {
+						inversion_occured = false;
+
+						for(let rank = 0; rank < sorted_slices.length; rank++) {
+							const aSlice = sorted_slices[rank];
+
+							if(aSlice) {
+								const nextSibling = this._pieChart.childNodes[rank];
+
+								if(nextSibling && (nextSibling != aSlice)) {
+									this._pieChart.insertBefore(aSlice, nextSibling);
+									inversion_occured = true;
+								}
+							}
+						}
+					} while(inversion_occured);
+				} 
+			})
+			.catch(this.emitErrorEvent);
+		}
+		else
+			this._pieChart.style.display = "none";
+	}
+
+	/**
+	 * 
+	 */
 	_onStatsReady() {
 		this._updateBeginEnd();
 
@@ -207,26 +314,8 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 			else
 				this._durationContainer.style.display = "none";
 
-			let obselCount = this._stats.obsel_count;
-			this._countTag.innerText = obselCount;
-
-			while(this._pieChart.firstChild)
-				this._pieChart.removeChild(this._pieChart.firstChild);
-
-			if(obselCount > 0) {
-				let obselCountPerType = this._stats.obsel_count_per_type;
-
-				for(let i = 0; i < obselCountPerType.length; i++) {
-					let type = obselCountPerType[i]["stats:hasObselType"];
-					let count = obselCountPerType[i]["stats:nb"];
-					let sliceElement = document.createElement("ktbs4la2-pie-slice");
-					sliceElement.setAttribute("string", type);
-					sliceElement.setAttribute("number", count);
-					this._pieChart.appendChild(sliceElement);
-				}
-			}
-			else
-				this._pieChart.style.display = "none";
+			
+			this._updatePieChart();
 
 			if(this._container.classList.contains("waiting"))
 				this._container.classList.remove("waiting");
@@ -289,6 +378,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 
 		this._countLabel.innerText = this._translateString("Obsels count") + " :";
 		this._pieChart.setAttribute("title", this._translateString("Obsels count per obsel types"));
+		this._updatePieChart();
 	}
 }
 

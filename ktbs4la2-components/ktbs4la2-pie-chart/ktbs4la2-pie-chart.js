@@ -106,7 +106,7 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 			const slice = this.slices[i];
 			const value = parseFloat(slice.getAttribute("number"));
 			const percentageValue = (value / this.valuesSum) * 100;
-			const color = slice.hasAttribute("color")?slice.getAttribute("color"):getDistinctColor(i, this.slices.length + 1);
+			const color = slice.hasAttribute("color")?slice.getAttribute("color"):getDistinctColor(i, this.slices.length);
 			this._drawPieSlice(cumulatedPercentages, percentageValue, color, slice.getAttribute("string"));
 			cumulatedPercentages += percentageValue;
 		}
