@@ -41,12 +41,12 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 
 		if((attributeName == "width") || (attributeName == "height"))
 			this._componentReady.then(() => {
-				this._updatePie();
+				this._requestUpdatePie();
 			}).catch(() => {});
 
 		if(attributeName == "pie-radius") {
 			this._componentReady.then(() => {
-				this._updatePie();
+				this._requestUpdatePie();
 			}).catch(() => {});
 		}
 	}
@@ -62,7 +62,7 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 		this._popup = this.shadowRoot.querySelector("#popup");
 		this._popupTitle = this.shadowRoot.querySelector("#popup-title");
 		this._popupContent = this.shadowRoot.querySelector("#popup-content");
-		this._updatePie();
+		this._requestUpdatePie();
 	}
 
 	/**
@@ -73,8 +73,21 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 			delete this._valuesSum;
 
 		this._componentReady.then(() => {
-			this._updatePie();
+			this._requestUpdatePie();
 		}).catch(() => {});
+	}
+
+	/**
+	 * 
+	 */
+	_requestUpdatePie() {
+		if(this._requestUpdatePieTaskID)
+			clearTimeout(this._requestUpdatePieTaskID);
+
+		this._requestUpdatePieTaskID = setTimeout(() => {
+			this._updatePie();
+			delete this._requestUpdatePieTaskID;
+		});
 	}
 
 	/**
@@ -158,22 +171,35 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 		const groupElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
 			// draw the slice
 			const beginAngle = (beginPercentage / 100) * (2 * Math.PI);
-			const endAngle = ((beginPercentage + sliceSizePercentage) / 100) * (2 * Math.PI);
-
 			const cornerPoint = {x: 0, y: 0};
 			const arcBeginPoint = {x: Math.sin(beginAngle) * this.pieRadius, y: -Math.cos(beginAngle) * this.pieRadius};
-			const arcEndPoint = {x: Math.sin(endAngle) * this.pieRadius, y: -Math.cos(endAngle) * this.pieRadius};
-
 			const arcOrientationCode = (sliceSizePercentage > 50.0)?1:0;
+			let endAngle, arcEndPoint, pathD;
 
-			// move (M) to the corner point
-			const pathD = "M" + cornerPoint.x + "," + cornerPoint.y + " " + 
-				// draw a line (L) to the arc begin point
-				"L" + arcBeginPoint.x + "," + arcBeginPoint.y + " " + 
-				// draw the arc (A) to the arc end point
-				"A " + this.pieRadius + " " + this.pieRadius + " 0 " + arcOrientationCode + " 1 " + arcEndPoint.x + " " + arcEndPoint.y + 
-				// close the path back to the begining (corner point)
-				" Z";
+			if(sliceSizePercentage < 100) {
+				endAngle = ((beginPercentage + sliceSizePercentage) / 100) * (2 * Math.PI);
+				arcEndPoint = {x: Math.sin(endAngle) * this.pieRadius, y: -Math.cos(endAngle) * this.pieRadius};
+
+						// move (M) to the corner point
+				pathD =	"M" + cornerPoint.x + "," + cornerPoint.y + " " + 
+						// draw a line (L) to the arc begin point
+						"L" + arcBeginPoint.x + "," + arcBeginPoint.y + " " + 
+						// draw the arc (A) to the arc end point
+						"A " + this.pieRadius + " " + this.pieRadius + " 0 " + arcOrientationCode + " 1 " + arcEndPoint.x + " " + arcEndPoint.y + 
+						// close the path back to the begining (corner point)
+						" Z";
+			}
+			else {
+				endAngle = (2 * Math.PI - 0.0000001);
+				arcEndPoint = {x: Math.sin(endAngle) * this.pieRadius, y: -Math.cos(endAngle) * this.pieRadius};
+
+						// move (M) straight to the arc begin point point
+				pathD =	"M" + arcBeginPoint.x + "," + arcBeginPoint.y + " " + 
+						// draw the arc (A) to the arc end point
+						"A " + this.pieRadius + " " + this.pieRadius + " 0 " + arcOrientationCode + " 1 " + arcEndPoint.x + " " + arcEndPoint.y +
+						// close the path back to the begining (corner point)
+						" Z";
+			}
 			
 			const slicePathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
 				slicePathElement.setAttribute("d", pathD);
@@ -191,19 +217,34 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 			const shadowUpperLeftCorner = {x: 1.1 * Math.sin(beginAngle) * this.pieRadius, y: 1.1 * -Math.cos(beginAngle) * this.pieRadius};
 			const shadowUpperRightCorner = {x: 1.1 * Math.sin(endAngle) * this.pieRadius, y: 1.1 * -Math.cos(endAngle) * this.pieRadius};
 
-			const shadowPathD = "M" + arcBeginPoint.x + "," + arcBeginPoint.y + " " +
-				"L" + shadowUpperLeftCorner.x + "," + shadowUpperLeftCorner.y + " " + 
-				"A " + 1.1 * this.pieRadius + " " + 1.1 * this.pieRadius + " 0 " + arcOrientationCode + " 1 " + shadowUpperRightCorner.x + " " + shadowUpperRightCorner.y + 
-				"L" + arcEndPoint.x + "," + arcEndPoint.y + " " + 
-				"A " + this.pieRadius + " " + this.pieRadius + " 0 " + arcOrientationCode + " 0 " + arcBeginPoint.x + " " + arcBeginPoint.y + 
-				// close the path back to the begining
-				" Z";
+			let shadowPathD;
+
+			if(sliceSizePercentage < 100) {
+				shadowPathD =	"M" + arcBeginPoint.x + "," + arcBeginPoint.y + " " +
+								"L" + shadowUpperLeftCorner.x + "," + shadowUpperLeftCorner.y + " " + 
+								"A " + 1.1 * this.pieRadius + " " + 1.1 * this.pieRadius + " 0 " + arcOrientationCode + " 1 " + shadowUpperRightCorner.x + " " + shadowUpperRightCorner.y + 
+								"L" + arcEndPoint.x + "," + arcEndPoint.y + " " + 
+								"A " + this.pieRadius + " " + this.pieRadius + " 0 " + arcOrientationCode + " 0 " + arcBeginPoint.x + " " + arcBeginPoint.y + 
+								// close the path back to the begining
+								" Z";
+			}
+			else {
+				shadowPathD =	"M" + arcBeginPoint.x + "," + arcBeginPoint.y + " " +
+								"L" + shadowUpperLeftCorner.x + "," + shadowUpperLeftCorner.y + " " + 
+								"A " + 1.1 * this.pieRadius + " " + 1.1 * this.pieRadius + " 0 " + arcOrientationCode + " 1 " + shadowUpperRightCorner.x + " " + shadowUpperRightCorner.y + 
+								"L" + shadowUpperLeftCorner.x + "," + shadowUpperLeftCorner.y + " " +
+								"L" + arcBeginPoint.x + "," + arcBeginPoint.y + " " + 
+								"L" + arcEndPoint.x + "," + arcEndPoint.y + " " + 
+								"A " + this.pieRadius + " " + this.pieRadius + " 0 " + arcOrientationCode + " 0 " + arcBeginPoint.x + " " + arcBeginPoint.y + 
+								// close the path back to the begining
+								" Z";
+			}
 			
 			const sliceShadowPathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
 				sliceShadowPathElement.setAttribute("d", shadowPathD);
 				sliceShadowPathElement.setAttribute("fill", fillColor);
 				sliceShadowPathElement.setAttribute("stroke", "white");
-				sliceShadowPathElement.setAttribute("stroke-width", 1);
+				sliceShadowPathElement.setAttribute("stroke-width", Number(sliceSizePercentage < 100));
 				sliceShadowPathElement.setAttribute("fill-opacity", 0.4);
 				sliceShadowPathElement.setAttribute("visibility", "hidden");
 			groupElement.appendChild(sliceShadowPathElement);
@@ -211,17 +252,27 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 
 			// display the percentage on the slice
 			if(sliceSizePercentage >= 6) {
-				const middleAngle = beginAngle + ((endAngle - beginAngle) / 2);
 				const fontSize = this.pieRadius / 6;
-				const labelX = Math.sin(middleAngle) * (2/3) * this.pieRadius;
-				const labelY = -Math.cos(middleAngle) * (2/3) * this.pieRadius;
+				let labelX, labelY, textRotationAngleDeg;
 
-				let textRotationAngleRad = (middleAngle - Math.PI / 2);
+				if(sliceSizePercentage < 100) {
+					const middleAngle = beginAngle + ((endAngle - beginAngle) / 2);
+					
+					labelX = Math.sin(middleAngle) * (2/3) * this.pieRadius;
+					labelY = -Math.cos(middleAngle) * (2/3) * this.pieRadius;
 
-				if(textRotationAngleRad > (Math.PI / 2))
-					textRotationAngleRad -= Math.PI;
+					let textRotationAngleRad = (middleAngle - Math.PI / 2);
 
-				const textRotationAngleDeg = (textRotationAngleRad * 180 / Math.PI);
+					if(textRotationAngleRad > (Math.PI / 2))
+						textRotationAngleRad -= Math.PI;
+
+					textRotationAngleDeg = (textRotationAngleRad * 180 / Math.PI);
+				}
+				else {
+					labelX = 0;
+					labelY = 0;
+					textRotationAngleDeg = 0;
+				}
 
 				const labelElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
 					labelElement.setAttribute("fill", "white");
