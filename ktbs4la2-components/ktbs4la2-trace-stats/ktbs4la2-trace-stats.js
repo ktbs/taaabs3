@@ -231,14 +231,27 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
+	_requestUpdatePieChart() {
+		if(this._requestUpdatePieChartTaskID)
+			clearTimeout(this._requestUpdatePieChartTaskID);
+
+		this._requestUpdatePieChartTaskID= setTimeout(() => {
+			this._updatePieChart();
+			delete this._requestUpdatePieChartTaskID;
+		})
+	}
+
+	/**
+	 * 
+	 */
 	_updatePieChart() {
 		while(this._pieChart.firstChild)
-		this._pieChart.removeChild(this._pieChart.firstChild);
+			this._pieChart.removeChild(this._pieChart.firstChild);
 
 		let obselCount = this._stats.obsel_count;
 		this._countTag.innerText = obselCount;
 
-		if(obselCount > 0) {
+		if(this._stats.obsel_count_per_type.length > 0) {
 			let obselCountPerType = this._stats.obsel_count_per_type;
 			let sorted_slices = new Array();
 
@@ -315,7 +328,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 				this._durationContainer.style.display = "none";
 
 			
-			this._updatePieChart();
+			this._requestUpdatePieChart();
 
 			if(this._container.classList.contains("waiting"))
 				this._container.classList.remove("waiting");
@@ -378,7 +391,8 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 
 		this._countLabel.innerText = this._translateString("Obsels count") + " :";
 		this._pieChart.setAttribute("title", this._translateString("Obsels count per obsel types"));
-		this._updatePieChart();
+
+		this._requestUpdatePieChart();
 	}
 }
 
