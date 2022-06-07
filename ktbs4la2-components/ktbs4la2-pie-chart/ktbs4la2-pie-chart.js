@@ -11,9 +11,9 @@ class KTBS4LA2PieChart extends TemplatedHTMLElement {
 	 * 
 	 */
 	constructor() {
-		super(import.meta.url);
+		super(import.meta.url, true, false);
 		this._sliceNodesObserver = new MutationObserver(this._onSliceNodesMutation.bind(this));
-		this._sliceNodesObserver.observe(this, { childList: true, subtree: true, attributes: true, attributeFilter: ["number", "color", "string"]});
+		this._sliceNodesObserver.observe(this, {childList: true, subtree: true, attributeFilter: ["number", "color", "string"]});
 	}
 
 	/**

@@ -3,6 +3,7 @@ import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 import {ResourceMultiton} from "../../ktbs-api/ResourceMultiton.js";
 import {Trace} from "../../ktbs-api/Trace.js";
 import {TraceStats} from "../../ktbs-api/TraceStats.js";
+import {getDistinctColor} from "../common/colors-utils.js";
 
 import "../ktbs4la2-pie-chart/ktbs4la2-pie-chart.js";
 
@@ -20,7 +21,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 
 		this._modelReady = new Promise((resolve, reject) => {
 			this._resolveModelReady = resolve;
-			this._rejectModelReady = resolve;
+			this._rejectModelReady = reject;
 		});
 	}
 
@@ -120,7 +121,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 		switch(this._trace.syncStatus) {
 			case "needs_sync":
 				this._onTraceOrStatsPending();
-				this._trace.get(this._abortController.signal);
+				this._trace.get(this._abortController.signal).catch(() => {});
 				break;
 			case "pending":
 				this._onTraceOrStatsPending();
@@ -160,7 +161,7 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 		switch(this._stats.syncStatus) {
 			case "needs_sync":
 				this._onTraceOrStatsPending();
-				this._stats.get(this._abortController.signal);
+				this._stats.get(this._abortController.signal).catch(() => {});
 				break;
 			case "pending":
 				this._onTraceOrStatsPending();
@@ -204,28 +205,6 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 		this._stats = this._trace.stats;
 		this._stats.registerObserver(this._onStatsNotification.bind(this));
 		this._onStatsNotification();
-		this._updateBeginEnd();
-	}
-
-	/**
-	 * 
-	 */
-	_updateBeginEnd() {
-		this._componentReady.then(() => {
-			if(this.stats && (this._stats.min_time != undefined) && (this._originTime != undefined)){
-				let minTime = parseInt(this._stats.min_time, 10) + this._originTime;
-				this._beginTag.innerText = this.formatTimeStampToDate(minTime);
-			}
-			else
-				this._beginContainer.style.display = "none";
-
-			if(this.stats && (this._stats.max_time != undefined) && (this._originTime != undefined)) {
-				let maxTime = parseInt(this._stats.max_time, 10) + this._originTime;
-				this._endTag.innerText = this.formatTimeStampToDate(maxTime);
-			}
-			else
-				this._endContainer.style.display = "none";
-		});
 	}
 
 	/**
@@ -245,89 +224,122 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 	 * 
 	 */
 	_updatePieChart() {
-		while(this._pieChart.firstChild)
-			this._pieChart.removeChild(this._pieChart.firstChild);
-
-		let obselCount = this._stats.obsel_count;
-		this._countTag.innerText = obselCount;
-
-		if(this._stats.obsel_count_per_type.length > 0) {
-			let obselCountPerType = this._stats.obsel_count_per_type;
-			let sorted_slices = new Array();
-
-			for(let i = 0; i < obselCountPerType.length; i++) {
-				let type = obselCountPerType[i]["stats:hasObselType"];
-				let count = obselCountPerType[i]["stats:nb"];
-				let sliceElement = document.createElement("ktbs4la2-pie-slice");
-				sliceElement.setAttribute("string", type);
-
-				this._modelReady.then(() => {
-					const obseltype_id = type.startsWith("m:")?type.substring(2):type;
-					const obselType = this._model.get_obsel_type(obseltype_id);
-
-					if(obselType) {
-						sliceElement.setAttribute("string", obselType.get_preferred_label(this._lang));
-
-						if(obselType.suggestedColor)
-							sliceElement.setAttribute("color", obselType.suggestedColor);
-
-						const rank = obselType.rank_within_parent_model;
-						
-						if(rank != undefined)
-							sorted_slices[rank] = sliceElement;
-					}
-				})
-				.catch(this.emitErrorEvent);
-
-				sliceElement.setAttribute("number", count);
-				this._pieChart.appendChild(sliceElement);
-			}
+		if(		
+				this._stats 
+			&& 	(this._stats.obsel_count_per_type instanceof Array) 
+			&& 	(this._stats.obsel_count_per_type.length > 0)
+		) {
+			while(this._pieChart.firstChild)
+				this._pieChart.removeChild(this._pieChart.firstChild);
 
 			this._modelReady.then(() => {
-				if(sorted_slices.length > 1) {
-					// reindex the array in case it has missing keys
-					sorted_slices = sorted_slices.filter(val => val);
-					let inversion_occured;
+				for(let i = 0; i < this._model.obsel_types.length; i++) {
+					const obselType = this._model.obsel_types[i];
+					
+					for(let j = 0; j < this._stats.obsel_count_per_type.length; j++) {
+						const obselcount_type_id = this._stats.obsel_count_per_type[j]["stats:hasObselType"];
+						
+						if(
+								(obselcount_type_id == obselType.id)
+							||	(obselcount_type_id == ("m:" + obselType.id))
+						) {
+							const count = this._stats.obsel_count_per_type[j]["stats:nb"];
 
-					do {
-						inversion_occured = false;
+							if(count > 0) {
+								const sliceElement = document.createElement("ktbs4la2-pie-slice");
+									sliceElement.setAttribute("string", obselType.get_preferred_label(this._lang));
+									sliceElement.setAttribute("number", count);
 
-						for(let rank = 0; rank < sorted_slices.length; rank++) {
-							const aSlice = sorted_slices[rank];
-
-							if(aSlice) {
-								const nextSibling = this._pieChart.childNodes[rank];
-
-								if(nextSibling && (nextSibling != aSlice)) {
-									this._pieChart.insertBefore(aSlice, nextSibling);
-									inversion_occured = true;
-								}
+									if(obselType.suggestedColor)
+										sliceElement.setAttribute("color", obselType.suggestedColor);
+									else
+										sliceElement.setAttribute("color", getDistinctColor(i, this._model.obsel_types.length));
+								
+								this._pieChart.appendChild(sliceElement);
 							}
+
+							break;
 						}
-					} while(inversion_occured);
-				} 
+					}
+				}
+
+				for(let i = 0; i < this._stats.obsel_count_per_type.length; i++) {
+					let obseltype_stats_id = this._stats.obsel_count_per_type[i]["stats:hasObselType"];
+
+					if(obseltype_stats_id.startsWith("m:"))
+						obseltype_stats_id = obseltype_stats_id.substring(2);
+
+					const obselType = this._model.get_obsel_type(obseltype_stats_id);
+
+					if(obselType == undefined) {
+						const count = this._stats.obsel_count_per_type[i]["stats:nb"];
+
+						if(count > 0) {
+							const sliceElement = document.createElement("ktbs4la2-pie-slice");
+								sliceElement.setAttribute("string", this._translateString("Unknown obsel type") + " (" + obseltype_stats_id + ")");
+								sliceElement.setAttribute("number", count);
+								sliceElement.setAttribute("color", "#888888");
+							this._pieChart.appendChild(sliceElement);
+						}
+					}
+				}
 			})
-			.catch(this.emitErrorEvent);
+			.catch((error) => {
+				for(let i = 0; i < this._stats.obsel_count_per_type.length; i++) {
+					const count = this._stats.obsel_count_per_type[i]["stats:nb"];
+
+					if(count > 0) {
+						const sliceElement = document.createElement("ktbs4la2-pie-slice");
+							sliceElement.setAttribute("string", this._stats.obsel_count_per_type[i]["stats:hasObselType"]);
+							sliceElement.setAttribute("number", count);
+						this._pieChart.appendChild(sliceElement);
+					}
+				}
+			})
+			.finally(() => {
+				if(this._pieChart.classList.contains("hidden"))
+					this._pieChart.style.classList.remove("hidden");
+			});
 		}
-		else
-			this._pieChart.style.display = "none";
+		else {
+			if(!this._pieChart.classList.contains("hidden"))
+				this._pieChart.style.classList.add("hidden");
+		}
 	}
 
 	/**
 	 * 
 	 */
 	_onStatsReady() {
-		this._updateBeginEnd();
-
 		this._componentReady.then(() => {
+			if(this._stats && (this._stats.min_time != undefined) && (this._originTime != undefined)){
+				let minTime = parseInt(this._stats.min_time, 10) + this._originTime;
+				this._beginTag.innerText = this.formatTimeStampToDate(minTime);
+				this._beginContainer.style.display = "block";
+			}
+			else
+				this._beginContainer.style.display = "none";
+
+			if(this._stats && (this._stats.max_time != undefined) && (this._originTime != undefined)) {
+				let maxTime = parseInt(this._stats.max_time, 10) + this._originTime;
+				this._endTag.innerText = this.formatTimeStampToDate(maxTime);
+				this._endContainer.style.display = "block";
+			}
+			else
+				this._endContainer.style.display = "none";
+
+
+			this._countTag.innerText = this._stats.obsel_count;
+
 			let duration = this._stats.duration;
 
-			if(duration != null)
+			if(duration != null) {
 				this._durationTag.innerText = this.formatTimeStampDeltaToDuration(duration);
+				this._durationContainer.style.display = "block";
+			}
 			else
 				this._durationContainer.style.display = "none";
 
-			
 			this._requestUpdatePieChart();
 
 			if(this._container.classList.contains("waiting"))

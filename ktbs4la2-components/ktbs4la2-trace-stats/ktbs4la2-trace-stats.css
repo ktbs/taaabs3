@@ -3,6 +3,10 @@
 	vertical-align: top;
 }
 
+#obsels-types-pie-chart.hidden {
+	display: none;	
+}
+
 #numbers {
 	font-size: 11pt;
 }
