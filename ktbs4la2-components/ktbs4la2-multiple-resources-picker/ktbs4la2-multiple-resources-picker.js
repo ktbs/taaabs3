@@ -199,7 +199,33 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 	 * 
 	 */
 	get resourcePickers() {
-		return this._resourcePickedsDiv.querySelectorAll("ktbs4la2-resource-picker");
+        if(this._resourcePickedsDiv)
+		    return this._resourcePickedsDiv.querySelectorAll("ktbs4la2-resource-picker");
+        else
+            return undefined;
+    }
+
+    /**
+     * 
+     */
+    get picked_resources() {
+        const pickers = this.resourcePickers;
+
+        if(pickers instanceof NodeList) {
+            const picked_resources = new Array();
+
+            for(let i = 0; i < pickers.length; i++) {
+                const aPicker = pickers[i];
+                const aPickedResource = aPicker.picked_resource;
+
+                if(aPickedResource)
+                    picked_resources.push(aPickedResource);
+            }
+
+            return picked_resources;
+        }
+        else
+            return undefined;
     }
     
     /**

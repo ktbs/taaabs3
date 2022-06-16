@@ -1,6 +1,7 @@
 import {TemplatedHTMLElement} from '../common/TemplatedHTMLElement.js';
 
 import {Method} from '../../ktbs-api/Method.js';
+import { ResourceMultiton } from '../../ktbs-api/ResourceMultiton.js';
 
 /**
  * 
@@ -16,7 +17,26 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
         if(this.attachInternals)
             this._internals = this.attachInternals();
 
+        this._pickedResource = null;
+
         this._customValidity = "";
+    }
+
+    /**
+     * 
+     */
+    get picked_resource() {
+        return this._pickedResource;
+    }
+
+    /**
+     * 
+     */
+    set picked_resource(new_picked_resource) {
+        if(new_picked_resource instanceof Resource)
+            this.setAttribute("value", new_picked_resource.uri);
+        else
+            throw new TypeError("New value for property \"picked_resource\" must be an instance of Resource");
     }
 
     /**
@@ -184,19 +204,27 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                             response.json()
                                 .then((parsedJson) => {
                                     if(parsedJson["@type"]) {
+                                        this._pickedResource = ResourceMultiton.get_resource(parsedJson["@type"], inputURL);
+
                                         if(this._allowed_resource_types && !this._allowed_resource_types.includes(parsedJson["@type"]))
                                             this._showMessage(this._translateString("Resource doesn't match expected type(s)") + " (" + parsedJson["@type"] + ")", "error");
-                                        else
+                                        else {
                                             this._showMessage(this._translateString("Valid resource URL") + " (" + parsedJson["@type"] + ")", "success");
+                                        }
                                     }
                                     else {
-                                        if(parsedJson["@graph"] && parsedJson["@graph"][0] && (parsedJson["@graph"][0]["@type"] == "TraceModel"))
+                                        if(parsedJson["@graph"] && parsedJson["@graph"][0] && (parsedJson["@graph"][0]["@type"] == "TraceModel")) {
+                                            this._pickedResource = ResourceMultiton.get_resource("Model", inputURL);
                                             this._showMessage(this._translateString("Valid resource URL") + " (" + parsedJson["@graph"][0]["@type"] + ")", "success");
-                                        else
+                                        }
+                                        else {
+                                            this._pickedResource = null;
                                             this._showMessage(this._translateString("Not a Ktbs resource"), "error");
+                                        }
                                     }
                                 })
                                 .catch((error) => {
+                                    this._pickedResource = null;
                                     this._showMessage(this._translateString("Not a Ktbs resource"), "error");
                                 })
                                 .finally(() => {
@@ -204,6 +232,8 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                                 });
                         }
                         else {
+                            this._pickedResource = null;
+
                             if(response.status == 401)
                                 this._showMessage(this._translateString("Authentication required"), "warning");
                             else if(response.status == 403)
@@ -211,10 +241,11 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                             else
                                 this._showMessage(this._translateString("Error : ") + response.status + " (" + response.statusText + ")", "error");
 
-                        this.dispatchEvent(dispatchAfterResultEvent);
+                            this.dispatchEvent(dispatchAfterResultEvent);
                         }
                     })
                     .catch((error) => {
+                        this._pickedResource = null;
                         this._showMessage(this._translateString("HTTP query failed"), "error");
                         this.dispatchEvent(dispatchAfterResultEvent);
                     });
@@ -224,6 +255,8 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
             catch(error) {
                 // the picked resource is a builtin method
                 if(Method.builtin_methods_ids.includes(this._uriInput.value)) {
+                    this._pickedResource = Method.getBuiltinMethod(this._uriInput.value);
+
                     if(!this._allowed_resource_types || this._allowed_resource_types.includes("Method")) {
                         if(this.allow_builtin_methods)
                             this._showMessage(this._translateString("Known builtin method"), "success");
@@ -233,8 +266,10 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                     else
                         this._showMessage(this._translateString("Resource doesn't match expected type(s)") + " (Builtin Method)", "error");
                 }
-                else 
+                else  {
+                    this._pickedResource = null;
                     this._showMessage(this._translateString("Not a valid URL"), "error");
+                }
 
                 this.dispatchEvent(dispatchAfterResultEvent);
             }

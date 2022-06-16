@@ -522,6 +522,26 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         for(let i = 0; i < resourceExplorerRoots.length; i++)
             resourceExplorerRoots[i].setAttribute("lang", this._lang);
     }
+
+    /**
+     * 
+     */
+    get picked_resource() {
+        if(this._uriInput)
+            return this._uriInput.picked_resource;
+        else
+            return undefined;
+    }
+
+    /**
+     * 
+     */
+    set picked_resource(new_picked_resource) {
+        if(new_picked_resource instanceof Resource)
+            this.setAttribute("value", new_picked_resource.uri);
+        else
+            throw new TypeError("New value for property \"picked_resource\" must be an instance of Resource");
+    }
 }
 
 customElements.define('ktbs4la2-resource-picker', KTBS4LA2ResourcePicker);
