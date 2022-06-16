@@ -84,7 +84,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
      */
     get value() {
         let pickers_values = new Array();
-        const pickers = this._getResourcePickers();
+        const pickers = this.resourcePickers;
 
         for(let i = 0; i < pickers.length; i++)
             pickers_values.push(pickers[i].value);
@@ -99,7 +99,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
         const new_values = newValue.split(" ").filter(Boolean);
 
         this._componentReady.then(() => {    
-            const pickers = this._getResourcePickers();
+            const pickers = this.resourcePickers;
             if(this.getAttribute("allowed-resource-count") != "1") {
                 const maxI = Math.max(new_values.length, pickers.length);
 
@@ -130,7 +130,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
         
         if(name == "required") {
             this._componentReady.then(() => {
-                const currentPickers = this._getResourcePickers();
+                const currentPickers = this.resourcePickers;
                 
                 if(currentPickers.length > 0)
                     currentPickers[0].setAttribute("required", this.required);
@@ -139,7 +139,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
         if(name == "allowed-resource-count") {
             if(newValue == "1") {
                 this._componentReady.then(() => {
-                    const currentPickers = this._getResourcePickers();
+                    const currentPickers = this.resourcePickers;
 
                     for(let i = 1; i < currentPickers.length; i++) {
                         const parentContainer = currentPickers[i].parentNode;
@@ -158,7 +158,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
             this.value = newValue;
         else {
             this._componentReady.then(() => {
-                const currentPickers = this._getResourcePickers();
+                const currentPickers = this.resourcePickers;
 
                 for(let i = 0; i < currentPickers.length; i++)
                     currentPickers[i].setAttribute(name, newValue);
@@ -175,7 +175,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 		this._addResourceButton.addEventListener("click", this._onClickAddResourceButton.bind(this));
 
 		setTimeout(() => {
-			const resourcePickers = this._getResourcePickers();
+			const resourcePickers = this.resourcePickers;
 
 			if(resourcePickers.length <= 0)
 				this._addResourcePicker(null, false);
@@ -198,7 +198,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
     /**
 	 * 
 	 */
-	_getResourcePickers() {
+	get resourcePickers() {
 		return this._resourcePickedsDiv.querySelectorAll("ktbs4la2-resource-picker");
     }
     
@@ -206,7 +206,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 	 * 
 	 */
 	_addResourcePicker(value = null, allow_remove = true) {
-        const currentPickers = this._getResourcePickers();
+        const currentPickers = this.resourcePickers;
 		const pickerContainer = document.createElement("div");
 		pickerContainer.classList.add("resource-picker-container");
 		const newResourcePicker = document.createElement("ktbs4la2-resource-picker");
@@ -230,7 +230,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 		if(this.getAttribute("placeholder"))
 			newResourcePicker.setAttribute("placeholder", this.getAttribute("placeholder"));
 
-        const currentPickersCount = this._getResourcePickers().length;
+        const currentPickersCount = this.resourcePickers.length;
 		const newPickerTabIndex = (currentPickersCount > 0)?(2 * currentPickersCount):1;
         newResourcePicker.setAttribute("tabIndex", newPickerTabIndex);
         
@@ -265,7 +265,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
 	_onClickAddResourceButton(event) {
         if(this.getAttribute("allowed-resource-count") != "1") {
             this._addResourcePicker();
-            const resourcePickers = this._getResourcePickers();
+            const resourcePickers = this.resourcePickers;
 
             if(resourcePickers.length > 0)
                 resourcePickers[resourcePickers.length - 1]._componentReady.then(() => {
@@ -286,7 +286,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
      */
     _onFocus(event) {
         this._componentReady.then(() => {
-            const pickers = this._getResourcePickers();
+            const pickers = this.resourcePickers;
 
             if(pickers.length > 0)
                 pickers[0].focus();
@@ -332,7 +332,7 @@ class KTBS4LA2MultipleResourcesPicker extends TemplatedHTMLElement {
      */
     checkValidity() {
         let valid = true;
-        const pickers = this._getResourcePickers();
+        const pickers = this.resourcePickers;
 
         for(let i = 0; valid && (i < pickers.length); i++)
             valid = pickers[i].checkValidity();

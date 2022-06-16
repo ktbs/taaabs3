@@ -18,8 +18,6 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         if(this.attachInternals)
             this._internals = this.attachInternals();
 
-        this._customValidity = "";
-
         this._resourceExplorerElementsMutationObserver = new MutationObserver(this._onResourceExplorerElementsMutation.bind(this));
     }
 
@@ -483,7 +481,6 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
         let isValid;
 
         if(this._uriInput) {
-            this._uriInput.setCustomValidity(this._customValidity);
             isValid = this._uriInput.checkValidity();
 
             if(!isValid)
@@ -508,7 +505,9 @@ class KTBS4LA2ResourcePicker extends TemplatedHTMLElement {
      * 
      */
     setCustomValidity(message) {
-        this._customValidity = message;
+        this._componentReady.then(() => {
+            this._uriInput.setCustomValidity(message);
+        });
     }
 
     /**
