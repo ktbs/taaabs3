@@ -21,6 +21,7 @@
     "Invalid ID !\nPlease enter an non empty string containing only letters, numbers, \"-\" or \"_\".": "ID invalide !\nVeuillez entrer une chaîne de caractères non-vide contenant uniquement des lettres, chiffres, \"-\" ou \"_\".",
     "This ID is already used by an other stylesheet in the same model !\nPlease choose a different ID.": "Cet ID est déjà utilisé par une autre feuille de style dans le même modèle !\nVeuillez choisir un ID différent.",
     "Split": "Fractionner",
+    "Compare": "Comparer",
     "Edit this stylesheet": "Modifier cette feuille de styles",
     "Save this stylesheet": "Enregistrer cette feuille de styles",
     "Cancel modifications of this stylesheet" : "Annuler les modifications apportées à cette feuille de styles",

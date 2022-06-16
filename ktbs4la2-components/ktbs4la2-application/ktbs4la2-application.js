@@ -21,6 +21,8 @@ import "../ktbs4la2-store-stylesheet-rules-to-method-form/ktbs4la2-store-stylesh
 import "../ktbs4la2-csv-trace-import/ktbs4la2-csv-trace-import.js";
 import "../ktbs4la2-trace-split-dialog/ktbs4la2-trace-split-dialog.js";
 import "../ktbs4la2-trace-split/ktbs4la2-trace-split.js";
+import "../ktbs4la2-compare-dialog/ktbs4la2-compare-dialog.js";
+import "../ktbs4la2-trace-compare/ktbs4la2-trace-compare.js";
 import "../ktbs4la2-trace-timeline/ktbs4la2-trace-timeline-create-stylesheet-dialog.js";
 
 import {ObselType} from "../../ktbs-api/ObselType.js";
@@ -78,6 +80,7 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 		this._mainContentDiv.addEventListener("fold-header", this._onFoldMainHeader.bind(this));
 		this._mainContentDiv.addEventListener("unfold-header", this._onUnfoldMainHeader.bind(this));
 		this._mainContentDiv.addEventListener("request-trace-split", this._onRequestTraceSplit.bind(this));
+		this._mainContentDiv.addEventListener("request-compare", this._onRequestCompare.bind(this));
 		this._mainContentDiv.addEventListener("request-stylesheet-creation-dialog", this._onRequestStylesheetCreationDialog.bind(this));
 
 		this._overlayDiv = this.shadowRoot.querySelector("#overlay");
@@ -526,6 +529,74 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 					console.error(error);
 					alert(error.name + " : " + error.message);
 				});
+		}
+		else {
+			const error = new Error("Missing trace uri and/or unknown type");
+			this.emitErrorEvent(error);
+			console.error(error);
+			alert(error.name + " : " + error.message);
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onRequestCompare(requestEvent) {
+		if(
+				requestEvent 
+			&&	requestEvent.detail
+			&&	requestEvent.detail.trace_uri
+			&&	(
+						(requestEvent.detail.trace_type == "StoredTrace")
+					||	(requestEvent.detail.trace_type == "ComputedTrace")
+			)
+		) {
+			const compareDialog = document.createElement("ktbs4la2-compare-dialog");
+				compareDialog.setAttribute("uri", requestEvent.detail.trace_uri);
+				compareDialog.setAttribute("resource-type", requestEvent.detail.trace_type);
+				compareDialog.addEventListener("cancel-compare", this.removeOverlay.bind(this));
+
+				compareDialog.addEventListener("validate-compare", (validateDialogEvent) => {
+					if(
+							validateDialogEvent
+						&&	validateDialogEvent.detail
+						&&	validateDialogEvent.detail.traces
+						&&	(validateDialogEvent.detail.traces instanceof Array)
+						&&	(validateDialogEvent.detail.traces.length > 1)
+					) {
+						this.removeOverlay();
+
+						const compareElement = document.createElement("ktbs4la2-trace-compare");
+							for(let i = 0; i < validateDialogEvent.detail.traces.length; i++) {
+								const aTrace = validateDialogEvent.detail.traces[i];
+
+								const titleElement = document.createElement("h2");
+									titleElement.innerText = aTrace.get_preferred_label(this._lang);
+								compareElement.appendChild(titleElement);
+
+								const aTimelineElement = document.createElement("ktbs4la2-trace-timeline");
+									aTimelineElement.setAttribute("uri", aTrace.uri);
+									aTimelineElement.setAttribute("resource-type", aTrace.type);
+									aTimelineElement.setAttribute("stylesheet", requestEvent.detail.display_styleshhet);
+									aTimelineElement.setAttribute("view-mode", requestEvent.detail.view_mode);
+									aTimelineElement.setAttribute("allow-split-trace", "false");
+									aTimelineElement.setAttribute("allow-compare", "false");
+									aTimelineElement.setAttribute("allow-edit-stylesheet", "false");
+									aTimelineElement.setAttribute("allow-create-method-from-stylesheet", "false");
+								compareElement.appendChild(aTimelineElement);
+
+								if(i < (validateDialogEvent.detail.traces.length - 1)) {
+									const horizontalRowElement = document.createElement("hr");
+									compareElement.appendChild(horizontalRowElement);
+								}
+							}
+
+							compareElement.setAttribute("lang", this._lang);
+						this.setOverlay(compareElement);
+					}
+				});
+
+			this.setOverlay(compareDialog);
 		}
 		else {
 			const error = new Error("Missing trace uri and/or unknown type");

@@ -1,4 +1,3 @@
-import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
 import {KTBS4LA2TimelineSynchronizer} from "../ktbs4la2-timeline-synchronizer/ktbs4la2-timeline-synchronizer.js";
 import "../ktbs4la2-trace-timeline/ktbs4la2-trace-timeline.js";
 
@@ -10,8 +9,8 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
     /**
 	 * 
 	 */
-	constructor() {
-        super(import.meta.url, false, false);
+	constructor(componentJSPath = import.meta.url, fetchStylesheet = false) {
+        super(componentJSPath, fetchStylesheet, false);
         this._onChildTraceTimelineSetStylesheetBindedFunction = this._onChildTraceTimelineSetStylesheet.bind(this);
         this._onChildTraceTimelineSetViewModeBindedFunction = this._onChildTraceTimelineSetViewMode.bind(this);
         this._onChildTraceTimelineSetHistogramDurationOptionBindedFunction = this._onChildTraceTimelineSetHistogramDurationOption.bind(this);
@@ -43,6 +42,15 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
      */
     get syncStylesheets() {
         return !(this.hasAttribute("sync-stylesheets") && ((this.getAttribute("sync-stylesheets") == "false") || (this.getAttribute("sync-stylesheets") == "0")));
+    }
+
+    /**
+     * 
+     */
+    get synchonizable_children_names() {
+        const _synchonizable_children_names = super.synchonizable_children_names;
+        _synchonizable_children_names.push("ktbs4la2-trace-timeline");
+        return _synchonizable_children_names;
     }
 
     /**
@@ -192,3 +200,5 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
 }
 
 customElements.define('ktbs4la2-trace-timeline-synchronizer', KTBS4LA2TraceTimelineSynchronizer);
+
+export {KTBS4LA2TraceTimelineSynchronizer};

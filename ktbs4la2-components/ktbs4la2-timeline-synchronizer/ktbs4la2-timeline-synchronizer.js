@@ -9,8 +9,8 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
     /**
 	 * 
 	 */
-	constructor() {
-        super(import.meta.url, false, false);
+	constructor(componentJSPath = import.meta.url, fetchStylesheet = false) {
+        super(componentJSPath, fetchStylesheet, false);
         this._onChildTimelineViewChangeBindedFunction = this._onChildTimelineViewChange.bind(this);
         this._onChildTimelineCursorMoveBindedFunction = this._onChildTimelineCursorMove.bind(this);
         this._timelineNodesObserver = new MutationObserver(this._onTimelineNodesMutation.bind(this));
@@ -32,6 +32,13 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
 
     /**
      * 
+     */
+    get synchonizable_children_names() {
+        return ["ktbs4la2-timeline"];
+    }
+
+    /**
+     * 
      * @param {*} mutationRecords 
      * @param {*} observer 
      */
@@ -47,12 +54,12 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
                     for(let j = 0;(!timelineAdded) && (j < currentMutationRecord.addedNodes.length); j++) {
                         let addedNode = currentMutationRecord.addedNodes[j];
                         
-                        if(addedNode.localName == "ktbs4la2-timeline")
+                        if(this.synchonizable_children_names.includes(addedNode.localName))
                             timelineAdded = true;
                     }
                 }
                 else if(    (currentMutationRecord.type == "attributes")
-                        &&	(currentMutationRecord.target.localName == "ktbs4la2-timeline")
+                        &&	(this.synchonizable_children_names.includes(currentMutationRecord.target.localName))
                         &&	(
                                 (currentMutationRecord.attributeName == "begin")
                             ||  (currentMutationRecord.attributeName == "end")))
@@ -68,7 +75,7 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
      * 
      */
     get timelines() {
-        let timelines = this.querySelectorAll("ktbs4la2-timeline");
+        let timelines = this.querySelectorAll(this.synchonizable_children_names.join(", "));
         return timelines;
     }
 
@@ -165,7 +172,7 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
        if(
                 this.syncView
             &&  event.target
-            &&  (event.target.localName == "ktbs4la2-timeline")
+            &&  this.synchonizable_children_names.includes(event.target.localName)
             &&  event.detail
             &&  event.detail.user_initiated
             &&  !document.fullscreenElement
@@ -206,7 +213,7 @@ export class KTBS4LA2TimelineSynchronizer extends TemplatedHTMLElement {
     _onChildTimelineCursorMove(event) {
         if(
                 this.syncCursor
-            &&  (event.target.localName == "ktbs4la2-timeline")
+            &&  this.synchonizable_children_names.includes(event.target.localName)
             &&  !document.fullscreenElement
         ) {
             let cursorTime = event.detail.cursorTime;

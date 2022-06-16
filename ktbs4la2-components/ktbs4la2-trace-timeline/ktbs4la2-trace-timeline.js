@@ -99,6 +99,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._currentStylesheetTools = this.shadowRoot.querySelector("#current-stylesheet-tools");
 		this._splitButton = this.shadowRoot.querySelector("#split-button");
 		this._splitButton.addEventListener("click", this._onClickSplitButton.bind(this));
+		this._compareButton = this.shadowRoot.querySelector("#compare-button");
+		this._compareButton.addEventListener("click", this._onClickCompareButton.bind(this));
 		this._editStylesheetButton = this.shadowRoot.querySelector("#edit-stylesheet-button");
 		this._editStylesheetButton.addEventListener("click", this._onClickEditStylesheetButton.bind(this));
 		this._saveStylesheetButton = this.shadowRoot.querySelector("#save-stylesheet-button");
@@ -377,7 +379,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			) {
 				this._componentReady.then(() => {
 					this._histogramOptionNormalizeCheckbox.checked = true;
-					this._updateHistogram();
+					this._requestUpdateHistogram();
 				});
 			}
 			else if(
@@ -387,7 +389,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			) {
 				this._componentReady.then(() => {
 					this._histogramOptionNormalizeCheckbox.checked = false;
-					this._updateHistogram();
+					this._requestUpdateHistogram();
 				});
 			}
 			else
@@ -401,7 +403,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			) {
 				this._componentReady.then(() => {
 					this._histogramOptionDurationCheckbox.checked = true;
-					this._updateHistogram();
+					this._requestUpdateHistogram();
 				});
 			}
 			else if(
@@ -411,7 +413,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 			) {
 				this._componentReady.then(() => {
 					this._histogramOptionDurationCheckbox.checked = false;
-					this._updateHistogram();
+					this._requestUpdateHistogram();
 				});
 			}
 			else
@@ -711,7 +713,8 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				});
 
 			this._resolveStylesheetsBuilded();
-		});
+		})
+		.catch(() => {});
 	}
 
 	/**
@@ -948,6 +951,27 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		if(this.allow_split_trace) {
 			this.dispatchEvent(
 				new CustomEvent("request-trace-split", {
+					bubbles: true,
+					cancelable: false,
+					composed: true,
+					detail : {
+						trace_type: this._trace.constructor.name,
+						trace_uri: this._trace.uri.toString(),
+						current_stylesheet_name: this._currentStylesheet.name,
+						view_mode: this.viewMode
+					}
+				})
+			);
+		}
+	}
+
+	/**
+	 * 
+	 */
+	_onClickCompareButton(event) {
+		if(this.allow_compare) {
+			this.dispatchEvent(
+				new CustomEvent("request-compare", {
 					bubbles: true,
 					cancelable: false,
 					composed: true,
@@ -1660,16 +1684,24 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	/**
 	 * 
 	 */
-	_onTimelineViewChanged(event) {
+	_requestUpdateHistogram() {
 		if(this._updateHistogramTaskID)
 			delete this._updateHistogramTaskID;
 
 		this._updateHistogramTaskID = setTimeout(() => {
-			if(event.detail.zoomLevel != this._lastHistogramUpdateZoomLevel)
+			Promise.all([this._timeline._componentReady, this._timeline._timeDivisionsInitialized, this._timeline._zoomInitialized]).then(() => {
 				this._updateHistogram();
-
-			delete this._updateHistogramTaskID;
+				delete this._updateHistogramTaskID;
+			}).catch(() => {});
 		});
+	}
+
+	/**
+	 * 
+	 */
+	_onTimelineViewChanged(event) {
+		if(event.detail.zoomLevel != this._lastHistogramUpdateZoomLevel)
+			this._requestUpdateHistogram();
 	}
 
 	/**
@@ -1756,7 +1788,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 				this.emitErrorEvent(new Error("Could not found event node for obsel " + anObsel.id));
 		}
 		
-		this._updateHistogram();
+		this._requestUpdateHistogram();
 
 		if(emit_event)
 			this.dispatchEvent(
@@ -1885,8 +1917,21 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		return (
 				!this.hasAttribute("allow-split-trace")
 			||	(
-					(this.hasAttribute("allow-split-trace") != "0")
-				&&	(this.hasAttribute("allow-split-trace") != "false")
+					(this.getAttribute("allow-split-trace") != "0")
+				&&	(this.getAttribute("allow-split-trace") != "false")
+			)
+		);
+	}
+
+	/**
+	 * 
+	 */
+	get allow_compare() {
+		return (
+				!this.hasAttribute("allow-compare")
+			||	(
+					(this.getAttribute("allow-compare") != "0")
+				&&	(this.getAttribute("allow-compare") != "false")
 			)
 		);
 	}
@@ -2008,7 +2053,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 		this._timeline.appendChild(eventsFragment);
 
 		if(this._currentStylesheet)
-			this._updateHistogram();
+			this._requestUpdateHistogram();
 	}
 
 	/**
@@ -2248,7 +2293,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onchangeHistogramOptionDurationCheckbox(event) {
-		this._updateHistogram();
+		this._requestUpdateHistogram();
 
 		this.dispatchEvent(
 			new CustomEvent("histogram-set-duration-option", {
@@ -2264,7 +2309,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	 * 
 	 */
 	_onchangeHistogramOptionNormalizeCheckbox(event) {
-		this._updateHistogram();
+		this._requestUpdateHistogram();
 
 		this.dispatchEvent(
 			new CustomEvent("histogram-set-normalize-option", {

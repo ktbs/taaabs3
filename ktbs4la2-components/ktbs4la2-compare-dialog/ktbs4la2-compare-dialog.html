@@ -1,0 +1,19 @@
+<h1 id="title">{translate: 'Compare traces'}</h1>
+
+<form id="compare-form">
+    <p id="traces">
+        <label for="traces-picker" id="traces-picker-label">{translate: 'Choose which traces to compare with'}</label>
+
+        <ktbs4la2-multiple-resources-picker
+            id="traces-picker"
+            allowed-resource-types="StoredTrace ComputedTrace"
+            tabindex="1"
+            required>
+        </ktbs4la2-multiple-resources-picker>
+    </p>
+
+    <p id="buttons">
+        <button type="submit" id="compare" tabIndex="2" disabled>{translate: 'Compare !'}</button>
+        <button type="reset" id="cancel" tabIndex="3">{translate: 'Cancel'}</button>
+    </p>
+</form>

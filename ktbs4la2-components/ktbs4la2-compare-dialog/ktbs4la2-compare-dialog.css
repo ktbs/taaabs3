@@ -1,0 +1,31 @@
+#traces-picker {
+    display: block;
+    min-width: 700px;
+}
+
+p#buttons {
+    margin-bottom: 0px;
+    text-align: center;
+}
+
+#buttons button {
+    background-color: var(--color-main, cornflowerblue);
+	width: 90px;
+	height: 35px;
+	margin-left: 10px;
+	margin-right: 10px;
+	color: white;
+	border: none;
+}
+
+#buttons button:not([disabled]) {
+    cursor: pointer;
+}
+
+#buttons button[disabled] {
+    opacity: 0.5;
+}
+
+#buttons button:not([disabled]):hover, #buttons button:not([disabled]):focus {
+    background-color: var(--color-highlight, royalblue);
+}

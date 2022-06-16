@@ -190,6 +190,10 @@
 	background-image: url('{my-component-folder}/split.svg');
 }
 
+#compare-button {
+	background-image: url('{my-component-folder}/balance-scale.svg');
+}
+
 #edit-stylesheet-button {
 	background-image: url('{my-component-folder}/edit.svg');
 }
@@ -228,6 +232,9 @@
 #stylesheet-tools.edit-mode #split-button,
 :host([allow-split-trace = "0"]) #split-button,
 :host([allow-split-trace = "false"]) #split-button,
+#stylesheet-tools.edit-mode #compare-button,
+:host([allow-compare = "0"]) #compare-button,
+:host([allow-compare = "false"]) #compare-button,
 #stylesheet-tools.edit-mode #edit-stylesheet-button,
 :host([allow-edit-stylesheet = "0"]) #edit-stylesheet-button,
 :host([allow-edit-stylesheet = "false"]) #edit-stylesheet-button,
