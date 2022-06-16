@@ -298,12 +298,12 @@ class KTBS4LA2TraceStats extends TemplatedHTMLElement {
 			})
 			.finally(() => {
 				if(this._pieChart.classList.contains("hidden"))
-					this._pieChart.style.classList.remove("hidden");
+					this._pieChart.classList.remove("hidden");
 			});
 		}
 		else {
 			if(!this._pieChart.classList.contains("hidden"))
-				this._pieChart.style.classList.add("hidden");
+				this._pieChart.classList.add("hidden");
 		}
 	}
 
