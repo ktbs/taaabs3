@@ -436,37 +436,45 @@ class KTBS4LA2Timeline extends TemplatedHTMLElement {
 		}
 
 		if(attributeName == "cursor-time") {
-			let cursorTime = parseFloat(newValue, 10);
+			Promise.all([this._componentReady, this._timeDivisionsInitialized, this._zoomInitialized]).then(() => {
+				let cursorTime = parseFloat(newValue, 10);
 
-			if(!isNaN(cursorTime)) {
-				this._setTimelineCursorPositionForTime(cursorTime);
-				this._timelineCursorLabel.innerText = getFormattedDate(cursorTime);
-			}
+				if(!isNaN(cursorTime)) {
+					this._setTimelineCursorPositionForTime(cursorTime);
+					this._timelineCursorLabel.innerText = getFormattedDate(cursorTime);
+				}
+			}).catch(() => {});
 		}
 
 		if((attributeName == "view-begin") && (newValue)) {
-			let newViewBeginTime = parseFloat(newValue, 10);
+			Promise.all([this._componentReady, this._timeDivisionsInitialized, this._zoomInitialized]).then(() => {
+				let newViewBeginTime = parseFloat(newValue, 10);
 
-			if(!isNaN(newViewBeginTime))
-				this._requestSetView(newViewBeginTime, null, null, false);
-			else
-				this.emitErrorEvent(new TypeError("Value for \"view-begin\" is not a number"));
+				if(!isNaN(newViewBeginTime))
+					this._requestSetView(newViewBeginTime, null, null, false);
+				else
+					this.emitErrorEvent(new TypeError("Value for \"view-begin\" is not a number"));
+			}).catch(() => {});
 		}
 
 		if((attributeName == "zoom-level") && (newValue)) {
-			if(Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit).includes(newValue))
-				this._requestSetView(null, newValue, null, false);
-			else
-				this.emitErrorEvent(new TypeError("Value for \"zoom-level\" is not a valid time subdivision unit"));
+			Promise.all([this._componentReady, this._timeDivisionsInitialized, this._zoomInitialized]).then(() => {
+				if(Object.keys(KTBS4LA2Timeline.minDivisionWidthPerUnit).includes(newValue))
+					this._requestSetView(null, newValue, null, false);
+				else
+					this.emitErrorEvent(new TypeError("Value for \"zoom-level\" is not a valid time subdivision unit"));
+			}).catch(() => {});
 		}
 
 		if((attributeName == "div-width") && (newValue)) {
-			let newDivWidth = parseFloat(newValue, 10);
+			Promise.all([this._componentReady, this._timeDivisionsInitialized, this._zoomInitialized]).then(() => {
+				let newDivWidth = parseFloat(newValue, 10);
 
-			if(!isNaN(newDivWidth))
-				this._requestSetView(null, null, newDivWidth, false);
-			else
-				this.emitErrorEvent(new TypeError("Value for \"div-width\" is not a number"));
+				if(!isNaN(newDivWidth))
+					this._requestSetView(null, null, newDivWidth, false);
+				else
+					this.emitErrorEvent(new TypeError("Value for \"div-width\" is not a number"));
+			}).catch(() => {});
 		}
 	}
 
