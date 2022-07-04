@@ -341,7 +341,7 @@ export class ObselList {
 	 * \Public
 	 */
 	list_attribute_type_distinct_values(attributeType, abortSignal = null, credentials = null) {
-		return 	list_attribute_type_distinct_values_by_atrribute_id(attributeType.id, abortSignal, credentials);
+		return 	this.list_attribute_type_distinct_values_by_attribute_id(attributeType.id, abortSignal, credentials);
 	}
 
 	/**
@@ -350,7 +350,7 @@ export class ObselList {
 	 * \return Promise
 	 * \Public
 	 */
-	list_attribute_type_distinct_values_by_atrribute_id(attribute_id, abortSignal = null, credentials = null) {
+	list_attribute_type_distinct_values_by_attribute_id(attribute_id, abortSignal = null, credentials = null) {
 		const sparqlQuery = "PREFIX m: <" + this.parent.model.uri + "#>\n\nSELECT DISTINCT ?val {?obs m:" + attribute_id + " ?val}";
 		
 		const listPromise = new Promise((resolve, reject) => {

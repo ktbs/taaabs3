@@ -1131,8 +1131,19 @@ export class Resource {
 						});
 				});
 			}
-			else
+			else {
+				if(!this._getPromise) {
+					let resolveDummyPromise;
+
+					this._getPromise = new Promise((resolve, reject) => {
+						resolveDummyPromise = resolve;
+					});
+
+					resolveDummyPromise();
+				}
+
 				this._registerClientGetAbortSignal(abortSignal);
+			}
 
 			return this._getPromise;
 		}
