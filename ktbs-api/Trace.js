@@ -71,6 +71,78 @@ export class Trace extends Resource {
 	}
 
 	/**
+	 * Gets the traces that the current trace is source for
+	 * \return Array of Trace
+	 * \public
+	 */
+	get derived_traces() {
+		if(!this._derived_traces) {
+			this._derived_traces = new Array();
+
+			if(
+					this._JSONData.isSourceOf
+				&&	(this._JSONData.isSourceOf instanceof Array)
+			) 
+				for(let i = 0; i < this._JSONData.isSourceOf.length; i++) {
+					const trace_link = this._JSONData.isSourceOf[i];
+					const trace_uri = this.resolve_link_uri(trace_link);
+					const trace = ResourceMultiton.get_resource(Trace, trace_uri);
+					this._derived_traces.push(trace);
+				}
+		}
+
+		return this._derived_traces;
+	}
+
+	/**
+	 * Finds the traces that the current trace is source for, and the traces that these traces are source for etc ... recursively.
+	 * \return Promise a Promise that resolves when the complete hierarchy has been determined
+	 * \public
+	 */
+	find_derived_traces_recurs(abortSignal = null, credentials = null) {
+		if(!this._find_derived_traces_recurs_promise) {
+			let resolveDervivedTracesPromise, rejectDervivedTracesPromise;
+
+			this._find_derived_traces_recurs_promise = new Promise((resolve, reject) => {
+				resolveDervivedTracesPromise = resolve;
+				rejectDervivedTracesPromise = reject;
+			});
+
+			this.get(abortSignal, credentials)
+				.then(() => {
+					const all_derived_traces = new Array(...this.derived_traces);
+					const derived_traces_promises = new Array();
+
+					for(let i = 0; i < this.derived_traces.length; i++) {
+						const aDerivedTrace = this.derived_traces[i];
+						const aDerivedTracePromise = aDerivedTrace.find_derived_traces_recurs(abortSignal, credentials);
+						
+						aDerivedTracePromise
+							.then((aDerivedTraceDerivedTraces) => {
+								all_derived_traces.concat(...aDerivedTraceDerivedTraces);
+							})
+							.catch(rejectDervivedTracesPromise);
+						
+						derived_traces_promises.push(aDerivedTracePromise);
+					}
+
+					Promise.all(derived_traces_promises)
+						.then(() => {
+							const all_derived_traces_unique = all_derived_traces.filter((value, index, self) => {
+								return self.indexOf(value) === index;
+							});
+
+							resolveDervivedTracesPromise(all_derived_traces_unique);
+						})
+						.catch(rejectDervivedTracesPromise);
+				})
+				.catch(rejectDervivedTracesPromise);
+		}
+
+		return this._find_derived_traces_recurs_promise;
+	}
+
+	/**
 	 * Resets all the resource cached data
 	 * \public
 	 */
@@ -86,6 +158,12 @@ export class Trace extends Resource {
 
 		if(this._stats)
 			delete this._stats;
+
+		if(this._derived_traces)
+			delete this._derived_traces;
+
+		if(this._find_derived_traces_recurs_promise)
+			delete this._find_derived_traces_recurs_promise;
 
 		super._resetCalculatedData();
 	}

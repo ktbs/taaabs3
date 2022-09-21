@@ -158,14 +158,17 @@ export class Obsel extends Resource {
      * \public
      */
     get sourceObsels() {
-        if(!this._sourceObsels && this._JSONData.hasSourceObsel) {
+        if(!this._sourceObsels) {
             this._sourceObsels = new Array();
-            let source_obsels_links = this._JSONData.hasSourceObsel;
-            
-            for(let i = 0; i < source_obsels_links.length; i++) {
-                let a_source_obsel_link = source_obsels_links[i];
-                let aSourceObsel = ResourceMultiton.get_resource(Obsel, this.resolve_link_uri(a_source_obsel_link));
-                this._sourceObsels.push(aSourceObsel);
+
+            if(this._JSONData.hasSourceObsel) {
+                let source_obsels_links = this._JSONData.hasSourceObsel;
+                
+                for(let i = 0; i < source_obsels_links.length; i++) {
+                    let a_source_obsel_link = source_obsels_links[i];
+                    let aSourceObsel = ResourceMultiton.get_resource(Obsel, this.resolve_link_uri(a_source_obsel_link));
+                    this._sourceObsels.push(aSourceObsel);
+                }
             }
         }
         
@@ -278,6 +281,59 @@ export class Obsel extends Resource {
     }
 
     /**
+     * 
+     */
+    find_derived_obsels(abortSignal = null, credentials = null, limit_reach_to_traces = undefined) {
+        if(!this._derived_obsels_found_promise) {
+
+            this._derived_obsels_found_promise = new Promise((resolve, reject) => {
+                this._resolve_derived_obsels_found_promise = resolve;
+                this._reject_derived_obsels_found_promise = reject;
+            });
+
+            this.parent.find_derived_traces_recurs(abortSignal, credentials)
+                .then((traces_derived_from_parent) => {
+                    const derived_traces_obsellists_loaded_promises = new Array();
+
+                    for(let i = 0; i < traces_derived_from_parent.length; i++) {
+                        const aDerivedTrace = traces_derived_from_parent[i];
+
+                        if(
+                                (limit_reach_to_traces === undefined)
+                            ||  (
+                                        (limit_reach_to_traces instanceof Array)
+                                    &&  (limit_reach_to_traces.includes(aDerivedTrace))
+                            )
+                        )
+                            derived_traces_obsellists_loaded_promises.push(aDerivedTrace.obsel_list.query({}, abortSignal));
+                    }
+
+                    Promise.all(derived_traces_obsellists_loaded_promises)
+                        .then((obsellists_loads_results) => {
+                            const derived_obsels = new Array();
+
+                            for(let i = 0; i < obsellists_loads_results.length; i++) {
+                                const loaded_obsels = obsellists_loads_results[i].obsels;
+
+                                for(let j = 0; j < loaded_obsels.length; j++) {
+                                    const anObsel = loaded_obsels[j];
+
+                                    if(anObsel.sourceObsels.includes(this))
+                                        derived_obsels.push(anObsel);
+                                }
+                            }
+
+                            this._resolve_derived_obsels_found_promise(derived_obsels);
+                        })
+                        .catch(this._reject_derived_obsels_found_promise);
+                })
+                .catch(this._reject_derived_obsels_found_promise);
+        }
+
+        return this._derived_obsels_found_promise;
+    }
+
+    /**
 	 * Stores a new resource as a child of the current resource
 	 * \throws KtbsError always throws a KtbsError when invoked for a Obsel as it is not a container resource
      * \public
@@ -311,6 +367,9 @@ export class Obsel extends Resource {
 
         if(this._attributes)
             delete this._attributes;
+
+        if(this._derived_obsels_found_promise)
+            delete this._derived_obsels_found_promise;
             
         super._resetCalculatedData();
     }
