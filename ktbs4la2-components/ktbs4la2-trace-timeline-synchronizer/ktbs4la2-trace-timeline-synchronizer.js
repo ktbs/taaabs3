@@ -1,3 +1,5 @@
+import {Trace} from "../../ktbs-api/Trace.js";
+
 import {KTBS4LA2TimelineSynchronizer} from "../ktbs4la2-timeline-synchronizer/ktbs4la2-timeline-synchronizer.js";
 import "../ktbs4la2-trace-timeline/ktbs4la2-trace-timeline.js";
 
@@ -35,6 +37,23 @@ class KTBS4LA2TraceTimelineSynchronizer extends KTBS4LA2TimelineSynchronizer {
      */
     get trace_timelines() {
         return this.querySelectorAll("ktbs4la2-trace-timeline");
+    }
+
+    /**
+     * 
+     */
+    get traces() {
+        const traces = new Array();
+        const timelines = this.trace_timelines;
+
+        for(let i = 0; i < timelines.length; i++) {
+            const aTimeline = timelines[i];
+
+            if(aTimeline._trace instanceof Trace)
+                traces.push(aTimeline._trace);
+        }
+
+        return traces;
     }
 
     /**
