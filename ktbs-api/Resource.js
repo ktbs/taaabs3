@@ -912,9 +912,8 @@ export class Resource {
 	}
 
 	/**
-	 * 
-	 * 
-	 * \return Promise
+	 * Finds the Ktbs root that hosts the current resource 
+	 * \return Promise a Promise that resolves with the Ktbs root
 	 * \public
 	 */
 	get_root(abortSignal = null, credentials = null) {
