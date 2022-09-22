@@ -1,7 +1,7 @@
-import {TemplatedHTMLElement} from "../common/TemplatedHTMLElement.js";
+import { TemplatedHTMLElement } from "../common/TemplatedHTMLElement.js";
 
 import "../ktbs4la2-document-header/ktbs4la2-document-header.js";
-import {lightOrDark} from "../common/colors-utils.js";
+import { lightOrDark } from "../common/colors-utils.js";
 
 export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 
@@ -17,9 +17,9 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 * 
 	 */
 	get parentTimeline() {
-		if(!this._parentTimeline)
-			this._parentTimeline = this.closest("ktbs4la2-timeline"); 
-		
+		if (!this._parentTimeline)
+			this._parentTimeline = this.closest("ktbs4la2-timeline");
+
 		return this._parentTimeline;
 	}
 
@@ -46,39 +46,39 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	attributeChangedCallback(attributeName, oldValue, newValue) {
 		super.attributeChangedCallback(attributeName, oldValue, newValue);
 
-		if(attributeName == "begin") {
-			if(newValue != null) {
+		if (attributeName == "begin") {
+			if (newValue != null) {
 				this._beginTime = parseInt(newValue, 10);
 
-				if(isNaN(this._beginTime))
+				if (isNaN(this._beginTime))
 					this.emitErrorEvent(new Error("Cannot parse integer from string : " + newValue));
 			}
 			else
 				this._beginTime = undefined;
 		}
-		else if(attributeName == "end") {
-			if(newValue != null) {
+		else if (attributeName == "end") {
+			if (newValue != null) {
 				this._endTime = parseInt(newValue, 10);
 
-				if(isNaN(this._endTime))
+				if (isNaN(this._endTime))
 					this.emitErrorEvent(new Error("Cannot parse integer from string : " + newValue));
 			}
 			else
 				this._endTime = undefined;
 		}
-		else if(attributeName == "visible") {
+		else if (attributeName == "visible") {
 			this._isVisible = !((newValue == "0") || (newValue == "false"));
 		}
-		else if(attributeName == "href")
+		else if (attributeName == "href")
 			this._componentReady.then(() => {
 				this._marker.setAttribute("href", newValue);
 				this._popupHeaderLink.setAttribute("href", newValue);
 				this._popupHeaderLink.style.visibility = "visible";
 			});
-		else if(attributeName == "color")
+		else if (attributeName == "color")
 			this._componentReady.then(() => {
-				if(newValue != null) {
-					if(this.hasAttribute("symbol")) {
+				if (newValue != null) {
+					if (this.hasAttribute("symbol")) {
 						this._marker.style.color = newValue;
 						this._marker.style.backgroundColor = "transparent";
 					}
@@ -99,22 +99,22 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 					this._popup.className = null;
 				}
 			});
-		else if(attributeName == "symbol")
+		else if (attributeName == "symbol")
 			this._componentReady.then(() => {
 				this._marker.innerHTML = newValue;
 
-				if(newValue)
+				if (newValue)
 					this._marker.style.backgroundColor = "transparent";
 			});
-		else if(attributeName == "title")
+		else if (attributeName == "title")
 			this._componentReady.then(() => {
 				this._marker.setAttribute("title", newValue);
 			});
-		else if(attributeName == "hidden-siblinbgs-count")
+		else if (attributeName == "hidden-siblinbgs-count")
 			this._componentReady.then(() => {
 				this._hiddenSiblingsMarker.innerText = "+" + newValue;
 			});
-		else if(attributeName == "id")
+		else if (attributeName == "id")
 			this._componentReady.then(() => {
 				this._popupHeaderLabel.innerText = newValue;
 			});
@@ -151,12 +151,12 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	get beginTime() {
 		return this._beginTime;
 	}
-	
+
 	/**
 	 * 
 	 */
 	get endTime() {
-		if(this._endTime != undefined)
+		if (this._endTime != undefined)
 			return this._endTime;
 		else
 			return this._beginTime;
@@ -168,14 +168,14 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	get isVisible() {
 		return ((this._isVisible == undefined) || this._isVisible);
 	}
-	
+
 	/**
 	 * 
 	 */
 	_onClickCloseButton(event) {
 		event.preventDefault();
 
-		if(this.selected)
+		if (this.selected)
 			this.classList.remove("selected");
 	}
 
@@ -198,37 +198,37 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 * 
 	 */
 	_requestUpdatePopupPosition() {
-		if(this._requestUpdatePopupPositionID)
+		if (this._requestUpdatePopupPositionID)
 			clearTimeout(this._requestUpdatePopupPositionID);
 
 		this._requestUpdatePopupPositionID = setTimeout(() => {
 			this._positionPopup();
 			this._requestUpdatePopupPositionID = null;
 		});
-	} 
+	}
 
 	/**
 	 * 
 	 */
 	_positionPopup() {
-		if(this.selected) {
-			if(this.parentTimeline) {
+		if (this.selected) {
+			if (this.parentTimeline) {
 				let parentTimeDiv = this.parentTimeline._timeDiv;
 				let parentWindow = this.parentTimeline._displayWindow;
 
-				if(parentTimeDiv && parentWindow) {
+				if (parentTimeDiv && parentWindow) {
 					let eventLeftStyle = this.style.left;
-					
-					if(eventLeftStyle.charAt(eventLeftStyle.length - 1) == '%') {
+
+					if (eventLeftStyle.charAt(eventLeftStyle.length - 1) == '%') {
 						let eventLeft = parseFloat(eventLeftStyle.substring(0, eventLeftStyle.length - 1));
-						
-						if(!isNaN(eventLeft)) {
+
+						if (!isNaN(eventLeft)) {
 							let eventBottomStyle = this.style.bottom;
 
-							if(eventBottomStyle.substring(eventBottomStyle.length - 2) == "px") {
+							if (eventBottomStyle.substring(eventBottomStyle.length - 2) == "px") {
 								let eventBottom = parseFloat(eventBottomStyle.substring(0, eventBottomStyle.length - 2));
-								
-								if(!isNaN(eventBottom)) {
+
+								if (!isNaN(eventBottom)) {
 									this._popupContent.style.removeProperty("max-height");
 									this._popupContent.style.removeProperty("max-width");
 									this._popup.style.removeProperty("right");
@@ -246,8 +246,8 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 									let popupWidth = this._popup.clientWidth;
 									let popupHeight = this._popup.clientHeight;
 
-									if((availableSpaceAtRight >= (popupWidth + 1)) || (availableSpaceAtLeft >= (popupWidth + 1))) {
-										if(availableSpaceAtRight >= (popupWidth + 1)) {
+									if ((availableSpaceAtRight >= (popupWidth + 1)) || (availableSpaceAtLeft >= (popupWidth + 1))) {
+										if (availableSpaceAtRight >= (popupWidth + 1)) {
 											// display popup at right
 											this._popup.style.left = (this._marker.clientWidth + 5) + "px";
 											this._popupArrow.className = "right";
@@ -262,13 +262,13 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 
 										let popupBottom = 2;
 
-										if((popupHeight + 2) > parentWindowHeight) {
+										if ((popupHeight + 2) > parentWindowHeight) {
 											// popup is too tall to fit in the timeline's display window
 											popupBottom = (-eventBottom) + 2;
 											let maxPopupContentHeight = (parentWindowHeight - 45)
 											this._popupContent.style.maxHeight = maxPopupContentHeight + "px";
 										}
-										else if((eventBottom + popupBottom + popupHeight) > (parentWindowHeight - 1)) {
+										else if ((eventBottom + popupBottom + popupHeight) > (parentWindowHeight - 1)) {
 											// popup can fit in the timeline's display window, but we have to lower it down
 											popupBottom = (parentWindowHeight - 1) - (eventBottom + popupHeight);
 										}
@@ -278,11 +278,11 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 									else {
 										let availableSpaceAtTop = parentWindowHeight - (eventBottom + this._marker.clientHeight);
 
-										if((availableSpaceAtTop >= (popupHeight + 2)) || (eventBottom <= availableSpaceAtTop)) {
+										if ((availableSpaceAtTop >= (popupHeight + 2)) || (eventBottom <= availableSpaceAtTop)) {
 											// display popup above the marker
 											this._popup.style.bottom = (this._marker.clientHeight + 9) + "px";
 
-											if(availableSpaceAtTop < (popupHeight + 2))
+											if (availableSpaceAtTop < (popupHeight + 2))
 												this._popupContent.style.maxHeight = (availableSpaceAtTop - 51) + "px";
 
 											this._popupArrow.style.bottom = (this._marker.clientHeight + 3) + "px";
@@ -290,7 +290,7 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 										}
 										else {
 											// display popup below the marker
-											if(popupHeight > (eventBottom - 2)) {
+											if (popupHeight > (eventBottom - 2)) {
 												this._popup.style.bottom = (-eventBottom) + 2 + "px";
 												this._popupContent.style.maxHeight = (eventBottom - 45) + "px";
 											}
@@ -299,12 +299,12 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 											this._popupArrow.className = "below";
 										}
 
-										if(popupWidth > (parentWindowWidth - 2)) {
+										if (popupWidth > (parentWindowWidth - 2)) {
 											// popup is too wide to fit in the timeline's display window
 											this._popupContent.style.maxWidth = (parentWindowWidth - 15) + "px";
 											this._popup.style.left = (-availableSpaceAtLeft) + "px";
 										}
-										else if(popupWidth > (availableSpaceAtRight - 1)) {
+										else if (popupWidth > (availableSpaceAtRight - 1)) {
 											// popup can fit in the timeline's display window, but we have to shift it left
 											this._popup.style.left = (availableSpaceAtRight - (popupWidth + 3)) + "px";
 										}
@@ -322,7 +322,7 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 * 
 	 */
 	_toggleSelect() {
-		if(!this.selected) {
+		if (!this.selected) {
 			let select_event = new CustomEvent("select-timeline-event", {
 				cancelable: true,
 				bubbles: true
@@ -332,26 +332,33 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 				this.classList.add("selected");
 				this._positionPopup();
 
-				if(this.parentTimeline) {
+				if (this.parentTimeline) {
 					this.parentTimeline._displayWindow.addEventListener("scroll", this._requestUpdatePopupPositionBindedFunction);
 
 					try {
 						this._timelineResizeObserver = new ResizeObserver(this._requestUpdatePopupPositionBindedFunction);
 						this._timelineResizeObserver.observe(this.parentTimeline._widgetContainer);
 					}
-					catch(error) {
+					catch (error) {
 						this.emitErrorEvent(error);
 					}
 				}
 			}
 		}
 		else {
-			this.parentTimeline._displayWindow.removeEventListener("scroll", this._requestUpdatePopupPositionBindedFunction);
-			
-			if(this._timelineResizeObserver)
-				this._timelineResizeObserver.disconnect();
-				
-			this.classList.remove("selected");
+			let unselect_event = new CustomEvent("unselect-timeline-event", {
+				cancelable: true,
+				bubbles: true
+			});
+
+			if(this.dispatchEvent(unselect_event)) {
+				this.parentTimeline._displayWindow.removeEventListener("scroll", this._requestUpdatePopupPositionBindedFunction);
+
+				if (this._timelineResizeObserver)
+					this._timelineResizeObserver.disconnect();
+
+				this.classList.remove("selected");
+			}
 		}
 	}
 
@@ -359,21 +366,21 @@ export class KTBS4LA2TimelineEvent extends TemplatedHTMLElement {
 	 * 
 	 */
 	static compareEventsOrder(eventA, eventB) {
-		if(eventA.beginTime < eventB.beginTime)
+		if (eventA.beginTime < eventB.beginTime)
 			return -1;
-		else if(eventA.beginTime > eventB.beginTime)
+		else if (eventA.beginTime > eventB.beginTime)
 			return 1;
 		else {
-			if(eventA.endTime > eventB.endTime)
+			if (eventA.endTime > eventB.endTime)
 				return -1;
-			else if(eventA.endTime < eventB.endTime)
+			else if (eventA.endTime < eventB.endTime)
 				return 1;
 			else {
-				if(eventA.id < eventB.id)
+				if (eventA.id < eventB.id)
 					return -1;
-				else if(eventA.id > eventB.id)
+				else if (eventA.id > eventB.id)
 					return 1;
-				else 
+				else
 					return 0;
 			}
 		}
