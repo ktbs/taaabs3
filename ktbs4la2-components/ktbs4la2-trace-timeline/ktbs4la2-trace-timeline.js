@@ -1102,6 +1102,7 @@ class KTBS4LA2TraceTimeline extends TemplatedHTMLElement {
 	_onClickCreateMethodFromStylesheetButton(event) {
 		this.dispatchEvent(new CustomEvent("request-create-method-from-stylesheet", {
             bubbles: true, 
+			composed: true,
             cancelable: true,
             detail: {
 				"stylesheet-id": this._currentStylesheet.name,
