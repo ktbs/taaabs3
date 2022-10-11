@@ -658,8 +658,12 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 							// build the new model content ---
 							const newModelAttributesTypes = new Array();
 
-							for(let i = 0; i < sourceTraceModel.attribute_types.length; i++)
-								newModelAttributesTypes.push(sourceTraceModel.attribute_types[i].clone());
+							for(let i = 0; i < sourceTraceModel.attribute_types.length; i++) {
+								const clonedAttributeType = sourceTraceModel.attribute_types[i].clone();
+								clonedAttributeType._JSONData["hasAttributeObselType"] = [];
+								newModel.addAttributeType(clonedAttributeType);
+								newModelAttributesTypes.push(clonedAttributeType);
+							}
 
 							const newModelObselTypes = new Array();
 
@@ -667,8 +671,10 @@ class KTBS4LA2Application extends TemplatedHTMLElement {
 								const aRuleData = formData["stylesheet-rules-data"][i];
 
 								if((aRuleData.visible == undefined) || (aRuleData.visible != false)) {
-									const aNewObselType = new ObselType(newModel);
+									const aNewObselType = new ObselType();
 									aNewObselType.id = aRuleData.id;
+									aNewObselType.set_translated_label(aRuleData.id, this._lang);
+									newModel.addObselType(aNewObselType);
 									aNewObselType.attribute_types = newModelAttributesTypes;
 
 									if(aRuleData.symbol && aRuleData.symbol.color)
