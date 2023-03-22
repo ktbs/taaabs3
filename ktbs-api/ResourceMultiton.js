@@ -1,4 +1,5 @@
 import {Resource} from "./Resource.js";
+import {Ktbs} from "./Ktbs.js";
 
 /**
  * This static class allows to share ktbs Resource instances in order to avoid instanciating duplicates of the same resource.
@@ -49,11 +50,19 @@ export class ResourceMultiton {
 
             if((typeof resource_type === 'function') && (/^\s*class\s+/.test(resource_type.toString()))) {
                 type_class = resource_type;
-                let newInstance = new (type_class)(uri);
-                ResourceMultiton.register_resource(newInstance);
             }
-            else
+            else if ((typeof resource_type === 'string')) {
+                // pa: this seems (?) to be required only when adding a KtbsRoot to KTBS4LA2,
+                //     so for the moment, this only supports 'KtbsRoot'.
+                if (resource_type === 'KtbsRoot') {
+                    type_class = Ktbs;
+                }
+            }
+            if (type_class === undefined) {
                 throw new TypeError(resource_type + " is not a valid type");
+            }
+            let newInstance = new (type_class)(uri);
+            ResourceMultiton.register_resource(newInstance);
         }
 
         return ResourceMultiton._resources[uri_string];
