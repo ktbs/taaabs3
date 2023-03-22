@@ -203,24 +203,22 @@ class KTBS4LA2ResourceUriInput extends TemplatedHTMLElement {
                             // when the response content from the HTTP request has been successfully read
                             response.json()
                                 .then((parsedJson) => {
-                                    if(parsedJson["@type"]) {
-                                        this._pickedResource = ResourceMultiton.get_resource(parsedJson["@type"], inputURL);
-
-                                        if(this._allowed_resource_types && !this._allowed_resource_types.includes(parsedJson["@type"]))
-                                            this._showMessage(this._translateString("Resource doesn't match expected type(s)") + " (" + parsedJson["@type"] + ")", "error");
-                                        else {
-                                            this._showMessage(this._translateString("Valid resource URL") + " (" + parsedJson["@type"] + ")", "success");
-                                        }
+                                    let resourceType;
+                                    try {
+                                        resourceType = parsedJson["@type"] || parsedJson["@graph"][0]["@type"];
+                                        this._pickedResource = ResourceMultiton.get_resource(resourceType, inputURL);
                                     }
-                                    else {
-                                        if(parsedJson["@graph"] && parsedJson["@graph"][0] && (parsedJson["@graph"][0]["@type"] == "TraceModel")) {
-                                            this._pickedResource = ResourceMultiton.get_resource("Model", inputURL);
-                                            this._showMessage(this._translateString("Valid resource URL") + " (" + parsedJson["@graph"][0]["@type"] + ")", "success");
-                                        }
+                                    catch {
+                                        this._showMessage(this._translateString("Not a Ktbs resource"), "error");
+                                    }
+                                    if (this.pickedResource !== null) {
+                                        if(this._allowed_resource_types && !this._allowed_resource_types.includes(resourceType))
+                                            this._showMessage(this._translateString("Resource doesn't match expected type(s)") + " (" +resourceType + ")", "error");
                                         else {
-                                            this._pickedResource = null;
-                                            this._showMessage(this._translateString("Not a Ktbs resource"), "error");
+                                            this._showMessage(this._translateString("Valid resource URL") + " (" + resourceType + ")", "success");
                                         }
+                                    } else {
+                                        this._showMessage(this._translateString("Not a Ktbs resource"), "error");
                                     }
                                 })
                                 .catch((error) => {
